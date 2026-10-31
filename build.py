@@ -301,7 +301,7 @@ def build_project(i, pj):
     shots = ""
     if pj["shots"]:
         shots = '<section class="mech-sec"><h2>Screenshots</h2><div class="shots">' + "".join(
-            f'<a href="{thumb(s, 2000)}" target="_blank" rel="noopener"><img loading="lazy" onerror="this.style.visibility='hidden'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot"></a>' for s in pj["shots"]) + "</div></section>"
+            f'<a href="{thumb(s, 2000)}" target="_blank" rel="noopener"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot"></a>' for s in pj["shots"]) + "</div></section>"
     full = ""
     if pj["full"]:
         full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" data-play-drive="{pj["full"]}" data-title="{e(pj["title"])} · full video">▶ Play full video</button></section>'
