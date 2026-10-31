@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roee Tal Portfolio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Roee Tal — game developer working in Unity and Unreal Engine. Projects, gameplay systems and experience.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a level-select screen. Hero as the title card, projects as selectable "levels",
+   a detail overlay as the in-game inspector, small clips as a dev "lab" shelf.
+   Single dark look on purpose (Roee's own black-grid / yellow-glow identity). */
+:root{
+  --void:#0d0f12;        /* page ground */
+  --panel:#15181d;       /* raised surfaces */
+  --panel-2:#1c2027;
+  --line:#2a2f38;        /* hairlines, grid */
+  --ink:#e9e6dc;         /* body text, warm */
+  --dim:#9a9a92;         /* secondary text */
+  --glow:#f5c542;        /* accent: yellow glow */
+  --glow-soft:rgba(245,197,66,.14);
+  --unity:#c9d2dd;       /* engine tag tints */
+  --unreal:#8fb4ff;
+  --f-display:"Chakra Petch", "Rajdhani", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "Cascadia Mono", Menlo, monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{
+  margin:0;background:var(--void);color:var(--ink);
+  font:16px/1.6 var(--f-body);
+  background-image:
+    linear-gradient(var(--line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:48px 48px;background-attachment:fixed;
+}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:radial-gradient(60% 50% at 80% 0%,var(--glow-soft),transparent 70%),
+             linear-gradient(transparent 0,var(--void) 85%)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--void)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--glow);outline-offset:3px}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* nav */
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(13,15,18,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:12px}
+.brand{font:700 18px/1 var(--f-display);letter-spacing:.04em;text-decoration:none}
+.brand span{color:var(--glow)}
+.navlinks{display:flex;gap:20px;font:500 13px/1 var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.navlinks a{text-decoration:none;color:var(--dim)}
+.navlinks a:hover{color:var(--glow)}
+@media (max-width:560px){.navlinks a.opt{display:none}}
+
+/* hero */
+.hero{padding-block:72px 48px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:40px;align-items:center}
+@media (max-width:860px){.hero{grid-template-columns:1fr;padding-block:40px 32px}}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--glow);display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:8px;height:8px;background:var(--glow);box-shadow:0 0 12px var(--glow)}
+h1{font:700 clamp(48px,9vw,96px)/.92 var(--f-display);letter-spacing:-.01em;margin:18px 0 14px;text-wrap:balance}
+.role{font:600 clamp(18px,2.4vw,24px)/1.3 var(--f-display);color:var(--dim);margin:0 0 20px}
+.role b{color:var(--ink);font-weight:600}
+.lede{max-width:58ch;margin:0 0 28px;color:#cfcbc0}
+.ctas{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;font:600 14px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;text-decoration:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.btn:hover{border-color:var(--glow);color:var(--glow)}
+.btn.primary{background:var(--glow);color:var(--void);border-color:var(--glow)}
+.btn.primary:hover{background:#ffd75e;color:var(--void)}
+
+.reel{position:relative;border:1px solid var(--line);background:var(--panel);aspect-ratio:16/9;max-width:100%;overflow:hidden;cursor:pointer}
+.reel img{width:100%;height:100%;object-fit:cover;display:block;opacity:.85;transition:opacity .2s,transform .4s}
+.reel:hover img{opacity:1;transform:scale(1.02)}
+.reel .rec{position:absolute;top:12px;left:12px;font:500 11px/1 var(--f-mono);letter-spacing:.1em;background:rgba(0,0,0,.6);padding:6px 8px;color:var(--ink)}
+.reel .rec::before{content:"●";color:#ff5a4f;margin-right:6px}
+.play{position:absolute;inset:0;display:grid;place-items:center}
+.play i{width:64px;height:64px;border-radius:50%;background:var(--glow);display:grid;place-items:center;box-shadow:0 0 0 8px var(--glow-soft)}
+.play i::before{content:"";border-left:18px solid var(--void);border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:5px}
+.reel figcaption{position:absolute;left:0;right:0;bottom:0;padding:28px 14px 12px;background:linear-gradient(transparent,rgba(0,0,0,.8));font:500 13px/1.3 var(--f-mono)}
+
+/* fallback art when a Drive image can't load */
+.ph{background:repeating-linear-gradient(135deg,var(--panel-2) 0 12px,var(--panel) 12px 24px)}
+
+/* sections */
+section{padding-block:56px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px;border-bottom:1px solid var(--line);padding-bottom:14px}
+h2{font:700 clamp(28px,4vw,40px)/1 var(--f-display);margin:0;letter-spacing:.01em}
+.sec-head p{margin:0;color:var(--dim);font:400 14px/1.4 var(--f-mono)}
+
+/* experience */
+.xp{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:24px}
+@media (max-width:860px){.xp{grid-template-columns:1fr}}
+.job{background:var(--panel);border:1px solid var(--line);padding:24px;position:relative}
+.job::before{content:"";position:absolute;left:-1px;top:-1px;width:28px;height:3px;background:var(--glow)}
+.job h3{font:700 24px/1.2 var(--f-display);margin:0}
+.meta{font:400 13px/1.5 var(--f-mono);color:var(--dim);margin:6px 0 14px}
+.job ul{margin:0;padding-left:18px;display:grid;gap:6px}
+.job .now{display:inline-block;font:500 11px/1 var(--f-mono);letter-spacing:.1em;color:var(--void);background:var(--glow);padding:5px 7px;margin-left:8px;vertical-align:middle}
+.side{display:grid;gap:16px;align-content:start}
+.side .box{border:1px solid var(--line);padding:18px;background:rgba(21,24,29,.7)}
+.side h4{font:600 13px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--glow);margin:0 0 10px}
+.side p{margin:0;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 8px;border:1px solid var(--line);color:var(--ink);background:var(--panel-2)}
+.chip.unity{color:var(--unity);border-color:#3a414c}
+.chip.unreal{color:var(--unreal);border-color:#2d3b57}
+
+/* level select */
+.levels{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:18px}
+.lvl{grid-column:span 2;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;text-align:left;padding:0;color:inherit;font:inherit;cursor:pointer;transition:border-color .2s,transform .2s}
+.lvl.big{grid-column:span 3}
+.lvl:hover{border-color:var(--glow);transform:translateY(-3px)}
+@media (max-width:860px){.levels{grid-template-columns:1fr 1fr}.lvl,.lvl.big{grid-column:span 1}}
+@media (max-width:560px){.levels{grid-template-columns:1fr}}
+.lvl .shot{aspect-ratio:16/9;max-width:100%;overflow:hidden;position:relative;border-bottom:1px solid var(--line)}
+.lvl .shot img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.lvl:hover .shot img{transform:scale(1.04)}
+.lvl .idx{position:absolute;top:10px;left:10px;font:500 11px/1 var(--f-mono);letter-spacing:.1em;background:rgba(0,0,0,.65);padding:5px 7px}
+.lvl .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.lvl h3{font:700 22px/1.15 var(--f-display);margin:0}
+.lvl .sub{color:var(--dim);font-size:14px;margin:0}
+.lvl .foot{margin-top:auto;padding-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.lvl .go{font:600 12px/1 var(--f-mono);letter-spacing:.1em;color:var(--glow)}
+
+/* lab */
+.lab{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.clip{background:var(--panel);border:1px solid var(--line);padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.clip:hover{border-color:var(--glow)}
+.clip .shot{aspect-ratio:16/10;max-width:100%;overflow:hidden;position:relative}
+.clip .shot img{width:100%;height:100%;object-fit:cover;display:block}
+.clip .shot::after{content:"▶";position:absolute;right:8px;bottom:8px;font-size:11px;background:var(--glow);color:var(--void);padding:4px 6px}
+.clip span{display:block;padding:10px 12px;font:500 13px/1.3 var(--f-mono)}
+
+/* contact */
+.contact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center;border:1px solid var(--line);background:var(--panel);padding:32px}
+@media (max-width:760px){.contact{grid-template-columns:1fr;padding:22px}}
+.contact h2{margin-bottom:10px}
+.contact p{margin:0;color:var(--dim)}
+.mail{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font:500 15px/1.4 var(--f-mono);margin-bottom:14px;word-break:break-all}
+.mail code{user-select:all;color:var(--ink)}
+footer{padding-block:28px 40px;color:var(--dim);font:400 12px/1.5 var(--f-mono)}
+
+/* inspector overlay */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(5,6,8,.88);backdrop-filter:blur(4px);overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 20px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 20px) max(16px,env(safe-area-inset-left,0px))}
+.sheet{max-width:1040px;margin:0 auto;background:var(--void);border:1px solid var(--line)}
+.sheet-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);font:500 12px/1 var(--f-mono);letter-spacing:.1em;color:var(--dim);position:sticky;top:0;background:var(--void);z-index:2}
+.x{background:none;border:1px solid var(--line);color:var(--ink);font:600 13px/1 var(--f-mono);padding:8px 12px;cursor:pointer}
+.x:hover{border-color:var(--glow);color:var(--glow)}
+.stage{aspect-ratio:16/9;max-width:100%;background:#000;position:relative}
+.stage iframe,.stage img{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:contain}
+.stage .note{position:absolute;left:12px;bottom:12px;font:400 12px/1.4 var(--f-mono);color:var(--dim)}
+.stage .note a{color:var(--glow)}
+.reelstrip{display:flex;gap:8px;overflow-x:auto;padding:12px 16px;border-bottom:1px solid var(--line)}
+.reelstrip button{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:500 12px/1 var(--f-mono);padding:9px 12px;cursor:pointer}
+.reelstrip button[aria-pressed="true"]{border-color:var(--glow);color:var(--glow)}
+.sheet-body{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;padding:24px}
+@media (max-width:760px){.sheet-body{grid-template-columns:1fr;padding:18px}}
+.sheet-body h3{font:700 clamp(26px,4vw,36px)/1.05 var(--f-display);margin:0 0 6px;text-wrap:balance}
+.sheet-body h4{font:600 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--glow);margin:20px 0 10px}
+.sheet-body ul{margin:0;padding-left:18px;display:grid;gap:6px}
+.sheet-body p{margin:0;max-width:62ch}
+.facts{display:grid;gap:12px;align-content:start;border-left:1px solid var(--line);padding-left:20px}
+@media (max-width:760px){.facts{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:16px}}
+.facts dt{font:500 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.facts dd{margin:4px 0 0;font-weight:500}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:0 24px 24px}
+.gallery button{padding:0;border:1px solid var(--line);background:var(--panel);cursor:pointer;aspect-ratio:16/10;max-width:100%;overflow:hidden}
+.gallery button:hover{border-color:var(--glow)}
+.gallery img{width:100%;height:100%;object-fit:cover;display:block}
+</style>
+
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top">ROEE<span>_</span>TAL</a>
+    <div class="navlinks">
+      <a href="#experience" class="opt">Experience</a>
+      <a href="#projects">Projects</a>
+      <a href="#lab" class="opt">Lab</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+  <header class="wrap hero">
+    <div>
+      <div class="eyebrow">Player 1 · Israel</div>
+      <h1>Roee Tal</h1>
+      <p class="role"><b>Game Developer</b> · Unity &amp; Unreal Engine</p>
+      <p class="lede">I build gameplay systems, UI and interactive 3D experiences. For the last year and a half I've worked as an Unreal developer at 3DVision, shipping real-time interactive applications for clients. Before that, three years of game design and development at Tiltan, working in Unity, C#, Unreal and C++.</p>
+      <div class="ctas">
+        <a class="btn primary" href="#projects">View projects</a>
+        <a class="btn" href="Roee-Tal-CV.pdf" target="_blank" rel="noopener">Download CV</a>
+        <a class="btn" href="https://github.com/Deadchu-R" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn" href="https://www.linkedin.com/in/roee-tal/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </div>
+    <figure class="reel" id="reel" role="button" tabindex="0" aria-label="Play showreel">
+      <img data-drive="1rlhZHUS8bYwiMmg42SXIdjwMXsK0N5bz" data-w="1280" alt="Showreel cover">
+      <span class="rec">SHOWREEL</span>
+      <div class="play"><i></i></div>
+      <figcaption>My journey as a game development student</figcaption>
+    </figure>
+  </header>
+
+  <section id="experience">
+    <div class="wrap">
+      <div class="sec-head"><h2>Experience</h2><p>02/2025 → now</p></div>
+      <div class="xp">
+        <article class="job">
+          <h3>Unreal Developer <span class="now">CURRENT</span></h3>
+          <div class="meta">3DVision · Tel Aviv · 02/2025 – Present<br>Real-time interactive simulation apps for real-estate companies, built in Unreal Engine</div>
+          <ul>
+            <li>Debug and optimize complex logic and Blueprints across multiple client projects</li>
+            <li>Develop and integrate interactive features based on client requirements</li>
+            <li>Implement custom UI elements and functionality tailored to each client</li>
+          </ul>
+        </article>
+        <div class="side">
+          <div class="box">
+            <h4>Education</h4>
+            <p><b>Game Design &amp; Development</b><br><span style="color:var(--dim)">Tiltan School of Design · Haifa · 2021–2024</span></p>
+          </div>
+          <div class="box">
+            <h4>Toolkit</h4>
+            <div class="chips">
+              <span class="chip unity">Unity</span><span class="chip">C#</span>
+              <span class="chip unreal">Unreal Engine</span><span class="chip">C++</span><span class="chip">Blueprints</span>
+              <span class="chip">OOP</span><span class="chip">Git</span><span class="chip">VR</span><span class="chip">Agile</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="wrap">
+      <div class="sec-head"><h2>Select a level</h2><p>5 projects · click for clips &amp; details</p></div>
+      <div class="levels" id="levels"></div>
+    </div>
+  </section>
+
+  <section id="lab">
+    <div class="wrap">
+      <div class="sec-head"><h2>The lab</h2><p>Shaders, small systems and course experiments</p></div>
+      <div class="lab" id="labGrid"></div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="contact">
+        <div>
+          <h2>Let's talk</h2>
+          <p>Open to Unity and Unreal developer roles in Israel.</p>
+        </div>
+        <div>
+          <div class="mail"><code id="email">roeetal17@gmail.com</code><button class="x" id="copy" type="button">Copy</button></div>
+          <div class="ctas">
+            <a class="btn primary" href="mailto:roeetal17@gmail.com">Email me</a>
+            <a class="btn" href="Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV (PDF)</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">© <span id="yr">2026</span> Roee Tal · Built as a static site, hosted free on GitHub Pages</footer>
+
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+const thumb=(id,w=900)=>`https://drive.google.com/thumbnail?id=${id}&sz=w${w}`;
+const embed=id=>`https://drive.google.com/file/d/${id}/preview`;
+const view=id=>`https://drive.google.com/file/d/${id}/view`;
+
+const PROJECTS=[
+ {slug:"bossrush",big:true,title:"Boss Rush",sub:"Grid-based tactical combat",engine:"unity",when:"12/2023 – 09/2024",
+  role:"Producer & Game Designer",team:"Final-year team project · Game Production 2",cover:"1ds2k9OIavd8wmB638ZMaas-4uHDBN5dH",
+  about:"A grid-based strategy game where the player controls a party of three characters to defeat a powerful boss. Set in a microscopic world, it pits bacteria and diseases against medicines, with a focus on strategic teamwork and coordination.",
+  did:["Led a cross-functional team of programmers and artists and managed the development pipeline through delivery","Designed the core gameplay loop, tactical grid mechanics and overall game balance","Resolved conflicts and blockers between team members to keep a smooth, productive workflow"],
+  tags:["Unity","C#","Game design","Production"],
+  clips:[["Tactical view","1aDkpRLZy3QNMPEeAIcHc3f8_Cf9acxPM"],["Moving arrow","1vcp3IeeehFJ_Ppq5JHC6mzsaFMiTb7Pc"],["Attack sequence","12FAXoXFoiz_-gTPMpAHg0HDlMtjLlzJO"],["Fireball effect","1HNorCwv_7PXALP_TCjANvZW385rQE3BR"],["Resource gather","1OZmcyiAOi2JdeSAK5nQF3ZrqDwe8VoyK"],["Full playthrough","15gejO8JuCfXQFWnQmd209mHFPer7dyFD"]],
+  shots:["1ds2k9OIavd8wmB638ZMaas-4uHDBN5dH"]},
+ {slug:"fps",big:true,title:"Infiltration FPS",sub:"Unreal Engine 5 · C++ & Blueprints",engine:"unreal",when:"06/2024 – 08/2024",
+  role:"Solo developer",team:"Final project · Unreal C++ course",cover:"1f_FEH3xWJFLEtx5Rivfkz0sW1IdyO7Cd",
+  about:"The player infiltrates a military base to retrieve a valuable chip. I designed an unconventional base with a dictatorship atmosphere using Unreal Marketplace assets, and built the mechanics in a mix of C++ and Blueprints.",
+  did:["Programmed core FPS mechanics: raycast-based shooting, recoil feedback and dynamic weapon pickups","Developed enemy AI with detection logic and patrol routes to support stealth gameplay","Built the interactable chip objective and the level layout"],
+  tags:["Unreal 5","C++","Blueprints","Enemy AI"],
+  clips:[["Aiming & shooting","1n41GdjA2EyP8mzpEkXMg3Bc8eSyndK3N"],["Weapon pickup","1DwSYEwlV_wUiXQb3PpXpJhq6zZMLcemI"],["Detected by AI","1S2__pZSY-X0TT8gnz3JyDHFArXmIPWk0"],["Chip objective","1woY9O2N8uW1xJGtTdQa_9ZSufwajvgii"],["Full video","1vL8FiPkjc6uhVvU76h9tpVB-diiNVmWc"]],
+  shots:["1XKdeZXwJXXcGLC-PLBU1AQnQTI0q1Jnl","1wghjod73Nu2WRcwxH32Q5rEhXCIN0K6e","1RSsJOWmaaCGo-ITMmSw50PgxQcOyCOBd","1Tjj_5cknQ_98sqItEYD7McOjM5rpw7Jk","1an1Bz7pWXvz1K8BBtg61GLg1WJUE7YDw","19JMa8TxKunQdd_Ga3ChQp8HwCUkE4sHc"]},
+ {slug:"shards",title:"Shards",sub:"Isometric story-driven game",engine:"unity",when:"10/2023 – 11/2023",
+  role:"Programmer",team:"3-week hackathon team",cover:"10P_bsBNsYOX6C94sR7FoAYuW_PC8ax71",
+  about:"Made during a three-week hackathon in November 2023 and inspired by the 7/10 attack on Israel, the game follows an adult returning to his hometown to confront unresolved trauma. The team aimed for a colorful yet unsettling atmosphere that reflects distorted memories.",
+  did:["Architected a modular, data-driven dialogue system with ScriptableObjects","Built complex UI interactions and event-driven mechanics (e.g., an OnLetterTyped event) to drive the narrative flow"],
+  tags:["Unity","C#","ScriptableObjects","UI"],
+  clips:[["Gameplay","1tmPJS60ybrLUhAnFwKSwCj7VyI8NLrSG"],["Dialogue system","1V9Hw7lS-zYJeBm6_fuOe69KBtvrrVjJk"]],
+  shots:["10P_bsBNsYOX6C94sR7FoAYuW_PC8ax71","1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs","1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV","1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9"]},
+ {slug:"almond-bar",title:"Almond Bar",sub:"Unreal quest adventure · Blueprints",engine:"unreal",when:"Tiltan",
+  role:"Solo developer",team:"Final project · Unreal Blueprints course",cover:"1S38ITtBFY7fynF-MWLseHT9h5Q9K5cms",
+  about:"An adventure game set in a bar, where the player retrieves a key and completes a quest. Inspired by my hometown bar, CharlieBar, blended with a modern, brightly lit design.",
+  did:["Built a dialogue and quest system in Blueprints","Designed and dressed the bar environment"],
+  tags:["Unreal","Blueprints","Dialogue","Quests"],
+  clips:[["Dialogue & quest","1MLFl9JnF-W2McG5Oifk0kycXAbX6_3wq"],["Mission complete","1gJONPXImUmGUgLn0zeO4VT1worbnZSCu"],["Full video","1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC"]],
+  shots:["1S38ITtBFY7fynF-MWLseHT9h5Q9K5cms","1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41","1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC","17zGlB0VBU26ZydIbjMk7YcrRy41PSAut"]},
+ {slug:"musical-level",title:"A Musical Level",sub:"Rhythm platformer inspired by Rayman Legends",engine:"unity",when:"2nd year",
+  role:"Team member",team:"Team project · Game Production course",cover:"1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP",
+  about:"Built in my second year for the Game Production course to replicate real-world production. The team created a rhythm-based level inspired by Rayman Legends' beat-driven gameplay.",
+  did:["Platforming mechanics shown in the clips: wall jump and hover, trampolines, shaking platforms, jump indicator and attack"],
+  tags:["Unity","Platformer","Rhythm","Level design"],
+  clips:[["Gameplay","18ezKyaZ6x8iKwvC2Gpj-vhhxqdaGCitd"],["Wall jump & hover","1kPgVVUSQZxFdqd71GMiGisgOrqmwEi_3"],["Trampoline","1pjC3tc_jsP7YIo4875abDV45rqQd-SCI"],["Shaking platforms","1hjmNAM8uoKoC1Wm-hAwvpBgZ1a2dcQqT"],["Jump indicator","1GmLecwlKi0yxsthTLXaq47NMBzhvEEPW"],["Attack","1Wlay5mvFlwNrT6sQCLVBJ7hxzUvdk-CF"]],
+  shots:["1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP","1cuHuKj4H0HIaWXCJpQLxaxdFCUKOtDzX"]}
+];
+
+const LAB=[
+ ["World-bending shader","1w8G1TMj93LvZqCNxYdG46o4rOHp4_2i2"],["Plane-bending shader","1lEnZM78NR3td-blCaTno0pfAXRFfc597"],
+ ["Toon shader","17zl6JE6t6rm-GDynooXcIjXIdwDehpk6"],["Hatching (Shader Graph)","1Sne0ks3fKGrbedu_LFnLIw84JBKD-g9a"],
+ ["Snow shader","164BZh7NNCB082xrTOb3skcxzQ4GvIAGH"],["Tile-map engine","1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL"],
+ ["Chess on the tile-map engine","1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi"],["Multiplayer login UI","1Cy7YyN8rTMAOnD0nJ3wLVHLuxE2zXoeL"],
+ ["Card-draw system","1_WDc8rzjxa7d6zPILMB0E2DsOPjuMyQc"],["Escape-room camera","1t1hd1aLov8GhUp2G_fn2yfejbeJVwUdd"],
+ ["AI training","1fDZRyrlEcJ4YKWOP8dyob5qL3pHyhs_M"],["Portal × Angry Birds","1hr7Xf76Kqlwt1apXkOBeSaaSp1PVswgI"],
+ ["Hyper-casual 3-lane runner","1aEOUM2jy6SdJU2bQzpZQ59jWytxGDc66"],["Space Invaders","1kC6Ikjb6H7kVDjeW56lN_Uv9p8GIGsbq"],
+ ["Snake","14TZn87SvelWovus4Zn1E_RqhUrwqV5jg"]
+];
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const img=(id,w,alt)=>`<img loading="lazy" src="${thumb(id,w)}" alt="${esc(alt)}" onerror="this.remove()">`;
+const engineChip=e=>e==="unreal"?'<span class="chip unreal">Unreal</span>':'<span class="chip unity">Unity</span>';
+
+document.getElementById("levels").innerHTML=PROJECTS.map((p,i)=>`
+ <button class="lvl${p.big?" big":""}" data-slug="${p.slug}" type="button">
+  <div class="shot ph">${img(p.cover,900,p.title)}<span class="idx">LEVEL ${String(i+1).padStart(2,"0")}</span></div>
+  <div class="body">
+   <h3>${esc(p.title)}</h3><p class="sub">${esc(p.sub)}</p>
+   <div class="foot"><div class="chips">${engineChip(p.engine)}<span class="chip">${esc(p.role)}</span></div><span class="go">PLAY ▸</span></div>
+  </div>
+ </button>`).join("");
+
+document.getElementById("labGrid").innerHTML=LAB.map(([t,id])=>`
+ <button class="clip" type="button" data-clip="${id}" data-title="${esc(t)}"><div class="shot ph">${img(id,480,t)}</div><span>${esc(t)}</span></button>`).join("");
+
+document.querySelectorAll("img[data-drive]").forEach(el=>{el.src=thumb(el.dataset.drive,el.dataset.w);el.onerror=()=>el.remove();el.parentElement.classList.add("ph")});
+
+const ov=document.getElementById("ov"),sheet=document.getElementById("sheet");
+let lastFocus=null;
+
+function stageFor(kind,id){
+  return kind==="img"
+   ? `<img src="${thumb(id,1600)}" alt="">`
+   : `<iframe src="${embed(id)}" allow="autoplay; fullscreen" allowfullscreen title="Video"></iframe><div class="note">Not loading? <a href="${view(id)}" target="_blank" rel="noopener">Open in Google Drive</a></div>`;
+}
+function openOverlay(html){
+  lastFocus=document.activeElement;sheet.innerHTML=html;ov.hidden=false;document.body.style.overflow="hidden";
+  sheet.querySelector(".x").focus();
+}
+function closeOverlay(){
+  ov.hidden=true;sheet.innerHTML="";document.body.style.overflow="";
+  if(location.hash&&PROJECTS.some(p=>"#"+p.slug===location.hash))history.replaceState(null,"",location.pathname+"#projects");
+  lastFocus&&lastFocus.focus();
+}
+function openProject(slug){
+  const p=PROJECTS.find(x=>x.slug===slug);if(!p)return;
+  openOverlay(`
+   <div class="sheet-top"><span>LEVEL ${String(PROJECTS.indexOf(p)+1).padStart(2,"0")} · ${esc(p.title.toUpperCase())}</span><button class="x" type="button" data-close>ESC ✕</button></div>
+   <div class="stage" id="stage">${stageFor("vid",p.clips[0][1])}</div>
+   <div class="reelstrip">${p.clips.map(([t,id],i)=>`<button type="button" data-v="${id}" aria-pressed="${i===0}">${esc(t)}</button>`).join("")}</div>
+   <div class="sheet-body">
+    <div>
+     <h3 id="sheetTitle">${esc(p.title)}</h3>
+     <p style="color:var(--dim);margin-bottom:14px">${esc(p.sub)}</p>
+     <p>${esc(p.about)}</p>
+     <h4>What I did</h4><ul>${p.did.map(d=>`<li>${esc(d)}</li>`).join("")}</ul>
+    </div>
+    <dl class="facts">
+     <div><dt>Engine</dt><dd>${p.engine==="unreal"?"Unreal Engine":"Unity"}</dd></div>
+     <div><dt>Role</dt><dd>${esc(p.role)}</dd></div>
+     <div><dt>Context</dt><dd>${esc(p.team)}</dd></div>
+     <div><dt>When</dt><dd>${esc(p.when)}</dd></div>
+     <div><dt>Stack</dt><dd><div class="chips" style="margin-top:6px">${p.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div></dd></div>
+    </dl>
+   </div>
+   ${p.shots.length?`<div class="gallery">${p.shots.map(id=>`<button type="button" data-i="${id}" aria-label="View screenshot" class="ph">${img(id,400,"Screenshot")}</button>`).join("")}</div>`:""}`);
+}
+function openClip(id,title){
+  openOverlay(`<div class="sheet-top"><span id="sheetTitle">LAB · ${esc(title.toUpperCase())}</span><button class="x" type="button" data-close>ESC ✕</button></div><div class="stage">${stageFor("vid",id)}</div>`);
+}
+
+document.getElementById("levels").addEventListener("click",e=>{const b=e.target.closest(".lvl");if(b){history.replaceState(null,"","#"+b.dataset.slug);openProject(b.dataset.slug)}});
+document.getElementById("labGrid").addEventListener("click",e=>{const b=e.target.closest(".clip");if(b)openClip(b.dataset.clip,b.dataset.title)});
+const reel=document.getElementById("reel");
+const playReel=()=>openClip("1rlhZHUS8bYwiMmg42SXIdjwMXsK0N5bz","Showreel");
+reel.addEventListener("click",playReel);
+reel.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();playReel()}});
+
+ov.addEventListener("click",e=>{
+  if(e.target===ov||e.target.closest("[data-close]"))return closeOverlay();
+  const v=e.target.closest("[data-v]");
+  if(v){sheet.querySelectorAll("[data-v]").forEach(b=>b.setAttribute("aria-pressed",b===v));sheet.querySelector("#stage").innerHTML=stageFor("vid",v.dataset.v);return}
+  const i=e.target.closest("[data-i]");
+  if(i){sheet.querySelectorAll("[data-v]").forEach(b=>b.setAttribute("aria-pressed","false"));const s=sheet.querySelector("#stage");s.innerHTML=stageFor("img",i.dataset.i);s.scrollIntoView({block:"nearest"})}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!ov.hidden)closeOverlay()});
+
+document.getElementById("copy").addEventListener("click",async e=>{
+  const t=document.getElementById("email").textContent;
+  try{await navigator.clipboard.writeText(t);e.target.textContent="Copied"}
+  catch{const r=document.createRange();r.selectNodeContents(document.getElementById("email"));const s=getSelection();s.removeAllRanges();s.addRange(r);e.target.textContent="Selected"}
+  setTimeout(()=>e.target.textContent="Copy",1600);
+});
+document.getElementById("yr").textContent=new Date().getFullYear();
+
+function route(){const s=location.hash.slice(1);if(PROJECTS.some(p=>p.slug===s))openProject(s)}
+window.addEventListener("hashchange",route);route();
+</script>
+
+</body>
+</html>
