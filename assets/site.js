@@ -239,7 +239,7 @@
   const jump=$("#jump");
   if(jump){
     const btn=jump.querySelector(".jump-btn"),panel=$("#jumpPanel"),links=[...panel.querySelectorAll("a")];
-    const targets=links.map(a=>document.getElementById(a.hash.slice(1)));
+    const targets=links.map(a=>{const h=a.getAttribute("href");return h.startsWith("#")?document.getElementById(h.slice(1)):null});
     const setOpen=on=>{jump.classList.toggle("open",on);panel.hidden=!on;btn.setAttribute("aria-expanded",on);btn.setAttribute("aria-label",on?"Close section menu":"Jump to a section")};
     // press-and-slide like an iPhone menu: hold the button, slide over the list, let go on a section to jump there.
     // A plain tap still just opens / closes the menu.
@@ -293,7 +293,7 @@
     const upd=()=>{
       raf2=0;let k=0;const line=innerHeight*.45;
       targets.forEach((t,i)=>{if(t&&t.getBoundingClientRect().top<=line)k=i});
-      if(innerHeight+scrollY>=document.body.scrollHeight-4)k=targets.length-1;
+      if(innerHeight+scrollY>=document.body.scrollHeight-4){for(let i=targets.length-1;i>=0;i--)if(targets[i]){k=i;break}}
       if(k===cur)return;cur=k;
       links.forEach((a,i)=>a.classList.toggle("on",i===k));
       const c=getComputedStyle(links[k]).getPropertyValue("--c").trim();

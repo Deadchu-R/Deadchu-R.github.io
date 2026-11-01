@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=8e404b5d">
+<link rel="stylesheet" href="../assets/site.css?v=afc6b988">
 <style>:root{--deep:#2a1010;--mid:#7a2a1f;--accent:#ffb07a}</style>
 </head>
 <body>
@@ -17,12 +17,16 @@
 <a class="mark" href="../index.html">Roee Tal</a>
 <nav><a href="../index.html#projects" aria-current="page">Projects</a><a href="../gallery.html">Gallery</a><a href="../lab.html">Lab</a><a href="../Roee-Tal-CV.pdf">CV</a><a href="../index.html#contact">Contact</a></nav>
 </div></header>
-<section class="phero short code-hero">
+<div class="jump" id="jump">
+  <nav class="jump-panel" id="jumpPanel" aria-label="Page sections" hidden><p class="jump-h">Jump to</p><a class="" href="#top" style="--c:#ffb07a"><span class="j-ico"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg></span>Army Capture Mechanic</a><a class="sub" href="#built" style="--c:#ffb07a"><i></i>What I built</a><a class="sub" href="#flow" style="--c:#ffb07a"><i></i>How it fits together</a><a class="sub" href="#the-code" style="--c:#ffb07a"><i></i>The code</a><a class="sub" href="#next" style="--c:#ffb07a"><i></i>Next</a><p class="jump-h pages">Main page</p><a class="" href="../index.html#top" style="--c:#3d84e6"><span class="j-ico"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></span>Home</a><a class="" href="../index.html#now" style="--c:#38b6ff"><span class="j-ico"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg></span>Experience</a><a class="" href="../index.html#projects" style="--c:#ffd23f"><span class="j-ico"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10a5 5 0 0 1 4.8 6.4l-.9 3a2.5 2.5 0 0 1-4.3.8L15 16H9l-1.6 2.2a2.5 2.5 0 0 1-4.3-.8l-.9-3A5 5 0 0 1 7 8z"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg></span>Projects</a><a class="" href="../index.html#more-code" style="--c:#9be15d"><span class="j-ico"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg></span>More code</a><p class="jump-h pages">Pages</p><div class="jump-pages"><a href="../gallery.html">Gallery</a><a href="../lab.html">Lab</a><a href="../Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a></div></nav>
+  <button class="jump-btn" type="button" aria-expanded="false" aria-controls="jumpPanel" aria-label="Jump to a section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="d1" cx="5" cy="6" r="2"/><circle class="d2" cx="5" cy="12" r="2"/><circle class="d3" cx="5" cy="18" r="2"/><path d="M10 6h10M10 12h10M10 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="x" d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+</div>
+<section class="phero short code-hero" id="top">
   <div class="wrap phero-copy"><p class="kicker">More code · C# · Unity 2D</p><h1>Army Capture Mechanic</h1><p class="lead">My part of a mobile army game in Unity</p></div>
   <svg class="wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 C 240 90 480 0 720 34 S 1200 80 1440 30 V80 H0Z"/></svg>
 </section>
 <div class="project">
-  <section class="wrap intro">
+  <section class="wrap intro" id="built">
     <div class="intro-text">
       <p class="hook">Beat an enemy army, stand in its circle, and its soldiers join yours.</p>
       <h3 class="kicker">What I built</h3>
@@ -38,9 +42,9 @@
     </dl>
   </section>
   <div class="wrap">
-    <section class="mech-sec"><h2>How it fits together</h2><div class="flow"><div class="flow-step"><b>Enemy army beaten</b><span>commander position</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Capture circle</b><span>trigger collider</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Countdown</b><span>stay inside</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Soldiers join you</b><span>army grows</span></div></div></section>
+    <section class="mech-sec" id="flow"><h2>How it fits together</h2><div class="flow"><div class="flow-step"><b>Enemy army beaten</b><span>commander position</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Capture circle</b><span>trigger collider</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Countdown</b><span>stay inside</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Soldiers join you</b><span>army grows</span></div></div></section>
     
-    <section class="mech-sec code-sec"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>ArmyCaptureManager.cs</span></figcaption><pre><code><span class="c">// ArmyCaptureManager.cs: stand inside a defeated army&#x27;s circle until the countdown</span>
+    <section class="mech-sec code-sec" id="the-code"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>ArmyCaptureManager.cs</span></figcaption><pre><code><span class="c">// ArmyCaptureManager.cs: stand inside a defeated army&#x27;s circle until the countdown</span>
 <span class="c">// ends to take its soldiers; stepping out cancels the capture</span>
 <span class="k">public</span> <span class="k">void</span> <span class="t">SetCaptureCollider</span>(<span class="t">Vector2</span> position, <span class="k">float</span> radius = <span class="n">1</span>, <span class="k">bool</span> active = <span class="k">false</span>)
 {
@@ -75,7 +79,7 @@
     _captureCountdownTimer.<span class="t">Reset</span>();
 }</code></pre></figure><p class="muted small center">Trimmed and commented for this page.</p></section>
   </div>
-  <div class="wrap code-next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a><a class="btn" href="unity-tools.html">Next: Reusable Unity Tools →</a></div>
+  <div class="wrap code-next" id="next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a><a class="btn" href="unity-tools.html">Next: Reusable Unity Tools →</a></div>
 </div>
 <footer class="foot" id="contact">
 <svg class="foot-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 260 80 520 0 760 30 S 1220 70 1440 22 V70 H0Z"/></svg>
@@ -103,6 +107,6 @@
   <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
 </div>
-<script src="../assets/site.js?v=d67b96d2" defer></script>
+<script src="../assets/site.js?v=714f7fba" defer></script>
 </body>
 </html>

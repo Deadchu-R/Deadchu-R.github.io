@@ -547,6 +547,48 @@ def about_html():
 </section>
 """
 
+
+J_I = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+J_HOME = J_I + '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>'
+J_IMG = J_I + '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>'
+J_MAIL = J_I + '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'
+J_USER = J_I + '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'
+J_LIST = J_I + '<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>'
+J_FLASK = J_I + '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/><path d="M7.5 15h9"/></svg>'
+J_NEXT = J_I + '<path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+J_PLAY = J_I + '<path d="M7 5v14l11-7z"/></svg>'
+
+def INDEX_JUMP():
+    return ([("#top", "Home", "#3d84e6", "", J_HOME), ("#now", "Experience · 3DVision", "#38b6ff", "", ICON_BRIEF),
+             ("#projects", "Projects", "#ffd23f", "", ICON_PAD)]
+            + [(f"#p-{pj['slug']}", e(pj['title']), pj['theme'][2], "sub", "") for pj in PROJECTS]
+            + [("#more-code", "More code", "#9be15d", "", ICON_CODE)]
+            + [(f"#c-{cp['slug']}", e(cp['title']), cp['theme'][2], "sub", "") for cp in CODE_PAGES]
+            + [("#gallery-lab", "Gallery &amp; lab", "#ff8fc0", "", J_IMG), ("#about", "Get to know me", "#ff9f5a", "", J_USER),
+               ("#contact", "Contact", "#6fd3c2", "", J_MAIL)])
+
+def site_jump(depth):
+    """The landing page's main sections, reached from any other page."""
+    p = "../" * depth
+    return [(f"{p}index.html#top", "Home", "#3d84e6", "", J_HOME), (f"{p}index.html#now", "Experience", "#38b6ff", "", ICON_BRIEF),
+            (f"{p}index.html#projects", "Projects", "#ffd23f", "", ICON_PAD), (f"{p}index.html#more-code", "More code", "#9be15d", "", ICON_CODE)]
+
+def jump_menu(items, depth, site=None):
+    """Floating jump menu. items = (href, label, color, 'sub'|'' , icon svg or '')."""
+    p = "../" * depth
+    def link(h, t, col, c, ic):
+        return f'<a class="{c}" href="{h}" style="--c:{col}">' + (f'<span class="j-ico">{ic}</span>' if ic else '<i></i>') + f'{t}</a>'
+    body = '<p class="jump-h">Jump to</p>' + "".join(link(*it) for it in items)
+    if site:
+        body += '<p class="jump-h pages">Main page</p>' + "".join(link(*it) for it in site)
+    body += (f'<p class="jump-h pages">Pages</p><div class="jump-pages"><a href="{p}gallery.html">Gallery</a><a href="{p}lab.html">Lab</a>'
+             f'<a href="{p}Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a></div>')
+    return f'''<div class="jump" id="jump">
+  <nav class="jump-panel" id="jumpPanel" aria-label="Page sections" hidden>{body}</nav>
+  <button class="jump-btn" type="button" aria-expanded="false" aria-controls="jumpPanel" aria-label="Jump to a section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="d1" cx="5" cy="6" r="2"/><circle class="d2" cx="5" cy="12" r="2"/><circle class="d3" cx="5" cy="18" r="2"/><path d="M10 6h10M10 12h10M10 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="x" d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+</div>
+'''
+
 def build_index():
     global DEPTH
     DEPTH = 0
@@ -572,22 +614,7 @@ def build_index():
     # screenshot and video poster in the gallery; site.js reshuffles it on each visit
     mosaic = mosaic_html(mosaic_pool())
     PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
-    I = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
-    ICON_HOME = I + '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>'
-    ICON_IMG = I + '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>'
-    ICON_MAIL = I + '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'
-    jump_items = ([("top", "Home", "#3d84e6", "", ICON_HOME), ("now", "Experience · 3DVision", "#38b6ff", "", ICON_BRIEF),
-                   ("projects", "Projects", "#ffd23f", "", ICON_PAD)]
-                  + [(f"p-{pj['slug']}", e(pj['title']), pj['theme'][2], "sub", "") for pj in PROJECTS]
-                  + [("more-code", "More code", "#9be15d", "", ICON_CODE)]
-                  + [(f"c-{cp['slug']}", e(cp['title']), cp['theme'][2], "sub", "") for cp in CODE_PAGES]
-                  + [("gallery-lab", "Gallery &amp; lab", "#ff8fc0", "", ICON_IMG), ("about", "Get to know me", "#ff9f5a", "", I + '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'), ("contact", "Contact", "#6fd3c2", "", ICON_MAIL)])
-    links = "".join(f'<a class="{c}" href="#{i}" style="--c:{col}">' + (f'<span class="j-ico">{ic}</span>' if ic else '<i></i>') + f'{t}</a>' for i, t, col, c, ic in jump_items)
-    html += f'''<div class="jump" id="jump">
-  <nav class="jump-panel" id="jumpPanel" aria-label="Page sections" hidden><p class="jump-h">Jump to</p>{links}<p class="jump-h pages">Pages</p><div class="jump-pages"><a href="gallery.html">Gallery</a><a href="lab.html">Lab</a><a href="Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a></div></nav>
-  <button class="jump-btn" type="button" aria-expanded="false" aria-controls="jumpPanel" aria-label="Jump to a section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="d1" cx="5" cy="6" r="2"/><circle class="d2" cx="5" cy="12" r="2"/><circle class="d3" cx="5" cy="18" r="2"/><path d="M10 6h10M10 12h10M10 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="x" d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
-</div>
-'''
+    html += jump_menu(INDEX_JUMP(), 0)
     html += f"""<section class="hero" id="top">
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
@@ -661,7 +688,7 @@ NEXT_CARD = {"tile-map-engine": "next-tile-map-engine", "infiltration": "next-in
 
 def tbc_band(back_href, back_label):
     """End of the chain: no looping back to the first project."""
-    return (f'<div class="tbc-band"><div class="wrap tbc-inner"><div class="tbc-card">'
+    return (f'<div class="tbc-band" id="next"><div class="wrap tbc-inner"><div class="tbc-card">'
             f'<span class="kicker">Next project</span><span class="tbc-title">To be continued<span class="tbc-dots"><i></i><i></i><i></i></span></span>'
             f'<span class="muted">Saved for future projects.</span></div>'
             f'<a class="btn ghost" href="{back_href}">← {e(back_label)}</a></div></div>')
@@ -673,7 +700,7 @@ def next_band(nxt):
         art = f'<img class="next-art cutout" src="../assets/art/{nxt["mascot"]}.webp" alt="" loading="lazy">'
     else:
         art = f'<img class="next-art card" src="../assets/art/{NEXT_CARD[nxt["slug"]]}.webp" alt="" loading="lazy">'
-    return (f'<a class="next-band" href="{nxt["slug"]}.html" style="--deep:{d};--mid:{m};--accent:{a}">'
+    return (f'<a class="next-band" id="next" href="{nxt["slug"]}.html" style="--deep:{d};--mid:{m};--accent:{a}">'
             f'<div class="wrap next-inner"><div class="next-copy"><span class="kicker">Next project</span>'
             f'<span class="next-title">{e(nxt["title"])} <span class="arr">→</span></span><span class="next-hook">{e(nxt["hook"])}</span></div>{art}</div></a>')
 
@@ -713,7 +740,7 @@ def code_section(pj):
         return ""
     name, url, path = SNIPPETS[pj["slug"]]
     code = (ROOT / path).read_text().rstrip()
-    return (f'<section class="mech-sec code-sec"><h2>Code sample</h2>'
+    return (f'<section class="mech-sec code-sec" id="code"><h2>Code sample</h2>'
             f'<figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>{e(name)}</span>'
             f'</figcaption><pre><code>{highlight_cs(code)}</code></pre></figure>'
             f'<p class="muted small center">Trimmed and commented for this page.</p></section>')
@@ -783,16 +810,21 @@ def build_code_page(i, cp):
     media = ""
     if cp.get("clip"):
         lbl, cap, f, d = cp["clip"]
-        media = f'<section class="mech-sec"><h2>In action</h2><div class="mech-grid n1"><figure class="mech">{clip_tile(lbl, f, d, depth, big=True, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure></div></section>'
+        media = f'<section class="mech-sec" id="action"><h2>In action</h2><div class="mech-grid n1"><figure class="mech">{clip_tile(lbl, f, d, depth, big=True, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure></div></section>'
     codes = "".join(code_figure(n, pth) for n, pth in cp["code"])
     html = head(f"{cp['title']} — Roee Tal", cp["hook"], depth, cp["theme"])
     html += topbar(depth, "projects")
-    html += f"""<section class="phero short code-hero">
+    acc = cp["theme"][2]
+    html += jump_menu([("#top", e(cp["title"]), acc, "", ICON_CODE), ("#built", "What I built", acc, "sub", ""),
+                       ("#flow", "How it fits together", acc, "sub", "")]
+                      + ([("#action", "In action", acc, "sub", "")] if cp.get("clip") else [])
+                      + [("#the-code", "The code", acc, "sub", ""), ("#next", "Next", acc, "sub", "")], depth, site_jump(depth))
+    html += f"""<section class="phero short code-hero" id="top">
   <div class="wrap phero-copy"><p class="kicker">More code · {e(cp['lang'])}</p><h1>{e(cp['title'])}</h1><p class="lead">{e(cp['sub'])}</p></div>
   {WAVE}
 </section>
 <div class="project">
-  <section class="wrap intro">
+  <section class="wrap intro" id="built">
     <div class="intro-text">
       <p class="hook">{e(cp['hook'])}</p>
       <h3 class="kicker">What I built</h3>
@@ -808,11 +840,11 @@ def build_code_page(i, cp):
     </dl>
   </section>
   <div class="wrap">
-    <section class="mech-sec"><h2>How it fits together</h2>{flow}</section>
+    <section class="mech-sec" id="flow"><h2>How it fits together</h2>{flow}</section>
     {media}
-    <section class="mech-sec code-sec"><h2>The code</h2>{codes}<p class="muted small center">Trimmed and commented for this page.</p></section>
+    <section class="mech-sec code-sec" id="the-code"><h2>The code</h2>{codes}<p class="muted small center">Trimmed and commented for this page.</p></section>
   </div>
-  <div class="wrap code-next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a>{f'<a class="btn" href="{nxt["slug"]}.html">Next: {e(nxt["title"])} →</a>' if nxt else '<span class="tbc-chip">Next: to be continued… <em>saved for future projects</em></span>'}</div>
+  <div class="wrap code-next" id="next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a>{f'<a class="btn" href="{nxt["slug"]}.html">Next: {e(nxt["title"])} →</a>' if nxt else '<span class="tbc-chip">Next: to be continued… <em>saved for future projects</em></span>'}</div>
 </div>
 """
     html += footer(depth, peek=False)
@@ -830,25 +862,35 @@ def build_project(i, pj):
         tiles = "".join(
             f'<figure class="mech">{clip_tile(lbl, f, d, depth, big=(len(clips) == 1), cap=cap, more=sec_more, credit=credit_attr(pj['slug']))}<figcaption><b>{e(lbl)}</b>{(" " + e(cap)) if cap else ""}</figcaption></figure>'
             for lbl, cap, f, d in clips)
-        sections.append(f"""<section class="mech-sec">
+        sections.append(f"""<section class="mech-sec" id="s{len(sections)+1}">
   <h2>{e(title)}</h2>{f'<p class="muted center">{e(intro)}</p>' if intro else ''}
   <div class="mech-grid n{min(len(clips), 3)}">{tiles}</div>
 </section>""")
         first = False
     shots = ""
     if pj["shots"]:
-        shots = '<section class="mech-sec"><h2>Screenshots</h2><div class="shots">' + "".join(
+        shots = '<section class="mech-sec" id="shots"><h2>Screenshots</h2><div class="shots">' + "".join(
             f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-title="Screenshot" data-cap="{e(SHOT_CAPS.get(s, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s in pj["shots"]) + "</div></section>"
     full = ""
     if pj["full"]:
-        full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}{credit_attr(pj['slug'])}>▶ Play full video</button></section>'
+        full = f'<section class="mech-sec center" id="full"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}{credit_attr(pj['slug'])}>▶ Play full video</button></section>'
     cast = ""
     if pj.get("cast"):
-        cast = '<section class="mech-sec"><h2>Characters</h2><div class="cast">' + "".join(
+        cast = '<section class="mech-sec" id="characters"><h2>Characters</h2><div class="cast">' + "".join(
             f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
     html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"])
     html += topbar(depth, "projects")
-    html += f"""<section class="phero">
+    acc = pj["theme"][2]
+    items = [("#top", e(pj["title"]), acc, "", ICON_PAD), ("#built", "What I built", acc, "sub", "")]
+    if pj["slug"] in SNIPPETS: items.append(("#code", "Code sample", acc, "sub", ""))
+    items += [(f"#s{k+1}", e(t), acc, "sub", "") for k, (t, _i, _c) in enumerate(pj["sections"])]
+    if pj["shots"]: items.append(("#shots", "Screenshots", acc, "sub", ""))
+    if pj["full"]: items.append(("#full", "Full video", acc, "sub", ""))
+    items.append(("#about-project", "About the project", acc, "sub", ""))
+    if pj.get("cast"): items.append(("#characters", "Characters", acc, "sub", ""))
+    items.append(("#next", "Next project", acc, "sub", ""))
+    html += jump_menu(items, depth, site_jump(depth))
+    html += f"""<section class="phero" id="top">
   <img class="phero-bg" onerror="this.remove()" src="{thumb(pj['cover'], 1800)}" alt="">
   {f'<img class="mascot" src="../assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}
   <div class="wrap phero-copy">
@@ -860,7 +902,7 @@ def build_project(i, pj):
 </section>
 
 <div class="project">
-  <section class="wrap intro">
+  <section class="wrap intro" id="built">
     <div class="intro-text">
       <p class="hook">{e(pj['hook'])}</p>
       <h3 class="kicker">What I built</h3>
@@ -877,7 +919,7 @@ def build_project(i, pj):
     </dl>
   </section>
   <div class="wrap">{code_section(pj)}{''.join(sections)}{shots}{full}</div>
-  <section class="wrap about-game">
+  <section class="wrap about-game" id="about-project">
     <h2>About the project</h2>
     {''.join(f'<p>{e(a)}</p>' for a in pj['about'])}
   </section>
@@ -898,11 +940,13 @@ def build_lab():
     early = "".join(f'<figure class="mech">{clip_tile(lbl, f, d, 0, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure>' for lbl, f, d, cap in EARLY)
     html = head("The Lab — Roee Tal", "Shaders, systems and course experiments by Roee Tal.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
     html += topbar(0, "lab")
-    html += f"""<section class="phero short">
+    html += jump_menu([("#top", "The lab", "#ffd23f", "", J_FLASK), ("#experiments", "Experiments", "#ffd23f", "sub", ""),
+                       ("#early", "Early work", "#ffd23f", "sub", "")], 0, site_jump(0))
+    html += f"""<section class="phero short" id="top">
   <div class="wrap phero-copy"><p class="kicker">Experiments</p><h1>The lab</h1><p class="lead">Small things I built to learn how they work: shaders, engines, UI and mini-games.</p></div>
   {WAVE}
 </section>
-<div class="project"><div class="wrap"><section class="mech-sec"><div class="mech-grid n3">{tiles}</div></section>
+<div class="project"><div class="wrap"><section class="mech-sec" id="experiments"><div class="mech-grid n3">{tiles}</div></section>
 <section class="mech-sec appendix" id="early"><p class="kicker">Appendix</p><h2>Early work</h2><p class="muted center">Where I started: small first projects and exercises, kept here for the record.</p><div class="mech-grid n3">{early}</div></section></div></div>
 """
     html += footer(0)
@@ -960,7 +1004,8 @@ def build_gallery():
     html = head("Gallery — Roee Tal", "Every clip, screenshot and character from Roee Tal's projects in one place.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
     html += topbar(0, "gallery")
     gal_mosaic = mosaic_html(mosaic_pool("".join(items)))
-    html += f"""<section class="phero short gal-hero">
+    html += jump_menu([("#top", "Gallery", "#ff8fc0", "", J_IMG), ("#ggrid", "Browse everything", "#ff8fc0", "sub", "")], 0, site_jump(0))
+    html += f"""<section class="phero short gal-hero" id="top">
   {gal_mosaic}
   <div class="wrap phero-copy"><p class="kicker">Everything in one place</p><h1>Gallery</h1><p class="lead">{len(items)} clips, screenshots and characters. Tap any of them to view it full screen.</p></div>
   {WAVE}
