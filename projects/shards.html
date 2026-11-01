@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=0aad19b6">
+<link rel="stylesheet" href="../assets/site.css?v=fe425c8f">
 <style>:root{--deep:#0b3b3a;--mid:#17736b;--accent:#ffd36e}</style>
 </head>
 <body>
@@ -33,9 +33,11 @@
     <div class="intro-text">
       <p class="hook">A man goes back to his hometown to face what happened there.</p>
       <h3 class="kicker">What I built</h3>
-      <ul class="ticks"><li>A data-driven dialogue system built on ScriptableObjects: a notebook made of pages, each tied to a character&#x27;s info</li><li>Typewriter text that fires events on every letter, every word and every finished sentence</li><li>Those events drive retro talking sounds and a two-sprite mouth animation (open / closed) for the speaker</li><li>Notebook options link to other entries to unlock different kinds of dialogue</li><li>The UI interactions that move the story forward</li></ul>
+      <ul class="ticks"><li>The whole dialogue system: a Sheet (the notebook) is a ScriptableObject holding Pages, each tied to a character&#x27;s NPC_ID</li><li>Page types through inheritance: a dialogue page shows answers that branch to other pages, a level page moves the player on; each overrides PageAction</li><li>Typewriter text that raises events on every letter, every word and when the text is finished</li><li>Those events drive retro talking sounds and a two-sprite mouth animation (open / closed) for the speaker</li><li>The speech-bubble UI that runs the conversation, plus the map builder, GameManager and LevelManager</li></ul>
+      
       <h3 class="kicker">Tech &amp; principles</h3>
-      <div class="techs"><span>C#</span><span>Unity</span><span>ScriptableObjects</span><span>Data-driven design</span><span>C# events: letter / word / sentence</span><span>Branching dialogue</span><span>Coroutines</span><span>UI</span></div>
+      <div class="techs"><span>C#</span><span>Unity</span><span>ScriptableObjects</span><span>Data-driven design</span><span>Inheritance &amp; polymorphism</span><span>UnityEvents</span><span>Coroutines</span><span>TextMeshPro</span><span>Branching dialogue</span></div>
+      <a class="btn code-btn" href="https://github.com/Deadchu-R/Shard_To_Swallow" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8.7 16.6 4.1 12l4.6-4.6L7.3 6 1.3 12l6 6zm6.6 0 4.6-4.6-4.6-4.6L16.7 6l6 6-6 6z"/></svg>View the code on GitHub</a>
     </div>
     <dl class="facts">
       <div><dt>Role</dt><dd>Programmer · some design</dd></div>
@@ -44,7 +46,48 @@
       <div><dt>Context</dt><dd>Hackathon team</dd></div>
     </dl>
   </section>
-  <div class="wrap"><section class="mech-sec">
+  <div class="wrap"><section class="mech-sec code-sec"><h2>Code sample</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>SimpleTypeWriterEffect.cs · DialoguePage.cs</span><a href="https://github.com/Deadchu-R/Shard_To_Swallow/tree/main/ShardsGame/Assets/Scripts/Systems/DialogueSystem/TextScripts" target="_blank" rel="noopener">Full file on GitHub →</a></figcaption><pre><code><span class="c">// Types the page out letter by letter and raises events other systems hook into:</span>
+<span class="c">// talking sounds and the speaker&#x27;s mouth animation listen to onLetterTyped / onWordTyped.</span>
+<span class="k">private</span> <span class="t">IEnumerator</span> <span class="t">TypeText</span>()
+{
+    <span class="k">if</span> (_isCoroutineRunning)
+    {
+        <span class="t">Debug</span>.<span class="t">LogWarning</span>(<span class="s">&quot;Coroutine is already running.&quot;</span>);
+        <span class="k">yield</span> <span class="k">break</span>;
+    }
+
+    _isCoroutineRunning = <span class="k">true</span>;
+    _textBuilder.<span class="t">Length</span> = <span class="n">0</span>;                  <span class="c">// reuse one StringBuilder, no per-letter strings</span>
+    <span class="k">int</span> characterCount = _fullText.<span class="t">Length</span>;
+
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i &lt; characterCount; i++)
+    {
+        onLetterTyped?.<span class="t">Invoke</span>();
+        <span class="k">if</span> (_fullText[i] == &#x27; &#x27;)
+            onWordTyped?.<span class="t">Invoke</span>();
+
+        _textBuilder.<span class="t">Append</span>(_fullText[i]);
+        textMeshProUGUI.text = _textBuilder.<span class="t">ToString</span>();
+        <span class="k">if</span> (<span class="t">IsFinishedText</span>()) <span class="k">yield</span> <span class="k">break</span>;      <span class="c">// raises onFinishedText</span>
+
+        <span class="k">for</span> (<span class="k">int</span> j = <span class="n">0</span>; j &lt; (<span class="k">int</span>)(typingSpeed * <span class="n">60</span>); j++)
+            <span class="k">yield</span> <span class="k">return</span> _waitForEndOfFrame;      <span class="c">// cached, no allocation per frame</span>
+    }
+}
+
+<span class="c">// Each page type decides what happens when it is shown.</span>
+<span class="a">[CreateAssetMenu</span>(fileName = <span class="s">&quot;New Page&quot;</span>, menuName = <span class="s">&quot;Page/DialoguePage&quot;</span>)]
+<span class="k">public</span> <span class="k">class</span> <span class="t">DialoguePage</span> : <span class="t">Page</span>
+{
+    <span class="k">public</span> <span class="k">string</span>[] <span class="t">Options</span>;
+    <span class="k">public</span> <span class="t">Page</span>[] <span class="t">Pages</span>;                          <span class="c">// where each answer leads</span>
+
+    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="t">PageAction</span>(<span class="t">SpeechBubbleUI</span> speechBubbleUI)
+    {
+        speechBubbleUI.<span class="t">SetDialogueOptions</span>(<span class="k">this</span>);
+        speechBubbleUI.<span class="t">SetButtonInteractable</span>(speechBubbleUI.<span class="t">NextButton</span>, <span class="k">false</span>);
+    }
+}</code></pre></figure><p class="muted small center">Trimmed and commented for this page. The full code is on GitHub.</p></section><section class="mech-sec">
   <h2>The dialogue system</h2><p class="muted center">Conversations are data, not code.</p>
   <div class="mech-grid n2"><figure class="mech"><button class="clip" type="button" data-src="../assets/clips/shards-dialogue.mp4" data-drive="1V9Hw7lS-zYJeBm6_fuOe69KBtvrrVjJk" data-title="Dialogue in action" data-cap="ScriptableObject-driven conversations with a typewriter effect." data-more="A man goes back to his hometown to face what happened there. The dialogue system: Conversations are data, not code. Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma." data-credit="Art by the team&#x27;s artists, not by me." aria-label="Play video: Dialogue in action"><video muted loop playsinline preload="none" poster="../assets/posters/shards-dialogue.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Dialogue in action</b> ScriptableObject-driven conversations with a typewriter effect.</figcaption></figure><figure class="mech"><button class="clip" type="button" data-src="../assets/clips/shards-gameplay.mp4" data-drive="1tmPJS60ybrLUhAnFwKSwCj7VyI8NLrSG" data-title="Gameplay" data-cap="Exploring the hometown." data-more="A man goes back to his hometown to face what happened there. The dialogue system: Conversations are data, not code. Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma." data-credit="Art by the team&#x27;s artists, not by me." aria-label="Play video: Gameplay"><video muted loop playsinline preload="none" poster="../assets/posters/shards-gameplay.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Gameplay</b> Exploring the hometown.</figcaption></figure></div>
 </section><section class="mech-sec"><h2>Screenshots</h2><div class="shots"><button class="zoom" type="button" data-full="../assets/img/1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs.jpg" data-group="shots" data-title="Screenshot" data-cap="The hometown, in isometric view." data-more="A man goes back to his hometown to face what happened there. Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma." aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility='hidden'" src="../assets/img/1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs-s.jpg" alt="Shards screenshot"><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><button class="zoom" type="button" data-full="../assets/img/16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd.jpg" data-group="shots" data-title="Screenshot" data-cap="Top-down layout of the hometown map." data-more="A man goes back to his hometown to face what happened there. Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma." aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility='hidden'" src="../assets/img/16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd-s.jpg" alt="Shards screenshot"><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><button class="zoom" type="button" data-full="../assets/img/1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV.jpg" data-group="shots" data-title="Screenshot" data-cap="NPC data component: each NPC links its dialogue sheet, UI handler and speech bubble." data-more="A man goes back to his hometown to face what happened there. Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma." aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility='hidden'" src="../assets/img/1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV-s.jpg" alt="Shards screenshot"><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><button class="zoom" type="button" data-full="../assets/img/1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9.jpg" data-group="shots" data-title="Screenshot" data-cap="The typewriter method that types dialogue letter by letter." data-more="A man goes back to his hometown to face what happened there. Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma." aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility='hidden'" src="../assets/img/1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9-s.jpg" alt="Shards screenshot"><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><button class="zoom" type="button" data-full="../assets/img/1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS.jpg" data-group="shots" data-title="Screenshot" data-cap="A dialogue sheet: pages of conversation stored as data." data-more="A man goes back to his hometown to face what happened there. Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma." aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility='hidden'" src="../assets/img/1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS-s.jpg" alt="Shards screenshot"><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><button class="zoom" type="button" data-full="../assets/img/1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky.jpg" data-group="shots" data-title="Screenshot" data-cap="An NPC ID asset holding the guard&#x27;s name and icons." data-more="A man goes back to his hometown to face what happened there. Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma." aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility='hidden'" src="../assets/img/1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky-s.jpg" alt="Shards screenshot"><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button></div></section></div>

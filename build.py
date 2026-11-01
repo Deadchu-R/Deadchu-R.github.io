@@ -49,11 +49,12 @@ PROJECTS = [
          hook="A man goes back to his hometown to face what happened there.",
          about=["Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma.",
                 "The team aimed for a colorful yet unsettling atmosphere, reflecting distorted memories and haunting experiences."],
-         did=["A data-driven dialogue system built on ScriptableObjects: a notebook made of pages, each tied to a character's info",
-              "Typewriter text that fires events on every letter, every word and every finished sentence",
+         did=["The whole dialogue system: a Sheet (the notebook) is a ScriptableObject holding Pages, each tied to a character's NPC_ID",
+              "Page types through inheritance: a dialogue page shows answers that branch to other pages, a level page moves the player on; each overrides PageAction",
+              "Typewriter text that raises events on every letter, every word and when the text is finished",
               "Those events drive retro talking sounds and a two-sprite mouth animation (open / closed) for the speaker",
-              "Notebook options link to other entries to unlock different kinds of dialogue",
-              "The UI interactions that move the story forward"],
+              "The speech-bubble UI that runs the conversation, plus the map builder, GameManager and LevelManager"],
+         repo="https://github.com/Deadchu-R/Shard_To_Swallow",
          sections=[
              ("The dialogue system", "Conversations are data, not code.", [
                  ("Dialogue in action", "ScriptableObject-driven conversations with a typewriter effect.", "shards-dialogue.mp4", "1V9Hw7lS-zYJeBm6_fuOe69KBtvrrVjJk"),
@@ -123,17 +124,20 @@ PROJECTS = [
          full="1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC",
          shots=["1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41", "17zGlB0VBU26ZydIbjMk7YcrRy41PSAut", "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC", "1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh"]),
     dict(slug="tile-map-engine", title="Tile-Map Engine", sub="A C# game engine built from scratch",
-         engine="C# · .NET console", role="Programmer · team of 3", when="2023 · 2nd year, Tiltan", context="Final project · Programming 2 course",
+         engine="C# · .NET 6 console", role="Programmer · team of 3", when="12/2022 – 02/2023 · 2nd year, Tiltan", context="Final project · Programming 2 course",
          theme=("#2b1608", "#8a4b12", "#ffc36b"), cover="tilemap-cover",
          hook="A small game engine in plain C#, and a two-player chess game running on it.",
          about=["A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works. Built by a team of three programmers."],
-         did=["A Unity-style object model from scratch: GameObjects, Components and a Transform on every tile object",
-              "An abstract TileObject (IComparer, ICloneable) with an OnStep event, cloned through MemberwiseClone",
-              "Movement rules behind an IMovementRule interface",
-              "A custom MyVector2 struct with operator overloading and MoveTowards / Normalize helpers",
-              "An OnWin event that lets a game plug its own win condition into the engine",
-              "Singleton managers for the engine, the tile map and console rendering, plus a two-player turn system",
-              "Chess built on the engine as the test game, with XML docs across the public API"],
+         did=["MyVector2, the engine's vector struct: operator overloading, Magnitude, Normalize, Dot, Distance, MoveTowards and Lerp",
+              "The engine's console renderer (RenderingManager): draws the grid in color, turns it into a chess board and queues messages through an event",
+              "TileObject groundwork: IComparer for sorting, the step event and XML documentation",
+              "Placing objects on the tile map and drawing the grid (TileMap.AddGameObjectOnGrid, DrawGrid)"],
+         did_team=["A Unity-style object model: GameObjects, Components and a Transform on every tile object",
+                   "A shared movement-rule service (IMovementRule) that each piece queries for legal moves",
+                   "Commands with a two-player turn system and an OnWin event for game-specific win logic",
+                   "A generic Singleton base class for the managers",
+                   "Chess built on the engine as the test game"],
+         repo="https://github.com/danieldaniel128/FinalProjectCSharp2",
          sections=[
              ("The engine", "", [
                  ("Engine code", "A walk through the engine's C# code.", "lab-tilemap.mp4", "1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL"),
@@ -152,7 +156,7 @@ TEAM_BUILT = {"tile-map-engine"}
 TECH = {
     "tile-map-engine": ["C#", ".NET", "OOP", "Interfaces & abstract classes", "Events & delegates", "Operator overloading", "Extension methods", "Singleton pattern", "Component model", "XML docs"],
     "infiltration": ["C++", "Blueprints", "Unreal Engine 5", "Raycasts", "Event-driven feedback", "Enemy AI: patrol & sight", "Detection meter", "Health & damage", "Level building"],
-    "shards": ["C#", "Unity", "ScriptableObjects", "Data-driven design", "C# events: letter / word / sentence", "Branching dialogue", "Coroutines", "UI"],
+    "shards": ["C#", "Unity", "ScriptableObjects", "Data-driven design", "Inheritance & polymorphism", "UnityEvents", "Coroutines", "TextMeshPro", "Branching dialogue"],
     "boss-rush": ["Team leadership", "Code oversight", "C#", "Unity", "Grid-based combat"],
     "almond-bar": ["Blueprints", "Unreal Engine", "Branching dialogue", "Quest system", "Level building"],
     "musical-level": ["C#", "Unity", "Gameplay scripting"],
@@ -581,6 +585,50 @@ def next_band(nxt):
             f'<div class="wrap next-inner"><div class="next-copy"><span class="kicker">Next project</span>'
             f'<span class="next-title">{e(nxt["title"])} <span class="arr">→</span></span><span class="next-hook">{e(nxt["hook"])}</span></div>{art}</div></a>')
 
+
+SNIPPETS = {  # slug -> (file shown, link to the full file, local snippet)
+    "shards": ("SimpleTypeWriterEffect.cs · DialoguePage.cs",
+               "https://github.com/Deadchu-R/Shard_To_Swallow/tree/main/ShardsGame/Assets/Scripts/Systems/DialogueSystem/TextScripts",
+               "snippets/shards.cs"),
+    "tile-map-engine": ("RenderingManager.cs",
+                        "https://github.com/danieldaniel128/FinalProjectCSharp2/blob/main/GameEngine/RenderingBeforeFinal/RenderingManager.cs",
+                        "snippets/tile-map-engine.cs"),
+}
+CS_KW = set("""abstract as base bool break case catch class const continue default do double else enum event false float for foreach
+if in int interface internal is new null object out override private protected public readonly ref return sealed static string
+struct switch this throw true try typeof using var virtual void while yield""".split())
+
+def highlight_cs(code):
+    import re, html
+    tok = re.compile(r'(//[^\n]*)|("(?:[^"\\]|\\.)*")|(\[[A-Z][A-Za-z]*(?=\())|\b([A-Za-z_][A-Za-z0-9_]*)\b|(\d+(?:\.\d+)?f?)')
+    out, last = [], 0
+    for m in tok.finditer(code):
+        out.append(html.escape(code[last:m.start()]))
+        t = html.escape(m.group(0))
+        if m.group(1): out.append(f'<span class="c">{t}</span>')
+        elif m.group(2): out.append(f'<span class="s">{t}</span>')
+        elif m.group(3): out.append(f'<span class="a">{t}</span>')
+        elif m.group(4):
+            w = m.group(4)
+            if w in CS_KW: out.append(f'<span class="k">{t}</span>')
+            elif w[0].isupper(): out.append(f'<span class="t">{t}</span>')
+            else: out.append(t)
+        else: out.append(f'<span class="n">{t}</span>')
+        last = m.end()
+    out.append(html.escape(code[last:]))
+    return "".join(out)
+
+def code_section(pj):
+    if pj["slug"] not in SNIPPETS:
+        return ""
+    name, url, path = SNIPPETS[pj["slug"]]
+    code = (ROOT / path).read_text().rstrip()
+    return (f'<section class="mech-sec code-sec"><h2>Code sample</h2>'
+            f'<figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>{e(name)}</span>'
+            f'<a href="{url}" target="_blank" rel="noopener">Full file on GitHub →</a></figcaption>'
+            f'<pre><code>{highlight_cs(code)}</code></pre></figure>'
+            f'<p class="muted small center">Trimmed and commented for this page. The full code is on GitHub.</p></section>')
+
 def build_project(i, pj):
     global DEPTH
     depth = DEPTH = 1
@@ -625,10 +673,12 @@ def build_project(i, pj):
   <section class="wrap intro">
     <div class="intro-text">
       <p class="hook">{e(pj['hook'])}</p>
-      <h3 class="kicker">{"What we built" if pj["slug"] in TEAM_BUILT else "What I built"}</h3>
+      <h3 class="kicker">What I built</h3>
       <ul class="ticks">{''.join(f'<li>{e(d)}</li>' for d in pj['did'])}</ul>
+      {f'<h3 class="kicker">The rest of the engine (my teammates)</h3><ul class="ticks team">' + ''.join(f'<li>{e(d)}</li>' for d in pj['did_team']) + '</ul>' if pj.get('did_team') else ''}
       <h3 class="kicker">Tech &amp; principles</h3>
       <div class="techs">{''.join(f'<span>{e(t)}</span>' for t in TECH[pj['slug']])}</div>
+      {f'<a class="btn code-btn" href="{pj["repo"]}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8.7 16.6 4.1 12l4.6-4.6L7.3 6 1.3 12l6 6zm6.6 0 4.6-4.6-4.6-4.6L16.7 6l6 6-6 6z"/></svg>View the code on GitHub</a>' if pj.get('repo') else ''}
     </div>
     <dl class="facts">
       <div><dt>Role</dt><dd>{e(pj['role'])}</dd></div>
@@ -637,7 +687,7 @@ def build_project(i, pj):
       <div><dt>Context</dt><dd>{e(pj['context'])}</dd></div>
     </dl>
   </section>
-  <div class="wrap">{''.join(sections)}{shots}{full}</div>
+  <div class="wrap">{code_section(pj)}{''.join(sections)}{shots}{full}</div>
   <section class="wrap about-game">
     <h2>About the project</h2>
     {''.join(f'<p>{e(a)}</p>' for a in pj['about'])}
