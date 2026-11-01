@@ -497,3 +497,21 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .vmax .i-min{display:none}
 .viewer.is-max .vmax .i-max{display:none}
 .viewer.is-max .vmax .i-min{display:block}
+
+/* desktop projects: one wide card per row (image and text side by side, alternating),
+   so the band can follow the card in view exactly like on phones */
+@media (min-width:901px){
+  .ptiles{grid-template-columns:1fr;gap:34px}
+  .ptile,.ptile:nth-child(1),.ptile:nth-child(2){grid-column:auto;flex-direction:row;min-height:330px}
+  .ptile:nth-child(even){flex-direction:row-reverse}
+  .ptile-img{position:relative;flex:0 0 54%;aspect-ratio:auto;min-height:330px}
+  .ptile-img::after{left:auto;top:0;bottom:0;right:0;width:30%;height:auto;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--mid) 60%,transparent) 55%,var(--mid))}
+  .ptile:nth-child(even) .ptile-img::after{right:auto;left:0;background:linear-gradient(270deg,transparent,color-mix(in srgb,var(--mid) 60%,transparent) 55%,var(--mid))}
+  .ptile .peek{z-index:2;right:30%}
+  .ptile:nth-child(even) .peek{right:6%}
+  .ptile-body{justify-content:center;padding:40px 48px;gap:12px}
+  .ptile-title{font-size:44px}
+  .ptile-hook{font-size:18px;max-width:34ch}
+  .ptile .more{margin-top:10px;flex:0}
+  .ptile{background:radial-gradient(90% 120% at 100% 100%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 60%),linear-gradient(135deg,var(--mid),var(--deep))}
+}
