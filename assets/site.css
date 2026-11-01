@@ -280,3 +280,14 @@ h1,h2,h3{text-wrap:balance}
 .mark{white-space:nowrap}
 @media (max-width:480px){.topbar nav{gap:12px}.topbar nav a{font-size:13px}.mark{font-size:18px}}
 @media (max-width:360px){.topbar nav a[href$="lab.html"]{display:none}}
+
+/* project cards: screenshot fades into each game's own palette */
+.ptile{background:radial-gradient(120% 70% at 0% 100%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 60%),linear-gradient(180deg,var(--mid) 0%,var(--mid) 50%,var(--deep) 100%);
+  box-shadow:0 18px 40px -22px rgba(0,0,0,.6),inset 0 0 0 1px color-mix(in srgb,var(--accent) 18%,transparent)}
+.ptile:hover{box-shadow:0 24px 50px -20px color-mix(in srgb,var(--accent) 45%,transparent),inset 0 0 0 1px color-mix(in srgb,var(--accent) 55%,transparent)}
+.ptile-img::after{content:"";position:absolute;z-index:1;left:0;right:0;bottom:0;height:38%;pointer-events:none;
+  background:linear-gradient(180deg,transparent 0%,color-mix(in srgb,var(--mid) 55%,transparent) 55%,var(--mid) 100%)}
+.ptile .peek{z-index:0}
+.ptile .kicker{color:var(--accent)}
+.ptile .more{color:var(--accent)}
+.ptile-body{margin-top:-28px;position:relative;z-index:1}
