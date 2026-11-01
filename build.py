@@ -7,6 +7,7 @@ Until a clip file exists, pages fall back to the Google Drive copy (by id).
 """
 from html import escape as e
 from pathlib import Path
+import hashlib
 
 ROOT = Path(__file__).parent
 
@@ -169,6 +170,11 @@ def has_clip(f):
 WAVE = '<svg class="wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 C 240 90 480 0 720 34 S 1200 80 1440 30 V80 H0Z"/></svg>'
 
 
+def ver(path):
+    """Short content hash so browsers fetch new CSS/JS right after an update."""
+    return hashlib.md5((ROOT / path).read_bytes()).hexdigest()[:8]
+
+
 def head(title, desc, depth, theme=None):
     p = "../" * depth
     style = ""
@@ -185,7 +191,7 @@ def head(title, desc, depth, theme=None):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&display=swap">
-<link rel="stylesheet" href="{p}assets/site.css">
+<link rel="stylesheet" href="{p}assets/site.css?v={ver('assets/site.css')}">
 {style}
 </head>
 <body>
@@ -231,7 +237,7 @@ def footer(depth):
   <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
 </div>
-<script src="{p}assets/site.js" defer></script>
+<script src="{p}assets/site.js?v={ver('assets/site.js')}" defer></script>
 </body>
 </html>
 """
