@@ -695,3 +695,9 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .jump.sliding .jump-panel{user-select:none}
 .jump-panel a.hl{background:color-mix(in srgb,var(--c) 30%,rgba(255,255,255,.08));transform:scale(1.03);transition:transform .08s}
 .jump-panel a.hl .j-ico,.jump-panel a.hl i{box-shadow:0 0 12px var(--c)}
+
+.jump-pages a{--c:#9fb4ff}
+.jump-panel .jump-pages a.hl{background:color-mix(in srgb,var(--c) 30%,rgba(255,255,255,.08));border-color:var(--c);transform:scale(1.05)}
+/* let the whole menu fit on a phone screen so nothing shifts while sliding */
+.jump-panel{max-height:calc(100svh - 110px)}
+@media (max-width:600px){.jump-panel a{padding:7px 10px}.jump-panel a.sub{padding:5px 10px 5px 42px}.jump-h{margin-bottom:4px}}

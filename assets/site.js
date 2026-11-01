@@ -272,7 +272,14 @@
       const target=d.moved?itemAt(ev.clientX,ev.clientY):null;
       items.forEach(i=>i.classList.remove("hl"));
       ignoreClick=true;setTimeout(()=>ignoreClick=false,350);
-      if(target){setOpen(false);target.click();return}
+      if(target){
+        setOpen(false);
+        const href=target.getAttribute("href");
+        if(href.startsWith("#"))target.click();                    // section on this page
+        else if(target.target==="_blank")window.open(target.href,"_blank","noopener");
+        else location.href=target.href;                            // Gallery, Lab
+        return;
+      }
       if(d.moved){setOpen(false);return}                            // slid off the list: just close
       if(d.wasOpen)setOpen(false);                                  // plain tap toggles
     };
