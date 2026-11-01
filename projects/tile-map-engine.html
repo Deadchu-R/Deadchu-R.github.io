@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tile-Map Engine — Roee Tal</title>
+<meta name="description" content="A small game engine in plain C#, and a two-player chess game running on it.">
+<meta name="theme-color" content="#2b1608">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="../assets/site.css?v=0aad19b6">
+<style>:root{--deep:#2b1608;--mid:#8a4b12;--accent:#ffc36b}</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+<a class="mark" href="../index.html">Roee Tal</a>
+<nav><a href="../index.html#projects" aria-current="page">Projects</a><a href="../gallery.html">Gallery</a><a href="../lab.html">Lab</a><a href="../Roee-Tal-CV.pdf">CV</a><a href="../index.html#contact">Contact</a></nav>
+</div></header>
+<section class="phero">
+  <img class="phero-bg" onerror="this.remove()" src="../assets/img/tilemap-cover.jpg" alt="">
+  
+  <div class="wrap phero-copy">
+    <p class="kicker">C# · .NET console</p>
+    <h1>Tile-Map Engine</h1>
+    <p class="lead">A C# game engine built from scratch</p>
+  </div>
+  <svg class="wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 C 240 90 480 0 720 34 S 1200 80 1440 30 V80 H0Z"/></svg>
+</section>
+
+<div class="project">
+  <section class="wrap intro">
+    <div class="intro-text">
+      <p class="hook">A small game engine in plain C#, and a two-player chess game running on it.</p>
+      <h3 class="kicker">What I built</h3>
+      <ul class="ticks"><li>A Unity-style object model from scratch: GameObjects, Components and a Transform on every tile object</li><li>An abstract TileObject (IComparer, ICloneable) with an OnStep event, cloned through MemberwiseClone</li><li>Movement rules behind an IMovementRule interface</li><li>My own MyVector2 struct with operator overloading and MoveTowards / Normalize helpers</li><li>An OnWin event that lets a game plug its own win condition into the engine</li><li>Singleton managers for the engine, the tile map and console rendering, plus a two-player turn system</li><li>Chess built on the engine as the test game, with XML docs across the public API</li></ul>
+      <h3 class="kicker">Tech &amp; principles</h3>
+      <div class="techs"><span>C#</span><span>.NET</span><span>OOP</span><span>Interfaces &amp; abstract classes</span><span>Events &amp; delegates</span><span>Operator overloading</span><span>Extension methods</span><span>Singleton pattern</span><span>Component model</span><span>XML docs</span></div>
+    </div>
+    <dl class="facts">
+      <div><dt>Role</dt><dd>Programmer</dd></div>
+      <div><dt>Engine</dt><dd>C# · .NET console</dd></div>
+      <div><dt>When</dt><dd>Tiltan</dd></div>
+      <div><dt>Context</dt><dd>Final project · C# 2 course</dd></div>
+    </dl>
+  </section>
+  <div class="wrap"><section class="mech-sec">
+  <h2>The engine</h2>
+  <div class="mech-grid n1"><figure class="mech"><button class="clip big" type="button" data-src="../assets/clips/lab-tilemap.mp4" data-drive="1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL" data-title="Engine code" data-cap="A walk through the engine&#x27;s C# code." data-more="A small game engine in plain C#, and a two-player chess game running on it. A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works." aria-label="Play video: Engine code"><video muted loop playsinline preload="none" poster="../assets/posters/lab-tilemap.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Engine code</b> A walk through the engine&#x27;s C# code.</figcaption></figure></div>
+</section><section class="mech-sec">
+  <h2>Chess on the engine</h2>
+  <div class="mech-grid n1"><figure class="mech"><button class="clip big" type="button" data-src="../assets/clips/lab-chess.mp4" data-drive="1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi" data-title="Chess" data-cap="Two players, colored pieces, turn by turn in the console." data-more="A small game engine in plain C#, and a two-player chess game running on it. A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works." aria-label="Play video: Chess"><video muted loop playsinline preload="none" poster="../assets/posters/lab-chess.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Chess</b> Two players, colored pieces, turn by turn in the console.</figcaption></figure></div>
+</section></div>
+  <section class="wrap about-game">
+    <h2>About the project</h2>
+    <p>A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works.</p>
+  </section>
+  <div class="wrap"></div>
+  
+</div>
+<a class="next-band" href="shards.html" style="--deep:#0b3b3a;--mid:#17736b;--accent:#ffd36e"><div class="wrap next-inner"><div class="next-copy"><span class="kicker">Next project</span><span class="next-title">Shards <span class="arr">→</span></span><span class="next-hook">A man goes back to his hometown to face what happened there.</span></div><img class="next-art cutout" src="../assets/art/shards-protagonist.webp" alt="" loading="lazy"></div></a>
+<footer class="foot" id="contact">
+<svg class="foot-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 260 80 520 0 760 30 S 1220 70 1440 22 V70 H0Z"/></svg>
+
+<div class="wrap foot-grid">
+  <div>
+    <h2>Let's make games together</h2>
+    <p class="muted">Open to Unity and Unreal developer roles in Israel.</p>
+  </div>
+  <div class="contact-lines">
+    <div class="copyrow"><span class="email" id="email">roeetal17@gmail.com</span><button class="btn ghost" type="button" data-copy="#email">Copy</button></div>
+    <span class="muted">(+972) 053-337-4350</span>
+    <div class="btns">
+      <a class="btn" href="mailto:roeetal17@gmail.com">Email me</a>
+      <a class="btn ghost" href="https://www.linkedin.com/in/roee-tal/" target="_blank" rel="noopener">LinkedIn</a>
+      <a class="btn ghost" href="https://github.com/Deadchu-R" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn ghost" href="../Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a>
+    </div>
+  </div>
+</div>
+<div class="wrap small muted">© Roee Tal</div>
+</footer>
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
+  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden><span class="i-ic">i</span><span class="i-tx">Read more</span></button></div><p class="viewer-credit" id="viewerCredit" hidden></p><div class="viewer-more" id="viewerMore"><p id="viewerMoreText"></p><a id="viewerLink" href="#">Open the project page →</a></div></div><div class="viewer-btns"><button class="btn ghost vmax" type="button" id="viewerMax" aria-label="Full screen" hidden><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path class="i-max" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path class="i-min" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div></div>
+  <div class="viewer-stage" id="viewerStage"></div>
+  <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
+  <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
+</div>
+<script src="../assets/site.js?v=c630038a" defer></script>
+</body>
+</html>

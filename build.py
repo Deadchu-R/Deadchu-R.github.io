@@ -122,12 +122,34 @@ PROJECTS = [
          ],
          full="1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC",
          shots=["1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41", "17zGlB0VBU26ZydIbjMk7YcrRy41PSAut", "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC", "1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh"]),
+    dict(slug="tile-map-engine", title="Tile-Map Engine", sub="A C# game engine built from scratch",
+         engine="C# · .NET console", role="Programmer", when="Tiltan", context="Final project · C# 2 course",
+         theme=("#2b1608", "#8a4b12", "#ffc36b"), cover="tilemap-cover",
+         hook="A small game engine in plain C#, and a two-player chess game running on it.",
+         about=["A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works."],
+         did=["A Unity-style object model from scratch: GameObjects, Components and a Transform on every tile object",
+              "An abstract TileObject (IComparer, ICloneable) with an OnStep event, cloned through MemberwiseClone",
+              "Movement rules behind an IMovementRule interface",
+              "My own MyVector2 struct with operator overloading and MoveTowards / Normalize helpers",
+              "An OnWin event that lets a game plug its own win condition into the engine",
+              "Singleton managers for the engine, the tile map and console rendering, plus a two-player turn system",
+              "Chess built on the engine as the test game, with XML docs across the public API"],
+         sections=[
+             ("The engine", "", [
+                 ("Engine code", "A walk through the engine's C# code.", "lab-tilemap.mp4", "1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL"),
+             ]),
+             ("Chess on the engine", "", [
+                 ("Chess", "Two players, colored pieces, turn by turn in the console.", "lab-chess.mp4", "1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi"),
+             ]),
+         ],
+         full=None,
+         shots=[]),
 ]
-
 # order on the site: the projects with the most of my own code come first
-ORDER = ["infiltration", "shards", "boss-rush", "almond-bar", "musical-level"]
+ORDER = ["infiltration", "tile-map-engine", "shards", "boss-rush", "almond-bar", "musical-level"]
 PROJECTS = sorted(PROJECTS, key=lambda pj: ORDER.index(pj["slug"]))
 TECH = {
+    "tile-map-engine": ["C#", ".NET", "OOP", "Interfaces & abstract classes", "Events & delegates", "Operator overloading", "Extension methods", "Singleton pattern", "Component model", "XML docs"],
     "infiltration": ["C++", "Blueprints", "Unreal Engine 5", "Raycasts", "Event-driven feedback", "Enemy AI: patrol & sight", "Detection meter", "Health & damage", "Level building"],
     "shards": ["C#", "Unity", "ScriptableObjects", "Data-driven design", "C# events: letter / word / sentence", "Branching dialogue", "Coroutines", "UI"],
     "boss-rush": ["Team leadership", "Code oversight", "C#", "Unity", "Grid-based combat"],
@@ -135,13 +157,14 @@ TECH = {
     "musical-level": ["C#", "Unity", "Gameplay scripting"],
 }
 CARD_TECH = {
+    "tile-map-engine": "Engine from scratch in C#, component model, interfaces & events, operator overloading, chess on top",
     "infiltration": "C++ & Blueprints, raycast shooting, event-driven shot feedback, patrolling enemy AI, detection meter",
     "shards": "ScriptableObject dialogue system, letter / word / sentence events, talking sounds & mouth animation, branching notebook",
     "boss-rush": "9-month team lead, code oversight, grid-based tactical combat in Unity",
     "almond-bar": "Blueprints, branching dialogue that decides your quest, quest system, level building",
     "musical-level": "Team production, C# gameplay scripting, beat-driven platforming mechanics",
 }
-CARD_ROLE = {"infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & team lead",
+CARD_ROLE = {"tile-map-engine": "Programmer · engine from scratch", "infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & team lead",
              "almond-bar": "Solo developer · all the code", "musical-level": "Producer"}
 
 LAB = [
@@ -149,8 +172,6 @@ LAB = [
     ("Toon shader", "lab-toon.mp4", "17zl6JE6t6rm-GDynooXcIjXIdwDehpk6", "Cel-shaded lighting with hard color steps."),
     ("Hatching in Shader Graph", "lab-hatching.mp4", "1Sne0ks3fKGrbedu_LFnLIw84JBKD-g9a", "Pencil-style hatching shading, built in Shader Graph."),
     ("Plane-bending shader", "lab-planebend.mp4", "1lEnZM78NR3td-blCaTno0pfAXRFfc597", "A shader that curves a flat plane."),
-    ("Tile-map engine", "lab-tilemap.mp4", "1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL", "A tile-map engine running a level."),
-    ("Chess on the tile-map engine", "lab-chess.mp4", "1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi", "A chess game built on top of the tile-map engine."),
     ("Card-draw system", "lab-cards.mp4", "1_WDc8rzjxa7d6zPILMB0E2DsOPjuMyQc", "Drawing cards into the player's hand."),
     ("Multiplayer login UI", "lab-mpui.mp4", "1Cy7YyN8rTMAOnD0nJ3wLVHLuxE2zXoeL", "Login and password screen for a multiplayer game."),
     ("Escape-room camera", "lab-escapecam.mp4", "1t1hd1aLov8GhUp2G_fn2yfejbeJVwUdd", "Camera control for an escape-room game."),
@@ -499,7 +520,7 @@ def build_index():
 
 <section class="band blue palette-band" id="projects">
   <div class="wrap">
-    <div class="sec-head"><h2>Projects</h2><p class="muted">Five games and the systems I coded for them. Each opens its own page with clips.</p></div>
+    <div class="sec-head"><h2>Projects</h2><p class="muted">Six projects and the systems I coded for them. Each opens its own page with clips.</p></div>
     <div class="ptiles">{''.join(tiles)}</div>
   </div>
 </section>
@@ -537,7 +558,7 @@ def build_index():
 <section class="band lab-teaser" id="gallery-lab">
   {mosaic}
   <div class="wrap lab-row">
-    <div><h2>Gallery &amp; lab</h2><p class="muted">Every clip, screenshot and character in one place, plus shaders, a tile-map engine and other things I built to learn how they work.</p></div>
+    <div><h2>Gallery &amp; lab</h2><p class="muted">Every clip, screenshot and character in one place, plus shaders, mini-games and other things I built to learn how they work.</p></div>
     <div class="btns"><a class="btn" href="gallery.html">Open the gallery →</a><a class="btn ghost" href="lab.html">The lab</a></div>
   </div>
 </section>
@@ -546,7 +567,7 @@ def build_index():
     (ROOT / "index.html").write_text(html)
 
 
-NEXT_CARD = {"infiltration": "next-infiltration", "almond-bar": "next-almond-bar"}
+NEXT_CARD = {"tile-map-engine": "next-tile-map-engine", "infiltration": "next-infiltration", "almond-bar": "next-almond-bar"}
 
 def next_band(nxt):
     """'Next project' band in the next project's own colors, with its character or an iconic frame."""
@@ -617,11 +638,11 @@ def build_project(i, pj):
   </section>
   <div class="wrap">{''.join(sections)}{shots}{full}</div>
   <section class="wrap about-game">
-    <h2>About the game</h2>
+    <h2>About the project</h2>
     {''.join(f'<p>{e(a)}</p>' for a in pj['about'])}
   </section>
   <div class="wrap">{cast}</div>
-  <div class="wrap credits"><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span><b>Credits.</b> {e(ART_NOTES[pj["slug"]])}</span></p></div>
+  {f'<div class="wrap credits"><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span><b>Credits.</b> {e(ART_NOTES[pj["slug"]])}</span></p></div>' if pj["slug"] in ART_NOTES else ''}
 </div>
 {next_band(nxt)}
 """
