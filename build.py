@@ -479,11 +479,20 @@ def mosaic_pool(g=None):
         out.append(f"assets/thumbs/{name}")
     return out
 
+def peek(path, n=9):
+    """First lines of real code from a snippet (skip the leading comment block)."""
+    lines = (ROOT / path).read_text().rstrip().split("\n")
+    i = 0
+    while i < len(lines) and lines[i].lstrip().startswith("//"):
+        i += 1
+    return highlight_cs("\n".join(lines[i:i + n]))
+
 def more_code_html():
     cards = "".join(
         f'<a class="repo" id="c-{cp["slug"]}" href="code/{cp["slug"]}.html" style="--deep:{cp["theme"][0]};--mid:{cp["theme"][1]};--accent:{cp["theme"][2]}"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>{e(cp["code"][0][0])}</span>'
         f'<span class="repo-body"><span class="repo-title">{e(cp["title"])}</span><span class="repo-tech">{"".join(f"<span>{e(x)}</span>" for x in cp["tech"][:4])}</span>'
-        f'<span class="repo-desc">{e(cp["hook"])}</span><span class="more">See the code →</span></span></a>'
+        f'<span class="repo-desc">{e(cp["hook"])}</span><span class="more">See the code →</span></span>'
+        f'<span class="repo-peek" aria-hidden="true"><pre><code>{peek(cp["code"][0][1])}</code></pre></span></a>'
         for cp in CODE_PAGES)
     return f"""<section class="band more-code" id="more-code">
   <div class="wrap">

@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="assets/site.css?v=0aca692a">
+<link rel="stylesheet" href="assets/site.css?v=5c94c0b7">
 
 </head>
 <body>
@@ -133,7 +133,39 @@
 <section class="band more-code" id="more-code">
   <div class="wrap">
     <div class="sec-head"><h2><span class="h-ico" style="--c:#9be15d"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg></span>More code</h2><p class="muted">Smaller systems I built, each with a short page and real code from it.</p></div>
-    <div class="repos"><a class="repo" id="c-deck-builder" href="code/deck-builder.html" style="--deep:#0f1f2e;--mid:#1f4f6e;--accent:#7fd1ff"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>Pile.cs</span><span class="repo-body"><span class="repo-title">Deck-Builder Card System</span><span class="repo-tech"><span>C#</span><span>Unity</span><span>ScriptableObjects</span><span>Coroutines</span></span><span class="repo-desc">The card plumbing behind a deck-builder: piles, shuffling, and drawing into a hand.</span><span class="more">See the code →</span></span></a><a class="repo" id="c-army-capture" href="code/army-capture.html" style="--deep:#2a1010;--mid:#7a2a1f;--accent:#ffb07a"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>ArmyCaptureManager.cs</span><span class="repo-body"><span class="repo-title">Army Capture Mechanic</span><span class="repo-tech"><span>C#</span><span>Unity 2D</span><span>Trigger colliders</span><span>Countdown timer</span></span><span class="repo-desc">Beat an enemy army, stand in its circle, and its soldiers join yours.</span><span class="more">See the code →</span></span></a><a class="repo" id="c-unity-tools" href="code/unity-tools.html" style="--deep:#10261a;--mid:#2d6a4f;--accent:#9be15d"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>UI_Manager.cs</span><span class="repo-body"><span class="repo-title">Reusable Unity Tools</span><span class="repo-tech"><span>C#</span><span>Unity</span><span>ScriptableObjects</span><span>OnValidate</span></span><span class="repo-desc">The dialogue system, a quest chain and a UI manager, pulled out of a game so the next one starts ahead.</span><span class="more">See the code →</span></span></a><a class="repo" id="c-post-office" href="code/post-office.html" style="--deep:#16162e;--mid:#3a3a7a;--accent:#a5b4ff"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>CustomerList.cpp</span><span class="repo-body"><span class="repo-title">Post Office Queue in C++</span><span class="repo-tech"><span>C++</span><span>Pointers</span><span>Doubly linked list</span><span>std::list</span></span><span class="repo-desc">Customers take a number, officers call them by the service they handle, and elderly customers come first.</span><span class="more">See the code →</span></span></a></div>
+    <div class="repos"><a class="repo" id="c-deck-builder" href="code/deck-builder.html" style="--deep:#0f1f2e;--mid:#1f4f6e;--accent:#7fd1ff"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>Pile.cs</span><span class="repo-body"><span class="repo-title">Deck-Builder Card System</span><span class="repo-tech"><span>C#</span><span>Unity</span><span>ScriptableObjects</span><span>Coroutines</span></span><span class="repo-desc">The card plumbing behind a deck-builder: piles, shuffling, and drawing into a hand.</span><span class="more">See the code →</span></span><span class="repo-peek" aria-hidden="true"><pre><code><span class="k">public</span> <span class="k">void</span> <span class="t">Shuffle</span>(<span class="t">Pile</span>[] piles)
+{
+    <span class="t">List</span>&lt;<span class="t">CardData</span>&gt; combinedCards = <span class="k">new</span> <span class="t">List</span>&lt;<span class="t">CardData</span>&gt;();
+
+    <span class="k">foreach</span> (<span class="t">CardData</span> card <span class="k">in</span> cardsData)          <span class="c">// this pile</span>
+        <span class="k">if</span> (card != <span class="k">null</span>) combinedCards.<span class="t">Add</span>(card);
+
+    <span class="k">foreach</span> (<span class="t">Pile</span> pile <span class="k">in</span> piles)                   <span class="c">// every other pile</span>
+    {</code></pre></span></a><a class="repo" id="c-army-capture" href="code/army-capture.html" style="--deep:#2a1010;--mid:#7a2a1f;--accent:#ffb07a"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>ArmyCaptureManager.cs</span><span class="repo-body"><span class="repo-title">Army Capture Mechanic</span><span class="repo-tech"><span>C#</span><span>Unity 2D</span><span>Trigger colliders</span><span>Countdown timer</span></span><span class="repo-desc">Beat an enemy army, stand in its circle, and its soldiers join yours.</span><span class="more">See the code →</span></span><span class="repo-peek" aria-hidden="true"><pre><code><span class="k">public</span> <span class="k">void</span> <span class="t">SetCaptureCollider</span>(<span class="t">Vector2</span> position, <span class="k">float</span> radius = <span class="n">1</span>, <span class="k">bool</span> active = <span class="k">false</span>)
+{
+    _canCapture = <span class="k">true</span>;
+    _armyCommanderPosition = position;
+    _captureCollider.transform.position = position;
+    _captureCollider.radius = radius;
+    _captureCollider.enabled = active;
+}
+</code></pre></span></a><a class="repo" id="c-unity-tools" href="code/unity-tools.html" style="--deep:#10261a;--mid:#2d6a4f;--accent:#9be15d"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>UI_Manager.cs</span><span class="repo-body"><span class="repo-title">Reusable Unity Tools</span><span class="repo-tech"><span>C#</span><span>Unity</span><span>ScriptableObjects</span><span>OnValidate</span></span><span class="repo-desc">The dialogue system, a quest chain and a UI manager, pulled out of a game so the next one starts ahead.</span><span class="more">See the code →</span></span><span class="repo-peek" aria-hidden="true"><pre><code><span class="k">private</span> <span class="k">void</span> <span class="t">OnValidate</span>() =&gt; <span class="t">InitializePanelDictionary</span>();
+
+<span class="k">private</span> <span class="k">void</span> <span class="t">AdjustPanelEntriesSize</span>()
+{
+    <span class="k">int</span> enumCount = <span class="t">Enum</span>.<span class="t">GetValues</span>(<span class="k">typeof</span>(<span class="t">PanelEnum</span>)).<span class="t">Length</span>;
+    <span class="k">if</span> (panelEntries.<span class="t">Count</span> &gt; enumCount)
+        panelEntries.<span class="t">RemoveRange</span>(enumCount, panelEntries.<span class="t">Count</span> - enumCount);
+    <span class="k">while</span> (panelEntries.<span class="t">Count</span> &lt; enumCount)
+        panelEntries.<span class="t">Add</span>(<span class="k">new</span> <span class="t">PanelEntry</span>());</code></pre></span></a><a class="repo" id="c-post-office" href="code/post-office.html" style="--deep:#16162e;--mid:#3a3a7a;--accent:#a5b4ff"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>CustomerList.cpp</span><span class="repo-body"><span class="repo-title">Post Office Queue in C++</span><span class="repo-tech"><span>C++</span><span>Pointers</span><span>Doubly linked list</span><span>std::list</span></span><span class="repo-desc">Customers take a number, officers call them by the service they handle, and elderly customers come first.</span><span class="more">See the code →</span></span><span class="repo-peek" aria-hidden="true"><pre><code><span class="t">Node</span>* customerList::insertSorted(<span class="t">Node</span>* sortedHead, <span class="t">Node</span>* newNode)
+{
+    <span class="k">if</span> (sortedHead == <span class="k">nullptr</span> || newNode-&gt;data.actionType &lt; sortedHead-&gt;data.actionType)
+    {
+        newNode-&gt;next = sortedHead;
+        <span class="k">if</span> (sortedHead != <span class="k">nullptr</span>) sortedHead-&gt;prev = newNode;
+        <span class="k">return</span> newNode;                            <span class="c">// new head</span>
+    }
+</code></pre></span></a></div>
   </div>
 </section>
 
