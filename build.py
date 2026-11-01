@@ -504,6 +504,7 @@ def about_html():
         ("Gaming", "#ffd23f", ICON_PAD.replace('width="18" height="18"', 'width="22" height="22"')),
         ("Anime & manga", "#ff7ae0", I + '<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>'),
         ("Comics", "#7fd1ff", I + '<path d="M4 5h16v10H10l-4 4v-4H4z"/><path d="M8 9h8M8 12h5"/></svg>'),
+        ("Learning Japanese", "#ff6b6b", I + '<path d="M4 6h9M8.5 4v2M6 6c.5 4 3.5 7 7 8M11 6c-.8 4-3.5 7-7 9"/><path d="m13 20 4-9 4 9M14.5 17h5"/></svg>'),
         ("Local AI tinkering", "#9be15d", I + '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>'),
     ]
     cards = "".join(f'<li style="--c:{c}"><span class="hb-ico">{svg}</span>{e(t)}</li>' for t, c, svg in hobbies)
@@ -513,7 +514,7 @@ def about_html():
   <div class="wrap about-grid">
     <div>
       <div class="sec-head"><h2><span class="h-ico" style="--c:#ff9f5a">{I}<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Get to know me</h2></div>
-      <p class="muted">Away from work I climb, play a lot of games, and read anime, manga and comics. I also like taking new tech apart to see how it works.</p>
+      <p class="muted">Away from work I climb, play a lot of games, read anime, manga and comics, and I'm learning Japanese. I also like taking new tech apart to see how it works.</p>
       <ul class="hobbies">{cards}</ul>
     </div>
     <div class="ai-card">
