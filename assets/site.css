@@ -481,3 +481,11 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .phero.gal-hero{background:#140b2e;isolation:isolate;--wave:var(--mid)}
 .phero.gal-hero::after{display:none}
 .gal-hero .phero-copy{padding-bottom:clamp(100px,13vw,150px)}
+
+/* player: opens small; the maximise button takes it full screen in any orientation */
+.viewer-btns{display:flex;gap:8px;flex-shrink:0;align-items:flex-start}
+.vmax{width:46px;padding:0;display:grid;place-items:center}
+.vmax[hidden]{display:none}
+.vmax .i-min{display:none}
+.viewer.is-max .vmax .i-max{display:none}
+.viewer.is-max .vmax .i-min{display:block}
