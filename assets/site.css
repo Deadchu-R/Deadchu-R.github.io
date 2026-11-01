@@ -442,4 +442,7 @@ section[id],footer[id]{scroll-margin-top:24px}
 .jump-panel a.on{background:rgba(255,255,255,.1)}
 .jump-panel a.on i{box-shadow:0 0 0 3px rgba(255,255,255,.15),0 0 10px rgba(255,255,255,.35)}
 @media (hover:hover){.jump-panel a:hover{background:rgba(255,255,255,.14)}}
+.jump-h.pages{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12)}
+.jump-pages{display:flex;gap:6px;padding:0 4px 2px}
+.jump-panel .jump-pages a{flex:1;justify-content:center;padding:10px 8px;border:1px solid rgba(255,255,255,.18);border-radius:999px;font:700 15px/1 var(--f)}
 body:has(.viewer:not([hidden])) .jump{display:none}
