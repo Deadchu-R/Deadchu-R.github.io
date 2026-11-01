@@ -47,13 +47,13 @@
     last&&last.blur&&last.blur();
   }
   function goFullscreen(video){
-    if(isFs())return;
-    const req=viewer.requestFullscreen||viewer.webkitRequestFullscreen;
+    if(isFs()||!video)return;
+    // the video element itself goes full screen, so its own minimise button returns to the small player
+    const req=video.requestFullscreen||video.webkitRequestFullscreen;
     if(req){
-      try{Promise.resolve(req.call(viewer)).then(()=>{fsOwned=true;try{screen.orientation.lock("landscape").catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
-    }else if(video&&video.webkitEnterFullscreen){ // iPhone: native player
+      try{Promise.resolve(req.call(video)).then(()=>{try{screen.orientation.unlock&&screen.orientation.unlock()}catch(e){}}).catch(()=>{})}catch(e){}
+    }else if(video.webkitEnterFullscreen){ // iPhone: native player
       video.addEventListener("loadedmetadata",()=>{try{video.webkitEnterFullscreen()}catch(e){}},{once:true});
-      video.addEventListener("webkitendfullscreen",close,{once:true});
     }
   }
   function playInStage(name,src,driveId){
@@ -128,8 +128,7 @@
     if(e.key==="ArrowLeft")step(-1);
     if(e.key==="ArrowRight")step(1);
   });
-  // leaving full screen (Back button, Esc, the player's own button) closes the player
-  ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{if(!isFs()&&fsOwned){fsOwned=false;close()}}));
+  // leaving full screen (the player's minimise button, Back, Esc) returns to the small player; Close shuts it
   // swipe between images
   let sx=null;
   stage.addEventListener("touchstart",e=>{sx=e.target.tagName==="VIDEO"&&e.touches[0].clientY>stage.clientHeight-70?null:e.touches[0].clientX},{passive:true});

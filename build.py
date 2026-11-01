@@ -391,11 +391,18 @@ def bp_svg():
     return f'<svg viewBox="0 0 768 470" role="img" aria-label="Illustration of an Unreal Engine 5 Blueprint graph (mock-up, not real project code)">{body}<text x="752" y="462" text-anchor="end" class="wm">BLUEPRINT</text></svg>'
 
 
-def mosaic_pool():
+def mosaic_html(pool):
+    rows = []
+    for r in range(4):
+        imgs = "".join(f'<img src="{pool[(r * 8 + k) % len(pool)]}" loading="lazy" alt="">' for k in range(8))
+        rows.append(f'<div class="mrow"><div class="mtrack">{imgs}{imgs}</div></div>')
+    return f'<div class="mosaic" aria-hidden="true" data-pool="{" ".join(pool)}">' + "".join(rows) + '</div><div class="mosaic-wash" aria-hidden="true"></div>'
+
+def mosaic_pool(g=None):
     """Small 320x180 thumbs of every gallery screenshot and poster (cached by source name)."""
     import re, hashlib
     from PIL import Image
-    g = (ROOT / "gallery.html").read_text()
+    g = g if g is not None else (ROOT / "gallery.html").read_text()
     srcs = re.findall(r'<img loading="lazy" src="(assets/(?:img|posters)/[^"]+)"', g) + re.findall(r'poster="(assets/(?:img|posters)/[^"]+)"', g)
     out, seen = [], set()
     tdir = ROOT / "assets/thumbs"; tdir.mkdir(exist_ok=True)
@@ -436,12 +443,7 @@ def build_index():
     html += topbar(0)
     # decorative film-strip mosaic behind the Gallery & lab band: built from every
     # screenshot and video poster in the gallery; site.js reshuffles it on each visit
-    pool = mosaic_pool()
-    rows = []
-    for r in range(4):
-        imgs = "".join(f'<img src="{pool[(r * 8 + k) % len(pool)]}" loading="lazy" alt="">' for k in range(8))
-        rows.append(f'<div class="mrow"><div class="mtrack">{imgs}{imgs}</div></div>')
-    mosaic = f'<div class="mosaic" aria-hidden="true" data-pool="{" ".join(pool)}">' + "".join(rows) + '</div><div class="mosaic-wash" aria-hidden="true"></div>'
+    mosaic = mosaic_html(mosaic_pool())
     PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
     jump_items = [("top","Home","#3d84e6","")]+[("projects","Projects",PROJ_GRAD,"")]+[(f"p-{pj['slug']}",pj['title'],pj['theme'][2],"sub") for pj in PROJECTS]+[("now","Currently at 3DVision","#38b6ff",""),("gallery-lab","Gallery &amp; lab","#ff8fc0",""),("contact","Contact","#6fd3c2","")]
     links = "".join(f'<a class="{c}" href="#{i}" style="--c:{col}"><i></i>{t}</a>' for i,t,col,c in jump_items)
@@ -655,7 +657,9 @@ def build_gallery():
     chip_html = "".join(f'<button type="button" class="chip{" themed" if k in THEMES else ""}" data-filter="{k}"{chip_style(k)} aria-pressed="{str(k == "all").lower()}">{e(v)}</button>' for k, v in chips)
     html = head("Gallery — Roee Tal", "Every clip, screenshot and character from Roee Tal's projects in one place.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
     html += topbar(0, "gallery")
-    html += f"""<section class="phero short">
+    gal_mosaic = mosaic_html(mosaic_pool("".join(items)))
+    html += f"""<section class="phero short gal-hero">
+  {gal_mosaic}
   <div class="wrap phero-copy"><p class="kicker">Everything in one place</p><h1>Gallery</h1><p class="lead">{len(items)} clips, screenshots and characters. Tap any of them to view it full screen.</p></div>
   {WAVE}
 </section>
