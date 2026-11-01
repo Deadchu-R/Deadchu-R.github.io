@@ -546,7 +546,8 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 @media (max-width:600px){.code pre{font-size:12px;padding:14px}}
 
 /* more code: repo cards */
-.band.more-code{background:linear-gradient(180deg,var(--deep),#081631)}
+.band.more-code{background:radial-gradient(ellipse 60% 70% at 90% 0%,rgba(155,225,93,.22),transparent 70%),radial-gradient(ellipse 50% 60% at 0% 100%,rgba(155,225,93,.12),transparent 70%),linear-gradient(180deg,#14361f 0%,#0d2615 60%,#0a1c10 100%)}
+.band.more-code .sec-head h2{color:#c9f5a3}
 .repos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
 @media (max-width:760px){.repos{grid-template-columns:1fr}}
 .repo{display:flex;flex-direction:column;text-decoration:none;border-radius:14px;overflow:hidden;background:#0d1117;border:1px solid rgba(255,255,255,.12);transition:transform .2s,border-color .2s,box-shadow .2s}
@@ -598,3 +599,5 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 
 .hero-links a svg{color:var(--c);flex:none;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 60%,transparent))}
 @media (max-width:480px){.hero-links a svg{width:15px;height:15px}}
+.band.more-code{isolation:isolate}
+.band.more-code::before{content:"";position:absolute;left:0;right:0;top:0;height:110px;z-index:-1;pointer-events:none;background:linear-gradient(var(--deep),transparent)}
