@@ -329,6 +329,13 @@ def build_index():
         hero_video = '<video class="hero-video" data-wide="assets/hero.mp4" data-tall="assets/hero-m.mp4" muted loop playsinline autoplay preload="auto" aria-hidden="true"></video>'
     html = head("Roee Tal — Game Developer", "Roee Tal, game developer. Gameplay systems in Unity and Unreal Engine.", 0)
     html += topbar(0)
+    # decorative film-strip mosaic behind the Gallery & lab band
+    rows = []
+    for r in range(4):
+        ids = [(r * 7 + k * 3) % 24 + 1 for k in range(8)]
+        imgs = "".join(f'<img src="assets/thumbs/t{i:02d}.jpg" loading="lazy" alt="">' for i in ids)
+        rows.append(f'<div class="mrow"><div class="mtrack">{imgs}{imgs}</div></div>')
+    mosaic = '<div class="mosaic" aria-hidden="true">' + "".join(rows) + '</div><div class="mosaic-wash" aria-hidden="true"></div>'
     html += f"""<section class="hero">
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
@@ -367,6 +374,7 @@ def build_index():
 </section>
 
 <section class="band lab-teaser">
+  {mosaic}
   <div class="wrap lab-row">
     <div><h2>Gallery &amp; lab</h2><p class="muted">Every clip, screenshot and character in one place, plus shaders, a tile-map engine and other things I built to learn how they work.</p></div>
     <div class="btns"><a class="btn" href="gallery.html">Open the gallery →</a><a class="btn ghost" href="lab.html">The lab</a></div>
