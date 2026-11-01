@@ -114,6 +114,12 @@ PROJECTS = [
          shots=["1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41", "17zGlB0VBU26ZydIbjMk7YcrRy41PSAut", "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC", "1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh"]),
 ]
 
+# order on the site: the projects with the most of my own code come first
+ORDER = ["infiltration", "shards", "boss-rush", "almond-bar", "musical-level"]
+PROJECTS = sorted(PROJECTS, key=lambda pj: ORDER.index(pj["slug"]))
+CARD_ROLE = {"infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & programmer",
+             "almond-bar": "Solo developer · all the code", "musical-level": "Producer"}
+
 LAB = [
     ("World-bending shader", "lab-worldbend.mp4", "1w8G1TMj93LvZqCNxYdG46o4rOHp4_2i2", "A shader that bends the world as it moves away from the camera."),
     ("Toon shader", "lab-toon.mp4", "17zl6JE6t6rm-GDynooXcIjXIdwDehpk6", "Cel-shaded lighting with hard color steps."),
@@ -430,6 +436,7 @@ def build_index():
   <span class="ptile-img"><img loading="lazy" onerror="this.style.visibility='hidden'" src="{thumb(pj['cover'], 900)}" alt="{e(pj['title'])} screenshot">{f'<img class="peek" loading="lazy" src="assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}</span>
   <span class="ptile-body">
     <span class="kicker">{e(pj['engine'])}</span>
+    <span class="role-tag">{e(CARD_ROLE[pj['slug']])}</span>
     <span class="ptile-title">{e(pj['title'])}</span>
     <span class="ptile-hook">{e(pj['hook'])}</span>
     <span class="more">View project →</span>
