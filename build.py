@@ -526,8 +526,7 @@ def build_index():
     <h1>Roee Tal</h1>
     <p class="lead">I build the systems players touch: combat, AI, dialogue and UI. Unreal developer at 3DVision, trained in game design and development at Tiltan.</p>
     <div class="btns">
-      <a class="btn" href="#projects">See projects</a>
-      <button class="btn ghost" type="button" {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}>▶ Watch showreel</button>
+      <button class="btn" type="button" {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}>▶ Watch showreel</button>
     </div>
     <nav class="hero-links" aria-label="Jump to">
       <a href="#now" style="--c:#38b6ff"><i></i>Current work</a>
