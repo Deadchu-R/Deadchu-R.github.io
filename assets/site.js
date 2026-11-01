@@ -165,19 +165,25 @@
     [...els,...extra].forEach(el=>ro.observe(el));
   }
 
-  /* ---------- side rail ---------- */
-  const rail=$(".rail");
-  if(rail){
-    const links=[...rail.querySelectorAll("a")],targets=links.map(a=>document.getElementById(a.hash.slice(1)));
-    let cur=-1,raf2=0,ft=0;
+  /* ---------- jump menu ---------- */
+  const jump=$("#jump");
+  if(jump){
+    const btn=jump.querySelector(".jump-btn"),panel=$("#jumpPanel"),links=[...panel.querySelectorAll("a")];
+    const targets=links.map(a=>document.getElementById(a.hash.slice(1)));
+    const setOpen=on=>{jump.classList.toggle("open",on);panel.hidden=!on;btn.setAttribute("aria-expanded",on);btn.setAttribute("aria-label",on?"Close section menu":"Jump to a section")};
+    btn.addEventListener("click",()=>setOpen(panel.hidden));
+    links.forEach(a=>a.addEventListener("click",()=>setOpen(false)));
+    document.addEventListener("click",e=>{if(!panel.hidden&&!jump.contains(e.target))setOpen(false)});
+    document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);btn.focus()}});
+    let cur=-1,raf2=0;
     const upd=()=>{
       raf2=0;let k=0;const line=innerHeight*.45;
       targets.forEach((t,i)=>{if(t&&t.getBoundingClientRect().top<=line)k=i});
       if(innerHeight+scrollY>=document.body.scrollHeight-4)k=targets.length-1;
-      if(k===cur)return;
-      const first=cur<0;cur=k;
+      if(k===cur)return;cur=k;
       links.forEach((a,i)=>a.classList.toggle("on",i===k));
-      if(!first){rail.classList.add("flash");clearTimeout(ft);ft=setTimeout(()=>rail.classList.remove("flash"),1300)}
+      const c=getComputedStyle(links[k]).getPropertyValue("--c").trim();
+      jump.style.setProperty("--cur",c.startsWith("conic")?"#7fb2ff":c);
     };
     addEventListener("scroll",()=>{if(!raf2)raf2=requestAnimationFrame(upd)},{passive:true});
     addEventListener("resize",upd);upd();

@@ -404,9 +404,14 @@ def build_index():
         imgs = "".join(f'<img src="assets/thumbs/t{i:02d}.jpg" loading="lazy" alt="">' for i in ids)
         rows.append(f'<div class="mrow"><div class="mtrack">{imgs}{imgs}</div></div>')
     mosaic = '<div class="mosaic" aria-hidden="true">' + "".join(rows) + '</div><div class="mosaic-wash" aria-hidden="true"></div>'
-    rail_items = [("top","Home","#ffd23f","")]+[("projects","Projects","#5aa0ff","")]+[(f"p-{pj['slug']}",pj['title'],pj['theme'][2],"sub") for pj in PROJECTS]+[("now","Currently","#38b6ff",""),("gallery-lab","Gallery & lab","#ff8fc0",""),("contact","Contact","#6fd3c2","")]
-    rail = '<nav class="rail" aria-label="Jump to a section">' + "".join(f'<a class="{c}" href="#{i}" style="--c:{col}"><span>{e(t)}</span></a>' for i,t,col,c in rail_items) + '</nav>\n'
-    html += rail
+    PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
+    jump_items = [("top","Home","#3d84e6","")]+[("projects","Projects",PROJ_GRAD,"")]+[(f"p-{pj['slug']}",pj['title'],pj['theme'][2],"sub") for pj in PROJECTS]+[("now","Currently at 3DVision","#38b6ff",""),("gallery-lab","Gallery &amp; lab","#ff8fc0",""),("contact","Contact","#6fd3c2","")]
+    links = "".join(f'<a class="{c}" href="#{i}" style="--c:{col}"><i></i>{t}</a>' for i,t,col,c in jump_items)
+    html += f'''<div class="jump" id="jump">
+  <nav class="jump-panel" id="jumpPanel" aria-label="Page sections" hidden><p class="jump-h">Jump to</p>{links}</nav>
+  <button class="jump-btn" type="button" aria-expanded="false" aria-controls="jumpPanel" aria-label="Jump to a section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="d1" cx="5" cy="6" r="2"/><circle class="d2" cx="5" cy="12" r="2"/><circle class="d3" cx="5" cy="18" r="2"/><path d="M10 6h10M10 12h10M10 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="x" d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+</div>
+'''
     html += f"""<section class="hero" id="top">
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
