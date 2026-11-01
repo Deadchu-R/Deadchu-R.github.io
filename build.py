@@ -8,6 +8,7 @@ Until a clip file exists, pages fall back to the Google Drive copy (by id).
 from html import escape as e
 from pathlib import Path
 import hashlib
+import re
 
 ROOT = Path(__file__).parent
 
@@ -270,7 +271,7 @@ def footer(depth):
 <div class="wrap small muted">© {SITE['name']}</div>
 </footer>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
-  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden>i</button></div></div><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div>
+  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden>i</button></div><div class="viewer-more" id="viewerMore"><p id="viewerMoreText"></p><a id="viewerLink" href="#">Open the project page →</a></div></div><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div>
   <div class="viewer-stage" id="viewerStage"></div>
   <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
@@ -281,16 +282,29 @@ def footer(depth):
 """
 
 
+def more_text(pj, section=None):
+    """The longer description behind the (i) button: what this project is, and the section the clip belongs to."""
+    parts = [pj["hook"]]
+    if section and section[1]:
+        parts.append(f"{section[0]}: {section[1]}")
+    parts.append(pj["about"][0])
+    return " ".join(parts)
+
+
+def more_attrs(text, href=""):
+    return f' data-more="{e(text)}"' + (f' data-href="{href}"' if href else "")
+
+
 FS_ICON = '<span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span>'
 
 
-def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False):
+def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False, more=""):
     p = "../" * depth
     poster = f"{p}assets/posters/{file.replace('.mp4', '.jpg')}"
     if not (ROOT / "assets/posters" / file.replace(".mp4", ".jpg")).exists():
         poster = thumb(did, 960)
     src = f"{p}assets/clips/{file}" if has_clip(file) else ""
-    return (f'<button class="clip{" big" if big else ""}" type="button"{f' data-group="{group}"' if group else ""}{" data-still" if still else ""} data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}" aria-label="Play video: {e(label)}">'
+    return (f'<button class="clip{" big" if big else ""}" type="button"{f' data-group="{group}"' if group else ""}{" data-still" if still else ""} data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}"{more} aria-label="Play video: {e(label)}">'
             f'<video muted loop playsinline preload="none" poster="{poster}"></video>'
             f'{FS_ICON}</button>')
 
@@ -370,8 +384,9 @@ def build_project(i, pj):
     sections = []
     first = True
     for title, intro, clips in pj["sections"]:
+        sec_more = more_attrs(more_text(pj, (title, intro)))
         tiles = "".join(
-            f'<figure class="mech">{clip_tile(lbl, f, d, depth, big=(len(clips) == 1), cap=cap)}<figcaption><b>{e(lbl)}</b>{(" " + e(cap)) if cap else ""}</figcaption></figure>'
+            f'<figure class="mech">{clip_tile(lbl, f, d, depth, big=(len(clips) == 1), cap=cap, more=sec_more)}<figcaption><b>{e(lbl)}</b>{(" " + e(cap)) if cap else ""}</figcaption></figure>'
             for lbl, cap, f, d in clips)
         sections.append(f"""<section class="mech-sec">
   <h2>{e(title)}</h2>{f'<p class="muted center">{e(intro)}</p>' if intro else ''}
@@ -381,14 +396,14 @@ def build_project(i, pj):
     shots = ""
     if pj["shots"]:
         shots = '<section class="mech-sec"><h2>Screenshots</h2><div class="shots">' + "".join(
-            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-title="Screenshot" data-cap="{e(SHOT_CAPS.get(s, ""))}" aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s in pj["shots"]) + "</div></section>"
+            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-title="Screenshot" data-cap="{e(SHOT_CAPS.get(s, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s in pj["shots"]) + "</div></section>"
     full = ""
     if pj["full"]:
-        full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}>▶ Play full video</button></section>'
+        full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}>▶ Play full video</button></section>'
     cast = ""
     if pj.get("cast"):
         cast = '<section class="mech-sec"><h2>Characters</h2><div class="cast">' + "".join(
-            f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}" aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
+            f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
     html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"])
     html += topbar(depth, "projects")
     html += f"""<section class="phero">
@@ -447,32 +462,37 @@ def build_gallery():
     global DEPTH
     DEPTH = 0
     items = []  # (html, project slug, kind)
-    def card(inner, proj_title, label, cap, slug, kind):
-        info = f'<button class="info" type="button" aria-label="Show description" aria-expanded="false">i</button>' if cap else ""
+    def card(inner, proj_title, label, cap, slug, kind, more=""):
+        info = f'<button class="info" type="button" aria-label="Show description" aria-expanded="false">i</button>' if (cap or more) else ""
+        mt = re.search(r'data-more="([^"]*)"', more)
+        mh = re.search(r'data-href="([^"]*)"', more)
+        extra = (f'<span class="gmore">{mt.group(1)}</span>' if mt else "") + (f'<a class="glink" href="{mh.group(1)}">Open the project page →</a>' if mh else "")
         return (f'<figure class="gitem" data-proj="{slug}" data-kind="{kind}">{inner}{info}'
-                f'<figcaption><span class="gproj">{e(proj_title)}</span><b>{e(label)}</b> {e(cap)}</figcaption></figure>')
+                f'<figcaption><span class="gproj">{e(proj_title)}</span><b>{e(label)}</b> {e(cap)}{extra}</figcaption></figure>')
     for pj in PROJECTS:
-        for _, _, clips in pj["sections"]:
+        href = f"projects/{pj['slug']}.html"
+        for sec_title, intro, clips in pj["sections"]:
+            m = more_attrs(more_text(pj, (sec_title, intro)), href)
             for lbl, cap, f, d in clips:
-                items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True), pj["title"], lbl, cap, pj["slug"], "video"))
+                items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True, more=m), pj["title"], lbl, cap, pj["slug"], "video", m))
         if pj["full"]:
             name = FULL.get(pj["full"])
             poster = f"assets/posters/full-{name}.jpg" if name and (ROOT / f"assets/posters/full-{name}.jpg").exists() else thumb(pj["cover"], 900)
             src = f"assets/full/{name}.mp4" if name and (ROOT / f"assets/full/{name}.mp4").exists() else ""
             cap = "The full gameplay video."
-            inner = (f'<button class="clip" type="button" data-group="all" data-still data-src="{src}" data-drive="{pj["full"]}" data-title="{e(pj["title"])} · full video" data-cap="{cap}" aria-label="Play the full {e(pj["title"])} video">'
+            inner = (f'<button class="clip" type="button" data-group="all" data-still data-src="{src}" data-drive="{pj["full"]}" data-title="{e(pj["title"])} · full video" data-cap="{cap}"{more_attrs(more_text(pj), href)} aria-label="Play the full {e(pj["title"])} video">'
                      f'<video muted playsinline preload="none" poster="{poster}"></video><span class="tag">Full video</span>{FS_ICON}</button>')
-            items.append(card(inner, pj["title"], "Full video", cap, pj["slug"], "video"))
+            items.append(card(inner, pj["title"], "Full video", cap, pj["slug"], "video", more_attrs(more_text(pj), href)))
         for sid in pj["shots"]:
             cap = SHOT_CAPS.get(sid, "")
-            inner = (f'<button class="zoom" type="button" data-full="{thumb(sid, 2000)}" data-group="all" data-title="{e(pj["title"])}" data-cap="{e(cap)}" aria-label="Enlarge screenshot">'
+            inner = (f'<button class="zoom" type="button" data-full="{thumb(sid, 2000)}" data-group="all" data-title="{e(pj["title"])}" data-cap="{e(cap)}"{more_attrs(more_text(pj), href)} aria-label="Enlarge screenshot">'
                      f'<img loading="lazy" src="{thumb(sid, 900)}" alt="{e(cap or pj["title"])}">{FS_ICON}</button>')
-            items.append(card(inner, pj["title"], "Screenshot", cap, pj["slug"], "image"))
+            items.append(card(inner, pj["title"], "Screenshot", cap, pj["slug"], "image", more_attrs(more_text(pj), href)))
         for f, c in pj.get("cast", []):
             cap = CAST_CAPS.get(f, "")
-            inner = (f'<button class="zoom art" type="button" data-full="assets/art/{f}.webp" data-group="all" data-title="{e(c)}" data-cap="{e(cap)}" aria-label="Enlarge: {e(c)}">'
+            inner = (f'<button class="zoom art" type="button" data-full="assets/art/{f}.webp" data-group="all" data-title="{e(c)}" data-cap="{e(cap)}"{more_attrs(more_text(pj), href)} aria-label="Enlarge: {e(c)}">'
                      f'<img loading="lazy" src="assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button>')
-            items.append(card(inner, pj["title"], c, cap, pj["slug"], "image"))
+            items.append(card(inner, pj["title"], c, cap, pj["slug"], "image", more_attrs(more_text(pj), href)))
     for lbl, f, d, cap in LAB:
         items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True), "Lab", lbl, cap, "lab", "video"))
     chips = [("all", "Everything"), ("video", "Videos"), ("image", "Images")] + [(pj["slug"], pj["title"]) for pj in PROJECTS] + [("lab", "Lab")]

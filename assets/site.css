@@ -262,6 +262,16 @@ h1,h2,h3{text-wrap:balance}
 .gitem .info{position:absolute;left:6px;top:6px;z-index:3}
 .gitem.show-info figcaption{opacity:1;top:0;padding:40px 10px 10px;display:block;overflow:auto;background:rgba(0,0,0,.86);font-size:13px;pointer-events:auto;-webkit-line-clamp:unset}
 .cap-row{display:flex;align-items:flex-start;gap:8px}
-#viewerCap{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
-.viewer.cap-open #viewerCap{display:block;-webkit-line-clamp:unset}
 .cap-row .info[hidden]{display:none}
+/* longer description behind (i) */
+.viewer-more{display:none;margin-top:6px;max-height:40svh;overflow:auto}
+.viewer.cap-open .viewer-more{display:grid;gap:8px}
+#viewerMoreText{margin:0;font-weight:400;font-size:14px;line-height:1.5;color:rgba(255,255,255,.72);max-width:70ch}
+#viewerMoreText:empty{display:none}
+#viewerLink{font-size:14px;font-weight:700;color:var(--accent);text-decoration:none}
+#viewerLink[hidden]{display:none}
+.viewer.cap-open .viewer-top{background:rgba(0,0,0,.85)}
+.gmore{display:none}
+.gitem.show-info .gmore{display:block;margin-top:6px;opacity:.85}
+.glink{display:none;pointer-events:auto}
+.gitem.show-info .glink{display:inline-block;margin-top:8px;color:var(--accent);font-weight:800;text-decoration:none}
