@@ -187,6 +187,14 @@
     [...els,...extra].forEach(el=>ro.observe(el));
   }
 
+  /* ---------- ongoing job: time since the start date, always current ---------- */
+  document.querySelectorAll("[data-since]").forEach(el=>{
+    const [y,m]=el.dataset.since.split("-").map(Number),now=new Date();
+    let months=(now.getFullYear()-y)*12+(now.getMonth()+1-m);if(months<1)months=1;
+    const yrs=Math.floor(months/12),mos=months%12;
+    el.textContent=[yrs?yrs+(yrs>1?" yrs":" yr"):"",mos?mos+(mos>1?" mos":" mo"):""].filter(Boolean).join(" ");
+  });
+
   /* ---------- gallery mosaic: new random order on every visit ---------- */
   const mos=$(".mosaic[data-pool]");
   if(mos){
