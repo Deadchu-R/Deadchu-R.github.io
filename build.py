@@ -171,7 +171,7 @@ CARD_ROLE = {"tile-map-engine": "Programmer · team of 3", "infiltration": "Solo
              "almond-bar": "Solo developer · all the code", "musical-level": "Producer"}
 
 EARLY = [  # appendix: early and small projects
-    ("Upon the Dawn", "lab-uponthedawn.mp4", "1UnovVrXcBiB45WCwJmY82AQ0reyyepL5", "A strategy prototype on an island map, destroying an enemy factory."),
+    ("Upon the Dawn", "lab-uponthedawn.mp4", "1UnovVrXcBiB45WCwJmY82AQ0reyyepL5", "An environmental hackathon game: destroy the polluting factories and bring back sun and flowers. I was one of two programmers; there was no artist on the team."),
     ("My first project: a boss fight", "lab-firstboss.mp4", "126SJ_eNvJFjB5OQVPowUp9PM7D6kmY9d", "My very first Unity game: a 2D platformer boss fight with a health heart, fireball attacks and a retry screen."),
     ("Save & load", "lab-savestring.mp4", "1RSi5jGjKOFYIemlezvZHC3fScOSxsg0-", "An early exercise: type a string, save it, and load it back."),
 ]
@@ -497,6 +497,35 @@ ICON_BRIEF = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"
 ICON_PAD = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10a5 5 0 0 1 4.8 6.4l-.9 3a2.5 2.5 0 0 1-4.3.8L15 16H9l-1.6 2.2a2.5 2.5 0 0 1-4.3-.8l-.9-3A5 5 0 0 1 7 8z"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg>'
 ICON_CODE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg>'
 
+def about_html():
+    I = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
+    hobbies = [
+        ("Bouldering", "#ff9f5a", I + '<path d="M5 20 9 9l4 5 3-7 3 13z"/><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="4.5" r="1.2"/></svg>'),
+        ("Gaming", "#ffd23f", ICON_PAD.replace('width="18" height="18"', 'width="22" height="22"')),
+        ("Anime & manga", "#ff7ae0", I + '<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>'),
+        ("Comics", "#7fd1ff", I + '<path d="M4 5h16v10H10l-4 4v-4H4z"/><path d="M8 9h8M8 12h5"/></svg>'),
+        ("Local AI tinkering", "#9be15d", I + '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>'),
+    ]
+    cards = "".join(f'<li style="--c:{c}"><span class="hb-ico">{svg}</span>{e(t)}</li>' for t, c, svg in hobbies)
+    tools = ["LM Studio", "Ollama", "ComfyUI", "Flux", "LobeHub", "OpenCode"]
+    chips = "".join(f'<span>{e(t)}</span>' for t in tools)
+    return f"""<section class="band about" id="about">
+  <div class="wrap about-grid">
+    <div>
+      <div class="sec-head"><h2><span class="h-ico" style="--c:#ff9f5a">{I}<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Get to know me</h2></div>
+      <p class="muted">Away from work I climb, play a lot of games, and read anime, manga and comics. I also like taking new tech apart to see how it works.</p>
+      <ul class="hobbies">{cards}</ul>
+    </div>
+    <div class="ai-card">
+      <p class="kicker">Side project · local AI</p>
+      <h3>Running AI models on my own PC</h3>
+      <p class="muted">I set up and run language and image models locally, no cloud: chat models, image generation pipelines and AI coding agents.</p>
+      <div class="ai-tools">{chips}</div>
+    </div>
+  </div>
+</section>
+"""
+
 def build_index():
     global DEPTH
     DEPTH = 0
@@ -531,7 +560,7 @@ def build_index():
                   + [(f"p-{pj['slug']}", e(pj['title']), pj['theme'][2], "sub", "") for pj in PROJECTS]
                   + [("more-code", "More code", "#9be15d", "", ICON_CODE)]
                   + [(f"c-{cp['slug']}", e(cp['title']), cp['theme'][2], "sub", "") for cp in CODE_PAGES]
-                  + [("gallery-lab", "Gallery &amp; lab", "#ff8fc0", "", ICON_IMG), ("contact", "Contact", "#6fd3c2", "", ICON_MAIL)])
+                  + [("gallery-lab", "Gallery &amp; lab", "#ff8fc0", "", ICON_IMG), ("about", "Get to know me", "#ff9f5a", "", I + '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'), ("contact", "Contact", "#6fd3c2", "", ICON_MAIL)])
     links = "".join(f'<a class="{c}" href="#{i}" style="--c:{col}">' + (f'<span class="j-ico">{ic}</span>' if ic else '<i></i>') + f'{t}</a>' for i, t, col, c, ic in jump_items)
     html += f'''<div class="jump" id="jump">
   <nav class="jump-panel" id="jumpPanel" aria-label="Page sections" hidden><p class="jump-h">Jump to</p>{links}<p class="jump-h pages">Pages</p><div class="jump-pages"><a href="gallery.html">Gallery</a><a href="lab.html">Lab</a><a href="Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a></div></nav>
@@ -595,7 +624,7 @@ def build_index():
 
 {more_code_html()}
 
-<section class="band lab-teaser" id="gallery-lab">
+{about_html()}<section class="band lab-teaser" id="gallery-lab">
   {mosaic}
   <div class="wrap lab-row">
     <div><h2>Gallery &amp; lab</h2><p class="muted">Every clip, screenshot and character in one place, plus shaders, mini-games and other things I built to learn how they work.</p></div>
