@@ -94,7 +94,7 @@ PROJECTS = [
              ]),
          ],
          full="1vL8FiPkjc6uhVvU76h9tpVB-diiNVmWc",
-         shots=["1f_FEH3xWJFLEtx5Rivfkz0sW1IdyO7Cd", "1XKdeZXwJXXcGLC-PLBU1AQnQTI0q1Jnl", "1vxite6U0WSEwBSumniwODX1HcLkG5bws", "1A6NvKk0XuyzGLglwsEt_koiogPNRFDMd", "1RSsJOWmaaCGo-ITMmSw50PgxQcOyCOBd", "1VaeqPSLmbuIN1fWtjF4kB5d7_ZKoTFBH", "1Tjj_5cknQ_98sqItEYD7McOjM5rpw7Jk", "1an1Bz7pWXvz1K8BBtg61GLg1WJUE7YDw", "19JMa8TxKunQdd_Ga3ChQp8HwCUkE4sHc", "1uGg_f72WbVOmD-jkJ_3K04-ggVF-CJGE"]),
+         shots=["1XKdeZXwJXXcGLC-PLBU1AQnQTI0q1Jnl", "1vxite6U0WSEwBSumniwODX1HcLkG5bws", "1A6NvKk0XuyzGLglwsEt_koiogPNRFDMd", "1RSsJOWmaaCGo-ITMmSw50PgxQcOyCOBd", "1VaeqPSLmbuIN1fWtjF4kB5d7_ZKoTFBH", "1Tjj_5cknQ_98sqItEYD7McOjM5rpw7Jk", "1an1Bz7pWXvz1K8BBtg61GLg1WJUE7YDw", "19JMa8TxKunQdd_Ga3ChQp8HwCUkE4sHc", "1uGg_f72WbVOmD-jkJ_3K04-ggVF-CJGE"]),
     dict(slug="almond-bar", title="Almond Bar", sub="Unreal Engine quest game",
          engine="Unreal · Blueprints", role="Solo developer", when="Tiltan", context="Final project · Unreal Blueprints course",
          theme=("#2c0830", "#7a1a73", "#ff7ae0"), cover="1S38ITtBFY7fynF-MWLseHT9h5Q9K5cms",
@@ -228,6 +228,8 @@ def footer(depth):
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
   <div class="viewer-top"><span id="viewerTitle"></span><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div>
   <div class="viewer-stage" id="viewerStage"></div>
+  <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
+  <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
 </div>
 <script src="{p}assets/site.js" defer></script>
 </body>
@@ -243,7 +245,7 @@ def clip_tile(label, file, did, depth, big=False):
     src = f"{p}assets/clips/{file}" if has_clip(file) else ""
     return (f'<button class="clip{" big" if big else ""}" type="button" data-src="{src}" data-drive="{did}" data-title="{e(label)}" aria-label="Play video: {e(label)}">'
             f'<video muted loop playsinline preload="none" poster="{poster}"></video>'
-            f'<span class="play">Play video</span></button>')
+            f'<span class="fs" title="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button>')
 
 
 def build_index():
@@ -332,14 +334,14 @@ def build_project(i, pj):
     shots = ""
     if pj["shots"]:
         shots = '<section class="mech-sec"><h2>Screenshots</h2><div class="shots">' + "".join(
-            f'<a href="{thumb(s, 2000)}" target="_blank" rel="noopener"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot"></a>' for s in pj["shots"]) + "</div></section>"
+            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot"></button>' for s in pj["shots"]) + "</div></section>"
     full = ""
     if pj["full"]:
         full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}>▶ Play full video</button></section>'
     cast = ""
     if pj.get("cast"):
         cast = '<section class="mech-sec"><h2>Characters</h2><div class="cast">' + "".join(
-            f'<figure><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}"><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
+            f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}"></button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
     html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"])
     html += topbar(depth, "projects")
     html += f"""<section class="phero">
