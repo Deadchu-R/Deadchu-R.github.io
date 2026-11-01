@@ -21,7 +21,7 @@ SITE = {
 
 # theme: (deep, mid, accent) colors for the project's own page
 PROJECTS = [
-    dict(slug="musical-level", title="A Musical Level", sub="Inspired by Rayman Legends",
+    dict(slug="musical-level", mascot="musical-cat", cast=[('musical-cat', 'The space cat, the playable hero'), ('musical-flower', 'A tentacle flower enemy')], title="A Musical Level", sub="Inspired by Rayman Legends",
          engine="Unity", role="Producer · design · scripting", when="2nd year, Tiltan", context="Game Production course, team project",
          theme=("#1a0b3d", "#4a2398", "#c9a7ff"), cover="1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP",
          hook="A space cat runs, jumps and fights through a level that moves to the beat.",
@@ -41,7 +41,7 @@ PROJECTS = [
          ],
          full="18ezKyaZ6x8iKwvC2Gpj-vhhxqdaGCitd",
          shots=["1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP", "1cuHuKj4H0HIaWXCJpQLxaxdFCUKOtDzX"]),
-    dict(slug="shards", title="Shards", sub="Isometric story-driven game",
+    dict(slug="shards", mascot="shards-protagonist", cast=[('shards-protagonist', 'The protagonist'), ('shards-shadow', 'A shadow memory'), ('shards-ghost', 'A ghost memory'), ('shards-cityhall', 'City hall')], title="Shards", sub="Isometric story-driven game",
          engine="Unity · C#", role="Programmer", when="Nov 2023 · 3 weeks", context="Hackathon team",
          theme=("#0b3b3a", "#17736b", "#ffd36e"), cover="10P_bsBNsYOX6C94sR7FoAYuW_PC8ax71",
          hook="A man goes back to his hometown to face what happened there.",
@@ -56,7 +56,7 @@ PROJECTS = [
          ],
          full=None,
          shots=["1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs", "16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd", "1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV", "1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9", "1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS", "1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky"]),
-    dict(slug="boss-rush", title="Boss Rush", sub="Grid-based tactical combat",
+    dict(slug="boss-rush", mascot="bossrush-dracovid", cast=[('bossrush-axe', 'Axe fighter'), ('bossrush-mage', 'Mage'), ('bossrush-ranger', 'Ranger'), ('bossrush-dracovid', 'Dracovid, the boss')], title="Boss Rush", sub="Grid-based tactical combat",
          engine="Unity · C#", role="Producer & game designer", when="12/2023 – 09/2024", context="Final year · Game Production 2",
          theme=("#3a0b2a", "#8c1d55", "#ff8fc0"), cover="1ds2k9OIavd8wmB638ZMaas-4uHDBN5dH",
          hook="Three heroes, one giant boss, and a grid. Medicines against disease, inside a microscopic world.",
@@ -252,7 +252,7 @@ def build_index():
     tiles = []
     for i, pj in enumerate(PROJECTS):
         tiles.append(f"""<a class="ptile" href="projects/{pj['slug']}.html" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
-  <span class="ptile-img"><img loading="lazy" onerror="this.style.visibility='hidden'" src="{thumb(pj['cover'], 900)}" alt="{e(pj['title'])} screenshot"></span>
+  <span class="ptile-img"><img loading="lazy" onerror="this.style.visibility='hidden'" src="{thumb(pj['cover'], 900)}" alt="{e(pj['title'])} screenshot">{f'<img class="peek" loading="lazy" src="assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}</span>
   <span class="ptile-body">
     <span class="kicker">{e(pj['engine'])}</span>
     <span class="ptile-title">{e(pj['title'])}</span>
@@ -336,10 +336,15 @@ def build_project(i, pj):
     full = ""
     if pj["full"]:
         full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}>▶ Play full video</button></section>'
+    cast = ""
+    if pj.get("cast"):
+        cast = '<section class="mech-sec"><h2>Characters</h2><div class="cast">' + "".join(
+            f'<figure><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}"><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
     html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"])
     html += topbar(depth, "projects")
     html += f"""<section class="phero">
   <img class="phero-bg" onerror="this.remove()" src="{thumb(pj['cover'], 1800)}" alt="">
+  {f'<img class="mascot" src="../assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}
   <div class="wrap phero-copy">
     <p class="kicker">{e(pj['engine'])}</p>
     <h1>{e(pj['title'])}</h1>
@@ -363,7 +368,7 @@ def build_project(i, pj):
       <div><dt>Context</dt><dd>{e(pj['context'])}</dd></div>
     </dl>
   </section>
-  <div class="wrap">{''.join(sections)}{shots}{full}</div>
+  <div class="wrap">{cast}{''.join(sections)}{shots}{full}</div>
   <a class="next wrap" href="{nxt['slug']}.html"><span class="kicker">Next project</span><span class="next-title">{e(nxt['title'])} →</span></a>
 </div>
 """
