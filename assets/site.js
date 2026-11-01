@@ -165,6 +165,24 @@
     [...els,...extra].forEach(el=>ro.observe(el));
   }
 
+  /* ---------- side rail ---------- */
+  const rail=$(".rail");
+  if(rail){
+    const links=[...rail.querySelectorAll("a")],targets=links.map(a=>document.getElementById(a.hash.slice(1)));
+    let cur=-1,raf2=0,ft=0;
+    const upd=()=>{
+      raf2=0;let k=0;const line=innerHeight*.45;
+      targets.forEach((t,i)=>{if(t&&t.getBoundingClientRect().top<=line)k=i});
+      if(innerHeight+scrollY>=document.body.scrollHeight-4)k=targets.length-1;
+      if(k===cur)return;
+      const first=cur<0;cur=k;
+      links.forEach((a,i)=>a.classList.toggle("on",i===k));
+      if(!first){rail.classList.add("flash");clearTimeout(ft);ft=setTimeout(()=>rail.classList.remove("flash"),1300)}
+    };
+    addEventListener("scroll",()=>{if(!raf2)raf2=requestAnimationFrame(upd)},{passive:true});
+    addEventListener("resize",upd);upd();
+  }
+
   /* ---------- gallery filters ---------- */
   const grid=$("#ggrid"),gcount=$("#gcount");
   function filter(chip){

@@ -229,7 +229,7 @@ def head(title, desc, depth, theme=None):
 <meta name="theme-color" content="{theme[0] if theme else '#0c2f6e'}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
 <link rel="stylesheet" href="{p}assets/site.css?v={ver('assets/site.css')}">
 {style}
 </head>
@@ -313,49 +313,76 @@ def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False,
 
 
 def bp_svg():
-    def wire(x1,y1,x2,y2,c,exec_=False):
-        d=max(40,abs(x2-x1)*.45)
+    """A UE5-style Blueprint mock-up drawn in SVG (illustration only)."""
+    T={"exec":"#ffffff","obj":"#00a8f4","vec":"#fdc828","rot":"#a0b4ff","xf":"#ff7300","cls":"#8c3cf0","bool":"#c41a1a"}
+    out=[];pins={}
+    def wire(a,b):
+        (x1,y1,c),(x2,y2,_)=pins[a],pins[b]
+        d=max(36,abs(x2-x1)*.5)
         path=f"M{x1} {y1} C{x1+d} {y1},{x2-d} {y2},{x2} {y2}"
-        w=f'<path d="{path}" stroke="{c}" stroke-width="{2.6 if exec_ else 2}" fill="none" opacity=".9"/>'
-        if exec_: w+=f'<path class="flow" d="{path}" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round"/>'
-        return w
-    def node(x,y,w,h,col,title,ins=(),outs=(),pure=False,kind="f"):
-        gid=f"h{x}{y}"
-        o=f'<g><defs><linearGradient id="{gid}" x1="0" x2="1"><stop offset="0" stop-color="{col}"/><stop offset=".75" stop-color="{col}" stop-opacity=".35"/><stop offset="1" stop-color="{col}" stop-opacity=".12"/></linearGradient></defs>'
-        o+=f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="6" fill="rgba(12,12,12,.88)" stroke="rgba(0,0,0,.9)" stroke-width="1.5"/>'
-        hh=22 if pure else 26
-        o+=f'<path d="M{x+6} {y}H{x+w-6}a6 6 0 0 1 6 6V{y+hh}H{x}V{y+6}a6 6 0 0 1 6-6z" fill="url(#{gid})"/>'
-        o+=f'<rect x="{x+.75}" y="{y+.75}" width="{w-1.5}" height="{h-1.5}" rx="5.5" fill="none" stroke="rgba(255,255,255,.08)"/>'
-        if kind=="e": o+=f'<path d="M{x+10} {y+hh/2}l6-6 6 6-6 6z" fill="none" stroke="#fff" stroke-width="1.6"/>'
-        else: o+=f'<text x="{x+11}" y="{y+hh-8}" class="ni">f</text>'
-        o+=f'<text x="{x+29}" y="{y+hh-8}" class="nt">{title}</text>'
-        for (py,lab,c,ex) in ins:
-            o+=(f'<path d="M{x+8} {py-6}h4l5 6-5 6h-4z" fill="#fff"/>' if ex else f'<circle cx="{x+12}" cy="{py}" r="4.5" fill="{c}"/>')
-            if lab:o+=f'<text x="{x+23}" y="{py+4}" class="pl">{lab}</text>'
-        for (py,lab,c,ex) in outs:
-            o+=(f'<path d="M{x+w-17} {py-6}h4l5 6-5 6h-4z" fill="#fff"/>' if ex else f'<circle cx="{x+w-12}" cy="{py}" r="4.5" fill="{c}"/>')
-            if lab:o+=f'<text x="{x+w-23}" y="{py+4}" class="pl" text-anchor="end">{lab}</text>'
-        return o+'</g>'
-    RED,BLUE,GREEN="#a31515","#2160a8","#3d8a2f"
-    CY,GR="#38b6ff","#9be15d"
-    g=""
-    g+=wire(194,72,250,56,"#fff",True)+wire(440,56,490,92,"#fff",True)+wire(440,96,490,132,CY)
-    g+=wire(204,252,280,252,"#fff",True)+wire(204,284,280,288,CY)+wire(230,376,280,316,GR)+wire(470,252,510,272,"#fff",True)
-    g+=node(24,40,170,64,RED,"Event BeginPlay",kind="e",outs=[(72,"","#fff",1)])
-    g+=node(250,24,190,96,BLUE,"Load Cesium Tileset",ins=[(56,"","#fff",1)],outs=[(56,"","#fff",1),(96,"Tileset",CY,0)])
-    g+=node(490,60,200,96,BLUE,"Spawn Apartment",ins=[(92,"","#fff",1),(132,"Location",CY,0)],outs=[(92,"","#fff",1)])
-    g+=node(24,220,180,92,RED,"On Clicked (Room)",kind="e",outs=[(252,"","#fff",1),(284,"Room",CY,0)])
-    g+=node(40,346,190,52,GREEN,"Get Selected Finish",outs=[(376,"Material",GR,0)],pure=True)
-    g+=node(280,220,190,116,BLUE,"Set Material",ins=[(252,"","#fff",1),(288,"Target",CY,0),(316,"Material",GR,0)],outs=[(252,"","#fff",1)])
-    g+=node(510,240,180,72,BLUE,"Move Camera To",ins=[(272,"","#fff",1)],outs=[(272,"","#fff",1)])
-    return f'<svg viewBox="0 0 720 420" role="img" aria-label="Illustrative Unreal Blueprint graph">{g}<text x="700" y="404" text-anchor="end" class="wm">BLUEPRINT</text></svg>'
+        ex=c=="#ffffff"
+        out.insert(0,f'<path d="{path}" stroke="{c}" stroke-width="{2.4 if ex else 2}" fill="none"/>'+(f'<path class="flow" d="{path}" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>' if ex else ""))
+    def pin(x,y,t,side,connected=True):
+        c=T[t]
+        if t=="exec":
+            return f'<path d="M{x-5} {y-6}h5l5 6-5 6h-5z" fill="{"#fff" if connected else "none"}" stroke="#fff" stroke-width="1.3"/>'
+        return f'<circle cx="{x}" cy="{y}" r="4.3" fill="{c if connected else "none"}" stroke="{c}" stroke-width="1.6"/>'
+    def node(key,x,y,w,title,head,ins=(),outs=(),icon="f",sub=""):
+        rows=max(len(ins),len(outs));hh=26 if not sub else 38;h=hh+rows*21+8
+        gid="g"+key
+        o=f'<defs><linearGradient id="{gid}" x1="0" x2="1"><stop offset="0" stop-color="{head}"/><stop offset=".6" stop-color="{head}" stop-opacity=".45"/><stop offset="1" stop-color="{head}" stop-opacity=".1"/></linearGradient></defs>'
+        o+=f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="7" fill="#0c0c0c" fill-opacity=".9" stroke="#000" stroke-width="1.4"/>'
+        o+=f'<path d="M{x+7} {y}H{x+w-7}a7 7 0 0 1 7 7V{y+hh}H{x}V{y+7}a7 7 0 0 1 7-7z" fill="url(#{gid})"/>'
+        o+=f'<rect x="{x+.8}" y="{y+.8}" width="{w-1.6}" height="{h-1.6}" rx="6.3" fill="none" stroke="#ffffff" stroke-opacity=".07"/>'
+        if icon=="e": o+=f'<path d="M{x+9} {y+13}l5.5-5.5 5.5 5.5-5.5 5.5z" fill="none" stroke="#fff" stroke-width="1.5"/>'
+        elif icon=="b": o+=f'<path d="M{x+10} {y+19}v-6l4-4m-4 4 4 4" fill="none" stroke="#fff" stroke-width="1.5"/>'
+        else: o+=f'<text x="{x+10}" y="{y+18}" class="ni">f</text>'
+        o+=f'<text x="{x+26}" y="{y+17.5}" class="nt">{title}</text>'
+        if sub:o+=f'<text x="{x+26}" y="{y+31}" class="ns">{sub}</text>'
+        for i,(lab,t,*rest) in enumerate(ins):
+            py=y+hh+12+i*21;pins[f"{key}.i.{lab or 'x'}"]=(x+10,py,T[t])
+            o+=pin(x+12,py,t,"in",not rest)
+            if lab:o+=f'<text x="{x+24}" y="{py+4}" class="pl">{lab}</text>'
+            if rest and rest[0]:o+=f'<rect x="{x+24+len(lab)*6.2+6}" y="{py-8}" width="{len(rest[0])*6.4+12}" height="16" rx="3" fill="#1a1a1a" stroke="#3a3a3a"/><text x="{x+24+len(lab)*6.2+12}" y="{py+4}" class="pv">{rest[0]}</text>'
+        for i,(lab,t) in enumerate(outs):
+            py=y+hh+12+i*21;pins[f"{key}.o.{lab or 'x'}"]=(x+w-10,py,T[t])
+            o+=pin(x+w-12,py,t,"out")
+            if lab:o+=f'<text x="{x+w-24}" y="{py+4}" class="pl" text-anchor="end">{lab}</text>'
+        out.append(o)
+    def getter(key,x,y,name,t):
+        w=len(name)*6.6+40
+        out.append(f'<rect x="{x}" y="{y}" width="{w}" height="24" rx="12" fill="#151515" stroke="#000" stroke-width="1.4"/><rect x="{x+1}" y="{y+1}" width="{w-2}" height="22" rx="11" fill="none" stroke="{T[t]}" stroke-opacity=".35"/><text x="{x+12}" y="{y+16}" class="pl">{name}</text>'+pin(x+w-12,y+12,t,"out"))
+        pins[f"{key}.o"]=(x+w-10,y+12,T[t])
+    def comment(x,y,w,h,label,col):
+        out.insert(0,f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="3" fill="{col}" fill-opacity=".09" stroke="{col}" stroke-opacity=".35"/><rect x="{x}" y="{y}" width="{w}" height="26" rx="3" fill="{col}" fill-opacity=".35"/><text x="{x+10}" y="{y+18}" class="ct">{label}</text>')
+    RED,BLUE,GREEN,GREY="#b01515","#1f63b8","#3d8f2e","#6b6b6b"
+    # --- setup row
+    node("bp",28,66,150,"Event BeginPlay",RED,outs=[("","exec")],icon="e")
+    getter("st",36,140,"Site Tileset","obj")
+    node("ld",212,66,180,"Load Site Tileset",BLUE,ins=[("","exec"),("Tileset","obj")],outs=[("On Loaded","exec")],sub="Target is BP Site Manager")
+    getter("sp",36,196,"Spawn Point","vec")
+    node("mt",212,164,200,"Make Transform",GREEN,ins=[("Location","vec"),("Rotation","rot",""),],outs=[("Return Value","xf")])
+    node("sa",450,66,290,"SpawnActor BP Apartment",BLUE,ins=[("","exec"),("Class","cls","BP_Apartment"),("Spawn Transform","xf")],outs=[("","exec"),("Return Value","obj")])
+    wire("bp.o.x","ld.i.x");wire("st.o","ld.i.Tileset");wire("ld.o.On Loaded","sa.i.x");wire("sp.o","mt.i.Location");wire("mt.o.Return Value","sa.i.Spawn Transform")
+    comment(14,30,740,232,"Load the site and spawn the apartment","#4a8fe0")
+    # --- picker row
+    node("oc",28,318,180,"On Clicked (Floor)",RED,outs=[("","exec"),("Touched Component","obj")],icon="e")
+    getter("po",40,404,"Picker Open?","bool")
+    node("br",240,318,150,"Branch",GREY,ins=[("","exec"),("Condition","bool")],outs=[("True","exec"),("False","exec")],icon="b")
+    getter("sf",246,412,"Selected Finish","obj")
+    node("sm",420,318,165,"Set Material",BLUE,ins=[("","exec"),("Target","obj"),("Material","obj")],outs=[("","exec")],sub="Target is Primitive Component")
+    node("mc",608,318,140,"Move Camera To",BLUE,ins=[("","exec"),("View","vec","Room")],outs=[("","exec")])
+    wire("oc.o.x","br.i.x");wire("po.o","br.i.Condition");wire("br.o.True","sm.i.x");wire("oc.o.Touched Component","sm.i.Target");wire("sf.o","sm.i.Material");wire("sm.o.x","mc.i.x")
+    comment(14,282,740,170,"Material picker: swap the floor finish the user clicked","#c48a2e")
+    body="".join(out)
+    return f'<svg viewBox="0 0 768 470" role="img" aria-label="Illustration of an Unreal Engine 5 Blueprint graph (mock-up, not real project code)">{body}<text x="752" y="462" text-anchor="end" class="wm">BLUEPRINT</text></svg>'
 
 def build_index():
     global DEPTH
     DEPTH = 0
     tiles = []
     for i, pj in enumerate(PROJECTS):
-        tiles.append(f"""<a class="ptile" href="projects/{pj['slug']}.html" data-mid="{pj['theme'][1]}" data-deep="{pj['theme'][0]}" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
+        tiles.append(f"""<a class="ptile" id="p-{pj['slug']}" href="projects/{pj['slug']}.html" data-mid="{pj['theme'][1]}" data-deep="{pj['theme'][0]}" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
   <span class="ptile-img"><img loading="lazy" onerror="this.style.visibility='hidden'" src="{thumb(pj['cover'], 900)}" alt="{e(pj['title'])} screenshot">{f'<img class="peek" loading="lazy" src="assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}</span>
   <span class="ptile-body">
     <span class="kicker">{e(pj['engine'])}</span>
@@ -377,7 +404,10 @@ def build_index():
         imgs = "".join(f'<img src="assets/thumbs/t{i:02d}.jpg" loading="lazy" alt="">' for i in ids)
         rows.append(f'<div class="mrow"><div class="mtrack">{imgs}{imgs}</div></div>')
     mosaic = '<div class="mosaic" aria-hidden="true">' + "".join(rows) + '</div><div class="mosaic-wash" aria-hidden="true"></div>'
-    html += f"""<section class="hero">
+    rail_items = [("top","Home","#ffd23f","")]+[("projects","Projects","#5aa0ff","")]+[(f"p-{pj['slug']}",pj['title'],pj['theme'][2],"sub") for pj in PROJECTS]+[("now","Currently","#38b6ff",""),("gallery-lab","Gallery & lab","#ff8fc0",""),("contact","Contact","#6fd3c2","")]
+    rail = '<nav class="rail" aria-label="Jump to a section">' + "".join(f'<a class="{c}" href="#{i}" style="--c:{col}"><span>{e(t)}</span></a>' for i,t,col,c in rail_items) + '</nav>\n'
+    html += rail
+    html += f"""<section class="hero" id="top">
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
     <p class="kicker">Game developer · Unity &amp; Unreal Engine</p>
@@ -398,7 +428,7 @@ def build_index():
   </div>
 </section>
 
-<section class="band now">
+<section class="band now" id="now">
   <div class="wrap now-grid">
     <div class="now-copy">
       <p class="kicker">Currently · since 02/2025</p>
@@ -415,8 +445,8 @@ def build_index():
       <div class="win-bar"><span class="win-ico" aria-hidden="true"></span><span class="win-title">BP_ApartmentTour (illustration)</span><span class="win-ctl" aria-hidden="true"><i>&#x2212;</i><i>&#x25A1;</i><i class="x">&#x2715;</i></span></div>
       <div class="ue-tabs" aria-hidden="true"><span class="ue-tab">BP_ApartmentTour</span></div>
       <div class="ue-crumb" aria-hidden="true"><span>BP_ApartmentTour</span><b>›</b><span>Event Graph</span><em>Zoom 1:1</em></div>
-      <div class="bp-body"><span class="demo-badge">Illustration only · not real project code</span>{bp_svg()}</div>
-      <figcaption><b>Mock-up.</b> I drew this to show the kind of Blueprint logic I work on. It isn&#x27;t taken from a real project: client work at 3DVision is under NDA.</figcaption>
+      <div class="bp-body"><span class="demo-badge">AI-assisted illustration · not real project code</span>{bp_svg()}</div>
+      <figcaption><b>Illustration, made with AI tools.</b> A mock-up of the kind of Blueprint logic I work on. It isn&#x27;t from a real project: client work at 3DVision is under NDA.</figcaption>
     </figure>
   </div>
   <div class="wrap">
@@ -428,7 +458,7 @@ def build_index():
   </div>
 </section>
 
-<section class="band lab-teaser">
+<section class="band lab-teaser" id="gallery-lab">
   {mosaic}
   <div class="wrap lab-row">
     <div><h2>Gallery &amp; lab</h2><p class="muted">Every clip, screenshot and character in one place, plus shaders, a tile-map engine and other things I built to learn how they work.</p></div>

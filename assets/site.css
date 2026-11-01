@@ -140,10 +140,14 @@ h1,h2,h3{text-wrap:balance}
   linear-gradient(90deg,#161616 1px,transparent 1px) 0 0/128px 128px,#262626}
 .demo-badge{position:absolute;left:12px;top:10px;padding:5px 10px;border-radius:999px;background:#ffd23f;color:#10131a;font:800 11px/1 var(--f);letter-spacing:.04em;text-transform:uppercase;z-index:1;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 .bp svg{width:100%;height:auto;display:block}
-.bp .nt{font:700 13px var(--f);fill:#fff}
-.bp .ni{font:italic 700 14px Georgia,serif;fill:#fff}
-.bp .pl{font:500 12px var(--f);fill:rgba(255,255,255,.82)}
-.bp .wm{font:900 34px var(--f);fill:rgba(255,255,255,.07);letter-spacing:.06em}
+.bp svg text{font-family:"Roboto","Segoe UI",Arial,sans-serif}
+.bp .nt{font-weight:700;font-size:12.5px;fill:#fff}
+.bp .ns{font-size:10px;font-style:italic;fill:rgba(255,255,255,.55)}
+.bp .pv{font-size:10.5px;fill:#ddd}
+.bp .ct{font-size:13px;fill:#fff;font-weight:400}
+.bp .ni{font:italic 700 13px Georgia,serif!important;fill:#fff}
+.bp .pl{font-size:11px;fill:rgba(255,255,255,.85)}
+.bp .wm{font-weight:900;font-size:30px;fill:rgba(255,255,255,.06);letter-spacing:.04em}
 .bp .flow{stroke-dasharray:4 70;animation:flow 2.2s linear infinite;filter:drop-shadow(0 0 4px #fff)}
 @keyframes flow{to{stroke-dashoffset:-74}}
 .bp figcaption{padding:10px 14px;font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.7);background:#1f1f1f;border-top:1px solid #0f0f0f}
@@ -413,3 +417,22 @@ html.rv .timeline:not(.in)::before{transform:scaleX(0)}
 /* reveal on scroll */
 html.rv .reveal{opacity:0;translate:0 26px;transition:opacity .7s ease var(--d,0s),translate .7s cubic-bezier(.2,.7,.2,1) var(--d,0s)}
 html.rv .reveal.in{opacity:1;translate:0 0}
+
+/* side rail: jump between landing sections */
+section[id],.ptile[id],footer[id]{scroll-margin-top:24px}
+.ptile[id]{scroll-margin-top:90px}
+.rail{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:4px;padding:10px 8px;border-radius:999px;background:rgba(8,10,28,.38);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1)}
+.rail a{position:relative;display:flex;align-items:center;justify-content:flex-end;height:20px;text-decoration:none;--s:11px;transition:height .25s}
+.rail a.sub{height:15px;--s:7px}
+.rail a::after{content:"";width:var(--s);height:var(--s);margin:0 calc((11px - var(--s))/2 + 1px);border-radius:50%;border:2px solid var(--c);background:transparent;transition:transform .25s,background .25s,box-shadow .25s}
+.rail a.sub::after{border-width:0;background:var(--c);opacity:.55}
+.rail a.on::after{background:var(--c);transform:scale(1.35);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 30%,transparent),0 0 12px var(--c)}
+.rail a.sub.on::after{opacity:1;transform:scale(1.6)}
+.rail span{position:absolute;right:30px;white-space:nowrap;padding:5px 11px;border-radius:999px;background:rgba(8,10,28,.85);border:1px solid color-mix(in srgb,var(--c) 55%,transparent);color:#fff;font:700 13px/1 var(--f);opacity:0;translate:8px 0;pointer-events:none;transition:opacity .2s,translate .2s}
+.rail span::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c);margin-right:7px;vertical-align:1px}
+@media (hover:hover){.rail:hover a,.rail:focus-within a{height:27px}.rail:hover span,.rail:focus-within span{opacity:1;translate:0 0;pointer-events:auto}}
+.rail.flash a.on span{opacity:1;translate:0 0}
+.rail span{font-size:12.5px;padding:4px 10px}
+.rail a:hover span{background:color-mix(in srgb,var(--c) 30%,#080a1c)}
+@media (max-width:700px){.rail{right:5px;padding:7px 4px;gap:1px}.rail a{height:22px}.rail a.sub{height:17px}}
+body:has(.viewer:not([hidden])) .rail{display:none}
