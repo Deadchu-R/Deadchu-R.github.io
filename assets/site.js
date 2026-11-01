@@ -198,6 +198,31 @@
   /* specs open on wide screens, folded on phones */
   if(matchMedia("(min-width: 861px)").matches)document.querySelectorAll("details[data-open-wide]").forEach(d=>d.open=true);
 
+  /* ---------- More code: highlight the card in focus ----------
+     one card per row (phones): the card nearest the middle of the screen, with a dead zone so it never flickers.
+     several cards per row (desktop): only the card under the mouse, so scrolling can't make it jump. */
+  const repos=[...document.querySelectorAll(".repo")];
+  if(repos.length){
+    const multiRow=()=>repos.length>1&&Math.abs(repos[0].offsetTop-repos[1].offsetTop)<4;
+    const set=el=>repos.forEach(r=>r.classList.toggle("is-active",r===el));
+    let hover=null,rafR=0;
+    const pickR=()=>{
+      rafR=0;
+      if(multiRow()){set(hover);return}
+      const mid=innerHeight/2,box=repos[0].parentElement.getBoundingClientRect();
+      if(box.bottom<0||box.top>innerHeight){set(null);return}
+      let best=null,bd=1e9;
+      repos.forEach(r=>{const b=r.getBoundingClientRect();const d=Math.abs((b.top+b.bottom)/2-mid);if(d<bd){bd=d;best=r}});
+      const prev=repos.find(r=>r.classList.contains("is-active"));
+      if(prev&&prev!==best){const pb=prev.getBoundingClientRect();if(Math.abs((pb.top+pb.bottom)/2-mid)-bd<60)best=prev}
+      if(bd>innerHeight*.6)best=null;
+      set(best);
+    };
+    repos.forEach(r=>{r.addEventListener("mouseenter",()=>{hover=r;if(multiRow())set(r)});r.addEventListener("mouseleave",()=>{if(hover===r)hover=null;if(multiRow())set(null)})});
+    addEventListener("scroll",()=>{if(!rafR)rafR=requestAnimationFrame(pickR)},{passive:true});
+    addEventListener("resize",pickR);pickR();
+  }
+
   /* ---------- gallery mosaic: new random order on every visit ---------- */
   const mos=$(".mosaic[data-pool]");
   if(mos){
