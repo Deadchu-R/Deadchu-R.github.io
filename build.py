@@ -192,6 +192,12 @@ FULL = {  # Drive id of a full video -> local compressed file in assets/full
 }
 
 
+ART_CREDIT_SLUGS = {"musical-level", "shards", "boss-rush"}
+ART_CREDIT = "Art and animation by the team's artists. I'm not an artist: my part was the code and game design."
+ART_CREDIT_SHORT = "Art by the team's artists, not by me."
+def credit_attr(slug):
+    return f' data-credit="{e(ART_CREDIT_SHORT)}"' if slug in ART_CREDIT_SLUGS else ""
+
 def play_attrs(drive_id, title, cap="The full gameplay video."):
     """Attributes for a button that opens a full video: local file if present, Drive otherwise."""
     name = FULL.get(drive_id)
@@ -273,7 +279,7 @@ def footer(depth):
 <div class="wrap small muted">© {SITE['name']}</div>
 </footer>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
-  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden>i</button></div><div class="viewer-more" id="viewerMore"><p id="viewerMoreText"></p><a id="viewerLink" href="#">Open the project page →</a></div></div><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div>
+  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden>i</button></div><p class="viewer-credit" id="viewerCredit" hidden></p><div class="viewer-more" id="viewerMore"><p id="viewerMoreText"></p><a id="viewerLink" href="#">Open the project page →</a></div></div><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div>
   <div class="viewer-stage" id="viewerStage"></div>
   <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
@@ -300,13 +306,13 @@ def more_attrs(text, href=""):
 FS_ICON = '<span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span>'
 
 
-def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False, more=""):
+def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False, more="", credit=""):
     p = "../" * depth
     poster = f"{p}assets/posters/{file.replace('.mp4', '.jpg')}"
     if not (ROOT / "assets/posters" / file.replace(".mp4", ".jpg")).exists():
         poster = thumb(did, 960)
     src = f"{p}assets/clips/{file}" if has_clip(file) else ""
-    return (f'<button class="clip{" big" if big else ""}" type="button"{f' data-group="{group}"' if group else ""}{" data-still" if still else ""} data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}"{more} aria-label="Play video: {e(label)}">'
+    return (f'<button class="clip{" big" if big else ""}" type="button"{f' data-group="{group}"' if group else ""}{" data-still" if still else ""} data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}"{more}{credit} aria-label="Play video: {e(label)}">'
             f'<video muted loop playsinline preload="none" poster="{poster}"></video>'
             f'{FS_ICON}</button>')
 
@@ -509,7 +515,7 @@ def build_project(i, pj):
     for title, intro, clips in pj["sections"]:
         sec_more = more_attrs(more_text(pj, (title, intro)))
         tiles = "".join(
-            f'<figure class="mech">{clip_tile(lbl, f, d, depth, big=(len(clips) == 1), cap=cap, more=sec_more)}<figcaption><b>{e(lbl)}</b>{(" " + e(cap)) if cap else ""}</figcaption></figure>'
+            f'<figure class="mech">{clip_tile(lbl, f, d, depth, big=(len(clips) == 1), cap=cap, more=sec_more, credit=credit_attr(pj['slug']))}<figcaption><b>{e(lbl)}</b>{(" " + e(cap)) if cap else ""}</figcaption></figure>'
             for lbl, cap, f, d in clips)
         sections.append(f"""<section class="mech-sec">
   <h2>{e(title)}</h2>{f'<p class="muted center">{e(intro)}</p>' if intro else ''}
@@ -522,7 +528,7 @@ def build_project(i, pj):
             f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-title="Screenshot" data-cap="{e(SHOT_CAPS.get(s, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s in pj["shots"]) + "</div></section>"
     full = ""
     if pj["full"]:
-        full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}>▶ Play full video</button></section>'
+        full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}{credit_attr(pj['slug'])}>▶ Play full video</button></section>'
     cast = ""
     if pj.get("cast"):
         cast = '<section class="mech-sec"><h2>Characters</h2><div class="cast">' + "".join(
@@ -541,6 +547,7 @@ def build_project(i, pj):
 </section>
 
 <div class="project">
+  {f'<div class="wrap art-wrap"><p class="art-note"><span aria-hidden="true">🎨</span>{e(ART_CREDIT)}</p></div>' if pj['slug'] in ART_CREDIT_SLUGS else ''}
   <section class="wrap intro">
     <div class="intro-text">
       <p class="hook">{e(pj['hook'])}</p>
@@ -600,13 +607,13 @@ def build_gallery():
         for sec_title, intro, clips in pj["sections"]:
             m = more_attrs(more_text(pj, (sec_title, intro)), href)
             for lbl, cap, f, d in clips:
-                items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True, more=m), pj["title"], lbl, cap, pj["slug"], "video", m))
+                items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True, more=m, credit=credit_attr(pj["slug"])), pj["title"], lbl, cap, pj["slug"], "video", m))
         if pj["full"]:
             name = FULL.get(pj["full"])
             poster = f"assets/posters/full-{name}.jpg" if name and (ROOT / f"assets/posters/full-{name}.jpg").exists() else thumb(pj["cover"], 900)
             src = f"assets/full/{name}.mp4" if name and (ROOT / f"assets/full/{name}.mp4").exists() else ""
             cap = "The full gameplay video."
-            inner = (f'<button class="clip" type="button" data-group="all" data-still data-src="{src}" data-drive="{pj["full"]}" data-title="{e(pj["title"])} · full video" data-cap="{cap}"{more_attrs(more_text(pj), href)} aria-label="Play the full {e(pj["title"])} video">'
+            inner = (f'<button class="clip" type="button" data-group="all" data-still data-src="{src}" data-drive="{pj["full"]}" data-title="{e(pj["title"])} · full video" data-cap="{cap}"{more_attrs(more_text(pj), href)}{credit_attr(pj["slug"])} aria-label="Play the full {e(pj["title"])} video">'
                      f'<video muted playsinline preload="none" poster="{poster}"></video><span class="tag">Full video</span>{FS_ICON}</button>')
             items.append(card(inner, pj["title"], "Full video", cap, pj["slug"], "video", more_attrs(more_text(pj), href)))
         for sid in pj["shots"]:

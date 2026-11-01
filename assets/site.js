@@ -29,7 +29,7 @@
   }
 
   /* ---------- viewer: arrows move through the clicked item's group ---------- */
-  const viewer=$("#viewer"),stage=$("#viewerStage"),title=$("#viewerTitle"),cap=$("#viewerCap"),infoBtn=$("#viewerInfo"),moreText=$("#viewerMoreText"),moreLink=$("#viewerLink");
+  const viewer=$("#viewer"),stage=$("#viewerStage"),title=$("#viewerTitle"),cap=$("#viewerCap"),infoBtn=$("#viewerInfo"),credit=$("#viewerCredit"),moreText=$("#viewerMoreText"),moreLink=$("#viewerLink");
   let last=null,gallery=[],gi=0,open_=false,fsOwned=false;
   const pauseAll=()=>{document.querySelectorAll(".clip video").forEach(x=>x.pause());heroVideo&&heroVideo.pause()};
   const isFs=()=>document.fullscreenElement||document.webkitFullscreenElement;
@@ -76,6 +76,7 @@
     const more=el.dataset.more||"";moreText.textContent=more;
     moreLink.hidden=!el.dataset.href;if(el.dataset.href)moreLink.href=el.dataset.href;
     infoBtn.hidden=!more;
+    credit.textContent=el.dataset.credit||"";credit.hidden=!el.dataset.credit||!vid;
     if(vid)return playInStage(el.dataset.title,el.dataset.src,el.dataset.drive||el.dataset.playDrive);
     stage.innerHTML=`<img src="${el.dataset.full}" alt="${(el.querySelector("img")||{}).alt||""}">`;
     return null;
