@@ -601,3 +601,10 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 @media (max-width:480px){.hero-links a svg{width:15px;height:15px}}
 .band.more-code{isolation:isolate}
 .band.more-code::before{content:"";position:absolute;left:0;right:0;top:0;height:110px;z-index:-1;pointer-events:none;background:linear-gradient(var(--deep),transparent)}
+
+/* icons in section headings (same as the hero quick links) */
+.h-ico{display:inline-grid;place-items:center;width:1.05em;height:1.05em;margin-right:.32em;vertical-align:-.12em;border-radius:.26em;color:var(--c);
+  background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.h-ico svg{width:62%;height:62%;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 60%,transparent))}
+.exp-kicker{display:flex;align-items:center;color:#7fd1ff}
+.exp-kicker .h-ico{width:28px;height:28px;margin-right:10px;border-radius:8px;vertical-align:0}
