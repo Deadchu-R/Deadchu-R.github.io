@@ -49,7 +49,11 @@ PROJECTS = [
          hook="A man goes back to his hometown to face what happened there.",
          about=["Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma.",
                 "The team aimed for a colorful yet unsettling atmosphere, reflecting distorted memories and haunting experiences."],
-         did=["Architected a modular dialogue system with ScriptableObjects, so writers add scenes as data", "Text types out letter by letter and fires an OnLetterTyped event that other systems hook into", "Built the UI interactions that move the story forward"],
+         did=["A data-driven dialogue system built on ScriptableObjects: a notebook made of pages, each tied to a character's info",
+              "Typewriter text that fires events on every letter, every word and every finished sentence",
+              "Those events drive retro talking sounds and a two-sprite mouth animation (open / closed) for the speaker",
+              "Notebook options link to other entries to unlock different kinds of dialogue",
+              "The UI interactions that move the story forward"],
          sections=[
              ("The dialogue system", "Conversations are data, not code.", [
                  ("Dialogue in action", "ScriptableObject-driven conversations with a typewriter effect.", "shards-dialogue.mp4", "1V9Hw7lS-zYJeBm6_fuOe69KBtvrrVjJk"),
@@ -84,14 +88,18 @@ PROJECTS = [
          hook="Sneak into a dictator's compound, steal the chip, get out alive.",
          about=["The final project for my Unreal Engine C++ course: the player infiltrates a military base to retrieve a valuable chip.",
                 "I designed an unconventional base with a dictatorship atmosphere using Unreal Marketplace assets, and built the mechanics in a mix of C++ and Blueprints."],
-         did=["Programmed raycast-based shooting with recoil feedback, and dynamic weapon pickups", "Developed enemy AI with detection logic and patrol routes for stealth play", "Built the chip objective and designed the compound layout"],
+         did=["Raycast-based shooting with recoil, plus weapon pickups",
+              "A shot event that other systems listen to, so sound and visual effects play after every shot without the weapon knowing about them",
+              "Enemies with health that patrol their routes searching for the player",
+              "A detection meter that fills while an enemy sees you: escape or shoot them before it is full, or you lose",
+              "Built the whole landscape and compound myself from Marketplace assets"],
          sections=[
              ("Gunplay", "", [
                  ("Aiming & shooting", "Raycast shots with recoil feedback.", "fps-shooting.mp4", "1n41GdjA2EyP8mzpEkXMg3Bc8eSyndK3N"),
                  ("Weapon pickup", "Grab a new weapon on the fly.", "fps-pickup.mp4", "1DwSYEwlV_wUiXQb3PpXpJhq6zZMLcemI"),
              ]),
              ("Stealth & objective", "", [
-                 ("Detected", "Patrolling guards spot the player.", "fps-detected.mp4", "1S2__pZSY-X0TT8gnz3JyDHFArXmIPWk0"),
+                 ("Detected", "A guard sees the player and the detection meter starts to fill.", "fps-detected.mp4", "1S2__pZSY-X0TT8gnz3JyDHFArXmIPWk0"),
                  ("The chip", "The interactable objective.", "fps-chip.mp4", "1woY9O2N8uW1xJGtTdQa_9ZSufwajvgii"),
              ]),
          ],
@@ -103,7 +111,9 @@ PROJECTS = [
          hook="My hometown bar, rebuilt brighter. Find the key, talk to the regulars, finish the quest.",
          about=["The final project for my Unreal Engine Blueprints course: an adventure game set in a bar, where the player must retrieve a key and complete a quest.",
                 "Inspired by my hometown bar, CharlieBar, I blended its atmosphere with a modern, brightly lit design."],
-         did=["Implemented a dialogue and quest system in Blueprints", "Designed and dressed the bar environment"],
+         did=["A Blueprint dialogue system where the player's answers decide which quest they get",
+              "A quest system that tracks the active mission and completes it",
+              "Built and dressed the bar environment"],
          sections=[
              ("Quest flow", "", [
                  ("Dialogue & quest taking", "Talk to an NPC and pick up the quest.", "almond-dialogue.mp4", "1MLFl9JnF-W2McG5Oifk0kycXAbX6_3wq"),
@@ -118,17 +128,17 @@ PROJECTS = [
 ORDER = ["infiltration", "shards", "boss-rush", "almond-bar", "musical-level"]
 PROJECTS = sorted(PROJECTS, key=lambda pj: ORDER.index(pj["slug"]))
 TECH = {
-    "infiltration": ["C++", "Blueprints", "Unreal Engine 5", "Line-trace shooting", "Enemy AI: detection & patrol", "Interaction system"],
-    "shards": ["C#", "Unity", "ScriptableObjects", "Data-driven design", "C# events (OnLetterTyped)", "Coroutines", "UI systems"],
+    "infiltration": ["C++", "Blueprints", "Unreal Engine 5", "Raycasts", "Event-driven feedback", "Enemy AI: patrol & sight", "Detection meter", "Health & damage", "Level building"],
+    "shards": ["C#", "Unity", "ScriptableObjects", "Data-driven design", "C# events: letter / word / sentence", "Branching dialogue", "Coroutines", "UI"],
     "boss-rush": ["Team leadership", "Code oversight", "C#", "Unity", "Grid-based combat"],
-    "almond-bar": ["Blueprints", "Unreal Engine", "Dialogue system", "Quest system"],
+    "almond-bar": ["Blueprints", "Unreal Engine", "Branching dialogue", "Quest system", "Level building"],
     "musical-level": ["C#", "Unity", "Gameplay scripting"],
 }
 CARD_TECH = {
-    "infiltration": "C++ & Blueprints, line-trace shooting with recoil, weapon pickups, enemy AI with detection and patrols",
-    "shards": "Data-driven dialogue system, ScriptableObjects, C# events, typewriter text, UI flow",
+    "infiltration": "C++ & Blueprints, raycast shooting, event-driven shot feedback, patrolling enemy AI, detection meter",
+    "shards": "ScriptableObject dialogue system, letter / word / sentence events, talking sounds & mouth animation, branching notebook",
     "boss-rush": "9-month team lead, code oversight, grid-based tactical combat in Unity",
-    "almond-bar": "Blueprints, dialogue system, quest system, interactable objects",
+    "almond-bar": "Blueprints, branching dialogue that decides your quest, quest system, level building",
     "musical-level": "Team production, C# gameplay scripting, beat-driven platforming mechanics",
 }
 CARD_ROLE = {"infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & team lead",
@@ -476,7 +486,7 @@ def build_index():
     html += f"""<section class="hero" id="top">
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
-    <p class="kicker">Game developer · Unity &amp; Unreal Engine</p>
+    <p class="kicker">Gameplay programmer · Unity C# &amp; Unreal C++ / Blueprints</p>
     <h1>Roee Tal</h1>
     <p class="lead">I build the systems players touch: combat, AI, dialogue and UI. Unreal developer at 3DVision, trained in game design and development at Tiltan.</p>
     <div class="btns">
@@ -489,7 +499,7 @@ def build_index():
 
 <section class="band blue palette-band" id="projects">
   <div class="wrap">
-    <div class="sec-head"><h2>Projects</h2><p class="muted">Five games from design to code. Each opens its own page with clips.</p></div>
+    <div class="sec-head"><h2>Projects</h2><p class="muted">Five games and the systems I coded for them. Each opens its own page with clips.</p></div>
     <div class="ptiles">{''.join(tiles)}</div>
   </div>
 </section>
