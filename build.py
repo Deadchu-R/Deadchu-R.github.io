@@ -85,7 +85,7 @@ PROJECTS = [
          shots=[]),
     dict(slug="infiltration", title="Infiltration", sub="FPS level in Unreal Engine 5",
          engine="Unreal 5 · C++ & Blueprints", role="Solo developer", when="06/2024 – 08/2024", context="Final project · Unreal C++ course",
-         theme=("#14261f", "#2f5a45", "#e8c36a"), cover="1wghjod73Nu2WRcwxH32Q5rEhXCIN0K6e",
+         theme=("#14261f", "#2f5a45", "#e8c36a"), cover="infiltration-cover",
          hook="Sneak into a dictator's compound, steal the chip, get out alive.",
          about=["The final project for my Unreal Engine C++ course: the player infiltrates a military base to retrieve a valuable chip.",
                 "I designed an unconventional base with a dictatorship atmosphere using Unreal Marketplace assets, and built the mechanics in a mix of C++ and Blueprints."],
@@ -477,6 +477,35 @@ def mosaic_pool(g=None):
         out.append(f"assets/thumbs/{name}")
     return out
 
+MORE_CODE = [  # (title, tech, what it is, repo)
+    ("Reusable Unity tools", ["C#", "Unity", "ScriptableObjects"],
+     "The Shards dialogue system packaged for reuse, a chained quest system that strikes out finished quests, and a UI manager that wires panels by enum and dictionary.",
+     "https://github.com/Deadchu-R/Tools"),
+    ("Post office queue simulation", ["C++", "STL", "File I/O"],
+     "A console simulation of a post office: a customer queue with priority for elderly customers, officers matched by service type, waiting times, and records kept in text files.",
+     "https://github.com/Deadchu-R/PostOfficeProject"),
+    ("State pattern: escape-room camera", ["C#", "Unity", "State pattern"],
+     "A camera state machine that moves between the room's viewpoints, with clickable objects and open conditions.",
+     "https://github.com/Deadchu-R/EscapeRoom-DesignPatterns-"),
+    ("Observer pattern: adventure game", ["C#", "Unity", "Observer pattern"],
+     "A small adventure game where pickups and enemies notify the game through an observer / notifier setup.",
+     "https://github.com/Deadchu-R/DesignPatternsAdventureGame"),
+]
+
+def more_code_html():
+    cards = "".join(
+        f'<a class="repo" href="{url}" target="_blank" rel="noopener"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>{e(url.split("github.com/")[1])}</span>'
+        f'<span class="repo-body"><span class="repo-title">{e(t)}</span><span class="repo-tech">{"".join(f"<span>{e(x)}</span>" for x in tech)}</span>'
+        f'<span class="repo-desc">{e(d)}</span><span class="more">View on GitHub →</span></span></a>'
+        for t, tech, d, url in MORE_CODE)
+    return f"""<section class="band more-code" id="more-code">
+  <div class="wrap">
+    <div class="sec-head"><h2>More code</h2><p class="muted">Smaller projects and coursework, straight to the source on GitHub.</p></div>
+    <div class="repos">{cards}</div>
+  </div>
+</section>
+"""
+
 def build_index():
     global DEPTH
     DEPTH = 0
@@ -502,7 +531,7 @@ def build_index():
     # screenshot and video poster in the gallery; site.js reshuffles it on each visit
     mosaic = mosaic_html(mosaic_pool())
     PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
-    jump_items = [("top","Home","#3d84e6","")]+[("projects","Projects",PROJ_GRAD,"")]+[(f"p-{pj['slug']}",pj['title'],pj['theme'][2],"sub") for pj in PROJECTS]+[("now","Currently at 3DVision","#38b6ff",""),("gallery-lab","Gallery &amp; lab","#ff8fc0",""),("contact","Contact","#6fd3c2","")]
+    jump_items = [("top","Home","#3d84e6","")]+[("projects","Projects",PROJ_GRAD,"")]+[(f"p-{pj['slug']}",pj['title'],pj['theme'][2],"sub") for pj in PROJECTS]+[("more-code","More code","#9be15d",""),("now","Currently at 3DVision","#38b6ff",""),("gallery-lab","Gallery &amp; lab","#ff8fc0",""),("contact","Contact","#6fd3c2","")]
     links = "".join(f'<a class="{c}" href="#{i}" style="--c:{col}"><i></i>{t}</a>' for i,t,col,c in jump_items)
     html += f'''<div class="jump" id="jump">
   <nav class="jump-panel" id="jumpPanel" aria-label="Page sections" hidden><p class="jump-h">Jump to</p>{links}<p class="jump-h pages">Pages</p><div class="jump-pages"><a href="gallery.html">Gallery</a><a href="lab.html">Lab</a><a href="Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a></div></nav>
@@ -530,7 +559,7 @@ def build_index():
   </div>
 </section>
 
-<section class="band now" id="now">
+{more_code_html()}<section class="band now" id="now">
   <div class="wrap now-grid">
     <div class="now-copy">
       <p class="kicker">Currently · since 02/2025</p>
