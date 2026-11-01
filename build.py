@@ -123,7 +123,7 @@ PROJECTS = [
          full="1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC",
          shots=["1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41", "17zGlB0VBU26ZydIbjMk7YcrRy41PSAut", "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC", "1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh"]),
     dict(slug="tile-map-engine", title="Tile-Map Engine", sub="A C# game engine built from scratch",
-         engine="C# · .NET console", role="Programmer", when="Tiltan", context="Final project · C# 2 course",
+         engine="C# · .NET console", role="Programmer", when="2023 · 2nd year, Tiltan", context="Final project · Programming 2 course",
          theme=("#2b1608", "#8a4b12", "#ffc36b"), cover="tilemap-cover",
          hook="A small game engine in plain C#, and a two-player chess game running on it.",
          about=["A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works."],
