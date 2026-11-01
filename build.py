@@ -252,6 +252,8 @@ def topbar(depth, current=""):
 def footer(depth):
     p = "../" * depth
     return f"""<footer class="foot" id="contact">
+<svg class="foot-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 260 80 520 0 760 30 S 1220 70 1440 22 V70 H0Z"/></svg>
+<div class="peekcat" aria-hidden="true"><img src="{p}assets/art/musical-cat.webp" alt="" loading="lazy"></div>
 <div class="wrap foot-grid">
   <div>
     <h2>Let's make games together</h2>
@@ -309,6 +311,40 @@ def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False,
             f'{FS_ICON}</button>')
 
 
+
+def bp_svg():
+    def wire(x1,y1,x2,y2,c,exec_=False):
+        d=max(40,abs(x2-x1)*.45)
+        path=f"M{x1} {y1} C{x1+d} {y1},{x2-d} {y2},{x2} {y2}"
+        w=f'<path d="{path}" stroke="{c}" stroke-width="{2.6 if exec_ else 2}" fill="none" opacity=".9"/>'
+        if exec_: w+=f'<path class="flow" d="{path}" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round"/>'
+        return w
+    def node(x,y,w,h,col,title,ins=(),outs=(),pure=False):
+        o=f'<g><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" fill="rgba(18,20,26,.92)" stroke="rgba(255,255,255,.14)"/>'
+        hh=22 if pure else 26
+        o+=f'<path d="M{x+8} {y}H{x+w-8}a8 8 0 0 1 8 8V{y+hh}H{x}V{y+8}a8 8 0 0 1 8-8z" fill="{col}"/>'
+        o+=f'<text x="{x+12}" y="{y+hh-8}" class="nt">{title}</text>'
+        for (py,lab,c,ex) in ins:
+            o+=(f'<path d="M{x+8} {py-5}l7 5-7 5z" fill="#fff"/>' if ex else f'<circle cx="{x+11}" cy="{py}" r="4.5" fill="none" stroke="{c}" stroke-width="2"/>')
+            if lab:o+=f'<text x="{x+22}" y="{py+4}" class="pl">{lab}</text>'
+        for (py,lab,c,ex) in outs:
+            o+=(f'<path d="M{x+w-15} {py-5}l7 5-7 5z" fill="#fff"/>' if ex else f'<circle cx="{x+w-11}" cy="{py}" r="4.5" fill="{c}"/>')
+            if lab:o+=f'<text x="{x+w-22}" y="{py+4}" class="pl" text-anchor="end">{lab}</text>'
+        return o+'</g>'
+    RED,BLUE,GREEN="#9b2226","#24527a","#3c6e37"
+    CY,GR="#38b6ff","#9be15d"
+    g=""
+    g+=wire(194,72,250,56,"#fff",True)+wire(440,56,490,92,"#fff",True)+wire(440,96,490,132,CY)
+    g+=wire(204,252,280,252,"#fff",True)+wire(204,284,280,288,CY)+wire(230,376,280,316,GR)+wire(470,252,510,272,"#fff",True)
+    g+=node(24,40,170,64,RED,"Event BeginPlay",outs=[(72,"","#fff",1)])
+    g+=node(250,24,190,96,BLUE,"Load Cesium Tileset",ins=[(56,"","#fff",1)],outs=[(56,"","#fff",1),(96,"Tileset",CY,0)])
+    g+=node(490,60,200,96,BLUE,"Spawn Apartment",ins=[(92,"","#fff",1),(132,"Location",CY,0)],outs=[(92,"","#fff",1)])
+    g+=node(24,220,180,92,RED,"On Clicked (Room)",outs=[(252,"","#fff",1),(284,"Room",CY,0)])
+    g+=node(40,346,190,52,GREEN,"Get Selected Finish",outs=[(376,"Material",GR,0)],pure=True)
+    g+=node(280,220,190,116,BLUE,"Set Material",ins=[(252,"","#fff",1),(288,"Target",CY,0),(316,"Material",GR,0)],outs=[(252,"","#fff",1)])
+    g+=node(510,240,180,72,BLUE,"Move Camera To",ins=[(272,"","#fff",1)],outs=[(272,"","#fff",1)])
+    return f'<svg viewBox="0 0 720 420" role="img" aria-label="Illustrative Unreal Blueprint graph">{g}<text x="700" y="404" text-anchor="end" class="wm">BLUEPRINT</text></svg>'
+
 def build_index():
     global DEPTH
     DEPTH = 0
@@ -359,17 +395,29 @@ def build_index():
 
 <section class="band now">
   <div class="wrap now-grid">
-    <div>
+    <div class="now-copy">
       <p class="kicker">Currently · since 02/2025</p>
       <h2>Unreal Developer at 3DVision</h2>
       <p class="muted">Tel Aviv · real-time interactive simulation apps for real-estate companies</p>
+      <div class="tools"><span class="tool"><i style="--c:#e8e8e8"></i>Unreal Engine 5</span><span class="tool"><i style="--c:#3d8bff"></i>Blueprints</span><span class="tool"><i style="--c:#6fd3c2"></i>Cesium for Unreal</span></div>
+      <ul class="ticks">
+        <li>Develop and integrate interactive features based on client requests</li>
+        <li>Debug and optimize complex logic and Blueprints across multiple projects</li>
+        <li>Build custom UI elements and functionality for each client</li>
+      </ul>
     </div>
-    <ul class="ticks">
-      <li>Develop and integrate interactive features based on client requests</li>
-      <li>Debug and optimize complex logic and Blueprints across multiple projects</li>
-      <li>Build custom UI elements and functionality for each client</li>
-      <li>Before that: game design and development at Tiltan, Haifa (2021–2024)</li>
-    </ul>
+    <figure class="bp">
+      <div class="bp-bar"><span class="dots"><i></i><i></i><i></i></span>BP_ApartmentTour · Event Graph</div>
+      <div class="bp-body">{bp_svg()}</div>
+      <figcaption>An illustration of the kind of logic I build. Client projects are under NDA.</figcaption>
+    </figure>
+  </div>
+  <div class="wrap">
+    <ol class="timeline">
+      <li><span class="when">2021–2024</span><b>Tiltan, Haifa</b><span class="muted">Game design &amp; development. Five games in Unity and Unreal.</span></li>
+      <li><span class="when">02/2025</span><b>3DVision, Tel Aviv</b><span class="muted">Unreal developer on real-time simulation apps.</span></li>
+      <li class="tl-next"><span class="when">Next</span><b>Your team?</b><a class="muted" href="#contact">Open to Unity and Unreal roles →</a></li>
+    </ol>
   </div>
 </section>
 

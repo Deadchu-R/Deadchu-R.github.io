@@ -154,6 +154,17 @@
     addEventListener("resize",pick);pick();
   }
 
+  /* ---------- reveal on scroll ---------- */
+  if("IntersectionObserver" in window&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const els=[];
+    const add=(sel,stagger)=>document.querySelectorAll(sel).forEach((el,i)=>{el.classList.add("reveal");if(stagger)el.style.setProperty("--d",(i%3)*.1+"s");els.push(el)});
+    add(".sec-head");add(".ptile",1);add(".now-copy");add(".bp");add(".timeline li",1);add(".lab-row");add(".foot-grid > *",1);
+    const extra=[...document.querySelectorAll(".timeline,.foot")];
+    document.documentElement.classList.add("rv");
+    const ro=new IntersectionObserver(en=>en.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");ro.unobserve(x.target)}}),{threshold:.15,rootMargin:"0px 0px -8% 0px"});
+    [...els,...extra].forEach(el=>ro.observe(el));
+  }
+
   /* ---------- gallery filters ---------- */
   const grid=$("#ggrid"),gcount=$("#gcount");
   function filter(chip){
