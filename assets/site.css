@@ -50,7 +50,7 @@ h1,h2,h3{text-wrap:balance}
 .wave path{fill:var(--wave,var(--mid))}
 
 /* landing hero */
-.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden;--wave:var(--mid);background:var(--deep)}
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden;--wave:var(--band-top,var(--mid));background:var(--deep)}
 .hero-media{position:absolute;inset:0}
 .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2}
 .slides img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
@@ -312,3 +312,9 @@ h1,h2,h3{text-wrap:balance}
 .chips-row .chip.themed{border-color:color-mix(in srgb,var(--accent) 60%,transparent);background:color-mix(in srgb,var(--mid) 70%,transparent)}
 .chips-row .chip.themed[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--ink)}
 .gitem .zoom.art::before{display:none}
+
+/* projects band: background takes on the palette of the card you're looking at */
+@property --band-top{syntax:"<color>";inherits:true;initial-value:#1758b0}
+@property --band-bottom{syntax:"<color>";inherits:true;initial-value:#0c2f6e}
+:root{--band-top:#1758b0;--band-bottom:#0c2f6e;transition:--band-top .8s ease,--band-bottom .8s ease}
+.band.palette-band{background:linear-gradient(180deg,var(--band-top) 0%,color-mix(in srgb,var(--band-top) 55%,var(--band-bottom)) 45%,var(--band-bottom) 88%,var(--deep) 100%)}

@@ -134,6 +134,25 @@
   stage.addEventListener("touchstart",e=>{sx=e.target.tagName==="VIDEO"&&e.touches[0].clientY>stage.clientHeight-70?null:e.touches[0].clientX},{passive:true});
   stage.addEventListener("touchend",e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)step(dx<0?1:-1);sx=null},{passive:true});
 
+  /* ---------- projects band follows the card in view ---------- */
+  const band=$(".palette-band");
+  if(band){
+    const cards=[...band.querySelectorAll(".ptile")],root=document.documentElement;
+    let raf=0,cur=null;
+    const pick=()=>{
+      raf=0;
+      const r=band.getBoundingClientRect(),vh=innerHeight;
+      if(r.bottom<0||r.top>vh)return;
+      const mid=vh/2;let best=null,bd=1e9;
+      cards.forEach(c=>{const b=c.getBoundingClientRect();const d=Math.abs((b.top+b.bottom)/2-mid);if(d<bd){bd=d;best=c}});
+      const before=cards.length&&cards[0].getBoundingClientRect().top>vh*.75;
+      const top=before?"#1758b0":best.dataset.mid,bottom=before?"#0c2f6e":best.dataset.deep;
+      if(top!==cur){cur=top;root.style.setProperty("--band-top",top);root.style.setProperty("--band-bottom",bottom)}
+    };
+    addEventListener("scroll",()=>{if(!raf)raf=requestAnimationFrame(pick)},{passive:true});
+    addEventListener("resize",pick);pick();
+  }
+
   /* ---------- gallery filters ---------- */
   const grid=$("#ggrid"),gcount=$("#gcount");
   function filter(chip){

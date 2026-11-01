@@ -314,7 +314,7 @@ def build_index():
     DEPTH = 0
     tiles = []
     for i, pj in enumerate(PROJECTS):
-        tiles.append(f"""<a class="ptile" href="projects/{pj['slug']}.html" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
+        tiles.append(f"""<a class="ptile" href="projects/{pj['slug']}.html" data-mid="{pj['theme'][1]}" data-deep="{pj['theme'][0]}" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
   <span class="ptile-img"><img loading="lazy" onerror="this.style.visibility='hidden'" src="{thumb(pj['cover'], 900)}" alt="{e(pj['title'])} screenshot">{f'<img class="peek" loading="lazy" src="assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}</span>
   <span class="ptile-body">
     <span class="kicker">{e(pj['engine'])}</span>
@@ -343,7 +343,7 @@ def build_index():
   {WAVE}
 </section>
 
-<section class="band blue" id="projects">
+<section class="band blue palette-band" id="projects">
   <div class="wrap">
     <div class="sec-head"><h2>Projects</h2><p class="muted">Five games from design to code. Each opens its own page with clips.</p></div>
     <div class="ptiles">{''.join(tiles)}</div>
