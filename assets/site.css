@@ -689,3 +689,9 @@ body:has(.viewer:not([hidden])) .jump{display:none}
   .repo-peek::after{content:"";position:absolute;left:0;right:0;bottom:0;height:45%;background:linear-gradient(transparent,#0a0d12);pointer-events:none}
   .repo-peek .c{color:#8b949e;font-style:italic}.repo-peek .s{color:#a5d6ff}.repo-peek .k{color:#ff7b72}.repo-peek .t{color:#79c0ff}.repo-peek .n{color:#d2a8ff}.repo-peek .a{color:#ffa657}
 }
+
+/* press-and-slide on the jump menu */
+.jump-btn{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.jump.sliding .jump-panel{user-select:none}
+.jump-panel a.hl{background:color-mix(in srgb,var(--c) 30%,rgba(255,255,255,.08));transform:scale(1.03);transition:transform .08s}
+.jump-panel a.hl .j-ico,.jump-panel a.hl i{box-shadow:0 0 12px var(--c)}

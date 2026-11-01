@@ -241,7 +241,44 @@
     const btn=jump.querySelector(".jump-btn"),panel=$("#jumpPanel"),links=[...panel.querySelectorAll("a")];
     const targets=links.map(a=>document.getElementById(a.hash.slice(1)));
     const setOpen=on=>{jump.classList.toggle("open",on);panel.hidden=!on;btn.setAttribute("aria-expanded",on);btn.setAttribute("aria-label",on?"Close section menu":"Jump to a section")};
-    btn.addEventListener("click",()=>setOpen(panel.hidden));
+    // press-and-slide like an iPhone menu: hold the button, slide over the list, let go on a section to jump there.
+    // A plain tap still just opens / closes the menu.
+    let drag=null,ignoreClick=false;
+    const items=[...panel.querySelectorAll("a")];
+    const hl=a=>{items.forEach(i=>i.classList.toggle("hl",i===a));if(a&&drag.last!==a){drag.last=a;try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}}};
+    const itemAt=(x,y)=>{const el=document.elementFromPoint(x,y);return el?el.closest(".jump-panel a"):null};
+    btn.addEventListener("pointerdown",ev=>{
+      if(ev.pointerType==="mouse")return;
+      drag={x:ev.clientX,y:ev.clientY,moved:false,last:null,wasOpen:!panel.hidden};
+      if(panel.hidden)setOpen(true);
+      try{btn.setPointerCapture(ev.pointerId)}catch(e){}
+    });
+    btn.addEventListener("pointermove",ev=>{
+      if(!drag)return;
+      if(!drag.moved&&Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)>10){drag.moved=true;jump.classList.add("sliding")}
+      if(!drag.moved)return;
+      ev.preventDefault();
+      hl(itemAt(ev.clientX,ev.clientY));
+      const r=panel.getBoundingClientRect();                       // auto-scroll a long list near its edges,
+      const inside=ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom;
+      if(inside)drag.entered=true;                                  // only once the finger is inside it
+      if(drag.entered&&inside&&panel.scrollHeight>panel.clientHeight+2){
+        if(ev.clientY<r.top+36)panel.scrollTop-=10;else if(ev.clientY>r.bottom-36)panel.scrollTop+=10;
+      }
+    });
+    const endDrag=ev=>{
+      if(!drag)return;
+      const d=drag;drag=null;jump.classList.remove("sliding");
+      const target=d.moved?itemAt(ev.clientX,ev.clientY):null;
+      items.forEach(i=>i.classList.remove("hl"));
+      ignoreClick=true;setTimeout(()=>ignoreClick=false,350);
+      if(target){setOpen(false);target.click();return}
+      if(d.moved){setOpen(false);return}                            // slid off the list: just close
+      if(d.wasOpen)setOpen(false);                                  // plain tap toggles
+    };
+    btn.addEventListener("pointerup",endDrag);
+    btn.addEventListener("pointercancel",ev=>{drag=null;jump.classList.remove("sliding");items.forEach(i=>i.classList.remove("hl"))});
+    btn.addEventListener("click",()=>{if(ignoreClick)return;setOpen(panel.hidden)});
     links.forEach(a=>a.addEventListener("click",()=>setOpen(false)));
     document.addEventListener("click",e=>{if(!panel.hidden&&!jump.contains(e.target))setOpen(false)});
     document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden){setOpen(false);btn.focus()}});
