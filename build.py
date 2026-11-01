@@ -529,9 +529,9 @@ def build_index():
       <button class="btn" type="button" {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}>▶ Watch showreel</button>
     </div>
     <nav class="hero-links" aria-label="Jump to">
-      <a href="#now" style="--c:#38b6ff"><i></i>Current work</a>
-      <a href="#projects" style="--c:#ffd23f"><i></i>Projects</a>
-      <a href="#more-code" style="--c:#9be15d"><i></i>More code</a>
+      <a href="#now" style="--c:#38b6ff"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>Current work</a>
+      <a href="#projects" style="--c:#ffd23f"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10a5 5 0 0 1 4.8 6.4l-.9 3a2.5 2.5 0 0 1-4.3.8L15 16H9l-1.6 2.2a2.5 2.5 0 0 1-4.3-.8l-.9-3A5 5 0 0 1 7 8z"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg>Projects</a>
+      <a href="#more-code" style="--c:#9be15d"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg>More code</a>
     </nav>
   </div>
   {WAVE}

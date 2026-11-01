@@ -595,3 +595,6 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .hero-links a i{width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
 @media (hover:hover){.hero-links a:hover{background:color-mix(in srgb,var(--c) 28%,rgba(8,10,28,.6));transform:translateY(-2px)}}
 @media (max-width:480px){.hero-links{gap:6px;flex-wrap:nowrap}.hero-links a{padding:8px 10px;font-size:13px;gap:6px;white-space:nowrap}.hero-links a i{width:7px;height:7px}}
+
+.hero-links a svg{color:var(--c);flex:none;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 60%,transparent))}
+@media (max-width:480px){.hero-links a svg{width:15px;height:15px}}
