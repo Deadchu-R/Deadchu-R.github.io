@@ -319,27 +319,32 @@ def bp_svg():
         w=f'<path d="{path}" stroke="{c}" stroke-width="{2.6 if exec_ else 2}" fill="none" opacity=".9"/>'
         if exec_: w+=f'<path class="flow" d="{path}" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round"/>'
         return w
-    def node(x,y,w,h,col,title,ins=(),outs=(),pure=False):
-        o=f'<g><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" fill="rgba(18,20,26,.92)" stroke="rgba(255,255,255,.14)"/>'
+    def node(x,y,w,h,col,title,ins=(),outs=(),pure=False,kind="f"):
+        gid=f"h{x}{y}"
+        o=f'<g><defs><linearGradient id="{gid}" x1="0" x2="1"><stop offset="0" stop-color="{col}"/><stop offset=".75" stop-color="{col}" stop-opacity=".35"/><stop offset="1" stop-color="{col}" stop-opacity=".12"/></linearGradient></defs>'
+        o+=f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="6" fill="rgba(12,12,12,.88)" stroke="rgba(0,0,0,.9)" stroke-width="1.5"/>'
         hh=22 if pure else 26
-        o+=f'<path d="M{x+8} {y}H{x+w-8}a8 8 0 0 1 8 8V{y+hh}H{x}V{y+8}a8 8 0 0 1 8-8z" fill="{col}"/>'
-        o+=f'<text x="{x+12}" y="{y+hh-8}" class="nt">{title}</text>'
+        o+=f'<path d="M{x+6} {y}H{x+w-6}a6 6 0 0 1 6 6V{y+hh}H{x}V{y+6}a6 6 0 0 1 6-6z" fill="url(#{gid})"/>'
+        o+=f'<rect x="{x+.75}" y="{y+.75}" width="{w-1.5}" height="{h-1.5}" rx="5.5" fill="none" stroke="rgba(255,255,255,.08)"/>'
+        if kind=="e": o+=f'<path d="M{x+10} {y+hh/2}l6-6 6 6-6 6z" fill="none" stroke="#fff" stroke-width="1.6"/>'
+        else: o+=f'<text x="{x+11}" y="{y+hh-8}" class="ni">f</text>'
+        o+=f'<text x="{x+29}" y="{y+hh-8}" class="nt">{title}</text>'
         for (py,lab,c,ex) in ins:
-            o+=(f'<path d="M{x+8} {py-5}l7 5-7 5z" fill="#fff"/>' if ex else f'<circle cx="{x+11}" cy="{py}" r="4.5" fill="none" stroke="{c}" stroke-width="2"/>')
-            if lab:o+=f'<text x="{x+22}" y="{py+4}" class="pl">{lab}</text>'
+            o+=(f'<path d="M{x+8} {py-6}h4l5 6-5 6h-4z" fill="#fff"/>' if ex else f'<circle cx="{x+12}" cy="{py}" r="4.5" fill="{c}"/>')
+            if lab:o+=f'<text x="{x+23}" y="{py+4}" class="pl">{lab}</text>'
         for (py,lab,c,ex) in outs:
-            o+=(f'<path d="M{x+w-15} {py-5}l7 5-7 5z" fill="#fff"/>' if ex else f'<circle cx="{x+w-11}" cy="{py}" r="4.5" fill="{c}"/>')
-            if lab:o+=f'<text x="{x+w-22}" y="{py+4}" class="pl" text-anchor="end">{lab}</text>'
+            o+=(f'<path d="M{x+w-17} {py-6}h4l5 6-5 6h-4z" fill="#fff"/>' if ex else f'<circle cx="{x+w-12}" cy="{py}" r="4.5" fill="{c}"/>')
+            if lab:o+=f'<text x="{x+w-23}" y="{py+4}" class="pl" text-anchor="end">{lab}</text>'
         return o+'</g>'
-    RED,BLUE,GREEN="#9b2226","#24527a","#3c6e37"
+    RED,BLUE,GREEN="#a31515","#2160a8","#3d8a2f"
     CY,GR="#38b6ff","#9be15d"
     g=""
     g+=wire(194,72,250,56,"#fff",True)+wire(440,56,490,92,"#fff",True)+wire(440,96,490,132,CY)
     g+=wire(204,252,280,252,"#fff",True)+wire(204,284,280,288,CY)+wire(230,376,280,316,GR)+wire(470,252,510,272,"#fff",True)
-    g+=node(24,40,170,64,RED,"Event BeginPlay",outs=[(72,"","#fff",1)])
+    g+=node(24,40,170,64,RED,"Event BeginPlay",kind="e",outs=[(72,"","#fff",1)])
     g+=node(250,24,190,96,BLUE,"Load Cesium Tileset",ins=[(56,"","#fff",1)],outs=[(56,"","#fff",1),(96,"Tileset",CY,0)])
     g+=node(490,60,200,96,BLUE,"Spawn Apartment",ins=[(92,"","#fff",1),(132,"Location",CY,0)],outs=[(92,"","#fff",1)])
-    g+=node(24,220,180,92,RED,"On Clicked (Room)",outs=[(252,"","#fff",1),(284,"Room",CY,0)])
+    g+=node(24,220,180,92,RED,"On Clicked (Room)",kind="e",outs=[(252,"","#fff",1),(284,"Room",CY,0)])
     g+=node(40,346,190,52,GREEN,"Get Selected Finish",outs=[(376,"Material",GR,0)],pure=True)
     g+=node(280,220,190,116,BLUE,"Set Material",ins=[(252,"","#fff",1),(288,"Target",CY,0),(316,"Material",GR,0)],outs=[(252,"","#fff",1)])
     g+=node(510,240,180,72,BLUE,"Move Camera To",ins=[(272,"","#fff",1)],outs=[(272,"","#fff",1)])
@@ -407,9 +412,11 @@ def build_index():
       </ul>
     </div>
     <figure class="bp">
-      <div class="bp-bar"><span class="dots"><i></i><i></i><i></i></span>BP_ApartmentTour · Event Graph</div>
-      <div class="bp-body">{bp_svg()}</div>
-      <figcaption>An illustration of the kind of logic I build. Client projects are under NDA.</figcaption>
+      <div class="win-bar"><span class="win-ico" aria-hidden="true"></span><span class="win-title">BP_ApartmentTour (illustration)</span><span class="win-ctl" aria-hidden="true"><i>&#x2212;</i><i>&#x25A1;</i><i class="x">&#x2715;</i></span></div>
+      <div class="ue-tabs" aria-hidden="true"><span class="ue-tab">BP_ApartmentTour</span></div>
+      <div class="ue-crumb" aria-hidden="true"><span>BP_ApartmentTour</span><b>›</b><span>Event Graph</span><em>Zoom 1:1</em></div>
+      <div class="bp-body"><span class="demo-badge">Illustration only · not real project code</span>{bp_svg()}</div>
+      <figcaption><b>Mock-up.</b> I drew this to show the kind of Blueprint logic I work on. It isn&#x27;t taken from a real project: client work at 3DVision is under NDA.</figcaption>
     </figure>
   </div>
   <div class="wrap">
