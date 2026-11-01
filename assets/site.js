@@ -28,70 +28,76 @@
     heroVideo.play().catch(()=>{});
   }
 
-  /* ---------- viewer (video + lightbox) ---------- */
+  /* ---------- viewer: one gallery per kind (clips, screenshots, characters) ---------- */
   const viewer=$("#viewer"),stage=$("#viewerStage"),title=$("#viewerTitle");
   let last=null,gallery=[],gi=0,mode="";
   const pauseAll=()=>{document.querySelectorAll(".clip video").forEach(x=>x.pause());heroVideo&&heroVideo.pause()};
   const isFs=()=>document.fullscreenElement||document.webkitFullscreenElement;
+  const count=()=>gallery.length>1?`${gi+1} / ${gallery.length}`:"";
 
   function show(){
     viewer.hidden=false;document.body.style.overflow="hidden";pauseAll();
+    viewer.classList.toggle("has-nav",gallery.length>1);
     $("#viewerClose").focus({preventScroll:true});
   }
   function close(){
     if(viewer.hidden)return;
-    if(isFs()){(document.exitFullscreen||document.webkitExitFullscreen).call(document).catch?.(()=>{})}
+    mode="";
+    if(isFs()){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}}
     viewer.hidden=true;stage.innerHTML="";viewer.className="viewer";document.body.style.overflow="";
     heroVideo&&heroVideo.play().catch(()=>{});
     last&&last.focus({preventScroll:true});
   }
   function goFullscreen(video){
-    // Android/desktop: the whole player goes full screen, turned sideways on phones.
-    const el=viewer;
-    const req=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(isFs())return;
+    const req=viewer.requestFullscreen||viewer.webkitRequestFullscreen;
     if(req){
-      Promise.resolve(req.call(el)).then(()=>{try{screen.orientation.lock("landscape").catch(()=>{})}catch(e){}}).catch(()=>{});
-    }else if(video&&video.webkitEnterFullscreen){ // iPhone
+      try{Promise.resolve(req.call(viewer)).then(()=>{try{screen.orientation.lock("landscape").catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
+    }else if(video&&video.webkitEnterFullscreen){ // iPhone: native player
       video.addEventListener("loadedmetadata",()=>{try{video.webkitEnterFullscreen()}catch(e){}},{once:true});
       video.addEventListener("webkitendfullscreen",close,{once:true});
     }
   }
-  function openVideo(name,src,driveId){
-    last=document.activeElement;mode="video";title.textContent=name;stage.innerHTML="";
-    viewer.className="viewer is-video";
-    let v=null;
-    const drive=()=>{stage.innerHTML=`<iframe src="${drivePreview(driveId)}" allow="autoplay; fullscreen" allowfullscreen title="${name.replace(/"/g,"")}"></iframe>`};
+  function playInStage(name,src,driveId){
+    stage.innerHTML="";let v=null;
+    const drive=()=>{stage.innerHTML=`<iframe src="${drivePreview(driveId)}" allow="autoplay; fullscreen" allowfullscreen title="${String(name).replace(/"/g,"")}"></iframe>`};
     if(src){
       v=document.createElement("video");
       Object.assign(v,{src,controls:true,autoplay:true,loop:true,playsInline:true});
       v.addEventListener("error",drive,{once:true});
       stage.appendChild(v);
     }else drive();
-    show();goFullscreen(v);
+    return v;
   }
-  function renderImage(){
-    const b=gallery[gi];
-    title.textContent=b.dataset.title||(gallery.length>1?`${gi+1} / ${gallery.length}`:"");
-    stage.innerHTML=`<img src="${b.dataset.full}" alt="${(b.querySelector("img")||{}).alt||""}">`;
-    viewer.classList.toggle("has-nav",gallery.length>1);
+  function render(){
+    const el=gallery[gi];
+    if(mode==="video"){
+      const n=el.dataset.title;title.textContent=count()?`${n} · ${count()}`:n;
+      return playInStage(n,el.dataset.src,el.dataset.drive||el.dataset.playDrive);
+    }
+    title.textContent=[el.dataset.title,count()].filter(Boolean).join(" · ");
+    stage.innerHTML=`<img src="${el.dataset.full}" alt="${(el.querySelector("img")||{}).alt||""}">`;
   }
-  function openImage(btn){
-    last=btn;mode="image";viewer.className="viewer is-image";
-    gallery=[...document.querySelectorAll(`.zoom[data-group="${btn.dataset.group}"]`)];
-    gi=Math.max(0,gallery.indexOf(btn));renderImage();show();
+  function open(kind,el,list){
+    last=document.activeElement;mode=kind;
+    viewer.className="viewer "+(kind==="video"?"is-video":"is-image");
+    gallery=list&&list.length?list:[el];gi=Math.max(0,gallery.indexOf(el));
+    const v=render();show();
+    if(kind==="video")goFullscreen(v);
   }
-  function step(d){if(mode!=="image"||gallery.length<2)return;gi=(gi+d+gallery.length)%gallery.length;renderImage()}
+  function step(d){if(!mode||gallery.length<2)return;gi=(gi+d+gallery.length)%gallery.length;render()}
 
   document.addEventListener("click",e=>{
     const c=e.target.closest(".clip");
-    if(c){openVideo(c.dataset.title,c.dataset.src,c.dataset.drive);return}
+    if(c){open("video",c,[...document.querySelectorAll(".clip")]);return}
     const z=e.target.closest(".zoom");
-    if(z){openImage(z);return}
+    if(z){open("image",z,[...document.querySelectorAll(`.zoom[data-group="${z.dataset.group}"]`)]);return}
     const d=e.target.closest("[data-play-drive]");
-    if(d){openVideo(d.dataset.title||"Video",d.dataset.src||"",d.dataset.playDrive);return}
+    if(d){if(!d.dataset.title)d.dataset.title="Video";open("video",d,[d]);return}
     if(e.target.closest("#viewerPrev")){step(-1);return}
     if(e.target.closest("#viewerNext")){step(1);return}
     if(mode==="image"&&e.target===stage)close();
+    if(e.target.closest("#viewerClose")){close();return}
     const cp=e.target.closest("[data-copy]");
     if(cp){
       const el=$(cp.dataset.copy);
@@ -100,7 +106,6 @@
         const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);done("Selected")});
     }
   });
-  $("#viewerClose").addEventListener("click",close);
   document.addEventListener("keydown",e=>{
     if(viewer.hidden)return;
     if(e.key==="Escape")close();
@@ -111,6 +116,6 @@
   ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{if(!isFs()&&mode==="video")close()}));
   // swipe between images
   let sx=null;
-  stage.addEventListener("touchstart",e=>{sx=e.touches[0].clientX},{passive:true});
+  stage.addEventListener("touchstart",e=>{sx=e.target.tagName==="VIDEO"&&e.touches[0].clientY>stage.clientHeight-70?null:e.touches[0].clientX},{passive:true});
   stage.addEventListener("touchend",e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)step(dx<0?1:-1);sx=null},{passive:true});
 })();

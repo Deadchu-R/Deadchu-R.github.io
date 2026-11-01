@@ -199,7 +199,7 @@ h1,h2,h3{text-wrap:balance}
 .viewer .nav:hover{background:rgba(0,0,0,.8)}
 .viewer .nav-prev{left:max(10px,env(safe-area-inset-left,0px))}
 .viewer .nav-next{right:max(10px,env(safe-area-inset-right,0px))}
-.viewer.is-image.has-nav .nav{display:grid}
+.viewer.has-nav .nav{display:grid}
 .viewer.is-image .viewer-stage{display:grid;place-items:center;padding:12px}
 .viewer.is-image .viewer-stage img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
 .viewer:fullscreen .viewer-top{position:absolute;left:0;right:0;top:0;z-index:3;background:linear-gradient(rgba(0,0,0,.6),transparent)}
