@@ -54,7 +54,6 @@ PROJECTS = [
               "Typewriter text that raises events on every letter, every word and when the text is finished",
               "Those events drive retro talking sounds and a two-sprite mouth animation (open / closed) for the speaker",
               "The speech-bubble UI that runs the conversation, plus the map builder, GameManager and LevelManager"],
-         repo="https://github.com/Deadchu-R/Shard_To_Swallow",
          sections=[
              ("The dialogue system", "Conversations are data, not code.", [
                  ("Dialogue in action", "ScriptableObject-driven conversations with a typewriter effect.", "shards-dialogue.mp4", "1V9Hw7lS-zYJeBm6_fuOe69KBtvrrVjJk"),
@@ -137,7 +136,6 @@ PROJECTS = [
                    "Commands with a two-player turn system and an OnWin event for game-specific win logic",
                    "A generic Singleton base class for the managers",
                    "Chess built on the engine as the test game"],
-         repo="https://github.com/danieldaniel128/FinalProjectCSharp2",
          sections=[
              ("The engine", "", [
                  ("Engine code", "A walk through the engine's C# code.", "lab-tilemap.mp4", "1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL"),
@@ -177,7 +175,6 @@ LAB = [
     ("Toon shader", "lab-toon.mp4", "17zl6JE6t6rm-GDynooXcIjXIdwDehpk6", "Cel-shaded lighting with hard color steps."),
     ("Hatching in Shader Graph", "lab-hatching.mp4", "1Sne0ks3fKGrbedu_LFnLIw84JBKD-g9a", "Pencil-style hatching shading, built in Shader Graph."),
     ("Plane-bending shader", "lab-planebend.mp4", "1lEnZM78NR3td-blCaTno0pfAXRFfc597", "A shader that curves a flat plane."),
-    ("Card-draw system", "lab-cards.mp4", "1_WDc8rzjxa7d6zPILMB0E2DsOPjuMyQc", "Drawing cards into the player's hand."),
     ("Multiplayer login UI", "lab-mpui.mp4", "1Cy7YyN8rTMAOnD0nJ3wLVHLuxE2zXoeL", "Login and password screen for a multiplayer game."),
     ("Escape-room camera", "lab-escapecam.mp4", "1t1hd1aLov8GhUp2G_fn2yfejbeJVwUdd", "Camera control for an escape-room game."),
     ("AI training", "lab-aitraining.mp4", "1fDZRyrlEcJ4YKWOP8dyob5qL3pHyhs_M", "Training an AI agent."),
@@ -334,7 +331,6 @@ def footer(depth, peek=True):
     <div class="btns">
       <a class="btn" href="mailto:{SITE['email']}">Email me</a>
       <a class="btn ghost" href="{SITE['linkedin']}" target="_blank" rel="noopener">LinkedIn</a>
-      <a class="btn ghost" href="{SITE['github']}" target="_blank" rel="noopener">GitHub</a>
       <a class="btn ghost" href="{p}Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a>
     </div>
   </div>
@@ -477,30 +473,15 @@ def mosaic_pool(g=None):
         out.append(f"assets/thumbs/{name}")
     return out
 
-MORE_CODE = [  # (title, tech, what it is, repo)
-    ("Reusable Unity tools", ["C#", "Unity", "ScriptableObjects"],
-     "The Shards dialogue system packaged for reuse, a chained quest system that strikes out finished quests, and a UI manager that wires panels by enum and dictionary.",
-     "https://github.com/Deadchu-R/Tools"),
-    ("Post office queue simulation", ["C++", "STL", "File I/O"],
-     "A console simulation of a post office: a customer queue with priority for elderly customers, officers matched by service type, waiting times, and records kept in text files.",
-     "https://github.com/Deadchu-R/PostOfficeProject"),
-    ("State pattern: escape-room camera", ["C#", "Unity", "State pattern"],
-     "A camera state machine that moves between the room's viewpoints, with clickable objects and open conditions.",
-     "https://github.com/Deadchu-R/EscapeRoom-DesignPatterns-"),
-    ("Observer pattern: adventure game", ["C#", "Unity", "Observer pattern"],
-     "A small adventure game where pickups and enemies notify the game through an observer / notifier setup.",
-     "https://github.com/Deadchu-R/DesignPatternsAdventureGame"),
-]
-
 def more_code_html():
     cards = "".join(
-        f'<a class="repo" href="{url}" target="_blank" rel="noopener"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>{e(url.split("github.com/")[1])}</span>'
-        f'<span class="repo-body"><span class="repo-title">{e(t)}</span><span class="repo-tech">{"".join(f"<span>{e(x)}</span>" for x in tech)}</span>'
-        f'<span class="repo-desc">{e(d)}</span><span class="more">View on GitHub →</span></span></a>'
-        for t, tech, d, url in MORE_CODE)
+        f'<a class="repo" href="code/{cp["slug"]}.html" style="--deep:{cp["theme"][0]};--mid:{cp["theme"][1]};--accent:{cp["theme"][2]}"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>{e(cp["code"][0][0])}</span>'
+        f'<span class="repo-body"><span class="repo-title">{e(cp["title"])}</span><span class="repo-tech">{"".join(f"<span>{e(x)}</span>" for x in cp["tech"][:4])}</span>'
+        f'<span class="repo-desc">{e(cp["hook"])}</span><span class="more">See the code →</span></span></a>'
+        for cp in CODE_PAGES)
     return f"""<section class="band more-code" id="more-code">
   <div class="wrap">
-    <div class="sec-head"><h2>More code</h2><p class="muted">Smaller projects and coursework, straight to the source on GitHub.</p></div>
+    <div class="sec-head"><h2>More code</h2><p class="muted">Smaller systems I built, each with a short page and real code from it.</p></div>
     <div class="repos">{cards}</div>
   </div>
 </section>
@@ -531,7 +512,7 @@ def build_index():
     # screenshot and video poster in the gallery; site.js reshuffles it on each visit
     mosaic = mosaic_html(mosaic_pool())
     PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
-    jump_items = [("top","Home","#3d84e6","")]+[("projects","Projects",PROJ_GRAD,"")]+[(f"p-{pj['slug']}",pj['title'],pj['theme'][2],"sub") for pj in PROJECTS]+[("more-code","More code","#9be15d",""),("now","Currently at 3DVision","#38b6ff",""),("gallery-lab","Gallery &amp; lab","#ff8fc0",""),("contact","Contact","#6fd3c2","")]
+    jump_items = [("top","Home","#3d84e6","")]+[("now","Currently at 3DVision","#38b6ff","")]+[("projects","Projects",PROJ_GRAD,"")]+[(f"p-{pj['slug']}",pj['title'],pj['theme'][2],"sub") for pj in PROJECTS]+[("more-code","More code","#9be15d",""),("gallery-lab","Gallery &amp; lab","#ff8fc0",""),("contact","Contact","#6fd3c2","")]
     links = "".join(f'<a class="{c}" href="#{i}" style="--c:{col}"><i></i>{t}</a>' for i,t,col,c in jump_items)
     html += f'''<div class="jump" id="jump">
   <nav class="jump-panel" id="jumpPanel" aria-label="Page sections" hidden><p class="jump-h">Jump to</p>{links}<p class="jump-h pages">Pages</p><div class="jump-pages"><a href="gallery.html">Gallery</a><a href="lab.html">Lab</a><a href="Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a></div></nav>
@@ -552,14 +533,7 @@ def build_index():
   {WAVE}
 </section>
 
-<section class="band blue palette-band" id="projects">
-  <div class="wrap">
-    <div class="sec-head"><h2>Projects</h2><p class="muted">Six projects and the systems I coded for them. Each opens its own page with clips.</p></div>
-    <div class="ptiles">{''.join(tiles)}</div>
-  </div>
-</section>
-
-{more_code_html()}<section class="band now" id="now">
+<section class="band now" id="now">
   <div class="wrap now-grid">
     <div class="now-copy">
       <p class="kicker">Currently · since 02/2025</p>
@@ -589,6 +563,15 @@ def build_index():
   </div>
 </section>
 
+<section class="band blue palette-band" id="projects">
+  <div class="wrap">
+    <div class="sec-head"><h2>Projects</h2><p class="muted">Six projects and the systems I coded for them. Each opens its own page with clips.</p></div>
+    <div class="ptiles">{''.join(tiles)}</div>
+  </div>
+</section>
+
+{more_code_html()}
+
 <section class="band lab-teaser" id="gallery-lab">
   {mosaic}
   <div class="wrap lab-row">
@@ -616,16 +599,14 @@ def next_band(nxt):
 
 
 SNIPPETS = {  # slug -> (file shown, link to the full file, local snippet)
-    "shards": ("SimpleTypeWriterEffect.cs · DialoguePage.cs",
-               "https://github.com/Deadchu-R/Shard_To_Swallow/tree/main/ShardsGame/Assets/Scripts/Systems/DialogueSystem/TextScripts",
+    "shards": ("SimpleTypeWriterEffect.cs · DialoguePage.cs", "",
                "snippets/shards.cs"),
-    "tile-map-engine": ("RenderingManager.cs",
-                        "https://github.com/danieldaniel128/FinalProjectCSharp2/blob/main/GameEngine/RenderingBeforeFinal/RenderingManager.cs",
+    "tile-map-engine": ("RenderingManager.cs", "",
                         "snippets/tile-map-engine.cs"),
 }
 CS_KW = set("""abstract as base bool break case catch class const continue default do double else enum event false float for foreach
 if in int interface internal is new null object out override private protected public readonly ref return sealed static string
-struct switch this throw true try typeof using var virtual void while yield""".split())
+struct switch this throw true try typeof using var virtual void while yield nullptr auto const""".split())
 
 def highlight_cs(code):
     import re, html
@@ -654,9 +635,109 @@ def code_section(pj):
     code = (ROOT / path).read_text().rstrip()
     return (f'<section class="mech-sec code-sec"><h2>Code sample</h2>'
             f'<figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>{e(name)}</span>'
-            f'<a href="{url}" target="_blank" rel="noopener">Full file on GitHub →</a></figcaption>'
-            f'<pre><code>{highlight_cs(code)}</code></pre></figure>'
-            f'<p class="muted small center">Trimmed and commented for this page. The full code is on GitHub.</p></section>')
+            f'</figcaption><pre><code>{highlight_cs(code)}</code></pre></figure>'
+            f'<p class="muted small center">Trimmed and commented for this page.</p></section>')
+
+CODE_PAGES = [
+    dict(slug="deck-builder", title="Deck-Builder Card System", sub="Draw, discard and exhaust piles in Unity",
+         lang="C# · Unity", role="Programmer", when="05/2024 – 07/2024", context="",
+         theme=("#0f1f2e", "#1f4f6e", "#7fd1ff"),
+         hook="The card plumbing behind a deck-builder: piles, shuffling, and drawing into a hand.",
+         did=["Cards as ScriptableObject data (name, description, cost, art) turned into Card objects at runtime",
+              "One Pile class for the draw, discard and exhaust piles: draw from the top, add cards, shuffle",
+              "Reshuffling the draw pile together with the other piles when it runs out",
+              "A Deck that draws cards one by one into the hand with a slide animation, and keeps drawing after a reshuffle"],
+         tech=["C#", "Unity", "ScriptableObjects", "Coroutines", "Inheritance", "Lerp animation"],
+         flow=[("CardData", "ScriptableObject"), ("Pile", "draw · discard · exhaust"), ("Deck", "draws & reshuffles"), ("Hand", "cards slide in")],
+         clip=("Card draw", "Drawing cards into the hand.", "lab-cards.mp4", "1_WDc8rzjxa7d6zPILMB0E2DsOPjuMyQc"),
+         code=[("Pile.cs", "snippets/cards-1.cs"), ("Deck.cs", "snippets/cards-2.cs")]),
+    dict(slug="army-capture", title="Army Capture Mechanic", sub="My part of a mobile army game in Unity",
+         lang="C# · Unity 2D", role="Programmer · team project", when="12/2023 – 01/2024", context="Mobile prototype",
+         theme=("#2a1010", "#7a2a1f", "#ffb07a"),
+         hook="Beat an enemy army, stand in its circle, and its soldiers join yours.",
+         did=["The capture system: a trigger circle placed on the defeated army's commander and sized to the army",
+              "A countdown that runs while the player stays inside the circle; stepping out resets it",
+              "On capture, the defeated army's soldiers move over to the player's army",
+              "A world-space UI indicator for the capture, enemy raycasts that catch the player, and soldier attacks timed to the animation"],
+         tech=["C#", "Unity 2D", "Trigger colliders", "Countdown timer", "World-space UI", "Gizmos"],
+         flow=[("Enemy army beaten", "commander position"), ("Capture circle", "trigger collider"), ("Countdown", "stay inside"), ("Soldiers join you", "army grows")],
+         clip=None,
+         code=[("ArmyCaptureManager.cs", "snippets/capture.cs")]),
+    dict(slug="unity-tools", title="Reusable Unity Tools", sub="Systems from Shards, packaged to reuse",
+         lang="C# · Unity", role="Solo developer", when="12/2023", context="Extracted from Shards",
+         theme=("#10261a", "#2d6a4f", "#9be15d"),
+         hook="The dialogue system, a quest chain and a UI manager, pulled out of a game so the next one starts ahead.",
+         did=["The Shards dialogue system as a standalone package: sheets, page types, typewriter events, speech bubble",
+              "A UI manager that keeps one inspector slot per PanelEnum value in sync while editing, then opens and closes panels by enum",
+              "A quest chain: quests are ScriptableObjects linked through NextQuest; finishing one strikes it out and shows the next"],
+         tech=["C#", "Unity", "ScriptableObjects", "OnValidate", "Enums & dictionaries", "TextMeshPro"],
+         flow=[("Quest", "ScriptableObject"), ("NextQuest", "chained"), ("QuestManager", "strike out, show next"), ("UI_Manager", "panels by enum")],
+         clip=None,
+         code=[("UI_Manager.cs", "snippets/tools-1.cs"), ("Quest.cs · QuestManager.cs", "snippets/tools-2.cs")]),
+    dict(slug="post-office", title="Post Office Queue in C++", sub="A console queue simulation",
+         lang="C++ · STL", role="Solo developer", when="04/2024 – 05/2024", context="",
+         theme=("#16162e", "#3a3a7a", "#a5b4ff"),
+         hook="Customers take a number, officers call them by the service they handle, and elderly customers come first.",
+         did=["A hand-written doubly linked list of customers, kept sorted by the service each one needs",
+              "The same queue also built on std::list, chosen by a flag",
+              "Separate numbering for elderly customers (E1, E2…) and everyone else (Y1, Y2…)",
+              "Officers that look for the next customer of their service type, and move to the next type when nobody is waiting",
+              "Office settings and customer records read from and written to text files"],
+         tech=["C++", "Pointers", "Doubly linked list", "std::list", "File I/O", "OOP"],
+         flow=[("Settings file", "officers, senior age"), ("Customer queue", "linked list or std::list"), ("Officers", "by service type"), ("Records file", "customers saved")],
+         clip=None,
+         code=[("CustomerList.cpp", "snippets/postoffice-1.cpp"), ("Customer.cpp · PostOfficeLogic.cpp", "snippets/postoffice-2.cpp")]),
+]
+
+def code_figure(name, path):
+    code = (ROOT / path).read_text().rstrip()
+    return (f'<figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>{e(name)}</span></figcaption>'
+            f'<pre><code>{highlight_cs(code)}</code></pre></figure>')
+
+def build_code_page(i, cp):
+    global DEPTH
+    depth = DEPTH = 1
+    nxt = CODE_PAGES[(i + 1) % len(CODE_PAGES)]
+    flow = '<div class="flow">' + '<span class="flow-arrow" aria-hidden="true">→</span>'.join(
+        f'<div class="flow-step"><b>{e(a)}</b><span>{e(b)}</span></div>' for a, b in cp["flow"]) + '</div>'
+    media = ""
+    if cp.get("clip"):
+        lbl, cap, f, d = cp["clip"]
+        media = f'<section class="mech-sec"><h2>In action</h2><div class="mech-grid n1"><figure class="mech">{clip_tile(lbl, f, d, depth, big=True, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure></div></section>'
+    codes = "".join(code_figure(n, pth) for n, pth in cp["code"])
+    html = head(f"{cp['title']} — Roee Tal", cp["hook"], depth, cp["theme"])
+    html += topbar(depth, "projects")
+    html += f"""<section class="phero short code-hero">
+  <div class="wrap phero-copy"><p class="kicker">More code · {e(cp['lang'])}</p><h1>{e(cp['title'])}</h1><p class="lead">{e(cp['sub'])}</p></div>
+  {WAVE}
+</section>
+<div class="project">
+  <section class="wrap intro">
+    <div class="intro-text">
+      <p class="hook">{e(cp['hook'])}</p>
+      <h3 class="kicker">What I built</h3>
+      <ul class="ticks">{''.join(f'<li>{e(d)}</li>' for d in cp['did'])}</ul>
+      <h3 class="kicker">Tech &amp; principles</h3>
+      <div class="techs">{''.join(f'<span>{e(t)}</span>' for t in cp['tech'])}</div>
+    </div>
+    <dl class="facts">
+      <div><dt>Role</dt><dd>{e(cp['role'])}</dd></div>
+      <div><dt>Language</dt><dd>{e(cp['lang'])}</dd></div>
+      <div><dt>When</dt><dd>{e(cp['when'])}</dd></div>
+      {f"<div><dt>Context</dt><dd>{e(cp['context'])}</dd></div>" if cp['context'] else ''}
+    </dl>
+  </section>
+  <div class="wrap">
+    <section class="mech-sec"><h2>How it fits together</h2>{flow}</section>
+    {media}
+    <section class="mech-sec code-sec"><h2>The code</h2>{codes}<p class="muted small center">Trimmed and commented for this page.</p></section>
+  </div>
+  <div class="wrap code-next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a><a class="btn" href="{nxt['slug']}.html">Next: {e(nxt['title'])} →</a></div>
+</div>
+"""
+    html += footer(depth)
+    (ROOT / "code").mkdir(exist_ok=True)
+    (ROOT / "code" / f"{cp['slug']}.html").write_text(html)
 
 def build_project(i, pj):
     global DEPTH
@@ -707,7 +788,6 @@ def build_project(i, pj):
       {f'<h3 class="kicker">The rest of the engine (my teammates)</h3><ul class="ticks team">' + ''.join(f'<li>{e(d)}</li>' for d in pj['did_team']) + '</ul>' if pj.get('did_team') else ''}
       <h3 class="kicker">Tech &amp; principles</h3>
       <div class="techs">{''.join(f'<span>{e(t)}</span>' for t in TECH[pj['slug']])}</div>
-      {f'<a class="btn code-btn" href="{pj["repo"]}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8.7 16.6 4.1 12l4.6-4.6L7.3 6 1.3 12l6 6zm6.6 0 4.6-4.6-4.6-4.6L16.7 6l6 6-6 6z"/></svg>View the code on GitHub</a>' if pj.get('repo') else ''}
     </div>
     <dl class="facts">
       <div><dt>Role</dt><dd>{e(pj['role'])}</dd></div>
@@ -817,4 +897,6 @@ if __name__ == "__main__":
     for i, pj in enumerate(PROJECTS):
         build_project(i, pj)
     build_lab()
+    for i, cp in enumerate(CODE_PAGES):
+        build_code_page(i, cp)
     print("built", 3 + len(PROJECTS), "pages")

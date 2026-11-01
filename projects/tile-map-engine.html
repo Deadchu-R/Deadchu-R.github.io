@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=53a797d6">
+<link rel="stylesheet" href="../assets/site.css?v=789cb420">
 <style>:root{--deep:#2b1608;--mid:#8a4b12;--accent:#ffc36b}</style>
 </head>
 <body>
@@ -37,7 +37,6 @@
       <h3 class="kicker">The rest of the engine (my teammates)</h3><ul class="ticks team"><li>A Unity-style object model: GameObjects, Components and a Transform on every tile object</li><li>A shared movement-rule service (IMovementRule) that each piece queries for legal moves</li><li>Commands with a two-player turn system and an OnWin event for game-specific win logic</li><li>A generic Singleton base class for the managers</li><li>Chess built on the engine as the test game</li></ul>
       <h3 class="kicker">Tech &amp; principles</h3>
       <div class="techs"><span>C#</span><span>.NET</span><span>OOP</span><span>Interfaces &amp; abstract classes</span><span>Events &amp; delegates</span><span>Operator overloading</span><span>Extension methods</span><span>Singleton pattern</span><span>Component model</span><span>XML docs</span></div>
-      <a class="btn code-btn" href="https://github.com/danieldaniel128/FinalProjectCSharp2" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8.7 16.6 4.1 12l4.6-4.6L7.3 6 1.3 12l6 6zm6.6 0 4.6-4.6-4.6-4.6L16.7 6l6 6-6 6z"/></svg>View the code on GitHub</a>
     </div>
     <dl class="facts">
       <div><dt>Role</dt><dd>Programmer · team of 3</dd></div>
@@ -46,7 +45,7 @@
       <div><dt>Context</dt><dd>Final project · Programming 2 course</dd></div>
     </dl>
   </section>
-  <div class="wrap"><section class="mech-sec code-sec"><h2>Code sample</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>RenderingManager.cs</span><a href="https://github.com/danieldaniel128/FinalProjectCSharp2/blob/main/GameEngine/RenderingBeforeFinal/RenderingManager.cs" target="_blank" rel="noopener">Full file on GitHub →</a></figcaption><pre><code><span class="c">// RenderingManager: draws the tile map to the console in color.</span>
+  <div class="wrap"><section class="mech-sec code-sec"><h2>Code sample</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>RenderingManager.cs</span></figcaption><pre><code><span class="c">// RenderingManager: draws the tile map to the console in color.</span>
 <span class="c">// Messages for the player are queued on an event and printed after the grid.</span>
 <span class="k">public</span> <span class="k">class</span> <span class="t">RenderingManager</span> : <span class="t">IRendering</span>
 {
@@ -76,7 +75,7 @@
     <span class="k">public</span> <span class="k">void</span> <span class="t">AddToPrint</span>(<span class="k">string</span> message) =&gt; <span class="t">OnPrint</span> += () =&gt; <span class="t">Console</span>.<span class="t">WriteLine</span>(message);
     <span class="k">public</span> <span class="k">void</span> <span class="t">PrintToUser</span>() =&gt; <span class="t">OnPrint</span>?.<span class="t">Invoke</span>();
     <span class="k">public</span> <span class="k">void</span> <span class="t">ClearPrint</span>() =&gt; <span class="t">OnPrint</span> = <span class="k">null</span>;
-}</code></pre></figure><p class="muted small center">Trimmed and commented for this page. The full code is on GitHub.</p></section><section class="mech-sec">
+}</code></pre></figure><p class="muted small center">Trimmed and commented for this page.</p></section><section class="mech-sec">
   <h2>The engine</h2>
   <div class="mech-grid n1"><figure class="mech"><button class="clip big" type="button" data-src="../assets/clips/lab-tilemap.mp4" data-drive="1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL" data-title="Engine code" data-cap="A walk through the engine&#x27;s C# code." data-more="A small game engine in plain C#, and a two-player chess game running on it. A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works. Built by a team of three programmers." aria-label="Play video: Engine code"><video muted loop playsinline preload="none" poster="../assets/posters/lab-tilemap.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Engine code</b> A walk through the engine&#x27;s C# code.</figcaption></figure></div>
 </section><section class="mech-sec">
@@ -105,7 +104,6 @@
     <div class="btns">
       <a class="btn" href="mailto:roeetal17@gmail.com">Email me</a>
       <a class="btn ghost" href="https://www.linkedin.com/in/roee-tal/" target="_blank" rel="noopener">LinkedIn</a>
-      <a class="btn ghost" href="https://github.com/Deadchu-R" target="_blank" rel="noopener">GitHub</a>
       <a class="btn ghost" href="../Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a>
     </div>
   </div>

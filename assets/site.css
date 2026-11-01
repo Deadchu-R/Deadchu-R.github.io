@@ -50,7 +50,7 @@ h1,h2,h3{text-wrap:balance}
 .wave path{fill:var(--wave,var(--mid))}
 
 /* landing hero */
-.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden;--wave:var(--band-top,var(--mid));background:var(--deep)}
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden;--wave:#0a2457;background:var(--deep)}
 .hero-media{position:absolute;inset:0}
 .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2}
 .slides img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
@@ -67,10 +67,10 @@ h1,h2,h3{text-wrap:balance}
 .band{position:relative;padding-block:clamp(56px,8vw,96px)}
 .band.blue{background:var(--mid)}
 .band.now{overflow:hidden;isolation:isolate;background:
-  radial-gradient(ellipse 55% 60% at 100% 0%,rgba(23,190,207,.32),transparent 70%),
+  radial-gradient(ellipse 55% 55% at 100% 40%,rgba(23,190,207,.30),transparent 70%),
   radial-gradient(ellipse 50% 55% at 0% 100%,rgba(200,40,150,.34),transparent 70%),
   radial-gradient(ellipse 45% 50% at 55% 55%,rgba(90,60,220,.28),transparent 70%),
-  linear-gradient(165deg,#0a1f52 0%,#071433 55%,#120a33 100%)}
+  linear-gradient(165deg,#0a2457 0%,#071433 55%,#120a33 100%)}
 .band.now::before{content:"";position:absolute;inset:-10%;z-index:-1;pointer-events:none;background:url("topo.svg") center/cover no-repeat;animation:topo 60s ease-in-out infinite alternate;
   -webkit-mask-image:radial-gradient(ellipse 85% 85% at 60% 45%,#000 40%,transparent 100%);mask-image:radial-gradient(ellipse 85% 85% at 60% 45%,#000 40%,transparent 100%)}
 @keyframes topo{to{transform:translate(-3%,2%) scale(1.06)}}
@@ -554,7 +554,23 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .repo-body{display:flex;flex-direction:column;gap:10px;padding:18px 20px 20px;flex:1}
 .repo-title{font:800 22px/1.15 var(--f);color:#fff}
 .repo-tech{display:flex;flex-wrap:wrap;gap:6px}
-.repo-tech span{padding:4px 9px;border-radius:6px;background:rgba(155,225,93,.1);border:1px solid rgba(155,225,93,.35);font:600 12.5px/1.2 ui-monospace,Consolas,monospace;color:#c9f5a3}
+.repo-tech span{padding:4px 9px;border-radius:6px;background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);font:600 12.5px/1.2 ui-monospace,Consolas,monospace;color:var(--accent)}
 .repo-desc{color:rgba(255,255,255,.78);font-size:15.5px;line-height:1.55}
-.repo .more{color:#9be15d}
-@media (hover:hover){.repo:hover{transform:translateY(-4px);border-color:rgba(155,225,93,.6);box-shadow:0 20px 40px -20px rgba(155,225,93,.4)}}
+.repo .more{color:var(--accent)}
+.repo{box-shadow:inset 0 3px 0 var(--accent)}
+@media (hover:hover){.repo:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 60%,transparent);box-shadow:inset 0 3px 0 var(--accent),0 20px 40px -20px color-mix(in srgb,var(--accent) 50%,transparent)}}
+
+/* code pages */
+.code-hero{background:radial-gradient(ellipse 70% 90% at 90% 0%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 70%),linear-gradient(160deg,var(--mid),var(--deep))}
+.code-hero::after{display:none}
+.flow{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px}
+.flow-step{flex:1 1 160px;max-width:230px;display:flex;flex-direction:column;gap:6px;padding:16px 18px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);text-align:center}
+.flow-step b{font:800 17px/1.2 ui-monospace,Consolas,monospace;color:var(--accent)}
+.flow-step span{font-size:14px;color:var(--soft)}
+.flow-arrow{align-self:center;font:800 22px var(--f);color:var(--accent)}
+@media (max-width:700px){.flow{flex-direction:column;align-items:center}.flow-step{max-width:none;width:100%}.flow-arrow{transform:rotate(90deg)}}
+.code-sec .code+.code{margin-top:22px}
+.code-next{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;padding-block:40px 70px}
+/* 3DVision now sits right under the hero: blend its bottom into the projects band */
+.band.now{padding-bottom:clamp(90px,11vw,130px)}
+.band.now + .palette-band::before{content:"";position:absolute;left:0;right:0;top:-60px;height:60px;background:linear-gradient(transparent,var(--band-top));pointer-events:none}

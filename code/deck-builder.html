@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deck-Builder Card System — Roee Tal</title>
+<meta name="description" content="The card plumbing behind a deck-builder: piles, shuffling, and drawing into a hand.">
+<meta name="theme-color" content="#0f1f2e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="../assets/site.css?v=789cb420">
+<style>:root{--deep:#0f1f2e;--mid:#1f4f6e;--accent:#7fd1ff}</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+<a class="mark" href="../index.html">Roee Tal</a>
+<nav><a href="../index.html#projects" aria-current="page">Projects</a><a href="../gallery.html">Gallery</a><a href="../lab.html">Lab</a><a href="../Roee-Tal-CV.pdf">CV</a><a href="../index.html#contact">Contact</a></nav>
+</div></header>
+<section class="phero short code-hero">
+  <div class="wrap phero-copy"><p class="kicker">More code · C# · Unity</p><h1>Deck-Builder Card System</h1><p class="lead">Draw, discard and exhaust piles in Unity</p></div>
+  <svg class="wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 C 240 90 480 0 720 34 S 1200 80 1440 30 V80 H0Z"/></svg>
+</section>
+<div class="project">
+  <section class="wrap intro">
+    <div class="intro-text">
+      <p class="hook">The card plumbing behind a deck-builder: piles, shuffling, and drawing into a hand.</p>
+      <h3 class="kicker">What I built</h3>
+      <ul class="ticks"><li>Cards as ScriptableObject data (name, description, cost, art) turned into Card objects at runtime</li><li>One Pile class for the draw, discard and exhaust piles: draw from the top, add cards, shuffle</li><li>Reshuffling the draw pile together with the other piles when it runs out</li><li>A Deck that draws cards one by one into the hand with a slide animation, and keeps drawing after a reshuffle</li></ul>
+      <h3 class="kicker">Tech &amp; principles</h3>
+      <div class="techs"><span>C#</span><span>Unity</span><span>ScriptableObjects</span><span>Coroutines</span><span>Inheritance</span><span>Lerp animation</span></div>
+    </div>
+    <dl class="facts">
+      <div><dt>Role</dt><dd>Programmer</dd></div>
+      <div><dt>Language</dt><dd>C# · Unity</dd></div>
+      <div><dt>When</dt><dd>05/2024 – 07/2024</dd></div>
+      
+    </dl>
+  </section>
+  <div class="wrap">
+    <section class="mech-sec"><h2>How it fits together</h2><div class="flow"><div class="flow-step"><b>CardData</b><span>ScriptableObject</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Pile</b><span>draw · discard · exhaust</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Deck</b><span>draws &amp; reshuffles</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Hand</b><span>cards slide in</span></div></div></section>
+    <section class="mech-sec"><h2>In action</h2><div class="mech-grid n1"><figure class="mech"><button class="clip big" type="button" data-src="../assets/clips/lab-cards.mp4" data-drive="1_WDc8rzjxa7d6zPILMB0E2DsOPjuMyQc" data-title="Card draw" data-cap="Drawing cards into the hand." aria-label="Play video: Card draw"><video muted loop playsinline preload="none" poster="../assets/posters/lab-cards.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Card draw</b> Drawing cards into the hand.</figcaption></figure></div></section>
+    <section class="mech-sec code-sec"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>Pile.cs</span></figcaption><pre><code><span class="c">// Pile.cs: reshuffle the draw pile together with other piles (e.g. the discard pile)</span>
+<span class="k">public</span> <span class="k">void</span> <span class="t">Shuffle</span>(<span class="t">Pile</span>[] piles)
+{
+    <span class="t">List</span>&lt;<span class="t">CardData</span>&gt; combinedCards = <span class="k">new</span> <span class="t">List</span>&lt;<span class="t">CardData</span>&gt;();
+
+    <span class="k">foreach</span> (<span class="t">CardData</span> card <span class="k">in</span> cardsData)          <span class="c">// this pile</span>
+        <span class="k">if</span> (card != <span class="k">null</span>) combinedCards.<span class="t">Add</span>(card);
+
+    <span class="k">foreach</span> (<span class="t">Pile</span> pile <span class="k">in</span> piles)                   <span class="c">// every other pile</span>
+    {
+        <span class="k">if</span> (pile == <span class="k">null</span> || pile == <span class="k">this</span>) <span class="k">continue</span>;
+        <span class="k">foreach</span> (<span class="k">var</span> card <span class="k">in</span> pile.<span class="t">GetPile</span>())
+            <span class="k">if</span> (card != <span class="k">null</span>) combinedCards.<span class="t">Add</span>(card);
+    }
+
+    cardsData = combinedCards.<span class="t">ToArray</span>();
+    cardsInPile = cardsData.<span class="t">Length</span>;
+    <span class="t">ShuffleCardData</span>();                             <span class="c">// swap-shuffle, then rebuild the Card objects</span>
+}</code></pre></figure><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>Deck.cs</span></figcaption><pre><code><span class="c">// Deck.cs: draw cards one by one into the hand; when the deck runs out,</span>
+<span class="c">// shuffle and keep drawing the cards that are still owed</span>
+<span class="k">public</span> <span class="t">IEnumerator</span> <span class="t">DrawCards</span>(<span class="k">int</span> cardsToDraw)
+{
+    <span class="k">int</span> currentCardsToDraw = <span class="t">Mathf</span>.<span class="t">Min</span>(cardsToDraw, cardsInDeck);
+    _remainingCardsToDraw = cardsToDraw;
+
+    <span class="k">for</span> (<span class="k">int</span> cardIndex = <span class="n">0</span>; cardIndex &lt; currentCardsToDraw; cardIndex++)
+    {
+        <span class="k">float</span> cardPosition = cardIndex * (cardSpacer + <span class="n">1</span>);
+        <span class="t">DrawCard</span>(cardPosition, cardIndex);          <span class="c">// instantiate, then slide into the hand</span>
+        _remainingCardsToDraw--;
+        <span class="k">yield</span> <span class="k">return</span> <span class="k">new</span> <span class="t">WaitForSeconds</span>(delayBetweenDraws);
+    }
+
+    <span class="k">if</span> (cardsInDeck &lt;= <span class="n">0</span>)
+    {
+        <span class="t">Shuffle</span>();
+        <span class="k">if</span> (_remainingCardsToDraw &gt; <span class="n">0</span>)
+            <span class="t">StartCoroutine</span>(<span class="t">DrawCards</span>(_remainingCardsToDraw));
+    }
+}</code></pre></figure><p class="muted small center">Trimmed and commented for this page.</p></section>
+  </div>
+  <div class="wrap code-next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a><a class="btn" href="army-capture.html">Next: Army Capture Mechanic →</a></div>
+</div>
+<footer class="foot" id="contact">
+<svg class="foot-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 260 80 520 0 760 30 S 1220 70 1440 22 V70 H0Z"/></svg>
+<div class="peekcat" aria-hidden="true"><img src="../assets/art/musical-cat.webp" alt="" loading="lazy"></div>
+<div class="wrap foot-grid">
+  <div>
+    <h2>Let's make games together</h2>
+    <p class="muted">Open to Unity and Unreal developer roles in Israel.</p>
+  </div>
+  <div class="contact-lines">
+    <div class="copyrow"><span class="email" id="email">roeetal17@gmail.com</span><button class="btn ghost" type="button" data-copy="#email">Copy</button></div>
+    <span class="muted">(+972) 053-337-4350</span>
+    <div class="btns">
+      <a class="btn" href="mailto:roeetal17@gmail.com">Email me</a>
+      <a class="btn ghost" href="https://www.linkedin.com/in/roee-tal/" target="_blank" rel="noopener">LinkedIn</a>
+      <a class="btn ghost" href="../Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a>
+    </div>
+  </div>
+</div>
+<div class="wrap small muted">© Roee Tal</div>
+</footer>
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
+  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden><span class="i-ic">i</span><span class="i-tx">Read more</span></button></div><p class="viewer-credit" id="viewerCredit" hidden></p><div class="viewer-more" id="viewerMore"><p id="viewerMoreText"></p><a id="viewerLink" href="#">Open the project page →</a></div></div><div class="viewer-btns"><button class="btn ghost vmax" type="button" id="viewerMax" aria-label="Full screen" hidden><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path class="i-max" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path class="i-min" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div></div>
+  <div class="viewer-stage" id="viewerStage"></div>
+  <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
+  <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
+</div>
+<script src="../assets/site.js?v=b6030b60" defer></script>
+</body>
+</html>

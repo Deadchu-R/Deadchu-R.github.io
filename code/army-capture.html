@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Army Capture Mechanic — Roee Tal</title>
+<meta name="description" content="Beat an enemy army, stand in its circle, and its soldiers join yours.">
+<meta name="theme-color" content="#2a1010">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="../assets/site.css?v=789cb420">
+<style>:root{--deep:#2a1010;--mid:#7a2a1f;--accent:#ffb07a}</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+<a class="mark" href="../index.html">Roee Tal</a>
+<nav><a href="../index.html#projects" aria-current="page">Projects</a><a href="../gallery.html">Gallery</a><a href="../lab.html">Lab</a><a href="../Roee-Tal-CV.pdf">CV</a><a href="../index.html#contact">Contact</a></nav>
+</div></header>
+<section class="phero short code-hero">
+  <div class="wrap phero-copy"><p class="kicker">More code · C# · Unity 2D</p><h1>Army Capture Mechanic</h1><p class="lead">My part of a mobile army game in Unity</p></div>
+  <svg class="wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 C 240 90 480 0 720 34 S 1200 80 1440 30 V80 H0Z"/></svg>
+</section>
+<div class="project">
+  <section class="wrap intro">
+    <div class="intro-text">
+      <p class="hook">Beat an enemy army, stand in its circle, and its soldiers join yours.</p>
+      <h3 class="kicker">What I built</h3>
+      <ul class="ticks"><li>The capture system: a trigger circle placed on the defeated army&#x27;s commander and sized to the army</li><li>A countdown that runs while the player stays inside the circle; stepping out resets it</li><li>On capture, the defeated army&#x27;s soldiers move over to the player&#x27;s army</li><li>A world-space UI indicator for the capture, enemy raycasts that catch the player, and soldier attacks timed to the animation</li></ul>
+      <h3 class="kicker">Tech &amp; principles</h3>
+      <div class="techs"><span>C#</span><span>Unity 2D</span><span>Trigger colliders</span><span>Countdown timer</span><span>World-space UI</span><span>Gizmos</span></div>
+    </div>
+    <dl class="facts">
+      <div><dt>Role</dt><dd>Programmer · team project</dd></div>
+      <div><dt>Language</dt><dd>C# · Unity 2D</dd></div>
+      <div><dt>When</dt><dd>12/2023 – 01/2024</dd></div>
+      <div><dt>Context</dt><dd>Mobile prototype</dd></div>
+    </dl>
+  </section>
+  <div class="wrap">
+    <section class="mech-sec"><h2>How it fits together</h2><div class="flow"><div class="flow-step"><b>Enemy army beaten</b><span>commander position</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Capture circle</b><span>trigger collider</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Countdown</b><span>stay inside</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Soldiers join you</b><span>army grows</span></div></div></section>
+    
+    <section class="mech-sec code-sec"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>ArmyCaptureManager.cs</span></figcaption><pre><code><span class="c">// ArmyCaptureManager.cs: stand inside a defeated army&#x27;s circle until the countdown</span>
+<span class="c">// ends to take its soldiers; stepping out cancels the capture</span>
+<span class="k">public</span> <span class="k">void</span> <span class="t">SetCaptureCollider</span>(<span class="t">Vector2</span> position, <span class="k">float</span> radius = <span class="n">1</span>, <span class="k">bool</span> active = <span class="k">false</span>)
+{
+    _canCapture = <span class="k">true</span>;
+    _armyCommanderPosition = position;
+    _captureCollider.transform.position = position;
+    _captureCollider.radius = radius;
+    _captureCollider.enabled = active;
+}
+
+<span class="k">private</span> <span class="k">void</span> <span class="t">Update</span>()
+{
+    <span class="k">if</span> (_captureCountdownTimer == <span class="k">null</span> || !_captureCountdownTimer.<span class="t">IsRunning</span>) <span class="k">return</span>;
+    _captureCountdownTimer.<span class="t">Tick</span>(<span class="t">Time</span>.deltaTime);   <span class="c">// timer ticked in Update, not a coroutine</span>
+    <span class="k">if</span> (_captureCountdownTimer.<span class="t">IsFinished</span>) <span class="t">Capture</span>();
+}
+
+<span class="k">private</span> <span class="k">void</span> <span class="t">OnTriggerEnter2D</span>(<span class="t">Collider2D</span> collision)
+{
+    <span class="k">if</span> (collision.<span class="t">CompareTag</span>(<span class="s">&quot;Player&quot;</span>)) <span class="t">StartCaptureTimer</span>();
+}
+
+<span class="k">private</span> <span class="k">void</span> <span class="t">OnTriggerExit2D</span>(<span class="t">Collider2D</span> collision)
+{
+    <span class="k">if</span> (collision.<span class="t">CompareTag</span>(<span class="s">&quot;Player&quot;</span>)) <span class="t">ResetCaptureCountdown</span>();
+}
+
+<span class="k">private</span> <span class="k">void</span> <span class="t">Capture</span>()
+{
+    <span class="t">GameManager</span>.instance.<span class="t">PlayerController</span>.<span class="t">CaptureArmy</span>(_defeatedArmy.<span class="t">Soldiers</span>);
+    _defeatedArmy.<span class="t">Soldiers</span>.<span class="t">Clear</span>();
+    _captureCountdownTimer.<span class="t">Reset</span>();
+}</code></pre></figure><p class="muted small center">Trimmed and commented for this page.</p></section>
+  </div>
+  <div class="wrap code-next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a><a class="btn" href="unity-tools.html">Next: Reusable Unity Tools →</a></div>
+</div>
+<footer class="foot" id="contact">
+<svg class="foot-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 260 80 520 0 760 30 S 1220 70 1440 22 V70 H0Z"/></svg>
+<div class="peekcat" aria-hidden="true"><img src="../assets/art/musical-cat.webp" alt="" loading="lazy"></div>
+<div class="wrap foot-grid">
+  <div>
+    <h2>Let's make games together</h2>
+    <p class="muted">Open to Unity and Unreal developer roles in Israel.</p>
+  </div>
+  <div class="contact-lines">
+    <div class="copyrow"><span class="email" id="email">roeetal17@gmail.com</span><button class="btn ghost" type="button" data-copy="#email">Copy</button></div>
+    <span class="muted">(+972) 053-337-4350</span>
+    <div class="btns">
+      <a class="btn" href="mailto:roeetal17@gmail.com">Email me</a>
+      <a class="btn ghost" href="https://www.linkedin.com/in/roee-tal/" target="_blank" rel="noopener">LinkedIn</a>
+      <a class="btn ghost" href="../Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a>
+    </div>
+  </div>
+</div>
+<div class="wrap small muted">© Roee Tal</div>
+</footer>
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
+  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden><span class="i-ic">i</span><span class="i-tx">Read more</span></button></div><p class="viewer-credit" id="viewerCredit" hidden></p><div class="viewer-more" id="viewerMore"><p id="viewerMoreText"></p><a id="viewerLink" href="#">Open the project page →</a></div></div><div class="viewer-btns"><button class="btn ghost vmax" type="button" id="viewerMax" aria-label="Full screen" hidden><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path class="i-max" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path class="i-min" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div></div>
+  <div class="viewer-stage" id="viewerStage"></div>
+  <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
+  <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
+</div>
+<script src="../assets/site.js?v=b6030b60" defer></script>
+</body>
+</html>

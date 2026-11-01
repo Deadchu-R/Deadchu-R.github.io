@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reusable Unity Tools — Roee Tal</title>
+<meta name="description" content="The dialogue system, a quest chain and a UI manager, pulled out of a game so the next one starts ahead.">
+<meta name="theme-color" content="#10261a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="../assets/site.css?v=789cb420">
+<style>:root{--deep:#10261a;--mid:#2d6a4f;--accent:#9be15d}</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+<a class="mark" href="../index.html">Roee Tal</a>
+<nav><a href="../index.html#projects" aria-current="page">Projects</a><a href="../gallery.html">Gallery</a><a href="../lab.html">Lab</a><a href="../Roee-Tal-CV.pdf">CV</a><a href="../index.html#contact">Contact</a></nav>
+</div></header>
+<section class="phero short code-hero">
+  <div class="wrap phero-copy"><p class="kicker">More code · C# · Unity</p><h1>Reusable Unity Tools</h1><p class="lead">Systems from Shards, packaged to reuse</p></div>
+  <svg class="wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 C 240 90 480 0 720 34 S 1200 80 1440 30 V80 H0Z"/></svg>
+</section>
+<div class="project">
+  <section class="wrap intro">
+    <div class="intro-text">
+      <p class="hook">The dialogue system, a quest chain and a UI manager, pulled out of a game so the next one starts ahead.</p>
+      <h3 class="kicker">What I built</h3>
+      <ul class="ticks"><li>The Shards dialogue system as a standalone package: sheets, page types, typewriter events, speech bubble</li><li>A UI manager that keeps one inspector slot per PanelEnum value in sync while editing, then opens and closes panels by enum</li><li>A quest chain: quests are ScriptableObjects linked through NextQuest; finishing one strikes it out and shows the next</li></ul>
+      <h3 class="kicker">Tech &amp; principles</h3>
+      <div class="techs"><span>C#</span><span>Unity</span><span>ScriptableObjects</span><span>OnValidate</span><span>Enums &amp; dictionaries</span><span>TextMeshPro</span></div>
+    </div>
+    <dl class="facts">
+      <div><dt>Role</dt><dd>Solo developer</dd></div>
+      <div><dt>Language</dt><dd>C# · Unity</dd></div>
+      <div><dt>When</dt><dd>12/2023</dd></div>
+      <div><dt>Context</dt><dd>Extracted from Shards</dd></div>
+    </dl>
+  </section>
+  <div class="wrap">
+    <section class="mech-sec"><h2>How it fits together</h2><div class="flow"><div class="flow-step"><b>Quest</b><span>ScriptableObject</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>NextQuest</b><span>chained</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>QuestManager</b><span>strike out, show next</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>UI_Manager</b><span>panels by enum</span></div></div></section>
+    
+    <section class="mech-sec code-sec"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>UI_Manager.cs</span></figcaption><pre><code><span class="c">// UI_Manager.cs: one inspector slot per PanelEnum value, kept in sync automatically.</span>
+<span class="c">// Add a value to the enum and its slot appears; panels are then opened by enum.</span>
+<span class="k">private</span> <span class="k">void</span> <span class="t">OnValidate</span>() =&gt; <span class="t">InitializePanelDictionary</span>();
+
+<span class="k">private</span> <span class="k">void</span> <span class="t">AdjustPanelEntriesSize</span>()
+{
+    <span class="k">int</span> enumCount = <span class="t">Enum</span>.<span class="t">GetValues</span>(<span class="k">typeof</span>(<span class="t">PanelEnum</span>)).<span class="t">Length</span>;
+    <span class="k">if</span> (panelEntries.<span class="t">Count</span> &gt; enumCount)
+        panelEntries.<span class="t">RemoveRange</span>(enumCount, panelEntries.<span class="t">Count</span> - enumCount);
+    <span class="k">while</span> (panelEntries.<span class="t">Count</span> &lt; enumCount)
+        panelEntries.<span class="t">Add</span>(<span class="k">new</span> <span class="t">PanelEntry</span>());
+}
+
+<span class="k">private</span> <span class="k">void</span> <span class="t">AssignPanelEnums</span>()
+{
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i &lt; panelEntries.<span class="t">Count</span>; i++)
+        panelEntries[i].<span class="t">PanelEnum</span> = (<span class="t">PanelEnum</span>)<span class="t">Enum</span>.<span class="t">ToObject</span>(<span class="k">typeof</span>(<span class="t">PanelEnum</span>), i);
+}
+
+<span class="k">public</span> <span class="k">void</span> <span class="t">OpenPanel</span>(<span class="t">PanelEnum</span> panelID)
+{
+    <span class="t">GameObject</span> panel = panels[panelID];
+    <span class="k">if</span> (panel != <span class="k">null</span> &amp;&amp; !panel.activeSelf) panel.<span class="t">SetActive</span>(<span class="k">true</span>);
+}</code></pre></figure><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>Quest.cs · QuestManager.cs</span></figcaption><pre><code><span class="c">// Quest.cs + QuestManager.cs: quests are ScriptableObjects chained through NextQuest.</span>
+<span class="c">// Finishing one strikes it out on screen and shows the next.</span>
+<span class="a">[CreateAssetMenu</span>(fileName = <span class="s">&quot;New Quest&quot;</span>, menuName = <span class="s">&quot;Quests/defaultQuest&quot;</span>)]
+<span class="k">public</span> <span class="k">class</span> <span class="t">Quest</span> : <span class="t">ScriptableObject</span>
+{
+    <span class="k">public</span> <span class="k">string</span> questName;
+    <span class="k">public</span> <span class="k">string</span> <span class="t">QuestDescription</span>;
+    <span class="k">public</span> <span class="k">int</span> <span class="t">QuestID</span>;
+    <span class="k">public</span> <span class="t">Quest</span> <span class="t">NextQuest</span>;
+    <span class="k">public</span> <span class="k">bool</span> <span class="t">IsCompleted</span> = <span class="k">false</span>;
+}
+
+<span class="k">public</span> <span class="k">void</span> <span class="t">FinishedQuest</span>(<span class="t">Quest</span> quest)
+{
+    <span class="k">if</span> (quest.<span class="t">NextQuest</span> != <span class="k">null</span>)
+    {
+        _previousQuest = quest;
+        _currentQuest = quest.<span class="t">NextQuest</span>;
+        questText.text = _previousQuest.<span class="t">QuestDescription</span>;
+        questText2.text = _currentQuest.<span class="t">QuestDescription</span>;
+        questText.fontStyle = <span class="t">FontStyles</span>.<span class="t">Strikethrough</span>;   <span class="c">// the finished quest, struck out</span>
+    }
+}</code></pre></figure><p class="muted small center">Trimmed and commented for this page.</p></section>
+  </div>
+  <div class="wrap code-next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a><a class="btn" href="post-office.html">Next: Post Office Queue in C++ →</a></div>
+</div>
+<footer class="foot" id="contact">
+<svg class="foot-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 260 80 520 0 760 30 S 1220 70 1440 22 V70 H0Z"/></svg>
+<div class="peekcat" aria-hidden="true"><img src="../assets/art/musical-cat.webp" alt="" loading="lazy"></div>
+<div class="wrap foot-grid">
+  <div>
+    <h2>Let's make games together</h2>
+    <p class="muted">Open to Unity and Unreal developer roles in Israel.</p>
+  </div>
+  <div class="contact-lines">
+    <div class="copyrow"><span class="email" id="email">roeetal17@gmail.com</span><button class="btn ghost" type="button" data-copy="#email">Copy</button></div>
+    <span class="muted">(+972) 053-337-4350</span>
+    <div class="btns">
+      <a class="btn" href="mailto:roeetal17@gmail.com">Email me</a>
+      <a class="btn ghost" href="https://www.linkedin.com/in/roee-tal/" target="_blank" rel="noopener">LinkedIn</a>
+      <a class="btn ghost" href="../Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a>
+    </div>
+  </div>
+</div>
+<div class="wrap small muted">© Roee Tal</div>
+</footer>
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
+  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden><span class="i-ic">i</span><span class="i-tx">Read more</span></button></div><p class="viewer-credit" id="viewerCredit" hidden></p><div class="viewer-more" id="viewerMore"><p id="viewerMoreText"></p><a id="viewerLink" href="#">Open the project page →</a></div></div><div class="viewer-btns"><button class="btn ghost vmax" type="button" id="viewerMax" aria-label="Full screen" hidden><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path class="i-max" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path class="i-min" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div></div>
+  <div class="viewer-stage" id="viewerStage"></div>
+  <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
+  <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
+</div>
+<script src="../assets/site.js?v=b6030b60" defer></script>
+</body>
+</html>
