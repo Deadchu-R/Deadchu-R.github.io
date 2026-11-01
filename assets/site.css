@@ -642,3 +642,8 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .ai-card h3{font:800 26px/1.15 var(--f);margin:8px 0 10px}
 .ai-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .ai-tools span{padding:6px 11px;border-radius:7px;background:rgba(155,225,93,.1);border:1px solid rgba(155,225,93,.35);font:600 13.5px/1.2 ui-monospace,Consolas,monospace;color:#c9f5a3}
+
+.fav-h{margin:26px 0 10px;font:700 13px/1 var(--f);letter-spacing:.16em;text-transform:uppercase;color:#ffd23f}
+.favs{display:flex;flex-wrap:wrap;gap:8px}
+.favs span{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;background:rgba(255,210,63,.08);border:1px solid rgba(255,210,63,.35);font:600 14.5px/1.2 var(--f);color:#fff}
+.favs span::before{content:"★";color:#ffd23f;font-size:12px}
