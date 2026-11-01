@@ -42,8 +42,9 @@
     open_=false;
     if(isFs()){fsOwned=false;try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}}
     viewer.hidden=true;stage.innerHTML="";viewer.className="viewer";document.body.style.overflow="";
+    infoBtn.setAttribute("aria-expanded","false");infoBtn.blur();
     heroVideo&&heroVideo.play().catch(()=>{});
-    last&&last.focus({preventScroll:true});
+    last&&last.blur&&last.blur();
   }
   function goFullscreen(video){
     if(isFs())return;
@@ -79,7 +80,9 @@
     stage.innerHTML=`<img src="${el.dataset.full}" alt="${(el.querySelector("img")||{}).alt||""}">`;
     return null;
   }
+  function closeTileInfo(){document.querySelectorAll(".gitem.show-info").forEach(f=>{f.classList.remove("show-info");f.querySelector(".info").setAttribute("aria-expanded","false")})}
   function open(el){
+    closeTileInfo();
     last=document.activeElement;open_=true;
     const g=el.dataset.group;
     let list=[el];
