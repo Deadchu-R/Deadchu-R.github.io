@@ -22,6 +22,12 @@
 
   const viewer=document.getElementById("viewer"),stage=document.getElementById("viewerStage"),title=document.getElementById("viewerTitle");
   const heroVideo=document.querySelector(".hero-video");
+  if(heroVideo){ // portrait screens get the vertical cut of the reel
+    const tall=matchMedia("(max-aspect-ratio: 1/1)").matches;
+    const src=tall?heroVideo.dataset.tall:heroVideo.dataset.wide;
+    heroVideo.poster=src.replace(".mp4",".jpg");heroVideo.src=src;
+    heroVideo.play().catch(()=>{});
+  }
   let last=null;
   function open(name,src,driveId){
     last=document.activeElement;title.textContent=name;stage.innerHTML="";
@@ -46,7 +52,7 @@
     const c=e.target.closest(".clip");
     if(c){open(c.dataset.title,c.dataset.src,c.dataset.drive);return}
     const d=e.target.closest("[data-play-drive]");
-    if(d){open(d.dataset.title||"Video","",d.dataset.playDrive);return}
+    if(d){open(d.dataset.title||"Video",d.dataset.src||"",d.dataset.playDrive);return}
     const cp=e.target.closest("[data-copy]");
     if(cp){
       const el=document.querySelector(cp.dataset.copy);

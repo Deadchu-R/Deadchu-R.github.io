@@ -40,7 +40,7 @@ PROJECTS = [
              ]),
          ],
          full="18ezKyaZ6x8iKwvC2Gpj-vhhxqdaGCitd",
-         shots=["1cuHuKj4H0HIaWXCJpQLxaxdFCUKOtDzX"]),
+         shots=["1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP", "1cuHuKj4H0HIaWXCJpQLxaxdFCUKOtDzX"]),
     dict(slug="shards", title="Shards", sub="Isometric story-driven game",
          engine="Unity · C#", role="Programmer", when="Nov 2023 · 3 weeks", context="Hackathon team",
          theme=("#0b3b3a", "#17736b", "#ffd36e"), cover="10P_bsBNsYOX6C94sR7FoAYuW_PC8ax71",
@@ -55,7 +55,7 @@ PROJECTS = [
              ]),
          ],
          full=None,
-         shots=["1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs", "1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV", "1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9"]),
+         shots=["1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs", "16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd", "1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV", "1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9", "1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS", "1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky"]),
     dict(slug="boss-rush", title="Boss Rush", sub="Grid-based tactical combat",
          engine="Unity · C#", role="Producer & game designer", when="12/2023 – 09/2024", context="Final year · Game Production 2",
          theme=("#3a0b2a", "#8c1d55", "#ff8fc0"), cover="1ds2k9OIavd8wmB638ZMaas-4uHDBN5dH",
@@ -94,7 +94,7 @@ PROJECTS = [
              ]),
          ],
          full="1vL8FiPkjc6uhVvU76h9tpVB-diiNVmWc",
-         shots=["1XKdeZXwJXXcGLC-PLBU1AQnQTI0q1Jnl", "1RSsJOWmaaCGo-ITMmSw50PgxQcOyCOBd", "1Tjj_5cknQ_98sqItEYD7McOjM5rpw7Jk", "19JMa8TxKunQdd_Ga3ChQp8HwCUkE4sHc"]),
+         shots=["1f_FEH3xWJFLEtx5Rivfkz0sW1IdyO7Cd", "1XKdeZXwJXXcGLC-PLBU1AQnQTI0q1Jnl", "1vxite6U0WSEwBSumniwODX1HcLkG5bws", "1A6NvKk0XuyzGLglwsEt_koiogPNRFDMd", "1RSsJOWmaaCGo-ITMmSw50PgxQcOyCOBd", "1VaeqPSLmbuIN1fWtjF4kB5d7_ZKoTFBH", "1Tjj_5cknQ_98sqItEYD7McOjM5rpw7Jk", "1an1Bz7pWXvz1K8BBtg61GLg1WJUE7YDw", "19JMa8TxKunQdd_Ga3ChQp8HwCUkE4sHc", "1uGg_f72WbVOmD-jkJ_3K04-ggVF-CJGE"]),
     dict(slug="almond-bar", title="Almond Bar", sub="Unreal Engine quest game",
          engine="Unreal · Blueprints", role="Solo developer", when="Tiltan", context="Final project · Unreal Blueprints course",
          theme=("#2c0830", "#7a1a73", "#ff7ae0"), cover="1S38ITtBFY7fynF-MWLseHT9h5Q9K5cms",
@@ -109,7 +109,7 @@ PROJECTS = [
              ]),
          ],
          full="1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC",
-         shots=["1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41", "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC"]),
+         shots=["1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41", "17zGlB0VBU26ZydIbjMk7YcrRy41PSAut", "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC", "1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh"]),
 ]
 
 LAB = [
@@ -127,11 +127,39 @@ LAB = [
     ("3-lane runner", "lab-runner.mp4", "1aEOUM2jy6SdJU2bQzpZQ59jWytxGDc66"),
     ("Space Invaders", "lab-invaders.mp4", "1kC6Ikjb6H7kVDjeW56lN_Uv9p8GIGsbq"),
     ("Snake", "lab-snake.mp4", "14TZn87SvelWovus4Zn1E_RqhUrwqV5jg"),
+    ("Snow shader", "lab-snow.mp4", "164BZh7NNCB082xrTOb3skcxzQ4GvIAGH"),
+    ("Aquarium in Unreal 4", "lab-aquarium.mp4", "1n7Sllz8QFlxmMBKCmnPvlq9hYfAx8_-d"),
 ]
 
 
+DEPTH = 0  # set per page so local asset paths resolve
+
+
 def thumb(i, w=1280):
+    small = w <= 900
+    name = f"{i}-s.jpg" if small else f"{i}.jpg"
+    if (ROOT / "assets/img" / name).exists():
+        return "../" * DEPTH + "assets/img/" + name
     return f"https://drive.google.com/thumbnail?id={i}&sz=w{w}"
+
+
+FULL = {  # Drive id of a full video -> local compressed file in assets/full
+    "15gejO8JuCfXQFWnQmd209mHFPer7dyFD": "bossrush",
+    "1vL8FiPkjc6uhVvU76h9tpVB-diiNVmWc": "infiltration",
+    "18ezKyaZ6x8iKwvC2Gpj-vhhxqdaGCitd": "musical-level",
+    "1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC": "almond-bar",
+    "1rlhZHUS8bYwiMmg42SXIdjwMXsK0N5bz": "showreel",
+}
+
+
+def play_attrs(drive_id, title):
+    """Attributes for a button that opens a full video: local file if present, Drive otherwise."""
+    name = FULL.get(drive_id)
+    src = ""
+    if name and (ROOT / "assets/full" / f"{name}.mp4").exists():
+        src = "../" * DEPTH + f"assets/full/{name}.mp4"
+    return f'data-play-drive="{drive_id}" data-src="{src}" data-title="{e(title)}"'
+
 
 
 def has_clip(f):
@@ -219,6 +247,8 @@ def clip_tile(label, file, did, depth, big=False):
 
 
 def build_index():
+    global DEPTH
+    DEPTH = 0
     tiles = []
     for i, pj in enumerate(PROJECTS):
         tiles.append(f"""<a class="ptile" href="projects/{pj['slug']}.html" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
@@ -233,18 +263,18 @@ def build_index():
     slides = "".join(f'<img onerror="this.remove()" src="{thumb(pj["cover"], 1600)}" alt="" style="--i:{i}">' for i, pj in enumerate(PROJECTS))
     hero_video = ""
     if (ROOT / "assets/hero.mp4").exists():
-        hero_video = '<video class="hero-video" src="assets/hero.mp4" poster="assets/hero.jpg" muted loop playsinline autoplay preload="auto" aria-hidden="true"></video>'
+        hero_video = '<video class="hero-video" data-wide="assets/hero.mp4" data-tall="assets/hero-m.mp4" muted loop playsinline autoplay preload="auto" aria-hidden="true"></video>'
     html = head("Roee Tal — Game Developer", "Roee Tal, game developer. Gameplay systems in Unity and Unreal Engine.", 0)
     html += topbar(0)
     html += f"""<section class="hero">
-  <div class="hero-media">{hero_video}<div class="slides" aria-hidden="true">{slides}</div></div>
+  <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
     <p class="kicker">Game developer · Unity &amp; Unreal Engine</p>
     <h1>Roee Tal</h1>
     <p class="lead">I build the systems players touch: combat, AI, dialogue and UI. Unreal developer at 3DVision, trained in game design and development at Tiltan.</p>
     <div class="btns">
       <a class="btn" href="#projects">See projects</a>
-      <button class="btn ghost" type="button" data-play-drive="{SITE['showreel']}" data-title="Showreel">▶ Watch showreel</button>
+      <button class="btn ghost" type="button" {play_attrs(SITE['showreel'], 'Showreel')}>▶ Watch showreel</button>
     </div>
   </div>
   {WAVE}
@@ -285,7 +315,8 @@ def build_index():
 
 
 def build_project(i, pj):
-    depth = 1
+    global DEPTH
+    depth = DEPTH = 1
     nxt = PROJECTS[(i + 1) % len(PROJECTS)]
     sections = []
     first = True
@@ -304,7 +335,7 @@ def build_project(i, pj):
             f'<a href="{thumb(s, 2000)}" target="_blank" rel="noopener"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot"></a>' for s in pj["shots"]) + "</div></section>"
     full = ""
     if pj["full"]:
-        full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" data-play-drive="{pj["full"]}" data-title="{e(pj["title"])} · full video">▶ Play full video</button></section>'
+        full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}>▶ Play full video</button></section>'
     html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"])
     html += topbar(depth, "projects")
     html += f"""<section class="phero">
@@ -342,6 +373,8 @@ def build_project(i, pj):
 
 
 def build_lab():
+    global DEPTH
+    DEPTH = 0
     tiles = "".join(f'<figure class="mech">{clip_tile(lbl, f, d, 0)}<figcaption><b>{e(lbl)}</b></figcaption></figure>' for lbl, f, d in LAB)
     html = head("The Lab — Roee Tal", "Shaders, systems and course experiments by Roee Tal.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
     html += topbar(0, "lab")

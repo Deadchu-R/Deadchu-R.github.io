@@ -58,6 +58,7 @@ h1,h2,h3{text-wrap:balance}
 @keyframes slide{0%{opacity:0;transform:scale(1.04)}3%{opacity:1}20%{opacity:1}24%{opacity:0;transform:scale(1.16)}100%{opacity:0}}
 .hero::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
   background:linear-gradient(180deg,rgba(12,47,110,.55) 0%,rgba(12,47,110,.05) 30%,rgba(12,47,110,.25) 55%,rgba(12,47,110,.92) 100%)}
+@media (max-aspect-ratio:1/1){.hero::after{background:linear-gradient(180deg,rgba(12,47,110,.6) 0%,rgba(12,47,110,0) 22%,rgba(12,47,110,.35) 45%,rgba(12,47,110,.95) 78%)}}
 .hero-copy{position:relative;z-index:4;width:100%;padding-block:120px clamp(90px,14vw,150px)}
 .hero h1{font:900 clamp(64px,13vw,168px)/.88 var(--f);margin:14px 0 18px;letter-spacing:-.02em}
 .lead{font-size:clamp(18px,2vw,22px);line-height:1.5;max-width:46ch;margin:0 0 28px;color:var(--paper)}
