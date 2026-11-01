@@ -608,3 +608,12 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .h-ico svg{width:62%;height:62%;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 60%,transparent))}
 .exp-kicker{display:flex;align-items:center;color:#7fd1ff}
 .exp-kicker .h-ico{width:28px;height:28px;margin-right:10px;border-radius:8px;vertical-align:0}
+
+/* jump menu: icons for the main sections, dots for the items inside them */
+.jump-panel a .j-ico{width:22px;height:22px;flex:none;display:grid;place-items:center;border-radius:6px;color:var(--c);
+  background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.jump-panel a .j-ico svg{width:14px;height:14px}
+.jump-panel a.on .j-ico{background:color-mix(in srgb,var(--c) 30%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--c) 50%,transparent)}
+.jump-panel a.sub{padding-left:42px}
+.jump-panel{max-height:min(78svh,640px);overflow:auto;overscroll-behavior:contain}
+.repo[id]{scroll-margin-top:90px}

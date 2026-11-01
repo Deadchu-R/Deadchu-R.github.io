@@ -475,7 +475,7 @@ def mosaic_pool(g=None):
 
 def more_code_html():
     cards = "".join(
-        f'<a class="repo" href="code/{cp["slug"]}.html" style="--deep:{cp["theme"][0]};--mid:{cp["theme"][1]};--accent:{cp["theme"][2]}"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>{e(cp["code"][0][0])}</span>'
+        f'<a class="repo" id="c-{cp["slug"]}" href="code/{cp["slug"]}.html" style="--deep:{cp["theme"][0]};--mid:{cp["theme"][1]};--accent:{cp["theme"][2]}"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>{e(cp["code"][0][0])}</span>'
         f'<span class="repo-body"><span class="repo-title">{e(cp["title"])}</span><span class="repo-tech">{"".join(f"<span>{e(x)}</span>" for x in cp["tech"][:4])}</span>'
         f'<span class="repo-desc">{e(cp["hook"])}</span><span class="more">See the code →</span></span></a>'
         for cp in CODE_PAGES)
@@ -516,8 +516,17 @@ def build_index():
     # screenshot and video poster in the gallery; site.js reshuffles it on each visit
     mosaic = mosaic_html(mosaic_pool())
     PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
-    jump_items = [("top","Home","#3d84e6","")]+[("now","Experience · 3DVision","#38b6ff","")]+[("projects","Projects",PROJ_GRAD,"")]+[(f"p-{pj['slug']}",pj['title'],pj['theme'][2],"sub") for pj in PROJECTS]+[("more-code","More code","#9be15d",""),("gallery-lab","Gallery &amp; lab","#ff8fc0",""),("contact","Contact","#6fd3c2","")]
-    links = "".join(f'<a class="{c}" href="#{i}" style="--c:{col}"><i></i>{t}</a>' for i,t,col,c in jump_items)
+    I = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    ICON_HOME = I + '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>'
+    ICON_IMG = I + '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>'
+    ICON_MAIL = I + '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'
+    jump_items = ([("top", "Home", "#3d84e6", "", ICON_HOME), ("now", "Experience · 3DVision", "#38b6ff", "", ICON_BRIEF),
+                   ("projects", "Projects", "#ffd23f", "", ICON_PAD)]
+                  + [(f"p-{pj['slug']}", e(pj['title']), pj['theme'][2], "sub", "") for pj in PROJECTS]
+                  + [("more-code", "More code", "#9be15d", "", ICON_CODE)]
+                  + [(f"c-{cp['slug']}", e(cp['title']), cp['theme'][2], "sub", "") for cp in CODE_PAGES]
+                  + [("gallery-lab", "Gallery &amp; lab", "#ff8fc0", "", ICON_IMG), ("contact", "Contact", "#6fd3c2", "", ICON_MAIL)])
+    links = "".join(f'<a class="{c}" href="#{i}" style="--c:{col}">' + (f'<span class="j-ico">{ic}</span>' if ic else '<i></i>') + f'{t}</a>' for i, t, col, c, ic in jump_items)
     html += f'''<div class="jump" id="jump">
   <nav class="jump-panel" id="jumpPanel" aria-label="Page sections" hidden><p class="jump-h">Jump to</p>{links}<p class="jump-h pages">Pages</p><div class="jump-pages"><a href="gallery.html">Gallery</a><a href="lab.html">Lab</a><a href="Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a></div></nav>
   <button class="jump-btn" type="button" aria-expanded="false" aria-controls="jumpPanel" aria-label="Jump to a section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="d1" cx="5" cy="6" r="2"/><circle class="d2" cx="5" cy="12" r="2"/><circle class="d3" cx="5" cy="18" r="2"/><path d="M10 6h10M10 12h10M10 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="x" d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
