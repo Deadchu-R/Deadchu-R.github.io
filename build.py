@@ -508,8 +508,15 @@ def about_html():
         ("Local AI tinkering", "#9be15d", I + '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>'),
     ]
     cards = "".join(f'<li style="--c:{c}"><span class="hb-ico">{svg}</span>{e(t)}</li>' for t, c, svg in hobbies)
-    games = ["Portal 2", "Minecraft", "The Witcher 3", "Slay the Spire", "Grime"]
-    favs = "".join(f'<span>{e(g)}</span>' for g in games)
+    G = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    games = [  # generic genre icons, not the games' logos
+        ("Portal 2", "#7fd1ff", G + '<path d="M5 8h3a2 2 0 1 1 4 0h3v3a2 2 0 1 1 0 4v4h-4a2 2 0 1 0-4 0H5v-4a2 2 0 1 0 0-4z"/></svg>'),
+        ("Minecraft", "#9be15d", G + '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>'),
+        ("The Witcher 3", "#ff9f5a", G + '<path d="M19 3 9.5 12.5M19 3h2v2l-9.5 9.5"/><path d="m6 12 6 6M8.5 15.5 4 20M4 18l2 2"/></svg>'),
+        ("Slay the Spire", "#ff7ae0", G + '<rect x="3" y="6" width="11" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/></svg>'),
+        ("Grime", "#c9a7ff", G + '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>'),
+    ]
+    favs = "".join(f'<span style="--c:{c}"><i>{svg}</i>{e(g)}</span>' for g, c, svg in games)
     tools = ["LM Studio", "Ollama", "ComfyUI", "Flux", "LobeHub", "OpenCode"]
     chips = "".join(f'<span>{e(t)}</span>' for t in tools)
     return f"""<section class="band about" id="about">
