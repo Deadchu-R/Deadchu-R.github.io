@@ -254,3 +254,14 @@ h1,h2,h3{text-wrap:balance}
 .gitem figcaption .gproj{font-size:9px;margin-bottom:2px}
 @media (hover:hover){.gitem:hover figcaption{opacity:1}}
 .gitem .zoom.art img{padding:12%}
+
+/* (i) info buttons: full description on demand */
+.info{width:26px;height:26px;flex:0 0 auto;display:grid;place-items:center;padding:0;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);
+  background:rgba(0,0,0,.55);color:#fff;font:800 14px/1 Georgia,"Times New Roman",serif;font-style:italic;cursor:pointer}
+.info:hover,.info[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+.gitem .info{position:absolute;left:6px;top:6px;z-index:3}
+.gitem.show-info figcaption{opacity:1;top:0;padding:40px 10px 10px;display:block;overflow:auto;background:rgba(0,0,0,.86);font-size:13px;pointer-events:auto;-webkit-line-clamp:unset}
+.cap-row{display:flex;align-items:flex-start;gap:8px}
+#viewerCap{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.viewer.cap-open #viewerCap{display:block;-webkit-line-clamp:unset}
+.cap-row .info[hidden]{display:none}

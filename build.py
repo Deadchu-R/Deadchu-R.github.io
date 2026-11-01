@@ -270,7 +270,7 @@ def footer(depth):
 <div class="wrap small muted">© {SITE['name']}</div>
 </footer>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
-  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><p id="viewerCap"></p></div><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div>
+  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden>i</button></div></div><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div>
   <div class="viewer-stage" id="viewerStage"></div>
   <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
@@ -381,7 +381,7 @@ def build_project(i, pj):
     shots = ""
     if pj["shots"]:
         shots = '<section class="mech-sec"><h2>Screenshots</h2><div class="shots">' + "".join(
-            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-cap="{e(SHOT_CAPS.get(s, ""))}" aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s in pj["shots"]) + "</div></section>"
+            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-title="Screenshot" data-cap="{e(SHOT_CAPS.get(s, ""))}" aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s in pj["shots"]) + "</div></section>"
     full = ""
     if pj["full"]:
         full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}>▶ Play full video</button></section>'
@@ -448,7 +448,8 @@ def build_gallery():
     DEPTH = 0
     items = []  # (html, project slug, kind)
     def card(inner, proj_title, label, cap, slug, kind):
-        return (f'<figure class="gitem" data-proj="{slug}" data-kind="{kind}">{inner}'
+        info = f'<button class="info" type="button" aria-label="Show description" aria-expanded="false">i</button>' if cap else ""
+        return (f'<figure class="gitem" data-proj="{slug}" data-kind="{kind}">{inner}{info}'
                 f'<figcaption><span class="gproj">{e(proj_title)}</span><b>{e(label)}</b> {e(cap)}</figcaption></figure>')
     for pj in PROJECTS:
         for _, _, clips in pj["sections"]:

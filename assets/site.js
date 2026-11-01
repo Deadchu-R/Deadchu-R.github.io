@@ -29,7 +29,7 @@
   }
 
   /* ---------- viewer: arrows move through the clicked item's group ---------- */
-  const viewer=$("#viewer"),stage=$("#viewerStage"),title=$("#viewerTitle"),cap=$("#viewerCap");
+  const viewer=$("#viewer"),stage=$("#viewerStage"),title=$("#viewerTitle"),cap=$("#viewerCap"),infoBtn=$("#viewerInfo");
   let last=null,gallery=[],gi=0,open_=false,fsOwned=false;
   const pauseAll=()=>{document.querySelectorAll(".clip video").forEach(x=>x.pause());heroVideo&&heroVideo.pause()};
   const isFs=()=>document.fullscreenElement||document.webkitFullscreenElement;
@@ -71,6 +71,8 @@
     viewer.className="viewer "+(vid?"is-video":"is-image")+(gallery.length>1?" has-nav":"");
     title.textContent=[el.dataset.title,count()].filter(Boolean).join(" · ");
     cap.textContent=el.dataset.cap||"";
+    viewer.classList.remove("cap-open");infoBtn.setAttribute("aria-expanded","false");
+    requestAnimationFrame(()=>{infoBtn.hidden=cap.scrollHeight<=cap.clientHeight+1});
     if(vid)return playInStage(el.dataset.title,el.dataset.src,el.dataset.drive||el.dataset.playDrive);
     stage.innerHTML=`<img src="${el.dataset.full}" alt="${(el.querySelector("img")||{}).alt||""}">`;
     return null;
@@ -90,8 +92,16 @@
   function step(d){if(!open_||gallery.length<2)return;gi=(gi+d+gallery.length)%gallery.length;render()}
 
   document.addEventListener("click",e=>{
+    if(e.target.closest("#viewerInfo")){const on=viewer.classList.toggle("cap-open");infoBtn.setAttribute("aria-expanded",on);return}
+    const gi_=e.target.closest(".gitem .info");
+    if(gi_){
+      const fig=gi_.closest(".gitem"),on=!fig.classList.contains("show-info");
+      document.querySelectorAll(".gitem.show-info").forEach(f=>{f.classList.remove("show-info");f.querySelector(".info").setAttribute("aria-expanded","false")});
+      fig.classList.toggle("show-info",on);gi_.setAttribute("aria-expanded",on);return;
+    }
+    if(!e.target.closest(".gitem.show-info"))document.querySelectorAll(".gitem.show-info").forEach(f=>{f.classList.remove("show-info");f.querySelector(".info").setAttribute("aria-expanded","false")});
     const item=e.target.closest(".clip,.zoom,[data-play-drive]");
-    if(item&&!viewer.contains(item)){if(!item.dataset.title)item.dataset.title="Video";open(item);return}
+    if(item&&!viewer.contains(item)){if(!item.dataset.title&&isVideo(item))item.dataset.title="Video";open(item);return}
     if(e.target.closest("#viewerPrev")){step(-1);return}
     if(e.target.closest("#viewerNext")){step(1);return}
     if(e.target.closest("#viewerClose")){close();return}
