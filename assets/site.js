@@ -48,6 +48,15 @@
   }
   // the video's own full-screen button is used; Chrome locks landscape when it opens,
   // so release the lock right away and let the phone's rotation decide
+  // screenshots and character art have no player controls, so they get their own full-screen button
+  const maxBtn=$("#viewerMax"),canFs=!!(viewer.requestFullscreen||viewer.webkitRequestFullscreen);
+  function toggleMax(){
+    if(isFs()){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}return}
+    try{Promise.resolve((viewer.requestFullscreen||viewer.webkitRequestFullscreen).call(viewer)).catch(()=>{})}catch(e){}
+  }
+  ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{
+    const on=document.fullscreenElement===viewer||document.webkitFullscreenElement===viewer;
+    viewer.classList.toggle("is-max",on);maxBtn.setAttribute("aria-label",on?"Exit full screen":"Full screen")}));
   const freeRotation=()=>{try{screen.orientation&&screen.orientation.unlock&&screen.orientation.unlock()}catch(e){}};
   ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{
     if(isFs()){freeRotation();setTimeout(freeRotation,150);setTimeout(freeRotation,600)}}));
@@ -71,6 +80,8 @@
     const more=el.dataset.more||"";moreText.textContent=more;
     moreLink.hidden=!el.dataset.href;if(el.dataset.href)moreLink.href=el.dataset.href;
     infoBtn.hidden=!more;
+    maxBtn.hidden=vid||!canFs;
+    if(vid&&(document.fullscreenElement===viewer))toggleMax();
     credit.textContent=el.dataset.credit||"";credit.hidden=!el.dataset.credit||!vid;
     if(vid)return playInStage(el.dataset.title,el.dataset.src,el.dataset.drive||el.dataset.playDrive);
     stage.innerHTML=`<img src="${el.dataset.full}" alt="${(el.querySelector("img")||{}).alt||""}">`;
@@ -104,8 +115,9 @@
     if(item&&!viewer.contains(item)){if(!item.dataset.title&&isVideo(item))item.dataset.title="Video";open(item);return}
     if(e.target.closest("#viewerPrev")){step(-1);return}
     if(e.target.closest("#viewerNext")){step(1);return}
+    if(e.target.closest("#viewerMax")){toggleMax();return}
     if(e.target.closest("#viewerClose")){close();return}
-    if(open_&&e.target===stage&&!isVideo(gallery[gi])){close();return}
+    if(open_&&e.target===stage&&!isVideo(gallery[gi])){if(isFs())toggleMax();else close();return}
     const chip=e.target.closest("[data-filter]");
     if(chip)filter(chip);
     const cp=e.target.closest("[data-copy]");

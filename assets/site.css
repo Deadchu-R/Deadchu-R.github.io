@@ -515,3 +515,6 @@ body:has(.viewer:not([hidden])) .jump{display:none}
   .ptile .more{margin-top:10px;flex:0}
   .ptile{background:radial-gradient(90% 120% at 100% 100%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 60%),linear-gradient(135deg,var(--mid),var(--deep))}
 }
+
+.viewer.is-max .viewer-stage img{max-width:100vw;max-height:calc(100svh - 90px)}
+@media (hover:hover){.btn.ghost.vmax:hover{background:var(--accent);color:var(--ink);border-color:var(--accent)}}
