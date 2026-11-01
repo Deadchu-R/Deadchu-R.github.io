@@ -529,6 +529,11 @@ def build_index():
       <a class="btn" href="#projects">See projects</a>
       <button class="btn ghost" type="button" {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}>▶ Watch showreel</button>
     </div>
+    <nav class="hero-links" aria-label="Jump to">
+      <a href="#now" style="--c:#38b6ff"><i></i>Current work</a>
+      <a href="#projects" style="--c:#ffd23f"><i></i>Projects</a>
+      <a href="#more-code" style="--c:#9be15d"><i></i>More code</a>
+    </nav>
   </div>
   {WAVE}
 </section>
