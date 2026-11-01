@@ -29,7 +29,7 @@
   }
 
   /* ---------- viewer: one gallery per kind (clips, screenshots, characters) ---------- */
-  const viewer=$("#viewer"),stage=$("#viewerStage"),title=$("#viewerTitle");
+  const viewer=$("#viewer"),stage=$("#viewerStage"),title=$("#viewerTitle"),cap=$("#viewerCap");
   let last=null,gallery=[],gi=0,mode="";
   const pauseAll=()=>{document.querySelectorAll(".clip video").forEach(x=>x.pause());heroVideo&&heroVideo.pause()};
   const isFs=()=>document.fullscreenElement||document.webkitFullscreenElement;
@@ -72,10 +72,11 @@
   function render(){
     const el=gallery[gi];
     if(mode==="video"){
-      const n=el.dataset.title;title.textContent=count()?`${n} · ${count()}`:n;
+      const n=el.dataset.title;title.textContent=count()?`${n} · ${count()}`:n;cap.textContent=el.dataset.cap||"";
       return playInStage(n,el.dataset.src,el.dataset.drive||el.dataset.playDrive);
     }
     title.textContent=[el.dataset.title,count()].filter(Boolean).join(" · ");
+    cap.textContent=el.dataset.cap||"";
     stage.innerHTML=`<img src="${el.dataset.full}" alt="${(el.querySelector("img")||{}).alt||""}">`;
   }
   function open(kind,el,list){

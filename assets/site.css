@@ -203,3 +203,10 @@ h1,h2,h3{text-wrap:balance}
 .viewer.is-image .viewer-stage{display:grid;place-items:center;padding:12px}
 .viewer.is-image .viewer-stage img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
 .viewer:fullscreen .viewer-top{position:absolute;left:0;right:0;top:0;z-index:3;background:linear-gradient(rgba(0,0,0,.6),transparent)}
+
+/* one-line description in the enlarged view */
+.viewer-text{min-width:0;display:grid;gap:4px}
+#viewerCap{margin:0;font-weight:400;font-size:15px;line-height:1.4;color:rgba(255,255,255,.8);max-width:70ch}
+#viewerCap:empty{display:none}
+.viewer-top{align-items:flex-start}
+#viewerClose{white-space:nowrap;flex-shrink:0}

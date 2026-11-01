@@ -71,8 +71,8 @@ PROJECTS = [
                  ("Attack sequence", "How a party member's attack plays out.", "bossrush-attack.mp4", "12FAXoXFoiz_-gTPMpAHg0HDlMtjLlzJO"),
              ]),
              ("Effects", "Feedback that makes each action land.", [
-                 ("Fireball", "", "bossrush-fireball.mp4", "1HNorCwv_7PXALP_TCjANvZW385rQE3BR"),
-                 ("Resource gather", "", "bossrush-gather.mp4", "1OZmcyiAOi2JdeSAK5nQF3ZrqDwe8VoyK"),
+                 ("Fireball", "The fireball attack effect.", "bossrush-fireball.mp4", "1HNorCwv_7PXALP_TCjANvZW385rQE3BR"),
+                 ("Resource gather", "The effect that plays when resources are gathered.", "bossrush-gather.mp4", "1OZmcyiAOi2JdeSAK5nQF3ZrqDwe8VoyK"),
              ]),
          ],
          full="15gejO8JuCfXQFWnQmd209mHFPer7dyFD",
@@ -114,26 +114,64 @@ PROJECTS = [
 ]
 
 LAB = [
-    ("World-bending shader", "lab-worldbend.mp4", "1w8G1TMj93LvZqCNxYdG46o4rOHp4_2i2"),
-    ("Toon shader", "lab-toon.mp4", "17zl6JE6t6rm-GDynooXcIjXIdwDehpk6"),
-    ("Hatching in Shader Graph", "lab-hatching.mp4", "1Sne0ks3fKGrbedu_LFnLIw84JBKD-g9a"),
-    ("Plane-bending shader", "lab-planebend.mp4", "1lEnZM78NR3td-blCaTno0pfAXRFfc597"),
-    ("Tile-map engine", "lab-tilemap.mp4", "1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL"),
-    ("Chess on the tile-map engine", "lab-chess.mp4", "1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi"),
-    ("Card-draw system", "lab-cards.mp4", "1_WDc8rzjxa7d6zPILMB0E2DsOPjuMyQc"),
-    ("Multiplayer login UI", "lab-mpui.mp4", "1Cy7YyN8rTMAOnD0nJ3wLVHLuxE2zXoeL"),
-    ("Escape-room camera", "lab-escapecam.mp4", "1t1hd1aLov8GhUp2G_fn2yfejbeJVwUdd"),
-    ("AI training", "lab-aitraining.mp4", "1fDZRyrlEcJ4YKWOP8dyob5qL3pHyhs_M"),
-    ("Portal × Angry Birds", "lab-portal.mp4", "1hr7Xf76Kqlwt1apXkOBeSaaSp1PVswgI"),
-    ("3-lane runner", "lab-runner.mp4", "1aEOUM2jy6SdJU2bQzpZQ59jWytxGDc66"),
-    ("Space Invaders", "lab-invaders.mp4", "1kC6Ikjb6H7kVDjeW56lN_Uv9p8GIGsbq"),
-    ("Snake", "lab-snake.mp4", "14TZn87SvelWovus4Zn1E_RqhUrwqV5jg"),
-    ("Snow shader", "lab-snow.mp4", "164BZh7NNCB082xrTOb3skcxzQ4GvIAGH"),
-    ("Aquarium in Unreal 4", "lab-aquarium.mp4", "1n7Sllz8QFlxmMBKCmnPvlq9hYfAx8_-d"),
+    ("World-bending shader", "lab-worldbend.mp4", "1w8G1TMj93LvZqCNxYdG46o4rOHp4_2i2", "A shader that bends the world as it moves away from the camera."),
+    ("Toon shader", "lab-toon.mp4", "17zl6JE6t6rm-GDynooXcIjXIdwDehpk6", "Cel-shaded lighting with hard color steps."),
+    ("Hatching in Shader Graph", "lab-hatching.mp4", "1Sne0ks3fKGrbedu_LFnLIw84JBKD-g9a", "Pencil-style hatching shading, built in Shader Graph."),
+    ("Plane-bending shader", "lab-planebend.mp4", "1lEnZM78NR3td-blCaTno0pfAXRFfc597", "A shader that curves a flat plane."),
+    ("Tile-map engine", "lab-tilemap.mp4", "1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL", "A tile-map engine running a level."),
+    ("Chess on the tile-map engine", "lab-chess.mp4", "1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi", "A chess game built on top of the tile-map engine."),
+    ("Card-draw system", "lab-cards.mp4", "1_WDc8rzjxa7d6zPILMB0E2DsOPjuMyQc", "Drawing cards into the player's hand."),
+    ("Multiplayer login UI", "lab-mpui.mp4", "1Cy7YyN8rTMAOnD0nJ3wLVHLuxE2zXoeL", "Login and password screen for a multiplayer game."),
+    ("Escape-room camera", "lab-escapecam.mp4", "1t1hd1aLov8GhUp2G_fn2yfejbeJVwUdd", "Camera control for an escape-room game."),
+    ("AI training", "lab-aitraining.mp4", "1fDZRyrlEcJ4YKWOP8dyob5qL3pHyhs_M", "Training an AI agent."),
+    ("Portal × Angry Birds", "lab-portal.mp4", "1hr7Xf76Kqlwt1apXkOBeSaaSp1PVswgI", "Angry Birds-style launching, with portals."),
+    ("3-lane runner", "lab-runner.mp4", "1aEOUM2jy6SdJU2bQzpZQ59jWytxGDc66", "A hyper-casual three-lane runner."),
+    ("Space Invaders", "lab-invaders.mp4", "1kC6Ikjb6H7kVDjeW56lN_Uv9p8GIGsbq", "A Space Invaders remake."),
+    ("Snake", "lab-snake.mp4", "14TZn87SvelWovus4Zn1E_RqhUrwqV5jg", "A Snake remake."),
+    ("Snow shader", "lab-snow.mp4", "164BZh7NNCB082xrTOb3skcxzQ4GvIAGH", "A shader that covers objects in snow."),
+    ("Aquarium in Unreal 4", "lab-aquarium.mp4", "1n7Sllz8QFlxmMBKCmnPvlq9hYfAx8_-d", "An aquarium scene built in Unreal Engine 4."),
 ]
 
 
 DEPTH = 0  # set per page so local asset paths resolve
+
+
+SHOT_CAPS = {  # one line shown under each enlarged screenshot
+    "1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP": "The space cat runs under a tree full of staring eyes.",
+    "1cuHuKj4H0HIaWXCJpQLxaxdFCUKOtDzX": "Level design overview of the whole stage.",
+    "1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs": "The hometown, in isometric view.",
+    "16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd": "Top-down layout of the hometown map.",
+    "1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV": "NPC data component: each NPC links its dialogue sheet, UI handler and speech bubble.",
+    "1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9": "The typewriter method that types dialogue letter by letter.",
+    "1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS": "A dialogue sheet: pages of conversation stored as data.",
+    "1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky": "An NPC ID asset holding the guard's name and icons.",
+    "1XKdeZXwJXXcGLC-PLBU1AQnQTI0q1Jnl": "Inside the watchtower.",
+    "1vxite6U0WSEwBSumniwODX1HcLkG5bws": "The dictator's building, first floor.",
+    "1A6NvKk0XuyzGLglwsEt_koiogPNRFDMd": "The dictator's building, second floor.",
+    "1RSsJOWmaaCGo-ITMmSw50PgxQcOyCOBd": "Inside the hospital.",
+    "1VaeqPSLmbuIN1fWtjF4kB5d7_ZKoTFBH": "The hospital from outside.",
+    "1Tjj_5cknQ_98sqItEYD7McOjM5rpw7Jk": "The armoury.",
+    "1an1Bz7pWXvz1K8BBtg61GLg1WJUE7YDw": "The soldiers' bedroom.",
+    "19JMa8TxKunQdd_Ga3ChQp8HwCUkE4sHc": "A statue in front of one of the base's buildings.",
+    "1uGg_f72WbVOmD-jkJ_3K04-ggVF-CJGE": "The military base in the desert.",
+    "1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41": "The bar, inspired by CharlieBar.",
+    "17zGlB0VBU26ZydIbjMk7YcrRy41PSAut": "The bar seen from the entrance.",
+    "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC": "The lounge seating area.",
+    "1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh": "The restroom, part of the quest.",
+}
+
+CAST_CAPS = {
+    "musical-cat": "The playable hero.",
+    "musical-flower": "An enemy waiting in the level.",
+    "shards-protagonist": "The man returning to his hometown.",
+    "shards-shadow": "A figure from his distorted memories.",
+    "shards-ghost": "Another figure from his memories.",
+    "shards-cityhall": "A building from the hometown.",
+    "bossrush-axe": "One of the three party members.",
+    "bossrush-mage": "One of the three party members.",
+    "bossrush-ranger": "One of the three party members.",
+    "bossrush-dracovid": "The boss the party fights.",
+}
 
 
 def thumb(i, w=1280):
@@ -153,13 +191,13 @@ FULL = {  # Drive id of a full video -> local compressed file in assets/full
 }
 
 
-def play_attrs(drive_id, title):
+def play_attrs(drive_id, title, cap="The full gameplay video."):
     """Attributes for a button that opens a full video: local file if present, Drive otherwise."""
     name = FULL.get(drive_id)
     src = ""
     if name and (ROOT / "assets/full" / f"{name}.mp4").exists():
         src = "../" * DEPTH + f"assets/full/{name}.mp4"
-    return f'data-play-drive="{drive_id}" data-src="{src}" data-title="{e(title)}"'
+    return f'data-play-drive="{drive_id}" data-src="{src}" data-title="{e(title)}" data-cap="{e(cap)}"'
 
 
 
@@ -232,7 +270,7 @@ def footer(depth):
 <div class="wrap small muted">© {SITE['name']}</div>
 </footer>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
-  <div class="viewer-top"><span id="viewerTitle"></span><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div>
+  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><p id="viewerCap"></p></div><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div>
   <div class="viewer-stage" id="viewerStage"></div>
   <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
@@ -243,13 +281,13 @@ def footer(depth):
 """
 
 
-def clip_tile(label, file, did, depth, big=False):
+def clip_tile(label, file, did, depth, big=False, cap=""):
     p = "../" * depth
     poster = f"{p}assets/posters/{file.replace('.mp4', '.jpg')}"
     if not (ROOT / "assets/posters" / file.replace(".mp4", ".jpg")).exists():
         poster = thumb(did, 960)
     src = f"{p}assets/clips/{file}" if has_clip(file) else ""
-    return (f'<button class="clip{" big" if big else ""}" type="button" data-src="{src}" data-drive="{did}" data-title="{e(label)}" aria-label="Play video: {e(label)}">'
+    return (f'<button class="clip{" big" if big else ""}" type="button" data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}" aria-label="Play video: {e(label)}">'
             f'<video muted loop playsinline preload="none" poster="{poster}"></video>'
             f'<span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button>')
 
@@ -282,7 +320,7 @@ def build_index():
     <p class="lead">I build the systems players touch: combat, AI, dialogue and UI. Unreal developer at 3DVision, trained in game design and development at Tiltan.</p>
     <div class="btns">
       <a class="btn" href="#projects">See projects</a>
-      <button class="btn ghost" type="button" {play_attrs(SITE['showreel'], 'Showreel')}>▶ Watch showreel</button>
+      <button class="btn ghost" type="button" {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}>▶ Watch showreel</button>
     </div>
   </div>
   {WAVE}
@@ -330,7 +368,7 @@ def build_project(i, pj):
     first = True
     for title, intro, clips in pj["sections"]:
         tiles = "".join(
-            f'<figure class="mech">{clip_tile(lbl, f, d, depth, big=(len(clips) == 1))}<figcaption><b>{e(lbl)}</b>{(" " + e(cap)) if cap else ""}</figcaption></figure>'
+            f'<figure class="mech">{clip_tile(lbl, f, d, depth, big=(len(clips) == 1), cap=cap)}<figcaption><b>{e(lbl)}</b>{(" " + e(cap)) if cap else ""}</figcaption></figure>'
             for lbl, cap, f, d in clips)
         sections.append(f"""<section class="mech-sec">
   <h2>{e(title)}</h2>{f'<p class="muted center">{e(intro)}</p>' if intro else ''}
@@ -340,14 +378,14 @@ def build_project(i, pj):
     shots = ""
     if pj["shots"]:
         shots = '<section class="mech-sec"><h2>Screenshots</h2><div class="shots">' + "".join(
-            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot"></button>' for s in pj["shots"]) + "</div></section>"
+            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-cap="{e(SHOT_CAPS.get(s, ""))}" aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot"></button>' for s in pj["shots"]) + "</div></section>"
     full = ""
     if pj["full"]:
         full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}>▶ Play full video</button></section>'
     cast = ""
     if pj.get("cast"):
         cast = '<section class="mech-sec"><h2>Characters</h2><div class="cast">' + "".join(
-            f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}"></button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
+            f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}" aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}"></button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
     html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"])
     html += topbar(depth, "projects")
     html += f"""<section class="phero">
@@ -388,7 +426,7 @@ def build_project(i, pj):
 def build_lab():
     global DEPTH
     DEPTH = 0
-    tiles = "".join(f'<figure class="mech">{clip_tile(lbl, f, d, 0)}<figcaption><b>{e(lbl)}</b></figcaption></figure>' for lbl, f, d in LAB)
+    tiles = "".join(f'<figure class="mech">{clip_tile(lbl, f, d, 0, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure>' for lbl, f, d, cap in LAB)
     html = head("The Lab — Roee Tal", "Shaders, systems and course experiments by Roee Tal.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
     html += topbar(0, "lab")
     html += f"""<section class="phero short">
