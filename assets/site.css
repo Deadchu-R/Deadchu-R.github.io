@@ -626,3 +626,5 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 @keyframes livePulse{70%{box-shadow:0 0 0 8px rgba(80,220,120,0)}100%{box-shadow:0 0 0 0 rgba(80,220,120,0)}}
 .timeline li.tl-now::before{background:#50dc78;box-shadow:0 0 0 5px rgba(80,220,120,.22);animation:livePulse 1.8s ease-out infinite}
 .timeline li.tl-now .when{color:#9cf0b4}
+.appendix{margin-top:30px;padding-top:40px;padding-bottom:70px;border-top:1px dashed rgba(255,255,255,.2)}
+.appendix .kicker{text-align:center}

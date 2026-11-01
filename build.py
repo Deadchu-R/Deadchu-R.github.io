@@ -170,6 +170,12 @@ CARD_TECH = {
 CARD_ROLE = {"tile-map-engine": "Programmer · team of 3", "infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & team lead",
              "almond-bar": "Solo developer · all the code", "musical-level": "Producer"}
 
+EARLY = [  # appendix: early and small projects
+    ("Upon the Dawn", "lab-uponthedawn.mp4", "1UnovVrXcBiB45WCwJmY82AQ0reyyepL5", "A strategy prototype on an island map, destroying an enemy factory."),
+    ("My first project: a boss fight", "lab-firstboss.mp4", "126SJ_eNvJFjB5OQVPowUp9PM7D6kmY9d", "My very first Unity game: a 2D platformer boss fight with a health heart, fireball attacks and a retry screen."),
+    ("Save & load", "lab-savestring.mp4", "1RSi5jGjKOFYIemlezvZHC3fScOSxsg0-", "An early exercise: type a string, save it, and load it back."),
+]
+
 LAB = [
     ("World-bending shader", "lab-worldbend.mp4", "1w8G1TMj93LvZqCNxYdG46o4rOHp4_2i2", "A shader that bends the world as it moves away from the camera."),
     ("Toon shader", "lab-toon.mp4", "17zl6JE6t6rm-GDynooXcIjXIdwDehpk6", "Cel-shaded lighting with hard color steps."),
@@ -839,13 +845,15 @@ def build_lab():
     global DEPTH
     DEPTH = 0
     tiles = "".join(f'<figure class="mech">{clip_tile(lbl, f, d, 0, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure>' for lbl, f, d, cap in LAB)
+    early = "".join(f'<figure class="mech">{clip_tile(lbl, f, d, 0, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure>' for lbl, f, d, cap in EARLY)
     html = head("The Lab — Roee Tal", "Shaders, systems and course experiments by Roee Tal.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
     html += topbar(0, "lab")
     html += f"""<section class="phero short">
   <div class="wrap phero-copy"><p class="kicker">Experiments</p><h1>The lab</h1><p class="lead">Small things I built to learn how they work: shaders, engines, UI and mini-games.</p></div>
   {WAVE}
 </section>
-<div class="project"><div class="wrap"><section class="mech-sec"><div class="mech-grid n3">{tiles}</div></section></div></div>
+<div class="project"><div class="wrap"><section class="mech-sec"><div class="mech-grid n3">{tiles}</div></section>
+<section class="mech-sec appendix" id="early"><p class="kicker">Appendix</p><h2>Early work</h2><p class="muted center">Where I started: small first projects and exercises, kept here for the record.</p><div class="mech-grid n3">{early}</div></section></div></div>
 """
     html += footer(0)
     (ROOT / "lab.html").write_text(html)
@@ -892,7 +900,9 @@ def build_gallery():
             items.append(card(inner, pj["title"], c, cap, pj["slug"], "image", more_attrs(more_text(pj), href)))
     for lbl, f, d, cap in LAB:
         items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True), "Lab", lbl, cap, "lab", "video"))
-    chips = [("all", "Everything"), ("video", "Videos"), ("image", "Images")] + [(pj["slug"], pj["title"]) for pj in PROJECTS] + [("lab", "Lab")]
+    for lbl, f, d, cap in EARLY:
+        items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True), "Early work", lbl, cap, "early", "video"))
+    chips = [("all", "Everything"), ("video", "Videos"), ("image", "Images")] + [(pj["slug"], pj["title"]) for pj in PROJECTS] + [("lab", "Lab"), ("early", "Early work")]
     def chip_style(k):
         th = THEMES.get(k)
         return f' style="--deep:{th[0]};--mid:{th[1]};--accent:{th[2]}"' if th else ""
