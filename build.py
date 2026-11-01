@@ -117,6 +117,13 @@ PROJECTS = [
 # order on the site: the projects with the most of my own code come first
 ORDER = ["infiltration", "shards", "boss-rush", "almond-bar", "musical-level"]
 PROJECTS = sorted(PROJECTS, key=lambda pj: ORDER.index(pj["slug"]))
+TECH = {
+    "infiltration": ["C++", "Blueprints", "Unreal Engine 5", "Line-trace shooting", "Enemy AI: detection & patrol", "Interaction system"],
+    "shards": ["C#", "Unity", "ScriptableObjects", "Data-driven design", "C# events (OnLetterTyped)", "Coroutines", "UI systems"],
+    "boss-rush": ["C#", "Unity", "Grid-based movement", "Turn-based combat"],
+    "almond-bar": ["Blueprints", "Unreal Engine", "Dialogue system", "Quest system"],
+    "musical-level": ["C#", "Unity", "Gameplay scripting"],
+}
 CARD_ROLE = {"infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & programmer",
              "almond-bar": "Solo developer · all the code", "musical-level": "Producer"}
 
@@ -576,13 +583,13 @@ def build_project(i, pj):
 </section>
 
 <div class="project">
-  {f'<div class="wrap art-wrap"><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span>{e(ART_NOTES[pj["slug"]])}</p></div>' if pj['slug'] in ART_NOTES else ''}
   <section class="wrap intro">
     <div class="intro-text">
       <p class="hook">{e(pj['hook'])}</p>
-      {''.join(f'<p>{e(a)}</p>' for a in pj['about'])}
-      <h3 class="kicker">What I did</h3>
+      <h3 class="kicker">What I built</h3>
       <ul class="ticks">{''.join(f'<li>{e(d)}</li>' for d in pj['did'])}</ul>
+      <h3 class="kicker">Tech &amp; principles</h3>
+      <div class="techs">{''.join(f'<span>{e(t)}</span>' for t in TECH[pj['slug']])}</div>
     </div>
     <dl class="facts">
       <div><dt>Role</dt><dd>{e(pj['role'])}</dd></div>
@@ -591,7 +598,13 @@ def build_project(i, pj):
       <div><dt>Context</dt><dd>{e(pj['context'])}</dd></div>
     </dl>
   </section>
-  <div class="wrap">{cast}{''.join(sections)}{shots}{full}</div>
+  <div class="wrap">{''.join(sections)}{shots}{full}</div>
+  <section class="wrap about-game">
+    <h2>About the game</h2>
+    {''.join(f'<p>{e(a)}</p>' for a in pj['about'])}
+  </section>
+  <div class="wrap">{cast}</div>
+  <div class="wrap credits"><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span><b>Credits.</b> {e(ART_NOTES[pj["slug"]])}</span></p></div>
 </div>
 {next_band(nxt)}
 """
