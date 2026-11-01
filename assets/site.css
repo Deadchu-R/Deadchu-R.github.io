@@ -654,3 +654,4 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .rig ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .rig li{display:flex;flex-direction:column;gap:3px;padding:9px 12px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font:600 14px/1.25 ui-monospace,Consolas,monospace;color:#e6edf3}
 .rig li b{font:700 10.5px/1 var(--f);letter-spacing:.12em;color:#8b949e}
+.rig-note{margin:10px 0 0;font-size:13.5px;color:var(--soft)}
