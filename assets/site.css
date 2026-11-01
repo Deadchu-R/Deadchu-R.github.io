@@ -460,3 +460,19 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .viewer-credit::before{content:"🎨 "}
 .viewer-credit[hidden]{display:none}
 .mech .clip[data-credit]::after{content:"Team art";position:absolute;left:10px;bottom:10px;padding:4px 8px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font:700 11px/1 var(--f);letter-spacing:.04em;pointer-events:none}
+
+/* next project band: the next game's colors and character */
+.next-band{display:block;position:relative;overflow:hidden;text-decoration:none;color:var(--paper);
+  background:radial-gradient(ellipse 60% 90% at 85% 60%,color-mix(in srgb,var(--accent) 28%,transparent),transparent 70%),linear-gradient(160deg,var(--mid),var(--deep) 85%);
+  padding-block:clamp(56px,8vw,90px) clamp(80px,10vw,120px)}
+.next-inner{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.next-copy{display:flex;flex-direction:column;gap:10px;min-width:0}
+.next-band .kicker{color:var(--accent)}
+.next-band .next-title{font:800 clamp(40px,7vw,76px)/1 var(--f);color:#fff;transition:color .2s}
+.next-band .arr{display:inline-block;color:var(--accent);transition:transform .25s}
+.next-hook{color:rgba(255,255,255,.78);max-width:40ch}
+.next-art{flex:none;pointer-events:none;transition:transform .35s cubic-bezier(.3,1.4,.5,1)}
+.next-art.cutout{height:clamp(170px,24vw,280px);width:auto;margin-block:-30px -70px;filter:drop-shadow(0 18px 28px rgba(0,0,0,.45))}
+.next-art.card{width:clamp(150px,20vw,230px);aspect-ratio:1;object-fit:cover;border-radius:22px;border:3px solid var(--accent);transform:rotate(5deg);box-shadow:0 22px 44px -14px rgba(0,0,0,.7),0 0 30px -6px var(--accent)}
+@media (hover:hover){.next-band:hover .arr{transform:translateX(8px)}.next-band:hover .next-art.cutout{transform:translateY(-8px) rotate(-3deg)}.next-band:hover .next-art.card{transform:rotate(0) scale(1.04)}}
+@media (max-width:600px){.next-inner{gap:12px}.next-hook{font-size:15px}.next-art.cutout{height:150px;margin-block:-10px -60px}.next-art.card{width:118px;border-radius:16px}}

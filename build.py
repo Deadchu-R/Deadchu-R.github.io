@@ -255,11 +255,11 @@ def topbar(depth, current=""):
 """
 
 
-def footer(depth):
+def footer(depth, peek=True):
     p = "../" * depth
     return f"""<footer class="foot" id="contact">
 <svg class="foot-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 260 80 520 0 760 30 S 1220 70 1440 22 V70 H0Z"/></svg>
-<div class="peekcat" aria-hidden="true"><img src="{p}assets/art/musical-cat.webp" alt="" loading="lazy"></div>
+{f'<div class="peekcat" aria-hidden="true"><img src="{p}assets/art/musical-cat.webp" alt="" loading="lazy"></div>' if peek else ''}
 <div class="wrap foot-grid">
   <div>
     <h2>Let's make games together</h2>
@@ -506,6 +506,19 @@ def build_index():
     (ROOT / "index.html").write_text(html)
 
 
+NEXT_CARD = {"infiltration": "next-infiltration", "almond-bar": "next-almond-bar"}
+
+def next_band(nxt):
+    """'Next project' band in the next project's own colors, with its character or an iconic frame."""
+    d, m, a = nxt["theme"]
+    if nxt.get("mascot"):
+        art = f'<img class="next-art cutout" src="../assets/art/{nxt["mascot"]}.webp" alt="" loading="lazy">'
+    else:
+        art = f'<img class="next-art card" src="../assets/art/{NEXT_CARD[nxt["slug"]]}.webp" alt="" loading="lazy">'
+    return (f'<a class="next-band" href="{nxt["slug"]}.html" style="--deep:{d};--mid:{m};--accent:{a}">'
+            f'<div class="wrap next-inner"><div class="next-copy"><span class="kicker">Next project</span>'
+            f'<span class="next-title">{e(nxt["title"])} <span class="arr">→</span></span><span class="next-hook">{e(nxt["hook"])}</span></div>{art}</div></a>')
+
 def build_project(i, pj):
     global DEPTH
     depth = DEPTH = 1
@@ -563,10 +576,10 @@ def build_project(i, pj):
     </dl>
   </section>
   <div class="wrap">{cast}{''.join(sections)}{shots}{full}</div>
-  <a class="next wrap" href="{nxt['slug']}.html"><span class="kicker">Next project</span><span class="next-title">{e(nxt['title'])} →</span></a>
 </div>
+{next_band(nxt)}
 """
-    html += footer(depth)
+    html += footer(depth, peek=False)
     (ROOT / "projects").mkdir(exist_ok=True)
     (ROOT / "projects" / f"{pj['slug']}.html").write_text(html)
 
