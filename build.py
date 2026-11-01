@@ -531,8 +531,8 @@ def about_html():
       <h3>Running AI models on my own PC</h3>
       <p class="muted">I set up and run language and image models locally, no cloud: chat models, image generation pipelines and AI coding agents.</p>
       <div class="ai-tools">{chips}</div>
-      <div class="rig"><p class="rig-h">On a PC I specced for it</p>
-        <ul><li><b>CPU</b>Ryzen 9 9950X3D</li><li><b>RAM</b>96 GB DDR5</li><li><b>GPU</b>RTX 3090 · dual-GPU ready</li><li><b>PSU</b>1600 W</li></ul><p class="rig-note">I chose every part with local AI in mind, then set up Windows and the drivers myself.</p></div>
+      <details class="rig" data-open-wide><summary class="rig-h">On a PC I specced for it</summary>
+        <ul><li><b>CPU</b>Ryzen 9 9950X3D</li><li><b>RAM</b>96 GB DDR5</li><li><b>GPU</b>RTX 3090 · dual-GPU ready</li><li><b>PSU</b>1600 W</li></ul><p class="rig-note">I chose every part with local AI in mind, then set up Windows and the drivers myself.</p></details>
     </div>
   </div>
 </section>

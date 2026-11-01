@@ -195,6 +195,9 @@
     el.textContent=[yrs?yrs+(yrs>1?" yrs":" yr"):"",mos?mos+(mos>1?" mos":" mo"):""].filter(Boolean).join(" ");
   });
 
+  /* specs open on wide screens, folded on phones */
+  if(matchMedia("(min-width: 861px)").matches)document.querySelectorAll("details[data-open-wide]").forEach(d=>d.open=true);
+
   /* ---------- gallery mosaic: new random order on every visit ---------- */
   const mos=$(".mosaic[data-pool]");
   if(mos){
