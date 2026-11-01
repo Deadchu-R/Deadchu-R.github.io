@@ -24,7 +24,7 @@ SITE = {
 # theme: (deep, mid, accent) colors for the project's own page
 PROJECTS = [
     dict(slug="musical-level", mascot="musical-cat", cast=[('musical-cat', 'The space cat, the playable hero'), ('musical-flower', 'A tentacle flower enemy')], title="A Musical Level", sub="Inspired by Rayman Legends",
-         engine="Unity", role="Producer · design · scripting", when="2nd year, Tiltan", context="Game Production course, team project",
+         engine="Unity", role="Producer · some programming & design", when="2nd year, Tiltan", context="Game Production course, team project",
          theme=("#1a0b3d", "#4a2398", "#c9a7ff"), cover="1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP",
          hook="A space cat runs, jumps and fights through a level that moves to the beat.",
          about=["Developed in my second year for the Game Production course, the goal was to replicate real-world game production. My team and I created a rhythm-based level inspired by Rayman Legends' beat-driven gameplay.",
@@ -44,7 +44,7 @@ PROJECTS = [
          full="18ezKyaZ6x8iKwvC2Gpj-vhhxqdaGCitd",
          shots=["1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP", "1cuHuKj4H0HIaWXCJpQLxaxdFCUKOtDzX"]),
     dict(slug="shards", mascot="shards-protagonist", cast=[('shards-protagonist', 'The protagonist'), ('shards-shadow', 'A shadow memory'), ('shards-ghost', 'A ghost memory'), ('shards-cityhall', 'City hall')], title="Shards", sub="Isometric story-driven game",
-         engine="Unity · C#", role="Programmer", when="Nov 2023 · 3 weeks", context="Hackathon team",
+         engine="Unity · C#", role="Programmer · some design", when="Nov 2023 · 3 weeks", context="Hackathon team",
          theme=("#0b3b3a", "#17736b", "#ffd36e"), cover="10P_bsBNsYOX6C94sR7FoAYuW_PC8ax71",
          hook="A man goes back to his hometown to face what happened there.",
          about=["Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma.",
@@ -59,7 +59,7 @@ PROJECTS = [
          full=None,
          shots=["1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs", "16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd", "1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV", "1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9", "1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS", "1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky"]),
     dict(slug="boss-rush", mascot="bossrush-dracovid", cast=[('bossrush-axe', 'Axe fighter'), ('bossrush-mage', 'Mage'), ('bossrush-ranger', 'Ranger'), ('bossrush-dracovid', 'Dracovid, the boss')], title="Boss Rush", sub="Grid-based tactical combat",
-         engine="Unity · C#", role="Producer & game designer", when="12/2023 – 09/2024", context="Final year · Game Production 2",
+         engine="Unity · C#", role="Producer & programmer · some design", when="12/2023 – 09/2024", context="Final year · Game Production 2",
          theme=("#3a0b2a", "#8c1d55", "#ff8fc0"), cover="1ds2k9OIavd8wmB638ZMaas-4uHDBN5dH",
          hook="Three heroes, one giant boss, and a grid. Medicines against disease, inside a microscopic world.",
          about=["Developed in my final year for the Game Production 2 course: a grid-based strategy game where the player controls a party of three characters to defeat a powerful boss.",
@@ -193,6 +193,13 @@ FULL = {  # Drive id of a full video -> local compressed file in assets/full
 
 
 ART_CREDIT_SLUGS = {"musical-level", "shards", "boss-rush"}
+ART_NOTES = {
+    "musical-level": "Art and animation by the team's artists. I'm not an artist: I was mainly the producer, with some programming and game design.",
+    "shards": "Art and animation by the team's artists. I'm not an artist: I was mainly the programmer, with some game design.",
+    "boss-rush": "Art and animation by the team's artists. I'm not an artist: I was the producer and a programmer, with some game design.",
+    "infiltration": "A solo project: I built everything myself, code, design and level setup. There was no art team, so the visuals use ready-made assets.",
+    "almond-bar": "A solo project: I built everything myself, code, design and level setup. There was no art team, so the visuals use ready-made assets.",
+}
 ART_CREDIT = "Art and animation by the team's artists. I'm not an artist: my part was the code and game design."
 ART_CREDIT_SHORT = "Art by the team's artists, not by me."
 def credit_attr(slug):
@@ -560,7 +567,7 @@ def build_project(i, pj):
 </section>
 
 <div class="project">
-  {f'<div class="wrap art-wrap"><p class="art-note"><span aria-hidden="true">🎨</span>{e(ART_CREDIT)}</p></div>' if pj['slug'] in ART_CREDIT_SLUGS else ''}
+  {f'<div class="wrap art-wrap"><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span>{e(ART_NOTES[pj["slug"]])}</p></div>' if pj['slug'] in ART_NOTES else ''}
   <section class="wrap intro">
     <div class="intro-text">
       <p class="hook">{e(pj['hook'])}</p>
