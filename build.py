@@ -501,12 +501,9 @@ def about_html():
     I = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
     hobbies = [
         ("Bouldering", "#ff9f5a", I + '<path d="M5 20 9 9l4 5 3-7 3 13z"/><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="4.5" r="1.2"/></svg>'),
-        ("Gaming", "#ffd23f", ICON_PAD.replace('width="18" height="18"', 'width="22" height="22"')),
         ("Anime & manga", "#ff7ae0", I + '<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>'),
         ("Comics", "#7fd1ff", I + '<path d="M4 5h16v10H10l-4 4v-4H4z"/><path d="M8 9h8M8 12h5"/></svg>'),
         ("Learning Japanese", "#ff6b6b", I + '<path d="M4 6h9M8.5 4v2M6 6c.5 4 3.5 7 7 8M11 6c-.8 4-3.5 7-7 9"/><path d="m13 20 4-9 4 9M14.5 17h5"/></svg>'),
-        ("PC hardware", "#ffd23f", I + '<rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="14" r="3"/><path d="M8 7h8"/></svg>'),
-        ("Local AI tinkering", "#9be15d", I + '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>'),
     ]
     cards = "".join(f'<li style="--c:{c}"><span class="hb-ico">{svg}</span>{e(t)}</li>' for t, c, svg in hobbies)
     G = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
