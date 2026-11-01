@@ -459,7 +459,8 @@ def build_lab():
 
 def build_gallery():
     """Every clip, screenshot, character and full video in one filterable page."""
-    global DEPTH
+    global DEPTH, THEMES
+    THEMES = {pj["slug"]: pj["theme"] for pj in PROJECTS}
     DEPTH = 0
     items = []  # (html, project slug, kind)
     def card(inner, proj_title, label, cap, slug, kind, more=""):
@@ -467,7 +468,9 @@ def build_gallery():
         mt = re.search(r'data-more="([^"]*)"', more)
         mh = re.search(r'data-href="([^"]*)"', more)
         extra = (f'<span class="gmore">{mt.group(1)}</span>' if mt else "") + (f'<a class="glink" href="{mh.group(1)}">Open the project page →</a>' if mh else "")
-        return (f'<figure class="gitem" data-proj="{slug}" data-kind="{kind}">{inner}{info}'
+        th = THEMES.get(slug)
+        style = f' style="--deep:{th[0]};--mid:{th[1]};--accent:{th[2]}"' if th else ""
+        return (f'<figure class="gitem" data-proj="{slug}" data-kind="{kind}"{style}>{inner}{info}'
                 f'<figcaption><span class="gproj">{e(proj_title)}</span><b>{e(label)}</b> {e(cap)}{extra}</figcaption></figure>')
     for pj in PROJECTS:
         href = f"projects/{pj['slug']}.html"
@@ -496,7 +499,10 @@ def build_gallery():
     for lbl, f, d, cap in LAB:
         items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True), "Lab", lbl, cap, "lab", "video"))
     chips = [("all", "Everything"), ("video", "Videos"), ("image", "Images")] + [(pj["slug"], pj["title"]) for pj in PROJECTS] + [("lab", "Lab")]
-    chip_html = "".join(f'<button type="button" class="chip" data-filter="{k}" aria-pressed="{str(k == "all").lower()}">{e(v)}</button>' for k, v in chips)
+    def chip_style(k):
+        th = THEMES.get(k)
+        return f' style="--deep:{th[0]};--mid:{th[1]};--accent:{th[2]}"' if th else ""
+    chip_html = "".join(f'<button type="button" class="chip{" themed" if k in THEMES else ""}" data-filter="{k}"{chip_style(k)} aria-pressed="{str(k == "all").lower()}">{e(v)}</button>' for k, v in chips)
     html = head("Gallery — Roee Tal", "Every clip, screenshot and character from Roee Tal's projects in one place.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
     html += topbar(0, "gallery")
     html += f"""<section class="phero short">

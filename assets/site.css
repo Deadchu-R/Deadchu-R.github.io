@@ -291,3 +291,24 @@ h1,h2,h3{text-wrap:balance}
 .ptile .kicker{color:var(--accent)}
 .ptile .more{color:var(--accent)}
 .ptile-body{margin-top:-28px;position:relative;z-index:1}
+
+/* project pages: the palette breathes along the scroll */
+.project{background:
+  radial-gradient(70% 40% at 100% 18%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 70%),
+  radial-gradient(60% 35% at 0% 52%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 70%),
+  radial-gradient(70% 35% at 100% 85%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 70%),
+  linear-gradient(180deg,var(--mid) 0%,var(--deep) 30%,color-mix(in srgb,var(--mid) 70%,var(--deep)) 55%,var(--deep) 80%,color-mix(in srgb,var(--mid) 60%,var(--deep)) 100%)}
+.mech-sec h2{background:linear-gradient(90deg,var(--paper),color-mix(in srgb,var(--accent) 70%,var(--paper)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.clip,.shots .zoom{box-shadow:0 20px 44px -22px color-mix(in srgb,var(--accent) 40%,#000),0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent)}
+.facts{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 14%,transparent),var(--card))}
+.ticks li::before{background:var(--accent);box-shadow:inset 0 0 0 4px var(--deep)}
+
+/* gallery: every tile wears its game's colors */
+.gitem .clip,.gitem .zoom{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 55%,transparent)}
+.gitem .clip::before,.gitem .zoom::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,transparent 55%,color-mix(in srgb,var(--mid) 80%,transparent) 100%)}
+.gitem .zoom.art{background:radial-gradient(circle at 50% 60%,var(--mid),var(--deep))}
+.gitem .gproj{color:var(--accent)}
+.chips-row .chip.themed{border-color:color-mix(in srgb,var(--accent) 60%,transparent);background:color-mix(in srgb,var(--mid) 70%,transparent)}
+.chips-row .chip.themed[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+.gitem .zoom.art::before{display:none}
