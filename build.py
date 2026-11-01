@@ -586,6 +586,13 @@ def build_index():
 
 NEXT_CARD = {"tile-map-engine": "next-tile-map-engine", "infiltration": "next-infiltration", "almond-bar": "next-almond-bar"}
 
+def tbc_band(back_href, back_label):
+    """End of the chain: no looping back to the first project."""
+    return (f'<div class="tbc-band"><div class="wrap tbc-inner"><div class="tbc-card">'
+            f'<span class="kicker">Next project</span><span class="tbc-title">To be continued<span class="tbc-dots"><i></i><i></i><i></i></span></span>'
+            f'<span class="muted">Saved for future projects.</span></div>'
+            f'<a class="btn ghost" href="{back_href}">← {e(back_label)}</a></div></div>')
+
 def next_band(nxt):
     """'Next project' band in the next project's own colors, with its character or an iconic frame."""
     d, m, a = nxt["theme"]
@@ -697,7 +704,7 @@ def code_figure(name, path):
 def build_code_page(i, cp):
     global DEPTH
     depth = DEPTH = 1
-    nxt = CODE_PAGES[(i + 1) % len(CODE_PAGES)]
+    nxt = CODE_PAGES[i + 1] if i + 1 < len(CODE_PAGES) else None
     flow = '<div class="flow">' + '<span class="flow-arrow" aria-hidden="true">→</span>'.join(
         f'<div class="flow-step"><b>{e(a)}</b><span>{e(b)}</span></div>' for a, b in cp["flow"]) + '</div>'
     media = ""
@@ -732,17 +739,17 @@ def build_code_page(i, cp):
     {media}
     <section class="mech-sec code-sec"><h2>The code</h2>{codes}<p class="muted small center">Trimmed and commented for this page.</p></section>
   </div>
-  <div class="wrap code-next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a><a class="btn" href="{nxt['slug']}.html">Next: {e(nxt['title'])} →</a></div>
+  <div class="wrap code-next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a>{f'<a class="btn" href="{nxt["slug"]}.html">Next: {e(nxt["title"])} →</a>' if nxt else '<span class="tbc-chip">Next: to be continued… <em>saved for future projects</em></span>'}</div>
 </div>
 """
-    html += footer(depth)
+    html += footer(depth, peek=False)
     (ROOT / "code").mkdir(exist_ok=True)
     (ROOT / "code" / f"{cp['slug']}.html").write_text(html)
 
 def build_project(i, pj):
     global DEPTH
     depth = DEPTH = 1
-    nxt = PROJECTS[(i + 1) % len(PROJECTS)]
+    nxt = PROJECTS[i + 1] if i + 1 < len(PROJECTS) else None
     sections = []
     first = True
     for title, intro, clips in pj["sections"]:
@@ -804,7 +811,7 @@ def build_project(i, pj):
   <div class="wrap">{cast}</div>
   {f'<div class="wrap credits"><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span><b>Credits.</b> {e(ART_NOTES[pj["slug"]])}</span></p></div>' if pj["slug"] in ART_NOTES else ''}
 </div>
-{next_band(nxt)}
+{next_band(nxt) if nxt else tbc_band('../index.html#projects', 'All projects')}
 """
     html += footer(depth, peek=False)
     (ROOT / "projects").mkdir(exist_ok=True)

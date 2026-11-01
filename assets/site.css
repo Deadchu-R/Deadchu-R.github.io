@@ -574,3 +574,16 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 /* 3DVision now sits right under the hero: blend its bottom into the projects band */
 .band.now{padding-bottom:clamp(90px,11vw,130px)}
 .band.now + .palette-band::before{content:"";position:absolute;left:0;right:0;top:-60px;height:60px;background:linear-gradient(transparent,var(--band-top));pointer-events:none}
+
+/* end of the project chain */
+.tbc-band{padding-block:clamp(56px,8vw,90px) clamp(80px,10vw,120px);background:linear-gradient(160deg,color-mix(in srgb,var(--mid) 70%,#000),var(--deep))}
+.tbc-inner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px}
+.tbc-card{display:flex;flex-direction:column;gap:10px;padding:26px 30px;border-radius:20px;border:2px dashed color-mix(in srgb,var(--accent) 55%,transparent);background:rgba(0,0,0,.18);min-width:min(100%,420px)}
+.tbc-card .kicker{color:var(--accent)}
+.tbc-title{font:800 clamp(34px,5.5vw,60px)/1 var(--f);color:#fff;display:inline-flex;align-items:baseline;gap:4px}
+.tbc-dots{display:inline-flex;gap:6px;margin-left:6px}
+.tbc-dots i{width:9px;height:9px;border-radius:50%;background:var(--accent);animation:tbc 1.4s ease-in-out infinite}
+.tbc-dots i:nth-child(2){animation-delay:.2s}.tbc-dots i:nth-child(3){animation-delay:.4s}
+@keyframes tbc{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-5px)}}
+.tbc-chip{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:999px;border:2px dashed color-mix(in srgb,var(--accent) 55%,transparent);font:700 15px/1.2 var(--f);color:#fff}
+.tbc-chip em{font-style:normal;font-weight:400;color:var(--soft)}
