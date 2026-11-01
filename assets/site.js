@@ -147,6 +147,7 @@
       cards.forEach(c=>{const b=c.getBoundingClientRect();const d=Math.abs((b.top+b.bottom)/2-mid);if(d<bd){bd=d;best=c}});
       const before=cards.length&&cards[0].getBoundingClientRect().top>vh*.75;
       const top=before?"#1758b0":best.dataset.mid,bottom=before?"#0c2f6e":best.dataset.deep;
+      cards.forEach(c=>c.classList.toggle("is-active",!before&&c===best));
       if(top!==cur){cur=top;root.style.setProperty("--band-top",top);root.style.setProperty("--band-bottom",bottom)}
     };
     addEventListener("scroll",()=>{if(!raf)raf=requestAnimationFrame(pick)},{passive:true});

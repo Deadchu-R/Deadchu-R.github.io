@@ -318,3 +318,7 @@ h1,h2,h3{text-wrap:balance}
 @property --band-bottom{syntax:"<color>";inherits:true;initial-value:#0c2f6e}
 :root{--band-top:#1758b0;--band-bottom:#0c2f6e;transition:--band-top .8s ease,--band-bottom .8s ease}
 .band.palette-band{background:linear-gradient(180deg,var(--band-top) 0%,color-mix(in srgb,var(--band-top) 55%,var(--band-bottom)) 45%,var(--band-bottom) 88%,var(--deep) 100%)}
+/* the card the background is following gets an outline in its accent color */
+.ptile{outline:2px solid transparent;outline-offset:4px;transition:transform .25s,outline-color .4s,box-shadow .4s}
+.ptile.is-active{outline-color:var(--accent);box-shadow:0 24px 60px -18px color-mix(in srgb,var(--accent) 60%,transparent)}
+@media (prefers-reduced-motion:no-preference){.ptile.is-active{transform:translateY(-4px)}}
