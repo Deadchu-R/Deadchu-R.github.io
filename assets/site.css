@@ -210,3 +210,29 @@ h1,h2,h3{text-wrap:balance}
 #viewerCap:empty{display:none}
 .viewer-top{align-items:flex-start}
 #viewerClose{white-space:nowrap;flex-shrink:0}
+
+/* full-screen hint on every image and clip */
+.zoom{position:relative}
+.zoom .fs,.clip .fs{position:absolute;right:10px;bottom:10px;width:40px;height:40px;display:grid;place-items:center;border-radius:8px;
+  background:rgba(0,0,0,.55);color:#fff;transition:transform .15s,background .15s;pointer-events:none}
+.zoom .fs svg,.clip .fs svg{width:26px;height:26px}
+.zoom:hover .fs,.zoom:focus-visible .fs{transform:scale(1.12);background:rgba(0,0,0,.75)}
+.zoom.bare .fs{right:-6px;bottom:-6px;width:34px;height:34px}
+.zoom.bare .fs svg{width:22px;height:22px}
+.clip .tag{position:absolute;left:10px;top:10px;background:var(--accent);color:var(--ink);font:800 12px/1 var(--f);padding:6px 9px;border-radius:999px}
+
+/* gallery page */
+.chips-row{display:flex;flex-wrap:wrap;gap:8px;padding-top:28px}
+.chips-row .chip{min-height:40px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);color:var(--paper);font:700 14px/1 var(--f);cursor:pointer}
+.chips-row .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+.gcount{margin:16px 0 0;font-size:14px}
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px;margin-top:18px;padding-bottom:40px}
+@media (max-width:600px){.ggrid{grid-template-columns:1fr 1fr;gap:14px}}
+.gitem{margin:0;min-width:0}
+.gitem .clip,.gitem .zoom{border-radius:14px;aspect-ratio:16/10}
+.gitem .zoom.art{background:radial-gradient(circle at 50% 60%,var(--mid),var(--deep));display:grid;place-items:center}
+.gitem .zoom.art img{object-fit:contain;padding:10%}
+.gitem figcaption{padding:10px 2px 0;font-size:14px;line-height:1.45;color:var(--soft)}
+.gitem figcaption b{color:var(--paper);font-weight:800}
+.gproj{display:block;font:700 11px/1.3 var(--f);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+@media (max-width:600px){.gitem figcaption{font-size:13px}.gitem .fs{width:32px;height:32px;right:6px;bottom:6px}.gitem .fs svg{width:20px;height:20px}}

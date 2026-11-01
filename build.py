@@ -243,7 +243,7 @@ def topbar(depth, current=""):
         return f'<a href="{p}{href}"{cur}>{label}</a>'
     return f"""<header class="topbar"><div class="wrap">
 <a class="mark" href="{p}index.html">Roee Tal</a>
-<nav>{a('index.html#projects','Projects','projects')}{a('lab.html','Lab','lab')}{a('Roee-Tal-CV.pdf','CV','cv')}{a('index.html#contact','Contact','contact')}</nav>
+<nav>{a('index.html#projects','Projects','projects')}{a('gallery.html','Gallery','gallery')}{a('lab.html','Lab','lab')}{a('Roee-Tal-CV.pdf','CV','cv')}{a('index.html#contact','Contact','contact')}</nav>
 </div></header>
 """
 
@@ -281,15 +281,18 @@ def footer(depth):
 """
 
 
-def clip_tile(label, file, did, depth, big=False, cap=""):
+FS_ICON = '<span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span>'
+
+
+def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False):
     p = "../" * depth
     poster = f"{p}assets/posters/{file.replace('.mp4', '.jpg')}"
     if not (ROOT / "assets/posters" / file.replace(".mp4", ".jpg")).exists():
         poster = thumb(did, 960)
     src = f"{p}assets/clips/{file}" if has_clip(file) else ""
-    return (f'<button class="clip{" big" if big else ""}" type="button" data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}" aria-label="Play video: {e(label)}">'
+    return (f'<button class="clip{" big" if big else ""}" type="button"{f' data-group="{group}"' if group else ""}{" data-still" if still else ""} data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}" aria-label="Play video: {e(label)}">'
             f'<video muted loop playsinline preload="none" poster="{poster}"></video>'
-            f'<span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button>')
+            f'{FS_ICON}</button>')
 
 
 def build_index():
@@ -351,8 +354,8 @@ def build_index():
 
 <section class="band lab-teaser">
   <div class="wrap lab-row">
-    <div><h2>The lab</h2><p class="muted">Shaders, a tile-map engine, multiplayer UI and other things I built to learn how they work.</p></div>
-    <a class="btn" href="lab.html">Open the lab →</a>
+    <div><h2>Gallery &amp; lab</h2><p class="muted">Every clip, screenshot and character in one place, plus shaders, a tile-map engine and other things I built to learn how they work.</p></div>
+    <div class="btns"><a class="btn" href="gallery.html">Open the gallery →</a><a class="btn ghost" href="lab.html">The lab</a></div>
   </div>
 </section>
 """
@@ -378,14 +381,14 @@ def build_project(i, pj):
     shots = ""
     if pj["shots"]:
         shots = '<section class="mech-sec"><h2>Screenshots</h2><div class="shots">' + "".join(
-            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-cap="{e(SHOT_CAPS.get(s, ""))}" aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot"></button>' for s in pj["shots"]) + "</div></section>"
+            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-cap="{e(SHOT_CAPS.get(s, ""))}" aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s in pj["shots"]) + "</div></section>"
     full = ""
     if pj["full"]:
         full = f'<section class="mech-sec center"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}>▶ Play full video</button></section>'
     cast = ""
     if pj.get("cast"):
         cast = '<section class="mech-sec"><h2>Characters</h2><div class="cast">' + "".join(
-            f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}" aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}"></button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
+            f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}" aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
     html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"])
     html += topbar(depth, "projects")
     html += f"""<section class="phero">
@@ -439,9 +442,60 @@ def build_lab():
     (ROOT / "lab.html").write_text(html)
 
 
+def build_gallery():
+    """Every clip, screenshot, character and full video in one filterable page."""
+    global DEPTH
+    DEPTH = 0
+    items = []  # (html, project slug, kind)
+    def card(inner, proj_title, label, cap, slug, kind):
+        return (f'<figure class="gitem" data-proj="{slug}" data-kind="{kind}">{inner}'
+                f'<figcaption><span class="gproj">{e(proj_title)}</span><b>{e(label)}</b> {e(cap)}</figcaption></figure>')
+    for pj in PROJECTS:
+        for _, _, clips in pj["sections"]:
+            for lbl, cap, f, d in clips:
+                items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True), pj["title"], lbl, cap, pj["slug"], "video"))
+        if pj["full"]:
+            name = FULL.get(pj["full"])
+            poster = f"assets/posters/full-{name}.jpg" if name and (ROOT / f"assets/posters/full-{name}.jpg").exists() else thumb(pj["cover"], 900)
+            src = f"assets/full/{name}.mp4" if name and (ROOT / f"assets/full/{name}.mp4").exists() else ""
+            cap = "The full gameplay video."
+            inner = (f'<button class="clip" type="button" data-group="all" data-still data-src="{src}" data-drive="{pj["full"]}" data-title="{e(pj["title"])} · full video" data-cap="{cap}" aria-label="Play the full {e(pj["title"])} video">'
+                     f'<video muted playsinline preload="none" poster="{poster}"></video><span class="tag">Full video</span>{FS_ICON}</button>')
+            items.append(card(inner, pj["title"], "Full video", cap, pj["slug"], "video"))
+        for sid in pj["shots"]:
+            cap = SHOT_CAPS.get(sid, "")
+            inner = (f'<button class="zoom" type="button" data-full="{thumb(sid, 2000)}" data-group="all" data-title="{e(pj["title"])}" data-cap="{e(cap)}" aria-label="Enlarge screenshot">'
+                     f'<img loading="lazy" src="{thumb(sid, 900)}" alt="{e(cap or pj["title"])}">{FS_ICON}</button>')
+            items.append(card(inner, pj["title"], "Screenshot", cap, pj["slug"], "image"))
+        for f, c in pj.get("cast", []):
+            cap = CAST_CAPS.get(f, "")
+            inner = (f'<button class="zoom art" type="button" data-full="assets/art/{f}.webp" data-group="all" data-title="{e(c)}" data-cap="{e(cap)}" aria-label="Enlarge: {e(c)}">'
+                     f'<img loading="lazy" src="assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button>')
+            items.append(card(inner, pj["title"], c, cap, pj["slug"], "image"))
+    for lbl, f, d, cap in LAB:
+        items.append(card(clip_tile(lbl, f, d, 0, cap=cap, group="all", still=True), "Lab", lbl, cap, "lab", "video"))
+    chips = [("all", "Everything"), ("video", "Videos"), ("image", "Images")] + [(pj["slug"], pj["title"]) for pj in PROJECTS] + [("lab", "Lab")]
+    chip_html = "".join(f'<button type="button" class="chip" data-filter="{k}" aria-pressed="{str(k == "all").lower()}">{e(v)}</button>' for k, v in chips)
+    html = head("Gallery — Roee Tal", "Every clip, screenshot and character from Roee Tal's projects in one place.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
+    html += topbar(0, "gallery")
+    html += f"""<section class="phero short">
+  <div class="wrap phero-copy"><p class="kicker">Everything in one place</p><h1>Gallery</h1><p class="lead">{len(items)} clips, screenshots and characters. Tap any of them to view it full screen.</p></div>
+  {WAVE}
+</section>
+<div class="project"><div class="wrap">
+  <div class="chips-row" role="group" aria-label="Filter the gallery">{chip_html}</div>
+  <p class="gcount muted" id="gcount" aria-live="polite"></p>
+  <div class="ggrid" id="ggrid">{''.join(items)}</div>
+</div></div>
+"""
+    html += footer(0)
+    (ROOT / "gallery.html").write_text(html)
+
+
 if __name__ == "__main__":
     build_index()
     for i, pj in enumerate(PROJECTS):
         build_project(i, pj)
     build_lab()
-    print("built", 2 + len(PROJECTS), "pages")
+    build_gallery()
+    print("built", 3 + len(PROJECTS), "pages")

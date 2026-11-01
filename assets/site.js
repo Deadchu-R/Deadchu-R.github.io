@@ -9,7 +9,7 @@
   const io="IntersectionObserver" in window ? new IntersectionObserver(entries=>{
     entries.forEach(en=>{
       const btn=en.target,v=btn.querySelector("video");
-      if(!v||!btn.dataset.src)return;
+      if(!v||!btn.dataset.src||"still" in btn.dataset)return;
       if(en.isIntersecting){if(!v.src)v.src=btn.dataset.src;v.play().catch(()=>{})}else v.pause();
     });
   },{threshold:.4}) : null;
@@ -28,22 +28,19 @@
     heroVideo.play().catch(()=>{});
   }
 
-  /* ---------- viewer: one gallery per kind (clips, screenshots, characters) ---------- */
+  /* ---------- viewer: arrows move through the clicked item's group ---------- */
   const viewer=$("#viewer"),stage=$("#viewerStage"),title=$("#viewerTitle"),cap=$("#viewerCap");
-  let last=null,gallery=[],gi=0,mode="";
+  let last=null,gallery=[],gi=0,open_=false,fsOwned=false;
   const pauseAll=()=>{document.querySelectorAll(".clip video").forEach(x=>x.pause());heroVideo&&heroVideo.pause()};
   const isFs=()=>document.fullscreenElement||document.webkitFullscreenElement;
+  const isVideo=el=>el.classList.contains("clip")||"playDrive" in el.dataset;
+  const visible=el=>{const g=el.closest(".gitem");return !g||!g.hidden};
   const count=()=>gallery.length>1?`${gi+1} / ${gallery.length}`:"";
 
-  function show(){
-    viewer.hidden=false;document.body.style.overflow="hidden";pauseAll();
-    viewer.classList.toggle("has-nav",gallery.length>1);
-    $("#viewerClose").focus({preventScroll:true});
-  }
   function close(){
-    if(viewer.hidden)return;
-    mode="";
-    if(isFs()){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}}
+    if(!open_)return;
+    open_=false;
+    if(isFs()){fsOwned=false;try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}}
     viewer.hidden=true;stage.innerHTML="";viewer.className="viewer";document.body.style.overflow="";
     heroVideo&&heroVideo.play().catch(()=>{});
     last&&last.focus({preventScroll:true});
@@ -52,7 +49,7 @@
     if(isFs())return;
     const req=viewer.requestFullscreen||viewer.webkitRequestFullscreen;
     if(req){
-      try{Promise.resolve(req.call(viewer)).then(()=>{try{screen.orientation.lock("landscape").catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
+      try{Promise.resolve(req.call(viewer)).then(()=>{fsOwned=true;try{screen.orientation.lock("landscape").catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
     }else if(video&&video.webkitEnterFullscreen){ // iPhone: native player
       video.addEventListener("loadedmetadata",()=>{try{video.webkitEnterFullscreen()}catch(e){}},{once:true});
       video.addEventListener("webkitendfullscreen",close,{once:true});
@@ -70,35 +67,37 @@
     return v;
   }
   function render(){
-    const el=gallery[gi];
-    if(mode==="video"){
-      const n=el.dataset.title;title.textContent=count()?`${n} · ${count()}`:n;cap.textContent=el.dataset.cap||"";
-      return playInStage(n,el.dataset.src,el.dataset.drive||el.dataset.playDrive);
-    }
+    const el=gallery[gi],vid=isVideo(el);
+    viewer.className="viewer "+(vid?"is-video":"is-image")+(gallery.length>1?" has-nav":"");
     title.textContent=[el.dataset.title,count()].filter(Boolean).join(" · ");
     cap.textContent=el.dataset.cap||"";
+    if(vid)return playInStage(el.dataset.title,el.dataset.src,el.dataset.drive||el.dataset.playDrive);
     stage.innerHTML=`<img src="${el.dataset.full}" alt="${(el.querySelector("img")||{}).alt||""}">`;
+    return null;
   }
-  function open(kind,el,list){
-    last=document.activeElement;mode=kind;
-    viewer.className="viewer "+(kind==="video"?"is-video":"is-image");
-    gallery=list&&list.length?list:[el];gi=Math.max(0,gallery.indexOf(el));
-    const v=render();show();
-    if(kind==="video")goFullscreen(v);
+  function open(el){
+    last=document.activeElement;open_=true;
+    const g=el.dataset.group;
+    let list=[el];
+    if(g)list=[...document.querySelectorAll(`[data-group="${g}"]`)].filter(visible);
+    else if(el.classList.contains("clip"))list=[...document.querySelectorAll(".clip:not([data-group])")];
+    gallery=list;gi=Math.max(0,gallery.indexOf(el));
+    const v=render();
+    viewer.hidden=false;document.body.style.overflow="hidden";pauseAll();
+    $("#viewerClose").focus({preventScroll:true});
+    if(v)goFullscreen(v);
   }
-  function step(d){if(!mode||gallery.length<2)return;gi=(gi+d+gallery.length)%gallery.length;render()}
+  function step(d){if(!open_||gallery.length<2)return;gi=(gi+d+gallery.length)%gallery.length;render()}
 
   document.addEventListener("click",e=>{
-    const c=e.target.closest(".clip");
-    if(c){open("video",c,[...document.querySelectorAll(".clip")]);return}
-    const z=e.target.closest(".zoom");
-    if(z){open("image",z,[...document.querySelectorAll(`.zoom[data-group="${z.dataset.group}"]`)]);return}
-    const d=e.target.closest("[data-play-drive]");
-    if(d){if(!d.dataset.title)d.dataset.title="Video";open("video",d,[d]);return}
+    const item=e.target.closest(".clip,.zoom,[data-play-drive]");
+    if(item&&!viewer.contains(item)){if(!item.dataset.title)item.dataset.title="Video";open(item);return}
     if(e.target.closest("#viewerPrev")){step(-1);return}
     if(e.target.closest("#viewerNext")){step(1);return}
-    if(mode==="image"&&e.target===stage)close();
     if(e.target.closest("#viewerClose")){close();return}
+    if(open_&&e.target===stage&&!isVideo(gallery[gi])){close();return}
+    const chip=e.target.closest("[data-filter]");
+    if(chip)filter(chip);
     const cp=e.target.closest("[data-copy]");
     if(cp){
       const el=$(cp.dataset.copy);
@@ -108,15 +107,29 @@
     }
   });
   document.addEventListener("keydown",e=>{
-    if(viewer.hidden)return;
+    if(!open_)return;
     if(e.key==="Escape")close();
     if(e.key==="ArrowLeft")step(-1);
     if(e.key==="ArrowRight")step(1);
   });
   // leaving full screen (Back button, Esc, the player's own button) closes the player
-  ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{if(!isFs()&&mode==="video")close()}));
+  ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{if(!isFs()&&fsOwned){fsOwned=false;close()}}));
   // swipe between images
   let sx=null;
   stage.addEventListener("touchstart",e=>{sx=e.target.tagName==="VIDEO"&&e.touches[0].clientY>stage.clientHeight-70?null:e.touches[0].clientX},{passive:true});
   stage.addEventListener("touchend",e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)step(dx<0?1:-1);sx=null},{passive:true});
+
+  /* ---------- gallery filters ---------- */
+  const grid=$("#ggrid"),gcount=$("#gcount");
+  function filter(chip){
+    const f=chip.dataset.filter;
+    document.querySelectorAll("[data-filter]").forEach(c=>c.setAttribute("aria-pressed",c===chip));
+    let n=0;
+    grid.querySelectorAll(".gitem").forEach(it=>{
+      const show=f==="all"||it.dataset.kind===f||it.dataset.proj===f;
+      it.hidden=!show;if(show)n++;
+    });
+    gcount.textContent=`Showing ${n} items`;
+  }
+  if(grid){const first=$('[data-filter="all"]');first&&filter(first)}
 })();
