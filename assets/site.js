@@ -165,6 +165,18 @@
     [...els,...extra].forEach(el=>ro.observe(el));
   }
 
+  /* ---------- gallery mosaic: new random order on every visit ---------- */
+  const mos=$(".mosaic[data-pool]");
+  if(mos){
+    const pool=mos.dataset.pool.split(" ");
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+    mos.querySelectorAll(".mtrack").forEach((tr,r)=>{
+      const imgs=[...tr.querySelectorAll("img")],n=imgs.length/2;
+      imgs.forEach((im,k)=>{im.src=pool[(r*n+(k%n))%pool.length]});
+      tr.style.animationDelay=-(Math.random()*60)+"s";
+    });
+  }
+
   /* ---------- jump menu ---------- */
   const jump=$("#jump");
   if(jump){

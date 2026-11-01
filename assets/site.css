@@ -66,14 +66,16 @@ h1,h2,h3{text-wrap:balance}
 /* bands */
 .band{position:relative;padding-block:clamp(56px,8vw,96px)}
 .band.blue{background:var(--mid)}
-.band.now{background:
-  radial-gradient(ellipse 60% 70% at 92% 10%,rgba(56,182,255,.22),transparent 70%),
-  radial-gradient(ellipse 55% 60% at 0% 100%,rgba(122,26,115,.45),transparent 70%),
-  linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px) 0 0/28px 28px,
-  linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px) 0 0/28px 28px,
-  linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px) 0 0/140px 140px,
-  linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px) 0 0/140px 140px,
-  linear-gradient(160deg,#0b2a63,#091a40 60%,#160b33)}
+.band.now{overflow:hidden;isolation:isolate;background:
+  radial-gradient(ellipse 55% 60% at 100% 0%,rgba(23,190,207,.32),transparent 70%),
+  radial-gradient(ellipse 50% 55% at 0% 100%,rgba(200,40,150,.34),transparent 70%),
+  radial-gradient(ellipse 45% 50% at 55% 55%,rgba(90,60,220,.28),transparent 70%),
+  linear-gradient(165deg,#0a1f52 0%,#071433 55%,#120a33 100%)}
+.band.now::before{content:"";position:absolute;inset:-10%;z-index:-1;pointer-events:none;background:url("topo.svg") center/cover no-repeat;animation:topo 60s ease-in-out infinite alternate;
+  -webkit-mask-image:radial-gradient(ellipse 85% 85% at 60% 45%,#000 40%,transparent 100%);mask-image:radial-gradient(ellipse 85% 85% at 60% 45%,#000 40%,transparent 100%)}
+@keyframes topo{to{transform:translate(-3%,2%) scale(1.06)}}
+.band.now::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.35;mix-blend-mode:overlay;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .band.lab-teaser{background:#140b2e;overflow:hidden;isolation:isolate;padding-block:clamp(90px,12vw,150px)}
 .mosaic{position:absolute;inset:-40% -20%;display:flex;flex-direction:column;justify-content:center;gap:14px;transform:rotate(-8deg);z-index:-2;pointer-events:none;opacity:.9}
 .mrow{overflow:hidden}
@@ -117,7 +119,10 @@ h1,h2,h3{text-wrap:balance}
 .now-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:48px;align-items:center}
 .tools{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 24px}
 .tool{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font:700 14px/1 var(--f)}
-.tool i{width:10px;height:10px;border-radius:3px;background:var(--c);transform:rotate(45deg);box-shadow:0 0 10px var(--c)}
+.tool svg{width:18px;height:18px;flex:none}
+.tool.ue{background:rgba(255,255,255,.12)}.tool.ue svg{color:#fff}
+.tool.bpi svg{color:#4fa3ff;filter:drop-shadow(0 0 6px rgba(79,163,255,.6))}
+.tool.cs svg{color:#6cadde;filter:drop-shadow(0 0 6px rgba(108,173,222,.5))}
 .bp{margin:0;border-radius:8px;overflow:hidden;background:#151515;border:1px solid #3a3a3a;box-shadow:0 40px 80px -30px rgba(0,0,0,.8),0 0 0 6px rgba(255,255,255,.03);transform:perspective(1400px) rotateY(-6deg) rotateX(2deg)}
 .win-bar{display:flex;align-items:center;height:32px;background:#1f1f1f;font:400 12.5px/1 "Segoe UI",var(--f);color:rgba(255,255,255,.85)}
 .win-ico{width:16px;height:16px;margin:0 10px 0 12px;border-radius:3px;background:linear-gradient(135deg,#3d8bff,#6fd3c2);flex:none}
