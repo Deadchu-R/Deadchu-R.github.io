@@ -59,12 +59,12 @@ PROJECTS = [
          full=None,
          shots=["1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs", "16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd", "1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV", "1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9", "1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS", "1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky"]),
     dict(slug="boss-rush", mascot="bossrush-dracovid", cast=[('bossrush-axe', 'Axe fighter'), ('bossrush-mage', 'Mage'), ('bossrush-ranger', 'Ranger'), ('bossrush-dracovid', 'Dracovid, the boss')], title="Boss Rush", sub="Grid-based tactical combat",
-         engine="Unity · C#", role="Producer & programmer · some design", when="12/2023 – 09/2024", context="Final year · Game Production 2",
+         engine="Unity · C#", role="Producer & team lead · code oversight", when="12/2023 – 09/2024", context="Final year · Game Production 2",
          theme=("#3a0b2a", "#8c1d55", "#ff8fc0"), cover="1ds2k9OIavd8wmB638ZMaas-4uHDBN5dH",
          hook="Three heroes, one giant boss, and a grid. Medicines against disease, inside a microscopic world.",
          about=["Developed in my final year for the Game Production 2 course: a grid-based strategy game where the player controls a party of three characters to defeat a powerful boss.",
                 "Set in a microscopic world, it pits bacteria and diseases against medicines, with a focus on strategic teamwork and coordination."],
-         did=["Designed the core gameplay loop, the tactical grid mechanics and the overall balance", "Led a cross-functional team of programmers and artists for nine months, through delivery", "Resolved conflicts and blockers between team members to keep the workflow smooth"],
+         did=["Led a cross-functional team of programmers and artists for nine months, through delivery", "Oversaw the second programmer's code so it worked as intended and stayed maintainable", "Resolved conflicts and blockers between team members to keep the workflow smooth", "Wrote the narrative and lore, and came up with the microscopic-world concept"],
          sections=[
              ("Combat on the grid", "Reading the board, moving, striking.", [
                  ("Tactical view", "A top-down read of the whole battlefield.", "bossrush-tactical.mp4", "1aDkpRLZy3QNMPEeAIcHc3f8_Cf9acxPM"),
@@ -120,11 +120,18 @@ PROJECTS = sorted(PROJECTS, key=lambda pj: ORDER.index(pj["slug"]))
 TECH = {
     "infiltration": ["C++", "Blueprints", "Unreal Engine 5", "Line-trace shooting", "Enemy AI: detection & patrol", "Interaction system"],
     "shards": ["C#", "Unity", "ScriptableObjects", "Data-driven design", "C# events (OnLetterTyped)", "Coroutines", "UI systems"],
-    "boss-rush": ["C#", "Unity", "Grid-based movement", "Turn-based combat"],
+    "boss-rush": ["Team leadership", "Code oversight", "C#", "Unity", "Grid-based combat"],
     "almond-bar": ["Blueprints", "Unreal Engine", "Dialogue system", "Quest system"],
     "musical-level": ["C#", "Unity", "Gameplay scripting"],
 }
-CARD_ROLE = {"infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & programmer",
+CARD_TECH = {
+    "infiltration": "C++ & Blueprints, line-trace shooting with recoil, weapon pickups, enemy AI with detection and patrols",
+    "shards": "Data-driven dialogue system, ScriptableObjects, C# events, typewriter text, UI flow",
+    "boss-rush": "9-month team lead, code oversight, grid-based tactical combat in Unity",
+    "almond-bar": "Blueprints, dialogue system, quest system, interactable objects",
+    "musical-level": "Team production, C# gameplay scripting, beat-driven platforming mechanics",
+}
+CARD_ROLE = {"infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & team lead",
              "almond-bar": "Solo developer · all the code", "musical-level": "Producer"}
 
 LAB = [
@@ -209,7 +216,7 @@ ART_CREDIT_SLUGS = {"musical-level", "shards", "boss-rush"}
 ART_NOTES = {
     "musical-level": "Art and animation by the team's artists. I'm not an artist: I was mainly the producer, with some programming and game design.",
     "shards": "Art and animation by the team's artists. I'm not an artist: I was mainly the programmer, with some game design.",
-    "boss-rush": "Art and animation by the team's artists. I'm not an artist: I was the producer and a programmer, with some game design.",
+    "boss-rush": "Art and animation by the team's artists. I'm not an artist: I was the producer and team lead, overseeing the code.",
     "infiltration": "A solo project: I built everything myself, code, design and level setup. There was no art team, so the visuals use ready-made assets.",
     "almond-bar": "A solo project: I built everything myself, code, design and level setup. There was no art team, so the visuals use ready-made assets.",
 }
@@ -445,7 +452,7 @@ def build_index():
     <span class="kicker">{e(pj['engine'])}</span>
     <span class="role-tag">{e(CARD_ROLE[pj['slug']])}</span>
     <span class="ptile-title">{e(pj['title'])}</span>
-    <span class="ptile-hook">{e(pj['hook'])}</span>
+    <span class="ptile-hook tech">{e(CARD_TECH[pj['slug']])}</span>
     <span class="more">View project →</span>
   </span>
 </a>""")

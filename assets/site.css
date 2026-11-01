@@ -530,3 +530,4 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .about-game p{color:var(--soft);margin:0 0 10px}
 .credits{padding-block:24px 64px}
 .credits .art-note{font-size:14px;opacity:.9;background:rgba(0,0,0,.18);border-color:rgba(255,255,255,.14)}
+.ptile-hook.tech{font-size:15.5px;color:rgba(255,255,255,.88)}
