@@ -67,7 +67,7 @@
     viewer.className="viewer "+(vid?"is-video":"is-image")+(gallery.length>1?" has-nav":"");
     title.textContent=[el.dataset.title,count()].filter(Boolean).join(" · ");
     cap.textContent=el.dataset.cap||"";
-    viewer.classList.remove("cap-open");infoBtn.setAttribute("aria-expanded","false");
+    viewer.classList.remove("cap-open");infoBtn.setAttribute("aria-expanded","false");infoBtn.querySelector(".i-tx").textContent="Read more";
     const more=el.dataset.more||"";moreText.textContent=more;
     moreLink.hidden=!el.dataset.href;if(el.dataset.href)moreLink.href=el.dataset.href;
     infoBtn.hidden=!more;
@@ -76,7 +76,7 @@
     stage.innerHTML=`<img src="${el.dataset.full}" alt="${(el.querySelector("img")||{}).alt||""}">`;
     return null;
   }
-  function closeTileInfo(){document.querySelectorAll(".gitem.show-info").forEach(f=>{f.classList.remove("show-info");f.querySelector(".info").setAttribute("aria-expanded","false")})}
+  function closeTileInfo(){document.querySelectorAll(".gitem.show-info").forEach(f=>{f.classList.remove("show-info");const b=f.querySelector(".info");b.setAttribute("aria-expanded","false");b.querySelector(".i-tx").textContent="Info"})}
   function open(el){
     closeTileInfo();
     last=document.activeElement;open_=true;
@@ -92,14 +92,14 @@
   function step(d){if(!open_||gallery.length<2)return;gi=(gi+d+gallery.length)%gallery.length;render()}
 
   document.addEventListener("click",e=>{
-    if(e.target.closest("#viewerInfo")){const on=viewer.classList.toggle("cap-open");infoBtn.setAttribute("aria-expanded",on);return}
+    if(e.target.closest("#viewerInfo")){const on=viewer.classList.toggle("cap-open");infoBtn.setAttribute("aria-expanded",on);infoBtn.querySelector(".i-tx").textContent=on?"Show less":"Read more";return}
     const gi_=e.target.closest(".gitem .info");
     if(gi_){
       const fig=gi_.closest(".gitem"),on=!fig.classList.contains("show-info");
       document.querySelectorAll(".gitem.show-info").forEach(f=>{f.classList.remove("show-info");f.querySelector(".info").setAttribute("aria-expanded","false")});
-      fig.classList.toggle("show-info",on);gi_.setAttribute("aria-expanded",on);return;
+      fig.classList.toggle("show-info",on);gi_.setAttribute("aria-expanded",on);document.querySelectorAll(".gitem .info .i-tx").forEach(t=>t.textContent=t.closest(".info")===gi_&&on?"Close":"Info");return;
     }
-    if(!e.target.closest(".gitem.show-info"))document.querySelectorAll(".gitem.show-info").forEach(f=>{f.classList.remove("show-info");f.querySelector(".info").setAttribute("aria-expanded","false")});
+    if(!e.target.closest(".gitem.show-info"))document.querySelectorAll(".gitem.show-info").forEach(f=>{f.classList.remove("show-info");const b=f.querySelector(".info");b.setAttribute("aria-expanded","false");b.querySelector(".i-tx").textContent="Info"});
     const item=e.target.closest(".clip,.zoom,[data-play-drive]");
     if(item&&!viewer.contains(item)){if(!item.dataset.title&&isVideo(item))item.dataset.title="Video";open(item);return}
     if(e.target.closest("#viewerPrev")){step(-1);return}
@@ -128,22 +128,38 @@
   stage.addEventListener("touchstart",e=>{sx=e.target.tagName==="VIDEO"&&e.touches[0].clientY>stage.clientHeight-70?null:e.touches[0].clientX},{passive:true});
   stage.addEventListener("touchend",e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)step(dx<0?1:-1);sx=null},{passive:true});
 
-  /* ---------- projects band follows the card in view ---------- */
+  /* ---------- projects band colors ----------
+     one card per row (phones): the band follows the card in the middle of the screen.
+     several cards per row (desktop): scrolling can't pick one, so the band stays calm
+     and only takes a card's colors while the mouse is over it. */
   const band=$(".palette-band");
   if(band){
     const cards=[...band.querySelectorAll(".ptile")],root=document.documentElement;
-    let raf=0,cur=null;
+    const BASE=["#1758b0","#0c2f6e"];
+    let raf=0,cur=null,hoverCard=null;
+    const multi=()=>cards.length>1&&Math.abs(cards[0].offsetTop-cards[1].offsetTop)<4; // layout position, unaffected by the reveal animation
+    const setBand=(top,bottom,active)=>{
+      cards.forEach(c=>c.classList.toggle("is-active",c===active));
+      if(top!==cur){cur=top;root.style.setProperty("--band-top",top);root.style.setProperty("--band-bottom",bottom)}
+    };
     const pick=()=>{
       raf=0;
+      const isMulti=multi();band.classList.toggle("multi",isMulti);
+      if(isMulti){hoverCard?setBand(hoverCard.dataset.mid,hoverCard.dataset.deep,hoverCard):setBand(BASE[0],BASE[1],null);return}
       const r=band.getBoundingClientRect(),vh=innerHeight;
       if(r.bottom<0||r.top>vh)return;
       const mid=vh/2;let best=null,bd=1e9;
       cards.forEach(c=>{const b=c.getBoundingClientRect();const d=Math.abs((b.top+b.bottom)/2-mid);if(d<bd){bd=d;best=c}});
-      const before=cards.length&&cards[0].getBoundingClientRect().top>vh*.75;
-      const top=before?"#1758b0":best.dataset.mid,bottom=before?"#0c2f6e":best.dataset.deep;
-      cards.forEach(c=>c.classList.toggle("is-active",!before&&c===best));
-      if(top!==cur){cur=top;root.style.setProperty("--band-top",top);root.style.setProperty("--band-bottom",bottom)}
+      // stick with the current card until another one is clearly closer (no flicker at the boundary)
+      const prev=cards.find(c=>c.classList.contains("is-active"));
+      if(prev&&prev!==best){const pb=prev.getBoundingClientRect();if(Math.abs((pb.top+pb.bottom)/2-mid)-bd<60)best=prev}
+      const before=cards[0].getBoundingClientRect().top>vh*.75;
+      before?setBand(BASE[0],BASE[1],null):setBand(best.dataset.mid,best.dataset.deep,best);
     };
+    cards.forEach(c=>{
+      c.addEventListener("mouseenter",()=>{hoverCard=c;if(multi())pick()});
+      c.addEventListener("mouseleave",()=>{if(hoverCard===c)hoverCard=null;if(multi())pick()});
+    });
     addEventListener("scroll",()=>{if(!raf)raf=requestAnimationFrame(pick)},{passive:true});
     addEventListener("resize",pick);pick();
   }

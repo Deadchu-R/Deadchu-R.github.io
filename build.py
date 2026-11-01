@@ -286,7 +286,7 @@ def footer(depth, peek=True):
 <div class="wrap small muted">© {SITE['name']}</div>
 </footer>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Video player">
-  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden>i</button></div><p class="viewer-credit" id="viewerCredit" hidden></p><div class="viewer-more" id="viewerMore"><p id="viewerMoreText"></p><a id="viewerLink" href="#">Open the project page →</a></div></div><div class="viewer-btns"><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div></div>
+  <div class="viewer-top"><div class="viewer-text"><span id="viewerTitle"></span><div class="cap-row"><p id="viewerCap"></p><button class="info" type="button" id="viewerInfo" aria-label="Show full description" aria-expanded="false" hidden><span class="i-ic">i</span><span class="i-tx">Read more</span></button></div><p class="viewer-credit" id="viewerCredit" hidden></p><div class="viewer-more" id="viewerMore"><p id="viewerMoreText"></p><a id="viewerLink" href="#">Open the project page →</a></div></div><div class="viewer-btns"><button class="btn ghost" type="button" id="viewerClose">Close ✕</button></div></div>
   <div class="viewer-stage" id="viewerStage"></div>
   <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
@@ -616,7 +616,7 @@ def build_gallery():
     DEPTH = 0
     items = []  # (html, project slug, kind)
     def card(inner, proj_title, label, cap, slug, kind, more=""):
-        info = f'<button class="info" type="button" aria-label="Show description" aria-expanded="false">i</button>' if (cap or more) else ""
+        info = f'<button class="info" type="button" aria-label="Show description" aria-expanded="false"><span class="i-ic">i</span><span class="i-tx">Info</span></button>' if (cap or more) else ""
         mt = re.search(r'data-more="([^"]*)"', more)
         mh = re.search(r'data-href="([^"]*)"', more)
         extra = (f'<span class="gmore">{mt.group(1)}</span>' if mt else "") + (f'<a class="glink" href="{mh.group(1)}">Open the project page →</a>' if mh else "")

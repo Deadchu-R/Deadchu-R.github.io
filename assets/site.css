@@ -344,11 +344,16 @@ html.rv .timeline:not(.in)::before{transform:scaleX(0)}
 .gitem .zoom.art img{padding:12%}
 
 /* (i) info buttons: full description on demand */
-.info{width:26px;height:26px;flex:0 0 auto;display:grid;place-items:center;padding:0;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);
-  background:rgba(0,0,0,.55);color:#fff;font:800 14px/1 Georgia,"Times New Roman",serif;font-style:italic;cursor:pointer}
-.info[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:var(--ink)}
-@media (hover:hover){.info:hover{background:var(--accent);border-color:var(--accent);color:var(--ink)}}
-.gitem .info{position:absolute;left:6px;top:6px;z-index:3}
+.info{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:5px 11px 5px 5px;border-radius:999px;border:0;cursor:pointer;
+  background:var(--accent);color:var(--ink);font:800 13px/1 var(--f);box-shadow:0 4px 14px -4px rgba(0,0,0,.6);animation:infoPulse 2.6s ease-in-out infinite}
+.info .i-ic{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--accent);font:800 12px/1 Georgia,serif;font-style:italic}
+.info[aria-expanded="true"]{animation:none;background:#fff}
+@keyframes infoPulse{0%,100%{box-shadow:0 4px 14px -4px rgba(0,0,0,.6),0 0 0 0 color-mix(in srgb,var(--accent) 70%,transparent)}50%{box-shadow:0 4px 14px -4px rgba(0,0,0,.6),0 0 0 7px color-mix(in srgb,var(--accent) 0%,transparent)}}
+@media (hover:hover){.info:hover{background:#fff;transform:scale(1.05)}}
+.gitem .info{position:absolute;left:6px;top:6px;z-index:3;padding:4px 9px 4px 4px;font-size:12px}
+.gitem .info .i-ic{width:16px;height:16px;font-size:11px}
+.viewer .info{--accent:#ffd23f;margin-top:2px}
+@media (max-width:600px){.gitem .info{left:4px;top:4px;gap:4px;padding:3px 7px 3px 3px;font-size:10.5px}.gitem .info .i-ic{width:14px;height:14px;font-size:9.5px}}
 .gitem.show-info figcaption{opacity:1;top:0;padding:40px 10px 10px;display:block;overflow:auto;background:rgba(0,0,0,.86);font-size:13px;pointer-events:auto;-webkit-line-clamp:unset}
 .cap-row{display:flex;align-items:flex-start;gap:8px}
 .cap-row .info[hidden]{display:none}
@@ -409,7 +414,10 @@ html.rv .timeline:not(.in)::before{transform:scaleX(0)}
 /* the card the background is following gets an outline in its accent color */
 .ptile{outline:2px solid transparent;outline-offset:4px;transition:transform .25s,outline-color .4s,box-shadow .4s}
 .ptile.is-active{outline-color:var(--accent);box-shadow:0 24px 60px -18px color-mix(in srgb,var(--accent) 60%,transparent)}
-@media (prefers-reduced-motion:no-preference){.ptile.is-active{transform:translateY(-4px)}}
+@media (prefers-reduced-motion:no-preference){.palette-band:not(.multi) .ptile.is-active{transform:translateY(-4px)}}
+/* desktop: every card glows in its own color, the band stays put */
+.palette-band.multi .ptile{box-shadow:0 30px 80px -26px var(--mid),0 0 0 1px color-mix(in srgb,var(--accent) 18%,transparent)}
+.palette-band.multi .ptile.is-active{box-shadow:0 34px 90px -20px var(--mid),0 0 40px -10px var(--accent)}
 
 /* footer wave + peeking cat */
 .foot-wave{position:absolute;left:0;right:0;bottom:calc(100% - 1px);width:100%;height:clamp(30px,5vw,70px);display:block;pointer-events:none}
