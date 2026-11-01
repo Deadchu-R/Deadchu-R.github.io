@@ -123,14 +123,14 @@ PROJECTS = [
          full="1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC",
          shots=["1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41", "17zGlB0VBU26ZydIbjMk7YcrRy41PSAut", "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC", "1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh"]),
     dict(slug="tile-map-engine", title="Tile-Map Engine", sub="A C# game engine built from scratch",
-         engine="C# · .NET console", role="Programmer", when="2023 · 2nd year, Tiltan", context="Final project · Programming 2 course",
+         engine="C# · .NET console", role="Programmer · team of 3", when="2023 · 2nd year, Tiltan", context="Final project · Programming 2 course",
          theme=("#2b1608", "#8a4b12", "#ffc36b"), cover="tilemap-cover",
          hook="A small game engine in plain C#, and a two-player chess game running on it.",
-         about=["A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works."],
+         about=["A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works. Built by a team of three programmers."],
          did=["A Unity-style object model from scratch: GameObjects, Components and a Transform on every tile object",
               "An abstract TileObject (IComparer, ICloneable) with an OnStep event, cloned through MemberwiseClone",
               "Movement rules behind an IMovementRule interface",
-              "My own MyVector2 struct with operator overloading and MoveTowards / Normalize helpers",
+              "A custom MyVector2 struct with operator overloading and MoveTowards / Normalize helpers",
               "An OnWin event that lets a game plug its own win condition into the engine",
               "Singleton managers for the engine, the tile map and console rendering, plus a two-player turn system",
               "Chess built on the engine as the test game, with XML docs across the public API"],
@@ -148,6 +148,7 @@ PROJECTS = [
 # order on the site: the projects with the most of my own code come first
 ORDER = ["infiltration", "tile-map-engine", "shards", "boss-rush", "almond-bar", "musical-level"]
 PROJECTS = sorted(PROJECTS, key=lambda pj: ORDER.index(pj["slug"]))
+TEAM_BUILT = {"tile-map-engine"}
 TECH = {
     "tile-map-engine": ["C#", ".NET", "OOP", "Interfaces & abstract classes", "Events & delegates", "Operator overloading", "Extension methods", "Singleton pattern", "Component model", "XML docs"],
     "infiltration": ["C++", "Blueprints", "Unreal Engine 5", "Raycasts", "Event-driven feedback", "Enemy AI: patrol & sight", "Detection meter", "Health & damage", "Level building"],
@@ -164,7 +165,7 @@ CARD_TECH = {
     "almond-bar": "Blueprints, branching dialogue that decides your quest, quest system, level building",
     "musical-level": "Team production, C# gameplay scripting, beat-driven platforming mechanics",
 }
-CARD_ROLE = {"tile-map-engine": "Programmer · engine from scratch", "infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & team lead",
+CARD_ROLE = {"tile-map-engine": "Programmer · team of 3", "infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & team lead",
              "almond-bar": "Solo developer · all the code", "musical-level": "Producer"}
 
 LAB = [
@@ -624,7 +625,7 @@ def build_project(i, pj):
   <section class="wrap intro">
     <div class="intro-text">
       <p class="hook">{e(pj['hook'])}</p>
-      <h3 class="kicker">What I built</h3>
+      <h3 class="kicker">{"What we built" if pj["slug"] in TEAM_BUILT else "What I built"}</h3>
       <ul class="ticks">{''.join(f'<li>{e(d)}</li>' for d in pj['did'])}</ul>
       <h3 class="kicker">Tech &amp; principles</h3>
       <div class="techs">{''.join(f'<span>{e(t)}</span>' for t in TECH[pj['slug']])}</div>

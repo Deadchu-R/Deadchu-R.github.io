@@ -32,13 +32,13 @@
   <section class="wrap intro">
     <div class="intro-text">
       <p class="hook">A small game engine in plain C#, and a two-player chess game running on it.</p>
-      <h3 class="kicker">What I built</h3>
-      <ul class="ticks"><li>A Unity-style object model from scratch: GameObjects, Components and a Transform on every tile object</li><li>An abstract TileObject (IComparer, ICloneable) with an OnStep event, cloned through MemberwiseClone</li><li>Movement rules behind an IMovementRule interface</li><li>My own MyVector2 struct with operator overloading and MoveTowards / Normalize helpers</li><li>An OnWin event that lets a game plug its own win condition into the engine</li><li>Singleton managers for the engine, the tile map and console rendering, plus a two-player turn system</li><li>Chess built on the engine as the test game, with XML docs across the public API</li></ul>
+      <h3 class="kicker">What we built</h3>
+      <ul class="ticks"><li>A Unity-style object model from scratch: GameObjects, Components and a Transform on every tile object</li><li>An abstract TileObject (IComparer, ICloneable) with an OnStep event, cloned through MemberwiseClone</li><li>Movement rules behind an IMovementRule interface</li><li>A custom MyVector2 struct with operator overloading and MoveTowards / Normalize helpers</li><li>An OnWin event that lets a game plug its own win condition into the engine</li><li>Singleton managers for the engine, the tile map and console rendering, plus a two-player turn system</li><li>Chess built on the engine as the test game, with XML docs across the public API</li></ul>
       <h3 class="kicker">Tech &amp; principles</h3>
       <div class="techs"><span>C#</span><span>.NET</span><span>OOP</span><span>Interfaces &amp; abstract classes</span><span>Events &amp; delegates</span><span>Operator overloading</span><span>Extension methods</span><span>Singleton pattern</span><span>Component model</span><span>XML docs</span></div>
     </div>
     <dl class="facts">
-      <div><dt>Role</dt><dd>Programmer</dd></div>
+      <div><dt>Role</dt><dd>Programmer · team of 3</dd></div>
       <div><dt>Engine</dt><dd>C# · .NET console</dd></div>
       <div><dt>When</dt><dd>2023 · 2nd year, Tiltan</dd></div>
       <div><dt>Context</dt><dd>Final project · Programming 2 course</dd></div>
@@ -46,14 +46,14 @@
   </section>
   <div class="wrap"><section class="mech-sec">
   <h2>The engine</h2>
-  <div class="mech-grid n1"><figure class="mech"><button class="clip big" type="button" data-src="../assets/clips/lab-tilemap.mp4" data-drive="1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL" data-title="Engine code" data-cap="A walk through the engine&#x27;s C# code." data-more="A small game engine in plain C#, and a two-player chess game running on it. A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works." aria-label="Play video: Engine code"><video muted loop playsinline preload="none" poster="../assets/posters/lab-tilemap.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Engine code</b> A walk through the engine&#x27;s C# code.</figcaption></figure></div>
+  <div class="mech-grid n1"><figure class="mech"><button class="clip big" type="button" data-src="../assets/clips/lab-tilemap.mp4" data-drive="1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL" data-title="Engine code" data-cap="A walk through the engine&#x27;s C# code." data-more="A small game engine in plain C#, and a two-player chess game running on it. A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works. Built by a team of three programmers." aria-label="Play video: Engine code"><video muted loop playsinline preload="none" poster="../assets/posters/lab-tilemap.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Engine code</b> A walk through the engine&#x27;s C# code.</figcaption></figure></div>
 </section><section class="mech-sec">
   <h2>Chess on the engine</h2>
-  <div class="mech-grid n1"><figure class="mech"><button class="clip big" type="button" data-src="../assets/clips/lab-chess.mp4" data-drive="1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi" data-title="Chess" data-cap="Two players, colored pieces, turn by turn in the console." data-more="A small game engine in plain C#, and a two-player chess game running on it. A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works." aria-label="Play video: Chess"><video muted loop playsinline preload="none" poster="../assets/posters/lab-chess.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Chess</b> Two players, colored pieces, turn by turn in the console.</figcaption></figure></div>
+  <div class="mech-grid n1"><figure class="mech"><button class="clip big" type="button" data-src="../assets/clips/lab-chess.mp4" data-drive="1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi" data-title="Chess" data-cap="Two players, colored pieces, turn by turn in the console." data-more="A small game engine in plain C#, and a two-player chess game running on it. A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works. Built by a team of three programmers." aria-label="Play video: Chess"><video muted loop playsinline preload="none" poster="../assets/posters/lab-chess.jpg"></video><span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span></button><figcaption><b>Chess</b> Two players, colored pieces, turn by turn in the console.</figcaption></figure></div>
 </section></div>
   <section class="wrap about-game">
     <h2>About the project</h2>
-    <p>A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works.</p>
+    <p>A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works. Built by a team of three programmers.</p>
   </section>
   <div class="wrap"></div>
   
