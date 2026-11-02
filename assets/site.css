@@ -702,3 +702,5 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .jump-panel{max-height:calc(100svh - 110px)}
 @media (max-width:600px){.jump-panel a{padding:7px 10px}.jump-panel a.sub{padding:5px 10px 5px 42px}.jump-h{margin-bottom:4px}}
 #ggrid,[id="built"]{scroll-margin-top:90px}
+.h-ico[hidden]{display:none}
+.hero-links a .ic{display:contents}

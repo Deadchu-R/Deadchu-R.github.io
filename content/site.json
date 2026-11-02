@@ -36,5 +36,88 @@
     "more_code",
     "about",
     "gallery_lab"
-  ]
+  ],
+  "showreel_label": "▶ Watch showreel",
+  "hero_buttons": [
+    {
+      "label": "Experience",
+      "link": "#now",
+      "icon": "brief",
+      "color": "#38b6ff"
+    },
+    {
+      "label": "Projects",
+      "link": "#projects",
+      "icon": "pad",
+      "color": "#ffd23f"
+    },
+    {
+      "label": "More code",
+      "link": "#more-code",
+      "icon": "code",
+      "color": "#9be15d"
+    }
+  ],
+  "headings": {
+    "experience": {
+      "title": "Experience",
+      "icon": "brief",
+      "color": "#38b6ff"
+    },
+    "projects": {
+      "title": "Projects",
+      "icon": "pad",
+      "color": "#ffd23f"
+    },
+    "more_code": {
+      "title": "More code",
+      "icon": "code",
+      "color": "#9be15d"
+    },
+    "about": {
+      "title": "Get to know me",
+      "icon": "user",
+      "color": "#ff9f5a"
+    },
+    "gallery_lab": {
+      "title": "Gallery & lab",
+      "icon": "",
+      "color": "#ff8fc0"
+    }
+  },
+  "gallery_lab_text": "Every clip, screenshot and character in one place, plus shaders, mini-games and other things I built to learn how they work.",
+  "gallery_lab_buttons": [
+    {
+      "label": "Open the gallery →",
+      "link": "gallery.html",
+      "style": "solid"
+    },
+    {
+      "label": "The lab",
+      "link": "lab.html",
+      "style": "ghost"
+    }
+  ],
+  "footer_title": "Let's make games together",
+  "footer_text": "Open to Unity and Unreal developer roles in Israel.",
+  "footer_buttons": [
+    {
+      "label": "Email me",
+      "link": "mailto:roeetal17@gmail.com",
+      "style": "solid"
+    },
+    {
+      "label": "LinkedIn",
+      "link": "https://www.linkedin.com/in/roee-tal/",
+      "style": "ghost"
+    },
+    {
+      "label": "CV",
+      "link": "Roee-Tal-CV.pdf",
+      "style": "ghost"
+    }
+  ],
+  "footer_peek": "/assets/art/musical-cat.webp",
+  "hero_video": "/assets/hero.mp4",
+  "hero_video_mobile": "/assets/hero-m.mp4"
 }

@@ -147,7 +147,74 @@ _sr = full_video(_site.get("showreel_video"))
 SITE["showreel"] = _site.get("showreel_drive_id") or _site.get("showreel_video")
 if _sr:
     FULL[SITE["showreel"]] = _sr
+# fields added for the visual editor; old content versions without them still build the same page
+SITE_DEFAULTS = {
+    "showreel_label": "▶ Watch showreel",
+    "hero_buttons": [
+        {"label": "Experience", "link": "#now", "icon": "brief", "color": "#38b6ff"},
+        {"label": "Projects", "link": "#projects", "icon": "pad", "color": "#ffd23f"},
+        {"label": "More code", "link": "#more-code", "icon": "code", "color": "#9be15d"},
+    ],
+    "headings": {
+        "experience": {"title": "Experience", "icon": "brief", "color": "#38b6ff"},
+        "projects": {"title": "Projects", "icon": "pad", "color": "#ffd23f"},
+        "more_code": {"title": "More code", "icon": "code", "color": "#9be15d"},
+        "about": {"title": "Get to know me", "icon": "user", "color": "#ff9f5a"},
+        "gallery_lab": {"title": "Gallery & lab", "icon": "", "color": "#ff8fc0"},
+    },
+    "gallery_lab_text": "Every clip, screenshot and character in one place, plus shaders, mini-games and other things I built to learn how they work.",
+    "gallery_lab_buttons": [
+        {"label": "Open the gallery →", "link": "gallery.html", "style": "solid"},
+        {"label": "The lab", "link": "lab.html", "style": "ghost"},
+    ],
+    "footer_title": "Let's make games together",
+    "footer_text": "Open to Unity and Unreal developer roles in Israel.",
+    "footer_buttons": [
+        {"label": "Email me", "link": "mailto:" + _site["email"], "style": "solid"},
+        {"label": "LinkedIn", "link": _site["linkedin"], "style": "ghost"},
+        {"label": "CV", "link": "Roee-Tal-CV.pdf", "style": "ghost"},
+    ],
+    "footer_peek": "/assets/art/musical-cat.webp",
+    "hero_video": "/assets/hero.mp4",
+    "hero_video_mobile": "/assets/hero-m.mp4",
+}
+for _k, _v in SITE_DEFAULTS.items():
+    if _k not in _site:
+        _site[_k] = _v
+    elif isinstance(_v, dict):
+        for _kk, _vv in _v.items():
+            _site[_k].setdefault(_kk, _vv)
+            if isinstance(_vv, dict):
+                for _a, _b in _vv.items():
+                    _site[_k][_kk].setdefault(_a, _b)
+
+
+def bg_video(path, tall=False):
+    """Background loop (no sound) -> web path of an mp4 with a .jpg poster beside it, or ''."""
+    path = str(path or "")
+    if not path:
+        return ""
+    src = _src(path)
+    if src.parent == ROOT / "assets" and src.suffix == ".mp4":
+        out = src
+    else:
+        out = ROOT / "assets/bg" / (_slug(path) + ".mp4")
+        out.parent.mkdir(exist_ok=True)
+        if not out.exists() and src.exists():
+            scale = "scale=-2:'min(1280,ih)'" if tall else "scale='min(1600,iw)':-2"
+            _ffmpeg("-i", src, "-an", "-t", "40", "-vf", scale, "-c:v", "libx264", "-crf", "28", "-preset", "veryfast",
+                    "-pix_fmt", "yuv420p", "-movflags", "+faststart", out)
+            print("  + background video", out.name)
+    poster = out.with_suffix(".jpg")
+    if out.exists() and not poster.exists():
+        _ffmpeg("-ss", "1", "-i", out, "-frames:v", "1", "-vf", "scale='min(1280,iw)':-2", "-q:v", "4", poster)
+    return str(out.relative_to(ROOT)) if out.exists() else ""
+
+
 SITE_TEXT = _site
+SITE_TEXT["_hero_wide"] = bg_video(_site.get("hero_video"))
+SITE_TEXT["_hero_tall"] = bg_video(_site.get("hero_video_mobile"), tall=True) or SITE_TEXT["_hero_wide"]
+SITE_TEXT["_peek"] = art_key(_site.get("footer_peek"))
 ABOUT = _load("about.json")
 
 # ---------------------------------------------------------------- projects (list order = site order)

@@ -5,6 +5,7 @@
    Visitors never load this file; publishing needs your own GitHub token. */
 (function(){
   if(window.__rtEdit)return;window.__rtEdit=1;
+  const ME=(document.currentScript&&document.currentScript.src)||location.href;
   const REPO="Deadchu-R/Deadchu-R.github.io",BR="main",API="https://api.github.com";
   const FILES={site:"content/site.json",projects:"content/projects.json","code-pages":"content/code-pages.json",lab:"content/lab.json","early-work":"content/early-work.json",about:"content/about.json"};
   const TOKEN_KEY="rt-edit-token";
@@ -112,6 +113,18 @@
   .rt-on [data-m]{cursor:pointer}
   #rt-sel{position:fixed;z-index:2147483000;pointer-events:none;border:2px solid #ffd23f;border-radius:8px;box-shadow:0 0 0 4000px rgba(0,0,0,0),0 0 0 1px rgba(0,0,0,.4);display:none}
   #rt-sel .rt-tag{position:absolute;left:-2px;top:-26px;background:#ffd23f;color:#111;font:700 12px/1 system-ui,sans-serif;padding:6px 8px;border-radius:6px 6px 6px 0;white-space:nowrap;display:flex;gap:6px;align-items:center}
+  #rt-sel .rt-arr{pointer-events:auto;cursor:pointer;background:#111;color:#ffd23f;border:0;border-radius:4px;padding:3px 7px;font:700 14px/1 system-ui,sans-serif;margin:-3px 0}
+  #rt-sel .rt-arr:disabled{opacity:.3;cursor:default}
+  .rt-secbar{position:absolute;z-index:60;top:10px;left:10px;display:flex;align-items:center;gap:6px;background:rgba(17,17,17,.88);border:1px solid #ffd23f;border-radius:12px;padding:5px 6px 5px 12px;color:#ffd23f;font:700 13px/1 system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.4);opacity:.8;transition:opacity .15s}
+  .rt-secbar:hover{opacity:1}
+  .rt-secbar button{appearance:none;width:40px;height:36px;border-radius:9px;border:1px solid #555;background:#222;color:#fff;font:800 20px/1 system-ui,sans-serif;cursor:pointer}
+  .rt-secbar button:hover:not(:disabled){border-color:#ffd23f;color:#ffd23f}
+  .rt-secbar button:disabled{opacity:.3;cursor:default}
+  .rt-hist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;margin:10px 0}
+  .rt-hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid #2c2c2c;border-radius:10px;background:#1b1b1b}
+  .rt-hrow div{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .rt-hrow span{color:#aaa;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rt-cur{color:#9be15d!important;font-weight:700;font-size:13px}
   #rt-sel .rt-grip{pointer-events:auto;cursor:grab;touch-action:none;background:#111;color:#ffd23f;border-radius:4px;padding:3px 6px;font-size:14px;line-height:1;margin:-3px 0}
   #rt-drop{position:fixed;z-index:2147483001;background:#ffd23f;border-radius:3px;pointer-events:none;display:none;box-shadow:0 0 12px #ffd23f}
   #rt-ghost{position:fixed;z-index:2147483002;pointer-events:none;opacity:.85;transform:rotate(1.5deg);box-shadow:0 18px 40px rgba(0,0,0,.5);border-radius:10px;overflow:hidden;display:none;background:#222}
@@ -160,12 +173,20 @@
   const pubBtn=h("button",{class:"rt-btn pri",type:"button",disabled:true,on:{click:publish}},"Publish");
   const bar=h("div",{id:"rt-bar"},
     h("b",{},"✎ Editing"),statusEl,pubBtn,
+    h("button",{class:"rt-btn sm",type:"button",on:{click:historyBox}},"↺ Versions"),
     h("button",{class:"rt-btn sm",type:"button",title:"How it works",on:{click:help}},"?"),
     h("button",{class:"rt-btn sm",type:"button",on:{click:askToken}},"Token…"),
     h("button",{class:"rt-btn sm dan",type:"button",on:{click:exitEdit}},"Exit"));
   const panel=h("div",{id:"rt-panel"});
-  const sel=h("div",{id:"rt-sel"},h("span",{class:"rt-tag"},h("span",{class:"rt-grip",title:"Drag to move"},"⠿"),h("span",{class:"rt-name"})));
+  const sel=h("div",{id:"rt-sel"},h("span",{class:"rt-tag"},h("span",{class:"rt-grip",title:"Drag to move"},"⠿"),
+    h("button",{class:"rt-arr",type:"button",title:"Move earlier",on:{click:e=>{e.stopPropagation();current&&step(current,-1)}}},"↑"),
+    h("button",{class:"rt-arr",type:"button",title:"Move later",on:{click:e=>{e.stopPropagation();current&&step(current,1)}}},"↓"),
+    h("span",{class:"rt-name"})));
   const drop=h("div",{id:"rt-drop"}),ghost=h("div",{id:"rt-ghost"});
+  const isIndex=!!$("#projects .ptiles");
+  const linkOpts=(isIndex?["#now","#projects","#more-code","#about","#gallery-lab","#contact"]:["index.html","index.html#projects","index.html#more-code","index.html#contact"])
+    .concat(["gallery.html","lab.html","Roee-Tal-CV.pdf","mailto:roeetal17@gmail.com","https://www.linkedin.com/in/roee-tal/"]);
+  ui.append(h("datalist",{id:"rt-links"},...linkOpts.map(v=>h("option",{value:v}))));
   ui.append(bar,panel);document.body.append(ui,sel,drop,ghost);
   const barH=()=>document.documentElement.style.setProperty("--rt-bar-h",bar.offsetHeight+"px");
   new ResizeObserver(barH).observe(bar);
@@ -207,12 +228,43 @@
       setTimeout(()=>inp.focus(),50);
     });
   }
+  const fmtDate=d=>new Date(d).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  async function historyBox(){
+    const list=h("div",{class:"rt-hist"},"Loading…");
+    const m=modal(h("h3",{},"Versions"),
+      h("p",{style:"margin:0"},"Every Publish is saved as a version. Restore puts all the text, order, images and videos back the way they were at that moment. The restore is a new version too, so it can be undone the same way."),
+      list,h("div",{class:"rt-row"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Close")));
+    try{
+      const commits=await gh(`/repos/${REPO}/commits?sha=${BR}&path=content&per_page=30`);
+      list.replaceChildren(...commits.map((c,i)=>h("div",{class:"rt-hrow"},
+        h("div",{},h("b",{},fmtDate(c.commit.committer.date)),h("span",{title:c.commit.message},c.commit.message.split("\n")[0])),
+        i===0?h("span",{class:"rt-cur"},"Current"):h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{m.remove();restore(c)}}},"Restore"))));
+    }catch(e){list.textContent="Couldn't load the versions ("+e.message+").";}
+  }
+  async function restore(c){
+    const when=fmtDate(c.commit.committer.date);
+    if(changes&&!confirm("You have unpublished changes on this page. Restoring will throw them away. Continue?"))return;
+    if(!confirm(`Restore the site to the version from ${when}?`))return;
+    setBusy("Restoring…");
+    try{
+      const ref=await gh(`/repos/${REPO}/git/ref/heads/${BR}`),head=ref.object.sha,commit=await gh(`/repos/${REPO}/git/commits/${head}`);
+      const files=await gh(`/repos/${REPO}/contents/content?ref=${c.sha}`),want=Object.values(FILES);
+      const tree=files.filter(f=>want.includes(f.path)).map(f=>({path:f.path,mode:"100644",type:"blob",sha:f.sha}));
+      const t=await gh(`/repos/${REPO}/git/trees`,{method:"POST",body:JSON.stringify({base_tree:commit.tree.sha,tree})});
+      const nc=await gh(`/repos/${REPO}/git/commits`,{method:"POST",body:JSON.stringify({message:`Restore the version from ${when} (${c.sha.slice(0,7)})`,tree:t.sha,parents:[head]})});
+      await gh(`/repos/${REPO}/git/refs/heads/${BR}`,{method:"PATCH",body:JSON.stringify({sha:nc.sha})});
+      dirty.clear();uploads.clear();changes=0;updateBar();
+      watchBuild(nc.sha);
+    }catch(err){setBusy("");alertBox("Restoring failed: "+err.message+". Nothing was changed.")}
+  }
   function help(){
     const m=modal(h("h3",{},"How editing works"),
       h("ol",{},
         h("li",{},h("b",{},"Text: "),"click any outlined text and type."),
         h("li",{},h("b",{},"Anything else: "),"click it. The panel on the left shows what you can do with it and with the blocks around it: move, duplicate, delete, replace the image or video, colors, layout."),
-        h("li",{},h("b",{},"Reorder: "),"drag the ⠿ handle on the yellow outline, or use ↑ ↓ in the panel. Works for cards, clips, bullets and whole sections."),
+        h("li",{},h("b",{},"Reorder: "),"each section has big ↑ ↓ buttons in its corner. For anything inside a section (cards, clips, buttons, bullets), click it and use the small arrows on its yellow outline, or drag the ⠿ handle."),
+        h("li",{},h("b",{},"Buttons, icons, colors, backgrounds: "),"click them. Links, icons, colors and background videos are in the panel."),
+        h("li",{},h("b",{},"Went wrong? "),"↺ Versions lists every publish. Restore brings any of them back."),
         h("li",{},h("b",{},"New item: "),"duplicate a similar one and change it."),
         h("li",{},h("b",{},"Publish: "),"saves everything on this page to GitHub. The site rebuilds itself in about 2 minutes; uploads are compressed automatically.")),
       h("p",{style:"color:#aaa;font-size:13px"},"Publish before moving to another page. Ctrl+Z undoes typing. Links and video buttons don't open while editing; use the jump menu or the top bar to move between pages."),
@@ -245,7 +297,8 @@
   const UNIT="[data-i],[data-k],[data-x],[data-m]";
   const LIST_NAMES={projects:"Project card","code-pages":"Code card",lab:"Lab clip","early-work":"Early-work clip",job_bullets:"Bullet",timeline:"Timeline entry",
     what_i_built:"Bullet",teammates_built:"Bullet",tech:"Tag",ai_tools:"Tag",hobbies:"Hobby",games:"Game",rig:"Rig part",sections:"Clip section",clips:"Clip",
-    screenshots:"Screenshot",characters:"Character",about:"Paragraph",flow:"Step",code:"Code block"};
+    screenshots:"Screenshot",characters:"Character",about:"Paragraph",flow:"Step",code:"Code block",
+    hero_buttons:"Button",gallery_lab_buttons:"Button",footer_buttons:"Button"};
   const KEY_NAMES={experience:"Experience",projects:"Projects",more_code:"More code",about:"Get to know me",gallery_lab:"Gallery & lab",code_sample:"Code sample",
     clips:"Clip sections",screenshots:"Screenshots",full_video:"Full video",characters:"Characters",credits:"Credits",flow:"How it fits together",clip:"In action",code:"The code"};
   const listOf=item=>item.parentElement&&item.parentElement.closest("[data-l]");
@@ -255,6 +308,9 @@
     if(u.hasAttribute("data-k"))return "Section · "+(KEY_NAMES[u.dataset.k]||u.dataset.k);
     if(u.hasAttribute("data-m"))return u.dataset.mk==="video"?"Video":"Image";
     if(u.classList.contains("phero"))return "Page header";
+    if(u.classList.contains("hero"))return "Top of the page";
+    if(u.tagName==="FOOTER")return "Footer";
+    if(/^H\d$/.test(u.tagName)||u.classList.contains("exp-kicker"))return "Heading";
     return "Settings";
   }
   const siblingsOf=u=>u.hasAttribute("data-i")?[...u.parentElement.children].filter(c=>c.hasAttribute("data-i")):[...u.parentElement.children].filter(c=>c.dataset.ok===u.dataset.ok);
@@ -266,13 +322,25 @@
     for(let u=target&&target.closest(UNIT);u;u=u.parentElement&&u.parentElement.closest(UNIT))chain.push(u);
     current=chain.find(movable)||chain[0]||null;
     renderPanel();place();
+    // keep the selected thing (and its arrows) visible above the panel / bar
+    if(current&&panel.style.display==="block"){
+      const r=current.getBoundingClientRect(),pr=panel.getBoundingClientRect();
+      const bottomLimit=pr.left<innerWidth/3?pr.top-12:innerHeight-bar.offsetHeight-24;
+      if(r.top<70||Math.min(r.bottom,r.top+120)>bottomLimit)scrollBy({top:r.top-Math.max(80,Math.min(140,bottomLimit-r.height-20))});
+    }
   }
   function place(){
     if(!current||!document.contains(current)){sel.style.display="none";return}
     const r=current.getBoundingClientRect();
     if(!r.width&&!r.height){sel.style.display="none";return}
     Object.assign(sel.style,{display:"block",left:r.left-4+"px",top:r.top-4+"px",width:r.width+8+"px",height:r.height+8+"px"});
-    $(".rt-grip",sel).style.display=movable(current)?"":"none";
+    const mv=movable(current);
+    $(".rt-grip",sel).style.display=mv?"":"none";
+    const sib=mv?siblingsOf(current):[],k=sib.indexOf(current),[up,down]=$$(".rt-arr",sel);
+    const horiz=mv&&sib.length>1&&Math.abs(sib[0].getBoundingClientRect().top-sib[1].getBoundingClientRect().top)<8;
+    up.textContent=horiz?"←":"↑";down.textContent=horiz?"→":"↓";
+    up.style.display=down.style.display=mv&&sib.length>1?"":"none";
+    up.disabled=k<=0;down.disabled=k===sib.length-1;
     $(".rt-name",sel).textContent=unitName(current);
   }
   addEventListener("scroll",place,{passive:true});addEventListener("resize",place);
@@ -281,7 +349,7 @@
   function renumber(container,lp,remap){
     // rewrite every path inside each item from its old index to its new one (two passes so indexes can't collide)
     const items=[...container.children].filter(c=>c.hasAttribute("data-i"));
-    const attrs=["data-e","data-m","data-x","data-l","data-ok"];
+    const attrs=["data-e","data-m","data-x","data-l","data-ok","data-ico"];
     const pass=(el,from,to)=>{const re=new RegExp(reEsc(lp+"."+from)+"(?=[.\"]|$)","g");
       [el,...el.querySelectorAll("*")].forEach(n=>attrs.forEach(a=>{const v=n.getAttribute(a);if(v&&v.includes(lp+"."+from))n.setAttribute(a,v.replace(re,lp+"."+to))}))};
     items.forEach(it=>{const from=it.dataset.from??it.dataset.i,to=remap(it);pass(it,from,"\u0001"+to);it.dataset.i=to;delete it.dataset.from});
@@ -311,7 +379,21 @@
       // keep the arrows between flow steps where they belong
       const fl=item.closest(".flow");if(fl){const steps=$$(".flow-step",fl),arrow=$(".flow-arrow",fl);$$(".flow-arrow",fl).forEach(a=>a.remove());steps.forEach((s,k)=>{if(k)s.before(arrow.cloneNode(true))})}
     }
-    flash(item);select(item);
+    flash(item);select(item);secBars();
+  }
+  function secBars(){
+    $$("[data-k]").forEach(sec=>{
+      let b=$(":scope>.rt-secbar",sec);
+      if(!b){
+        if(getComputedStyle(sec).position==="static")sec.style.position="relative";
+        b=h("div",{class:"rt-secbar rt-ui"},h("span",{class:"rt-sl",on:{click:()=>{chain=[sec];current=sec;renderPanel();place()}}},"Section · "+(KEY_NAMES[sec.dataset.k]||sec.dataset.k)),
+          h("button",{type:"button",title:"Move this section up",on:{click:()=>step(sec,-1)}},"↑"),
+          h("button",{type:"button",title:"Move this section down",on:{click:()=>step(sec,1)}},"↓"));
+        sec.prepend(b);
+      }
+      const sib=siblingsOf(sec),k=sib.indexOf(sec),[up,down]=$$("button",b);
+      up.disabled=k<=0;down.disabled=k===sib.length-1;b.hidden=sib.length<2;
+    });
   }
   function step(u,dir){
     const sib=siblingsOf(u),k=sib.indexOf(u),t=sib[k+dir];
@@ -379,14 +461,17 @@
       else{const v=$("video",m);if(v){v.removeAttribute("poster");v.src=url;v.play().catch(()=>{})}m.dataset.src=url}
     });
     if(path.endsWith(".cover")&&$(".phero-bg"))$(".phero-bg").src=url;
+    $$("[data-bg]").filter(b=>b.dataset.bg.split(" ").includes(path)).forEach(b=>{b.removeAttribute("poster");b.src=url;if(b.play)b.play().catch(()=>{})});
     toast(kind==="video"?"New video ready. It gets compressed when you publish.":"New image ready.");
     renderPanel();
   }
 
   /* ------------------------------------------------------------ settings panel */
   const COLOR_VAR={color_main:"--mid",color_deep:"--deep",color_accent:"--accent"};
-  function previewColor(holder,path,v){
-    const k=path.split(".").pop(),cv=COLOR_VAR[k];if(!cv)return;
+  function previewColor(holder,path,v,opts){
+    const k=path.split(".").pop();
+    if(opts&&opts.length){const t=opts[0]?$(opts[0],holder):holder;if(t)t.style.setProperty(opts[1],v);return}
+    const cv=COLOR_VAR[k];if(!cv){holder.style.setProperty("--c",v);return}
     const tgt=holder.classList.contains("phero")?document.documentElement:holder;
     tgt.style.setProperty(cv,v);
     if(holder.dataset.mid!==undefined&&k==="color_main")holder.dataset.mid=v;
@@ -403,18 +488,22 @@
     if(type==="color"){
       const hex=/^#[0-9a-f]{6}$/i.test(val)?val:"#000000";
       const t=h("input",{type:"text",value:val,spellcheck:"false"}),c=h("input",{type:"color",value:hex});
-      c.addEventListener("input",()=>{t.value=c.value;set(path,c.value);previewColor(holder,path,c.value)});
-      t.addEventListener("change",()=>{const v=t.value.trim();if(/^#[0-9a-f]{6}$/i.test(v)){c.value=v;set(path,v);previewColor(holder,path,v)}else t.value=get(path)||""});
+      c.addEventListener("input",()=>{t.value=c.value;set(path,c.value);previewColor(holder,path,c.value,opts)});
+      t.addEventListener("change",()=>{const v=t.value.trim();if(/^#[0-9a-f]{6}$/i.test(v)){c.value=v;set(path,v);previewColor(holder,path,v,opts)}else t.value=get(path)||""});
       wrap.append(h("div",{class:"rt-color"},c,t));
     }else if(type==="select"){
-      const s=h("select",{},...opts.map(o=>h("option",{value:o,selected:o===val},o)));
-      s.addEventListener("change",()=>{set(path,s.value);if(path.endsWith(".layout"))previewLayout(holder,s.value)});
+      const s=h("select",{},...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));
+      s.addEventListener("change",()=>{set(path,s.value);if(path.endsWith(".layout"))previewLayout(holder,s.value);if(path.endsWith(".icon"))previewIcon(path,s.value);
+        if(path.endsWith(".style")&&holder.classList.contains("btn"))holder.classList.toggle("ghost",s.value==="ghost")});
       wrap.append(s);
-      if(path.endsWith(".icon"))wrap.append(h("p",{class:"rt-hint"},"The icon changes on the site after you publish."));
     }else if(type==="image"||type==="art"||type==="video"){
       wrap.append(h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,type,holder)}},val?"Replace…":"Add…"),
         val&&!/^(cover)$/.test(path.split(".").pop())?h("button",{class:"rt-btn sm dan",type:"button",on:{click:()=>{set(path,"");renderPanel();toast("Removed. The site updates after you publish.")}}},"Remove"):null),
         h("div",{class:"rt-file"},val?String(val).split("/").pop():"none"));
+    }else if(type==="link"){
+      const t=h("input",{type:"text",value:val,list:"rt-links",spellcheck:"false"});
+      t.addEventListener("input",()=>{set(path,t.value.trim());if(holder.tagName==="A")holder.setAttribute("href",t.value.trim())});
+      wrap.append(t,h("p",{class:"rt-hint"},"Pick from the list or paste any web address."));
     }else{
       const t=h("input",{type:"text",value:val});
       t.addEventListener("input",()=>{let v=t.value;if(path.endsWith(".slug"))v=v.toLowerCase().replace(/[^a-z0-9-]+/g,"-");set(path,v)});
@@ -422,6 +511,15 @@
       else wrap.append(t);
     }
     return wrap;
+  }
+  let ICONS={};
+  fetch(new URL("icons.json",ME).href).then(r=>r.json()).then(j=>{ICONS=j}).catch(()=>{});
+  function previewIcon(path,name){
+    $$(`[data-ico="${CSS.escape(path)}"]`).forEach(c=>{
+      const old=$("svg",c),size=old?old.getAttribute("width"):"18";
+      c.innerHTML=name&&ICONS[name]?`<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="${size>18?1.9:2}" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`:"";
+      if(c.classList.contains("h-ico"))c.hidden=!name;
+    });
   }
   function renderPanel(){
     panel.replaceChildren();
@@ -448,7 +546,7 @@
       // media belonging to this unit (itself, or inside it but not inside a smaller unit)
       const media=[u,...u.querySelectorAll("[data-m]")].filter(m=>m.hasAttribute("data-m")&&(m===u||owner(m)===u));
       media.forEach(m=>{const p=m.dataset.m;if(mseen.has(p))return;mseen.add(p);
-        const kind=m.dataset.mk,lab=kind==="video"?"Video":p.endsWith(".mascot")?"Character cut-out":p.endsWith(".cover")?"Cover image":"Image";
+        const kind=m.dataset.mk,last=p.split(".").pop(),lab={showreel_video:"Showreel video",full_video:"Full video",mascot:"Character cut-out",cover:"Cover image",video:"Clip video"}[last]||(kind==="video"?"Video":"Image");
         g.append(h("label",{},lab),h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(p,kind,m)}},"Replace…")),h("div",{class:"rt-file"},String(get(p)||"").split("/").pop()))});
       if(u.dataset.x){try{JSON.parse(u.dataset.x).filter(f=>!mseen.has(f[1])).forEach(f=>g.append(field(u,f)))}catch(e){}}
       if(g.childNodes.length>1)panel.append(g);
@@ -523,6 +621,7 @@
     $$("[data-edit-show]").forEach(x=>{x.hidden=false});
     $$("details").forEach(d=>{if($("[data-e]",d))d.open=true});
     $$("[data-e]").forEach(initText);
+    secBars();
     $$("a").forEach(a=>{a.draggable=false});
     $$("summary").forEach(su=>su.addEventListener("keyup",e=>{if(e.key===" ")e.preventDefault()},true));
     staleCheck();
