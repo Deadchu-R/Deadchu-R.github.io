@@ -103,58 +103,68 @@
 
   /* ------------------------------------------------------------ UI shell */
   const STYLE=`
-  .rt-on [data-e]{outline:1px dashed rgba(255,210,63,.0);outline-offset:3px;cursor:text;border-radius:3px;transition:outline-color .15s}
-  .rt-on [data-e]:hover{outline-color:rgba(255,210,63,.75)}
-  .rt-on [data-e]:focus{outline:2px solid #ffd23f;outline-offset:3px;background:rgba(255,210,63,.07)}
+  .rt-on body{touch-action:manipulation}
+  .rt-on [data-e]{outline:1px dashed transparent;outline-offset:3px;border-radius:3px;transition:outline-color .15s}
+  .rt-on [data-e]:hover{outline-color:rgba(255,210,63,.6)}
+  .rt-on [data-e][contenteditable]{outline:2px solid #ffd23f;outline-offset:3px;background:rgba(255,210,63,.08);cursor:text}
   .rt-on [data-e]:empty::before{content:attr(data-ph);opacity:.45;font-style:italic}
-  .rt-on [data-e]:empty:not([data-ph])::before{content:"type here"}
+  .rt-on [data-e]:empty:not([data-ph])::before{content:"double-tap to write"}
   .rt-on pre code[data-e]{display:block;white-space:pre}
   .rt-on .reveal,.rt-on [data-reveal]{opacity:1!important;transform:none!important}
-  .rt-on [data-m]{cursor:pointer}
-  #rt-sel{position:fixed;z-index:2147483000;pointer-events:none;border:2px solid #ffd23f;border-radius:8px;box-shadow:0 0 0 4000px rgba(0,0,0,0),0 0 0 1px rgba(0,0,0,.4);display:none}
-  #rt-sel .rt-tag{position:absolute;left:-2px;top:-26px;background:#ffd23f;color:#111;font:700 12px/1 system-ui,sans-serif;padding:6px 8px;border-radius:6px 6px 6px 0;white-space:nowrap;display:flex;gap:6px;align-items:center}
-  #rt-sel .rt-arr{pointer-events:auto;cursor:pointer;background:#111;color:#ffd23f;border:0;border-radius:4px;padding:3px 7px;font:700 14px/1 system-ui,sans-serif;margin:-3px 0}
-  #rt-sel .rt-arr:disabled{opacity:.3;cursor:default}
-  .rt-secbar{position:absolute;z-index:60;top:10px;left:10px;display:flex;align-items:center;gap:6px;background:rgba(17,17,17,.88);border:1px solid #ffd23f;border-radius:12px;padding:5px 6px 5px 12px;color:#ffd23f;font:700 13px/1 system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.4);opacity:.8;transition:opacity .15s}
+  #rt-sel{position:fixed;z-index:2147483000;pointer-events:none;border:2px solid #ffd23f;border-radius:8px;box-shadow:0 0 0 1px rgba(0,0,0,.35);display:none}
+  #rt-tb{position:fixed;z-index:2147483050;display:none;align-items:center;gap:2px;background:#111;border:1px solid #333;border-radius:11px;padding:3px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  #rt-tb .rt-name{color:#ffd23f;font:700 11px/1 system-ui,sans-serif;padding:0 6px 0 5px;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
+  #rt-tb button{appearance:none;width:32px;height:30px;border:0;border-radius:8px;background:none;color:#fff;font:600 16px/1 system-ui,sans-serif;cursor:pointer;display:grid;place-items:center;padding:0}
+  #rt-tb button:hover:not(:disabled){background:#2a2a2a;color:#ffd23f}
+  #rt-tb button:disabled{opacity:.28;cursor:default}
+  #rt-tb .rt-grip{cursor:grab;touch-action:none;color:#ffd23f}
+  #rt-tb .rt-sep{width:1px;height:18px;background:#333;margin:0 2px}
+  #rt-tb button.on{background:#ffd23f;color:#111}
+  .rt-secbar{position:absolute;z-index:60;top:8px;right:8px;display:flex;align-items:center;gap:3px;background:rgba(17,17,17,.85);border:1px solid rgba(255,210,63,.7);border-radius:10px;padding:3px;color:#ffd23f;font:700 11px/1 system-ui,sans-serif;opacity:.7;transition:opacity .15s}
   .rt-secbar:hover{opacity:1}
-  .rt-secbar button{appearance:none;width:40px;height:36px;border-radius:9px;border:1px solid #555;background:#222;color:#fff;font:800 20px/1 system-ui,sans-serif;cursor:pointer}
-  .rt-secbar button:hover:not(:disabled){border-color:#ffd23f;color:#ffd23f}
-  .rt-secbar button:disabled{opacity:.3;cursor:default}
+  .rt-secbar .rt-sl{padding:0 4px 0 6px;max-width:0;overflow:hidden;white-space:nowrap;transition:max-width .2s;text-transform:uppercase;letter-spacing:.05em}
+  .rt-secbar:hover .rt-sl{max-width:200px}
+  .rt-secbar button{appearance:none;width:32px;height:30px;border-radius:7px;border:0;background:#222;color:#fff;font:800 17px/1 system-ui,sans-serif;cursor:pointer}
+  .rt-secbar button:hover:not(:disabled){color:#ffd23f}
+  .rt-secbar button:disabled{opacity:.25;cursor:default}
   .rt-hist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;margin:10px 0}
   .rt-hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid #2c2c2c;border-radius:10px;background:#1b1b1b}
   .rt-hrow div{display:flex;flex-direction:column;gap:2px;min-width:0}
   .rt-hrow span{color:#aaa;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rt-cur{color:#9be15d!important;font-weight:700;font-size:13px}
-  #rt-sel .rt-grip{pointer-events:auto;cursor:grab;touch-action:none;background:#111;color:#ffd23f;border-radius:4px;padding:3px 6px;font-size:14px;line-height:1;margin:-3px 0}
   #rt-drop{position:fixed;z-index:2147483001;background:#ffd23f;border-radius:3px;pointer-events:none;display:none;box-shadow:0 0 12px #ffd23f}
   #rt-ghost{position:fixed;z-index:2147483002;pointer-events:none;opacity:.85;transform:rotate(1.5deg);box-shadow:0 18px 40px rgba(0,0,0,.5);border-radius:10px;overflow:hidden;display:none;background:#222}
   .rt-ui,.rt-ui *{box-sizing:border-box;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:0;text-transform:none}
-  #rt-bar{position:fixed;z-index:2147483100;left:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#111;color:#fff;border:1px solid #333;border-radius:14px;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.45);max-width:calc(100vw - 96px);font-size:14px}
-  #rt-bar b{color:#ffd23f;padding:0 4px}
+  #rt-bar{position:fixed;z-index:2147483100;left:12px;bottom:12px;display:flex;gap:4px;align-items:center;background:#111;border:1px solid #333;border-radius:12px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  #rt-bar .rt-pub{appearance:none;border:0;border-radius:9px;background:#ffd23f;color:#111;font:700 14px/1 system-ui,sans-serif;padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:7px}
+  #rt-bar .rt-pub:disabled{background:#2a2a2a;color:#888;cursor:default}
+  #rt-bar .rt-pub i{width:7px;height:7px;border-radius:50%;background:#e03b3b;display:none}
+  #rt-bar .rt-pub.dirty i{display:block}
+  #rt-bar .rt-more{appearance:none;border:0;border-radius:9px;background:none;color:#fff;font:700 18px/1 system-ui,sans-serif;width:36px;height:34px;cursor:pointer}
+  #rt-bar .rt-more:hover{background:#2a2a2a}
+  #rt-toast{position:fixed;z-index:2147483100;left:12px;bottom:62px;max-width:min(420px,calc(100vw - 100px));background:#111;color:#e8e8e8;border:1px solid #333;border-radius:10px;padding:8px 12px;font:13px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.45);display:none}
+  #rt-menu{position:fixed;z-index:2147483150;left:12px;bottom:62px;background:#151515;border:1px solid #333;border-radius:12px;padding:5px;box-shadow:0 12px 32px rgba(0,0,0,.5);display:none;min-width:190px}
+  #rt-menu button{display:block;width:100%;text-align:left;appearance:none;border:0;background:none;color:#eee;font:600 14px/1 system-ui,sans-serif;padding:11px 12px;border-radius:8px;cursor:pointer}
+  #rt-menu button:hover{background:#2a2a2a}
+  #rt-menu .dan{color:#ff8a8a}
   .rt-btn{appearance:none;border:1px solid #444;background:#222;color:#fff;border-radius:9px;padding:8px 12px;font:600 14px/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
   .rt-btn:hover{border-color:#ffd23f}
   .rt-btn.pri{background:#ffd23f;color:#111;border-color:#ffd23f}
-  .rt-btn.pri:disabled{background:#3a3a3a;color:#999;border-color:#3a3a3a;cursor:default}
   .rt-btn.dan{color:#ff8a8a}
   .rt-btn.sm{padding:6px 9px;font-size:13px}
-  #rt-status{font-size:13px;color:#cfd8e3;padding:0 4px}
   .rt-link{background:none;border:0;color:#ffd23f;text-decoration:underline;cursor:pointer;font:inherit;padding:0}
-  #rt-panel{position:fixed;z-index:2147483099;right:12px;top:72px;width:340px;max-height:calc(100vh - 160px);overflow:auto;background:#151515;color:#eee;border:1px solid #333;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.5);padding:10px;display:none;font-size:14px}
-  #rt-panel .rt-grp{border:1px solid #2c2c2c;border-radius:10px;padding:10px;margin-bottom:8px;background:#1b1b1b}
-  #rt-panel .rt-grp:last-child{margin-bottom:0}
-  #rt-panel h4{margin:0 0 8px;font:700 12px/1.2 system-ui,sans-serif;color:#ffd23f;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;gap:8px}
-  #rt-panel h4 small{color:#888;font-weight:600;text-transform:none;letter-spacing:0}
+  #rt-panel{position:fixed;z-index:2147483060;width:300px;max-height:min(52vh,460px);overflow:auto;background:#151515;color:#eee;border:1px solid #333;border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.5);padding:10px 12px 12px;display:none;font-size:14px}
   #rt-panel .rt-row{display:flex;flex-wrap:wrap;gap:6px}
-  #rt-panel label{display:block;font-size:12px;color:#aaa;margin:8px 0 4px}
+  #rt-panel label{display:block;font-size:12px;color:#aaa;margin:10px 0 4px}
   #rt-panel input[type=text],#rt-panel select{width:100%;background:#0e0e0e;color:#fff;border:1px solid #3a3a3a;border-radius:8px;padding:8px;font:14px system-ui,sans-serif}
   #rt-panel .rt-color{display:flex;gap:6px;align-items:center}
   #rt-panel input[type=color]{width:44px;height:36px;padding:0;border:1px solid #3a3a3a;border-radius:8px;background:none;cursor:pointer;flex:none}
   #rt-panel .rt-file{font-size:12px;color:#888;word-break:break-all;margin-top:4px}
-  #rt-panel .rt-head{display:flex;justify-content:space-between;align-items:center;margin:-2px 0 8px;color:#aaa;font-size:12px}
+  #rt-panel .rt-head{display:flex;justify-content:space-between;align-items:center;color:#ffd23f;font:700 12px/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em}
   #rt-panel .rt-x{background:none;border:0;color:#aaa;font-size:18px;cursor:pointer;padding:2px 6px}
   #rt-panel .rt-hint{color:#999;font-size:12px;margin:6px 0 0;line-height:1.4}
   .rt-modal{position:fixed;inset:0;z-index:2147483200;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
-  .rt-card{background:#151515;color:#eee;border:1px solid #333;border-radius:16px;max-width:520px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.6);font-size:15px;line-height:1.5}
+  .rt-card{background:#151515;color:#eee;border:1px solid #333;border-radius:16px;max-width:520px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.6);font-size:15px;line-height:1.5;max-height:90vh;overflow:auto}
   .rt-card h3{margin:0 0 10px;font:800 20px/1.2 system-ui,sans-serif;color:#fff}
   .rt-card ol{padding-left:20px;margin:8px 0}
   .rt-card a{color:#ffd23f}
@@ -162,43 +172,58 @@
   .rt-card .rt-row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
   .rt-banner{position:fixed;z-index:2147483098;left:50%;top:70px;transform:translateX(-50%);background:#3b2a00;color:#ffe9a8;border:1px solid #ffd23f;border-radius:10px;padding:10px 14px;font:14px/1.4 system-ui,sans-serif;max-width:min(560px,calc(100vw - 24px));box-shadow:0 10px 30px rgba(0,0,0,.4)}
   @media (max-width:640px){
-    #rt-bar{left:8px;right:76px;bottom:8px;max-width:none}
-    #rt-panel{left:8px;right:8px;width:auto;top:auto;bottom:calc(8px + var(--rt-bar-h,56px) + 8px);max-height:46vh}
+    #rt-panel{left:8px!important;right:8px;width:auto;top:auto!important;bottom:62px;max-height:40vh}
+    #rt-menu{left:8px}
+    #rt-toast{left:8px;right:8px;max-width:none;bottom:auto;top:64px}
+    .rt-secbar .rt-sl{display:none}
   }`;
   document.head.append(h("style",{id:"rt-css"},STYLE));
   document.documentElement.classList.add("rt-on");
 
   const ui=h("div",{class:"rt-ui"});
-  const statusEl=h("span",{id:"rt-status"},"Loading…");
-  const pubBtn=h("button",{class:"rt-btn pri",type:"button",disabled:true,on:{click:publish}},"Publish");
-  const bar=h("div",{id:"rt-bar"},
-    h("b",{},"✎ Editing"),statusEl,pubBtn,
-    h("button",{class:"rt-btn sm",type:"button",on:{click:historyBox}},"↺ Versions"),
-    h("button",{class:"rt-btn sm",type:"button",title:"How it works",on:{click:help}},"?"),
-    h("button",{class:"rt-btn sm",type:"button",on:{click:askToken}},"Token…"),
-    h("button",{class:"rt-btn sm dan",type:"button",on:{click:exitEdit}},"Exit"));
+  const pubBtn=h("button",{class:"rt-pub",type:"button",disabled:true,on:{click:publish}},h("i"),"Publish");
+  const menu=h("div",{id:"rt-menu"});
+  const item=(label,fn,cls)=>h("button",{type:"button",class:cls||"",on:{click:()=>{menu.style.display="none";fn()}}},label);
+  menu.append(item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
+  const bar=h("div",{id:"rt-bar"},pubBtn,h("button",{class:"rt-more",type:"button",title:"More",on:{click:e=>{e.stopPropagation();menu.style.display=menu.style.display==="block"?"none":"block"}}},"⋯"));
+  const toastEl=h("div",{id:"rt-toast"});
   const panel=h("div",{id:"rt-panel"});
-  const sel=h("div",{id:"rt-sel"},h("span",{class:"rt-tag"},h("span",{class:"rt-grip",title:"Drag to move"},"⠿"),
-    h("button",{class:"rt-arr",type:"button",title:"Move earlier",on:{click:e=>{e.stopPropagation();current&&step(current,-1)}}},"↑"),
-    h("button",{class:"rt-arr",type:"button",title:"Move later",on:{click:e=>{e.stopPropagation();current&&step(current,1)}}},"↓"),
-    h("span",{class:"rt-name"})));
+  const sel=h("div",{id:"rt-sel"});
+  const B=(glyph,title,fn,cls)=>h("button",{type:"button",title,"aria-label":title,class:cls||"",on:{click:e=>{e.stopPropagation();fn()}}},glyph);
+  const tb=h("div",{id:"rt-tb",class:"rt-ui"});
+  const T={
+    name:h("span",{class:"rt-name"}),
+    grip:h("button",{type:"button",class:"rt-grip",title:"Drag to move","aria-label":"Drag to move"},"⠿"),
+    up:B("↑","Move earlier",()=>current&&step(current,-1)),
+    down:B("↓","Move later",()=>current&&step(current,1)),
+    edit:B("✎","Edit text",()=>clickedText&&startEdit(clickedText)),
+    media:B("🖼","Replace image / video",()=>clickedMedia&&replaceMedia(clickedMedia.dataset.m,clickedMedia.dataset.mk,clickedMedia)),
+    dup:B("⧉","Duplicate",()=>current&&duplicate(current)),
+    del:B("🗑","Delete",()=>current&&remove(current)),
+    gear:B("⚙","Settings",()=>{panelOpen=!panelOpen;renderPanel()}),
+    parent:B("⤴","Select what's around it",()=>{const k=chain.indexOf(current);if(chain[k+1]){current=chain[k+1];clickedText=clickedMedia=null;panelOpen=false;renderPanel();place()}}),
+  };
+  tb.append(T.name,T.grip,T.up,T.down,T.edit,T.media,T.dup,T.del,T.gear,T.parent);
   const drop=h("div",{id:"rt-drop"}),ghost=h("div",{id:"rt-ghost"});
   const isIndex=!!$("#projects .ptiles");
   const linkOpts=(isIndex?["#now","#projects","#more-code","#about","#gallery-lab","#contact"]:["index.html","index.html#projects","index.html#more-code","index.html#contact"])
     .concat(["gallery.html","lab.html","Roee-Tal-CV.pdf","mailto:roeetal17@gmail.com","https://www.linkedin.com/in/roee-tal/"]);
   ui.append(h("datalist",{id:"rt-links"},...linkOpts.map(v=>h("option",{value:v}))));
-  ui.append(bar,panel);document.body.append(ui,sel,drop,ghost);
-  const barH=()=>document.documentElement.style.setProperty("--rt-bar-h",bar.offsetHeight+"px");
-  new ResizeObserver(barH).observe(bar);
+  ui.append(bar,menu,toastEl,panel);document.body.append(ui,sel,tb,drop,ghost);
+  document.addEventListener("click",e=>{if(!e.target.closest("#rt-menu,.rt-more"))menu.style.display="none"});
 
-  let busyMsg="";
-  function setBusy(m){busyMsg=m;pubBtn.disabled=!!m||!changes;updateBar()}
-  function status(text,keep,...extra){statusEl.replaceChildren(text,...extra);statusEl.dataset.keep=keep?"1":""}
+  let busyMsg="",toastTimer=0;
+  function setBusy(m){busyMsg=m;updateBar()}
+  function status(text,keep,...extra){
+    clearTimeout(toastTimer);
+    if(!text&&!extra.length){toastEl.style.display="none";return}
+    toastEl.replaceChildren(text,...extra);toastEl.style.display="block";
+    if(!keep)toastTimer=setTimeout(()=>{toastEl.style.display="none"},4000);
+  }
   function updateBar(){
-    if(busyMsg){statusEl.textContent=busyMsg;pubBtn.disabled=true;return}
-    pubBtn.disabled=!changes;
-    if(changes){status(`${dirty.size+uploads.size?"Unsaved changes":""}`);pubBtn.textContent="Publish"}
-    else if(!statusEl.dataset.keep)status(loaded?"Click anything to edit":"Loading…");
+    pubBtn.classList.toggle("dirty",!!changes);
+    pubBtn.disabled=!!busyMsg||!changes;
+    if(busyMsg)status(busyMsg,true);
   }
   function toast(m){status(m)}
   function modal(...kids){const m=h("div",{class:"rt-modal rt-ui",on:{click:e=>{if(e.target===m)m.remove()}}},h("div",{class:"rt-card"},...kids));document.body.append(m);return m}
@@ -260,14 +285,13 @@
   function help(){
     const m=modal(h("h3",{},"How editing works"),
       h("ol",{},
-        h("li",{},h("b",{},"Text: "),"click any outlined text and type."),
-        h("li",{},h("b",{},"Anything else: "),"click it. The panel on the left shows what you can do with it and with the blocks around it: move, duplicate, delete, replace the image or video, colors, layout."),
-        h("li",{},h("b",{},"Reorder: "),"each section has big ↑ ↓ buttons in its corner. For anything inside a section (cards, clips, buttons, bullets), click it and use the small arrows on its yellow outline, or drag the ⠿ handle."),
-        h("li",{},h("b",{},"Buttons, icons, colors, backgrounds: "),"click them. Links, icons, colors and background videos are in the panel."),
-        h("li",{},h("b",{},"Went wrong? "),"↺ Versions lists every publish. Restore brings any of them back."),
-        h("li",{},h("b",{},"New item: "),"duplicate a similar one and change it."),
-        h("li",{},h("b",{},"Publish: "),"saves everything on this page to GitHub. The site rebuilds itself in about 2 minutes; uploads are compressed automatically.")),
-      h("p",{style:"color:#aaa;font-size:13px"},"Publish before moving to another page. Ctrl+Z undoes typing. Links and video buttons don't open while editing; use the jump menu or the top bar to move between pages."),
+        h("li",{},h("b",{},"Tap"),", anything to select it. A small toolbar appears next to it."),
+        h("li",{},h("b",{},"Double-tap text"),", to change it (or tap ✎). Tap outside when you're done."),
+        h("li",{},h("b",{},"↑ ↓"),", move it. Whole sections have their own ↑ ↓ in the corner. You can also drag ⠿."),
+        h("li",{},h("b",{},"🖼"),", replace the image or video. ",h("b",{},"⧉")," duplicate (that's how you add a new one). ",h("b",{},"🗑")," delete."),
+        h("li",{},h("b",{},"⚙"),", more options: links, icons, colors, layouts, background videos. ",h("b",{},"⤴")," selects what's around it."),
+        h("li",{},h("b",{},"Publish"),", saves to the site; it rebuilds in about 2 minutes. ⋯ › Versions brings back any earlier version.")),
+      h("p",{style:"color:#aaa;font-size:13px"},"Publish before moving to another page. Links and videos don't open while editing; use the top menu or the jump menu to change pages."),
       h("div",{class:"rt-row"},h("button",{class:"rt-btn pri",type:"button",on:{click:()=>m.remove()}},"Got it")));
   }
   function exitEdit(){
@@ -281,8 +305,18 @@
   const PT=(()=>{const d=document.createElement("div");try{d.contentEditable="plaintext-only";return d.contentEditable==="plaintext-only"}catch(e){return false}})();
   const norm=s=>String(s??"").replace(/\s+/g," ").trim();
   function readText(el){return el.hasAttribute("data-code")?el.innerText.replace(/ /g," "):norm(el.innerText)}
+  function startEdit(el,x,y){
+    if(el.isContentEditable)return;
+    el.contentEditable=PT?"plaintext-only":"true";el.spellcheck=true;el.focus();
+    try{
+      const r=x!=null&&document.caretRangeFromPoint?document.caretRangeFromPoint(x,y):null;
+      const sl=getSelection();sl.removeAllRanges();
+      if(r&&el.contains(r.startContainer))sl.addRange(r);else{const rr=document.createRange();rr.selectNodeContents(el);rr.collapse(false);sl.addRange(rr)}
+    }catch(e){}
+    T.edit.classList.add("on");
+  }
   function initText(el){
-    el.contentEditable=PT?"plaintext-only":"true";el.spellcheck=true;
+    el.addEventListener("blur",()=>{el.removeAttribute("contenteditable");T.edit.classList.remove("on");place()});
     el.addEventListener("input",()=>{
       const p=el.dataset.e;let v=readText(el);
       if(el.hasAttribute("data-code")){const old=get(p)||"";if(old.endsWith("\n")&&!v.endsWith("\n"))v+="\n"}
@@ -316,32 +350,46 @@
   const siblingsOf=u=>u.hasAttribute("data-i")?[...u.parentElement.children].filter(c=>c.hasAttribute("data-i")):[...u.parentElement.children].filter(c=>c.dataset.ok===u.dataset.ok);
   const movable=u=>u.hasAttribute("data-i")||u.hasAttribute("data-k");
 
-  let current=null,chain=[];
+  let current=null,chain=[],clickedText=null,clickedMedia=null,panelOpen=false;
+  const owner=m=>{let p=m.parentElement&&m.parentElement.closest(UNIT);while(p&&p.matches("[data-m]")&&!p.matches("[data-i],[data-k],[data-x]"))p=p.parentElement&&p.parentElement.closest(UNIT);return p};
+  const mediaOf=u=>[u,...u.querySelectorAll("[data-m]")].filter(m=>m.hasAttribute("data-m")&&(m===u||owner(m)===u));
+  const fieldsOf=u=>{try{return u.dataset.x?JSON.parse(u.dataset.x):[]}catch(e){return []}};
   function select(target){
     chain=[];
     for(let u=target&&target.closest(UNIT);u;u=u.parentElement&&u.parentElement.closest(UNIT))chain.push(u);
-    current=chain.find(movable)||chain[0]||null;
+    current=chain[0]||null;
+    // an image inside a card selects the card (the image is replaced from the toolbar)
+    if(current&&chain[1]&&current.matches("[data-m]")&&!current.matches("[data-i],[data-k],[data-x]"))current=chain[1];
+    clickedText=target&&target.closest("[data-e]");if(clickedText&&current&&!current.contains(clickedText))clickedText=null;
+    clickedMedia=target&&target.closest("[data-m]");
+    if(!clickedMedia&&current){const m=mediaOf(current);if(m.length===1&&m[0].tagName==="IMG")clickedMedia=m[0]}
+    panelOpen=false;
     renderPanel();place();
-    // keep the selected thing (and its arrows) visible above the panel / bar
-    if(current&&panel.style.display==="block"){
-      const r=current.getBoundingClientRect(),pr=panel.getBoundingClientRect();
-      const bottomLimit=pr.left<innerWidth/3?pr.top-12:innerHeight-bar.offsetHeight-24;
-      if(r.top<70||Math.min(r.bottom,r.top+120)>bottomLimit)scrollBy({top:r.top-Math.max(80,Math.min(140,bottomLimit-r.height-20))});
-    }
   }
+  const show=(el,on)=>{el.style.display=on?"":"none"};
   function place(){
-    if(!current||!document.contains(current)){sel.style.display="none";return}
+    if(!current||!document.contains(current)){sel.style.display=tb.style.display="none";panel.style.display="none";return}
     const r=current.getBoundingClientRect();
-    if(!r.width&&!r.height){sel.style.display="none";return}
+    if(!r.width&&!r.height){sel.style.display=tb.style.display="none";return}
     Object.assign(sel.style,{display:"block",left:r.left-4+"px",top:r.top-4+"px",width:r.width+8+"px",height:r.height+8+"px"});
-    const mv=movable(current);
-    $(".rt-grip",sel).style.display=mv?"":"none";
-    const sib=mv?siblingsOf(current):[],k=sib.indexOf(current),[up,down]=$$(".rt-arr",sel);
-    const horiz=mv&&sib.length>1&&Math.abs(sib[0].getBoundingClientRect().top-sib[1].getBoundingClientRect().top)<8;
-    up.textContent=horiz?"←":"↑";down.textContent=horiz?"→":"↓";
-    up.style.display=down.style.display=mv&&sib.length>1?"":"none";
-    up.disabled=k<=0;down.disabled=k===sib.length-1;
-    $(".rt-name",sel).textContent=unitName(current);
+    const mv=movable(current),sib=mv?siblingsOf(current):[],k=sib.indexOf(current);
+    const horiz=sib.length>1&&Math.abs(sib[0].getBoundingClientRect().top-sib[1].getBoundingClientRect().top)<8;
+    T.name.textContent=unitName(current);
+    show(T.grip,mv&&sib.length>1);show(T.up,mv&&sib.length>1);show(T.down,mv&&sib.length>1);
+    T.up.textContent=horiz?"←":"↑";T.down.textContent=horiz?"→":"↓";T.up.disabled=k<=0;T.down.disabled=k===sib.length-1;
+    show(T.edit,!!clickedText);show(T.media,!!clickedMedia);
+    show(T.dup,current.hasAttribute("data-i"));show(T.del,current.hasAttribute("data-i"));
+    show(T.gear,hasSettings(current));T.gear.classList.toggle("on",panelOpen);
+    show(T.parent,!!chain[chain.indexOf(current)+1]);
+    tb.style.display="flex";
+    const tw=tb.offsetWidth,th=tb.offsetHeight;
+    let top=r.top-th-10;if(top<64)top=r.bottom+10;if(top>innerHeight-th-70)top=Math.max(64,Math.min(innerHeight-th-70,r.top+10));
+    tb.style.top=top+"px";tb.style.left=Math.max(8,Math.min(innerWidth-tw-8,r.left))+"px";
+    if(panelOpen&&innerWidth>640){
+      const pw=panel.offsetWidth,ph=panel.offsetHeight;
+      let pt=top+th+6;if(pt+ph>innerHeight-70)pt=Math.max(64,top-ph-6);
+      panel.style.top=pt+"px";panel.style.left=Math.max(8,Math.min(innerWidth-pw-8,r.left))+"px";
+    }
   }
   addEventListener("scroll",place,{passive:true});addEventListener("resize",place);
 
@@ -350,8 +398,9 @@
     // rewrite every path inside each item from its old index to its new one (two passes so indexes can't collide)
     const items=[...container.children].filter(c=>c.hasAttribute("data-i"));
     const attrs=["data-e","data-m","data-x","data-l","data-ok","data-ico"];
-    const pass=(el,from,to)=>{const re=new RegExp(reEsc(lp+"."+from)+"(?=[.\"]|$)","g");
-      [el,...el.querySelectorAll("*")].forEach(n=>attrs.forEach(a=>{const v=n.getAttribute(a);if(v&&v.includes(lp+"."+from))n.setAttribute(a,v.replace(re,lp+"."+to))}))};
+    const sep=lp.includes(":")?".":":";   // top-level lists ("projects") index as projects:0, nested ones as …sections.0
+    const pass=(el,from,to)=>{const re=new RegExp(reEsc(lp+sep+from)+"(?=[.\"]|$)","g");
+      [el,...el.querySelectorAll("*")].forEach(n=>attrs.forEach(a=>{const v=n.getAttribute(a);if(v&&v.includes(lp+sep+from))n.setAttribute(a,v.replace(re,lp+sep+to))}))};
     items.forEach(it=>{const from=it.dataset.from??it.dataset.i,to=remap(it);pass(it,from,"\u0001"+to);it.dataset.i=to;delete it.dataset.from});
     items.forEach(it=>pass(it,"\u0001"+it.dataset.i,it.dataset.i));
   }
@@ -379,6 +428,7 @@
       // keep the arrows between flow steps where they belong
       const fl=item.closest(".flow");if(fl){const steps=$$(".flow-step",fl),arrow=$(".flow-arrow",fl);$$(".flow-arrow",fl).forEach(a=>a.remove());steps.forEach((s,k)=>{if(k)s.before(arrow.cloneNode(true))})}
     }
+    if(item.hasAttribute("data-k"))item.scrollIntoView({block:"start"});   // follow the section to its new place
     flash(item);select(item);secBars();
   }
   function secBars(){
@@ -386,9 +436,9 @@
       let b=$(":scope>.rt-secbar",sec);
       if(!b){
         if(getComputedStyle(sec).position==="static")sec.style.position="relative";
-        b=h("div",{class:"rt-secbar rt-ui"},h("span",{class:"rt-sl",on:{click:()=>{chain=[sec];current=sec;renderPanel();place()}}},"Section · "+(KEY_NAMES[sec.dataset.k]||sec.dataset.k)),
-          h("button",{type:"button",title:"Move this section up",on:{click:()=>step(sec,-1)}},"↑"),
-          h("button",{type:"button",title:"Move this section down",on:{click:()=>step(sec,1)}},"↓"));
+        b=h("div",{class:"rt-secbar rt-ui"},h("span",{class:"rt-sl"},KEY_NAMES[sec.dataset.k]||sec.dataset.k),
+          h("button",{type:"button",title:"Move this whole section up",on:{click:()=>step(sec,-1)}},"↑"),
+          h("button",{type:"button",title:"Move this whole section down",on:{click:()=>step(sec,1)}},"↓"));
         sec.prepend(b);
       }
       const sib=siblingsOf(sec),k=sib.indexOf(sec),[up,down]=$$("button",b);
@@ -416,7 +466,7 @@
     if(!confirm(`Delete this ${unitName(item).toLowerCase()}?`))return;
     listOp(item,(arr,perm,pos)=>{arr.splice(pos,1);perm.splice(pos,1)});
     item.remove();
-    current=null;chain=[];renderPanel();place();
+    current=null;chain=[];panelOpen=false;renderPanel();place();
   }
   function flash(el){el.animate([{outline:"3px solid #ffd23f",outlineOffset:"4px"},{outline:"3px solid transparent",outlineOffset:"4px"}],{duration:900})}
 
@@ -521,43 +571,25 @@
       if(c.classList.contains("h-ico"))c.hidden=!name;
     });
   }
+  function hasSettings(u){return mediaOf(u).some(m=>m!==clickedMedia)||fieldsOf(u).length>0||(u.tagName==="A"&&!!u.getAttribute("href"))}
   function renderPanel(){
     panel.replaceChildren();
-    if(!chain.length){panel.style.display="none";return}
-    panel.append(h("div",{class:"rt-head"},h("span",{},"Selected"),h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{chain=[];current=null;renderPanel();place()}}},"✕")));
-    const seen=new Set(),mseen=new Set();
-    const owner=m=>{let p=m.parentElement&&m.parentElement.closest(UNIT);while(p&&p.matches("[data-m]")&&!p.matches("[data-i],[data-k],[data-x]"))p=p.parentElement&&p.parentElement.closest(UNIT);return p};
-    chain.slice(0,4).forEach(u=>{
-      if(seen.has(u))return;seen.add(u);
-      const g=h("div",{class:"rt-grp"});
-      const sib=movable(u)?siblingsOf(u):[],k=sib.indexOf(u);
-      g.append(h("h4",{},unitName(u),sib.length>1?h("small",{},`${k+1} of ${sib.length}`):null));
-      const row=h("div",{class:"rt-row"});
-      if(movable(u)&&sib.length>1){
-        row.append(h("button",{class:"rt-btn sm",type:"button",disabled:k===0,on:{click:()=>step(u,-1)}},"↑ Earlier"),
-                   h("button",{class:"rt-btn sm",type:"button",disabled:k===sib.length-1,on:{click:()=>step(u,1)}},"↓ Later"));
-      }
-      if(u.hasAttribute("data-i")){
-        row.append(h("button",{class:"rt-btn sm",type:"button",on:{click:()=>duplicate(u)}},"⧉ Duplicate"),
-                   h("button",{class:"rt-btn sm dan",type:"button",on:{click:()=>remove(u)}},"✕ Delete"));
-      }
-      if(u.tagName==="A"&&u.getAttribute("href"))row.append(h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{if(!changes||confirm("Leave without publishing? Changes on this page will be lost.")){changes=0;location.href=u.href}}}},"↗ Open page"));
-      if(row.childNodes.length)g.append(row);
-      // media belonging to this unit (itself, or inside it but not inside a smaller unit)
-      const media=[u,...u.querySelectorAll("[data-m]")].filter(m=>m.hasAttribute("data-m")&&(m===u||owner(m)===u));
-      media.forEach(m=>{const p=m.dataset.m;if(mseen.has(p))return;mseen.add(p);
-        const kind=m.dataset.mk,last=p.split(".").pop(),lab={showreel_video:"Showreel video",full_video:"Full video",mascot:"Character cut-out",cover:"Cover image",video:"Clip video"}[last]||(kind==="video"?"Video":"Image");
-        g.append(h("label",{},lab),h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(p,kind,m)}},"Replace…")),h("div",{class:"rt-file"},String(get(p)||"").split("/").pop()))});
-      if(u.dataset.x){try{JSON.parse(u.dataset.x).filter(f=>!mseen.has(f[1])).forEach(f=>g.append(field(u,f)))}catch(e){}}
-      if(g.childNodes.length>1)panel.append(g);
-    });
-    if(panel.childNodes.length<=1){panel.style.display="none";return}
+    if(!current||!panelOpen){panel.style.display="none";place();return}
+    const u=current;
+    panel.append(h("div",{class:"rt-head"},h("span",{},unitName(u)),h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{panelOpen=false;renderPanel()}}},"✕")));
+    const mseen=new Set();
+    mediaOf(u).forEach(m=>{const p=m.dataset.m;if(mseen.has(p))return;mseen.add(p);
+      const kind=m.dataset.mk,last=p.split(".").pop(),lab={showreel_video:"Showreel video",full_video:"Full video",mascot:"Character cut-out",cover:"Cover image",video:"Clip video"}[last]||(kind==="video"?"Video":"Image");
+      panel.append(h("label",{},lab),h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(p,kind,m)}},"Replace…")),h("div",{class:"rt-file"},String(get(p)||"").split("/").pop()))});
+    fieldsOf(u).filter(f=>!mseen.has(f[1])).forEach(f=>panel.append(field(u,f)));
+    if(u.tagName==="A"&&u.getAttribute("href"))panel.append(h("div",{class:"rt-row",style:"margin-top:12px"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{if(!changes||confirm("Leave without publishing? Changes on this page will be lost.")){changes=0;location.href=u.href}}}},"↗ Open this link")));
     panel.style.display="block";
+    place();
   }
 
   /* ------------------------------------------------------------ drag to reorder */
   let drag=null;
-  $(".rt-grip",sel).addEventListener("pointerdown",e=>{
+  T.grip.addEventListener("pointerdown",e=>{
     if(!current||!movable(current))return;
     e.preventDefault();e.stopPropagation();
     const r=current.getBoundingClientRect();
@@ -587,19 +619,26 @@
     const{u,target,after}=drag;drag=null;ghost.style.display="none";drop.style.display="none";
     if(target&&target!==u)moveItem(u,target,after);else place();
   }
-  const grip=$(".rt-grip",sel);
+  const grip=T.grip;
   grip.addEventListener("pointermove",moveDrag);grip.addEventListener("pointerup",endDrag);grip.addEventListener("pointercancel",endDrag);
 
   /* ------------------------------------------------------------ clicks: select instead of navigate */
+  let lastTap={};
   document.addEventListener("click",e=>{
     const t=e.target;
     if(!loaded||t.closest(".rt-ui,.rt-modal,#rt-sel"))return;
     if(t.closest(".topbar,.jump,.viewer"))return;            // site navigation still works
     const act=t.closest("a,button,summary,label,.clip,.zoom");
+    const te=t.closest("[data-e]");
     if(act){e.preventDefault();e.stopImmediatePropagation()}
+    if(te&&te.isContentEditable)return;                       // typing: let the caret move
+    const now=Date.now();
+    if(te&&lastTap.el===te&&now-lastTap.t<450){lastTap={};select(t);startEdit(te,e.clientX,e.clientY);return}
+    lastTap={el:te,t:now};
     select(t);
   },true);
-  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.activeElement?.isContentEditable){chain=[];current=null;renderPanel();place()}});
+  document.addEventListener("dblclick",e=>{const te=e.target.closest("[data-e]");if(loaded&&te&&!e.target.closest(".rt-ui")){e.preventDefault();startEdit(te,e.clientX,e.clientY)}},true);
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(document.activeElement?.isContentEditable)document.activeElement.blur();else{current=null;chain=[];panelOpen=false;renderPanel();place()}}});
 
   /* ------------------------------------------------------------ start */
   function staleCheck(){
@@ -626,6 +665,7 @@
     $$("summary").forEach(su=>su.addEventListener("keyup",e=>{if(e.key===" ")e.preventDefault()},true));
     staleCheck();
     loaded=true;updateBar();
+    status("Tap anything to select it · double-tap text to change it");
     if(!store.get("rt-edit-helped")){store.set("rt-edit-helped","1");help()}
   }
   start();
