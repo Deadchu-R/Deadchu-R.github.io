@@ -1169,7 +1169,7 @@ Actions (use paths exactly as listed):
 {"do":"add_section","title":"...","text":"...","after":"<section key from ORDER>","layout":"text|image-right|image-left|image-top"}
 {"do":"remove_section","key":"cs_…"}
 {"do":"attach","path":"<MEDIA or image/video FIELD path>","attachment":0}
-"this"/"זה" means the SELECTED item. Keep the site's text in English unless asked. reply = one short sentence in the owner's language.`;
+Only add a menu link (site:nav) or a button when the owner asks for a link/button. "this"/"זה" means the SELECTED item. Keep the site's text in English unless asked. reply = one short sentence in the owner's language.`;
   async function applyJsonAnswer(content,thinking){
     const raw=String(content||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/^```(?:json)?|```$/gm,"").trim();let out;
     try{out=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);try{out=m?JSON.parse(m[0]):null}catch(e2){out=null}if(!out)out={actions:[],reply:raw}}
@@ -1205,11 +1205,23 @@ Actions (use paths exactly as listed):
     try{
       const model=await appModel(),big=!isPhone();
       const userMsg=`PAGE ${location.pathname}\n${big?catalog().slice(0,24000):smallCatalog(current?3500:4500)}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`;
-      const messages=[{role:"system",content:LOCAL_SYS},{role:"user",content:userMsg}];
+      const content=await appChat([{role:"system",content:LOCAL_SYS},{role:"user",content:userMsg}],thinking,700);
+      await applyJsonAnswer(content,thinking);
+    }catch(e){thinking.remove();aiSay("err",appErr(e))}
+  }
+  function appErr(e){
+    const m=errText(e);
+    return /fetch|network|load failed/i.test(m)
+      ?`Can't reach the AI app at ${appUrl()}. Phone: is Termux open with ollama serve running (OLLAMA_ORIGINS="*")? PC: is the LM Studio server on (with CORS) or Ollama running? (${m})`
+      :/memory|ram|alloc/i.test(m)?"AI app: not enough memory for "+(store.get(APP_MODEL)||"this model")+". Try a smaller one (e.g. qwen3:1.7b) in ⋯ › Site settings. ("+m+")"
+      :"AI app: "+m;
+  }
+  async function appChat(messages,thinking,maxTok){
+      const model=await appModel(),big=!isPhone();
       let content="";
       if(await detectOllama()){
         const r=await fetchT(appBase()+"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,messages,stream:true,think:false,format:"json",keep_alive:"30m",
-          options:{temperature:.2,num_ctx:big?16384:4096,num_predict:700}})},600000);
+          options:{temperature:.2,num_ctx:big?16384:4096,num_predict:maxTok||700}})},600000);
         if(!r.ok){const t=await r.text().catch(()=>"");throw new Error((t.match(/"error":"([^"]+)/)||[,"the app answered "+r.status])[1])}
         const rd=r.body.getReader(),dec=new TextDecoder();let buf="",t0=Date.now(),first=0;
         thinking.textContent=`Reading the page… (${model})`;
@@ -1219,18 +1231,41 @@ Actions (use paths exactly as listed):
             if(j.message&&j.message.content){content+=j.message.content;if(!first)first=Date.now();thinking.textContent=`Writing… ${content.length} characters · ${Math.round((Date.now()-t0)/1000)}s`}}}
       }else{
         const r=await fetchT(appUrl()+"/chat/completions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,temperature:.2,max_tokens:900,stream:false,
-          messages:[{role:"system",content:LOCAL_SYS+"\n/no_think"},messages[1]]})},600000);
+          messages:[{role:"system",content:messages[0].content+"\n/no_think"},...messages.slice(1)]})},600000);
         const j=await r.json().catch(()=>({}));
         if(!r.ok)throw new Error((j.error&&(j.error.message||j.error))||("the app answered "+r.status));
         content=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
       }
-      await applyJsonAnswer(content,thinking);
-    }catch(e){thinking.remove();
-      const m=errText(e);
-      aiSay("err",/fetch|network|load failed/i.test(m)
-        ?`Can't reach the AI app at ${appUrl()}. Phone: is Termux open with ollama serve running (OLLAMA_ORIGINS="*")? PC: is the LM Studio server on (with CORS) or Ollama running? (${m})`
-        :/memory|ram|alloc/i.test(m)?"AI app: not enough memory for "+(store.get(APP_MODEL)||"this model")+". Try a smaller one (e.g. qwen3:1.7b) in ⋯ › Site settings. ("+m+")"
-        :"AI app: "+m)}
+      return content;
+  }
+  /* ---- "add a section about…": the editor builds the section itself; the small model only writes its words */
+  const SECTION_ASK=/(סקשן|סעיף|אזור|קטע|בלוק|section|block)/i,SECTION_DO=/(הוסף|תוסיף|הכנס|תכניס|תכין|הכן|צור|תיצור|תעשה|תבנה|בנה|add|create|make|new|build|insert)/i;
+  const wantsSection=t=>SECTION_ASK.test(t)&&SECTION_DO.test(t);
+  const SECTION_SYS=`You write one new section for Roee Tal's game-developer portfolio. Reply ONLY with JSON: {"title":"...","kicker":"...","text":"..."}
+title: English, at most 6 words. kicker: English, at most 4 words (a small label above the title). text: 2-3 short, friendly English sentences.
+If the owner explicitly asks for Hebrew, write in Hebrew instead.`;
+  async function sectionFlow(text){
+    const thinking=aiSay("sys","Writing the new section…");
+    try{
+      const msgs=[{role:"system",content:SECTION_SYS},{role:"user",content:text}];
+      let content;
+      if(provider()==="app")content=await appChat(msgs,thinking,300);
+      else{const eng=await ensureEngine(r=>{thinking.textContent=`Downloading the AI model… ${Math.round((r.progress||0)*100)}%`});
+        const res=await eng.chat.completions.create({messages:msgs,temperature:.5,max_tokens:300,extra_body:{enable_thinking:false},response_format:{type:"json_object"}});
+        content=res.choices[0].message.content}
+      const raw=String(content||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/^```(?:json)?|```$/gm,"").trim();
+      let d={};try{d=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);try{d=m?JSON.parse(m[0]):{}}catch(e2){}}
+      const fallback=text.replace(SECTION_DO,"").replace(SECTION_ASK,"").replace(/\b(a|an|the|me|for|of|about|לי|של|על|חדש|חדשה)\b/gi,"").trim();
+      const after=current&&current.closest('[data-ok="site:section_order"]');
+      const r_=addSection(after,{title:String(d.title||fallback||"New section").slice(0,80),kicker:String(d.kicker||"").slice(0,40),text:String(d.text||"").slice(0,600),layout:"text"});
+      thinking.remove();
+      if(!r_){aiSay("err","New sections go on the main page. Open roeetal.com (the home page) and ask again.");return}
+      aiSay("act","✓ add section "+r_.key);
+      const file=aiFiles.find(f=>/^(image|video)\//.test(f.type));
+      if(file){await replaceMedia(r_.base+".media","media",$(`#cs-${r_.id}`),file);aiSay("act","✓ picture placed in the section")}
+      aiFiles=[];renderFiles();
+      aiSay("ai",/[\u0590-\u05FF]/.test(text)?"הוספתי סקשן חדש. אפשר לערוך את הטקסט בלחיצה כפולה, ובלחיצה עליו ואז ⚙ לבחור צבעים, פריסה ותמונה. אחר כך Publish.":"Added the section. Double-tap to edit its text; tap it, then ⚙ for colors, layout and a picture. Then Publish.");
+    }catch(e){thinking.remove();aiSay("err",provider()==="app"?appErr(e):"On-device AI: "+errText(e))}
   }
   async function localSend(text){
     const thinking=aiSay("sys","Loading the on-device model…");
@@ -1263,7 +1298,8 @@ Actions (use paths exactly as listed):
   }
   async function aiSend(text){
     if(aiBusy||!text.trim()&&!aiFiles.length)return;
-    if(provider()==="local"||provider()==="app"){aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));await (provider()==="app"?appSend(text):localSend(text));aiBusy=false;return}
+    if(provider()==="local"||provider()==="app"){aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
+      await (wantsSection(text)?sectionFlow(text):provider()==="app"?appSend(text):localSend(text));aiBusy=false;return}
     const key=store.get(AI_KEY);if(!key){aiKeyBox();return}
     aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
     const thinking=aiSay("sys","…");
