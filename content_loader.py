@@ -213,7 +213,7 @@ SITE_DEFAULTS = {
     "footer_buttons": [
         {"label": "Email me", "link": "mailto:" + _site["email"], "style": "solid"},
         {"label": "LinkedIn", "link": _site["linkedin"], "style": "ghost"},
-        {"label": "CV", "link": "Roee-Tal-CV.pdf", "style": "ghost"},
+        {"label": "CV", "link": "cv.html", "style": "ghost"},
     ],
     "footer_peek": "/assets/art/musical-cat.webp",
     "hero_title": _site.get("name", "Roee Tal"),
@@ -222,7 +222,7 @@ SITE_DEFAULTS = {
         {"label": "Projects", "link": "index.html#projects", "icon": ""},
         {"label": "Gallery", "link": "gallery.html", "icon": ""},
         {"label": "Lab", "link": "lab.html", "icon": ""},
-        {"label": "CV", "link": "Roee-Tal-CV.pdf", "icon": ""},
+        {"label": "CV", "link": "cv.html", "icon": ""},
         {"label": "Contact", "link": "index.html#contact", "icon": ""},
     ],
     "job_tools": [

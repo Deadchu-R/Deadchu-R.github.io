@@ -54,6 +54,12 @@ Every section is JSON. Common fields (all optional):
 - "Add a button" → add an item to the section's `buttons.items` with a label and a link.
 - Links on this site: `#projects`, `#about`, `#now`, `#more-code`, `#gallery-lab`, `#contact`, `projects/<slug>.html`, `mailto:roeetal17@gmail.com`, or any https address.
 <!-- /small -->
+## Résumé page (cv.html)
+- קורות חיים / CV / רזומה = the résumé page. Each résumé is a version in content/cv.json › variants.<id>: person (name, title, summary, email, phone, location, links) and two lists of sections, main and side.
+- Section types: experience (role, org, dates, location, about, bullets), projects (name, meta, dates, link, bullets), education (degree, school, dates, location, label, bullets = courses), skills / tags (groups with items), languages (name, level), list (title, sub, dates, text), text.
+- Design per version: template ats | novo | studio, accent color, font, density compact | normal | roomy, show_photo, dir ltr | rtl.
+- Résumé bullets: start with a strong verb, say what you built and the result, one or two lines each. Never invent experience or numbers.
+
 
 ## Owner and site
 - Roee Tal, game developer (Unity / Unreal, gameplay programming, game design). The site is his portfolio: projects, code, a lab of experiments, about, contact.

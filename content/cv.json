@@ -1,0 +1,546 @@
+{
+  "default": "unity-ats",
+  "variants": {
+    "unity-ats": {
+      "label": "Unity · ATS (main)",
+      "template": "ats",
+      "accent": "#1f5fa8",
+      "font": "Inter",
+      "density": "normal",
+      "photo": "/assets/cv/roee.jpg",
+      "show_photo": false,
+      "dir": "ltr",
+      "lang": "en",
+      "public": true,
+      "person": {
+        "name": "Roee Tal",
+        "title": "Game Developer — Unity",
+        "summary": "Game developer with 1.5 years of professional real-time 3D development at 3DVision and a 3-year game design and development program at Tiltan. Strong Unity and C# foundation: modular, data-driven systems, event-driven gameplay and UI.",
+        "email": "roeetal17@gmail.com",
+        "phone": "053-337-4350",
+        "location": "Israel",
+        "links": [
+          {
+            "label": "roeetal.com",
+            "url": "https://www.roeetal.com/"
+          },
+          {
+            "label": "LinkedIn",
+            "url": "https://linkedin.com/in/roee-tal"
+          },
+          {
+            "label": "GitHub",
+            "url": "https://github.com/Deadchu-R"
+          }
+        ]
+      },
+      "main": [
+        {
+          "type": "experience",
+          "title": "Experience",
+          "items": [
+            {
+              "role": "Unreal Developer",
+              "org": "3DVision",
+              "dates": "02/2025 – Present",
+              "location": "Tel Aviv",
+              "about": "Real-time interactive apps for real-estate companies, built in Unreal Engine",
+              "label": "",
+              "bullets": [
+                "Develop and integrate interactive features based on client requirements across multiple projects",
+                "Debug and optimize complex logic for stability and performance",
+                "Implement custom UI elements and functionality tailored to client needs"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "projects",
+          "title": "Projects",
+          "items": [
+            {
+              "name": "Isometric Story-Driven Game",
+              "meta": "Unity · 3-week hackathon",
+              "dates": "2023",
+              "link": "https://www.roeetal.com/projects/shards.html",
+              "link_label": "",
+              "bullets": [
+                "Built the full dialogue system: ScriptableObject sheets and pages, with page types via inheritance for branching answers and level changes",
+                "Typewriter text raising per-letter, per-word and finish events that drive talking sounds and mouth animation"
+              ]
+            },
+            {
+              "name": "Boss Rush: Grid-Based Tactical Combat",
+              "meta": "Unity · Producer & Team Lead",
+              "dates": "2023–2024",
+              "link": "https://www.roeetal.com/projects/boss-rush.html",
+              "link_label": "",
+              "bullets": [
+                "Led a cross-functional team of programmers and artists for nine months, through delivery",
+                "Oversaw the second programmer's code to keep it working and maintainable"
+              ]
+            },
+            {
+              "name": "FPS Stealth Level",
+              "meta": "Unreal Engine, C++ & Blueprints",
+              "dates": "2024",
+              "link": "https://www.roeetal.com/projects/infiltration.html",
+              "link_label": "",
+              "bullets": [
+                "Programmed raycast shooting with recoil, weapon pickups and a shot event that triggers sound and VFX",
+                "Built patrolling enemy AI with a detection meter: escape or shoot enemies before it fills"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "education",
+          "title": "Education",
+          "items": [
+            {
+              "degree": "Game Design and Development",
+              "school": "Tiltan School of Design and Visual Communication",
+              "dates": "10/2021 – 10/2024",
+              "location": "Haifa",
+              "about": "",
+              "label": "Courses",
+              "bullets": [
+                "C# 1–2",
+                "Unity Development 1–2",
+                "C++",
+                "Multiplayer",
+                "Unreal Development 1–2",
+                "Game Design 1–2",
+                "Game Production"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "skills",
+          "title": "Skills",
+          "items": [
+            {
+              "label": "Engines",
+              "items": [
+                "Unity",
+                "Unreal Engine (Blueprints, C++)"
+              ]
+            },
+            {
+              "label": "Programming",
+              "items": [
+                "C#",
+                "C++"
+              ]
+            },
+            {
+              "label": "Practices",
+              "items": [
+                "OOP",
+                "design patterns",
+                "event-driven and data-driven design",
+                "debugging and optimization",
+                "Git",
+                "Agile"
+              ]
+            },
+            {
+              "label": "AI-assisted development",
+              "items": [
+                "GitHub Copilot",
+                "OpenCode",
+                "ChatGPT",
+                "Gemini",
+                "local LLMs (Ollama, LM Studio)",
+                "adopting Claude Code"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "languages",
+          "title": "Languages",
+          "items": [
+            {
+              "name": "Hebrew",
+              "level": "Native"
+            },
+            {
+              "name": "English",
+              "level": "Full professional proficiency"
+            }
+          ]
+        }
+      ],
+      "side": []
+    },
+    "novo": {
+      "label": "Novo design",
+      "template": "novo",
+      "accent": "#2a8a8f",
+      "font": "Open Sans",
+      "density": "normal",
+      "photo": "/assets/cv/roee.jpg",
+      "show_photo": true,
+      "dir": "ltr",
+      "lang": "en",
+      "public": true,
+      "person": {
+        "name": "Roee Tal",
+        "title": "Game Developer",
+        "summary": "Experienced Game Developer with a strong foundation in Unity and C#, currently active in the Unreal Engine ecosystem at 3DVision. Proven ability to architect complex technical systems and solve intricate development challenges. Looking to bring my cross-engine proficiency, technical design skills, and passion for gameplay back to the Unity platform to build engaging gaming experiences.",
+        "email": "roeetal17@gmail.com",
+        "phone": "053-337-4350",
+        "location": "Israel",
+        "links": [
+          {
+            "label": "roeetal.com",
+            "url": "https://www.roeetal.com/"
+          },
+          {
+            "label": "LinkedIn",
+            "url": "https://linkedin.com/in/roee-tal"
+          },
+          {
+            "label": "GitHub",
+            "url": "https://github.com/Deadchu-R"
+          }
+        ]
+      },
+      "main": [
+        {
+          "type": "experience",
+          "title": "Experience",
+          "items": [
+            {
+              "role": "Unreal Developer",
+              "org": "3DVision",
+              "dates": "02/2025 – Present",
+              "location": "Tel Aviv",
+              "about": "A company that makes real time simulation interfaces for real estate companies in Unreal Engine",
+              "label": "Achievements/Tasks",
+              "bullets": [
+                "Debugged and optimized complex logic and Blueprints across multiple projects",
+                "Developed and integrated interactive features based on client requests",
+                "Implemented custom UI elements and functionalities tailored to client needs"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "education",
+          "title": "Education",
+          "items": [
+            {
+              "degree": "Game Design And Development",
+              "school": "Tiltan School of design and visual communication",
+              "dates": "10/2021 – 10/2024",
+              "location": "Haifa, Israel",
+              "about": "",
+              "label": "Courses",
+              "bullets": [
+                "C# 1,2",
+                "Game Design 1,2",
+                "Unity Development 1,2",
+                "Unreal Development 1,2",
+                "C++",
+                "Game Production",
+                "Multiplayer"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tags",
+          "title": "Interests",
+          "items": [
+            {
+              "label": "",
+              "items": [
+                "Video Games",
+                "Manga Reading",
+                "Bouldering",
+                "Tinkering with PCs and mobile devices",
+                "Emerging Technologies"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "languages",
+          "title": "Languages",
+          "items": [
+            {
+              "name": "Hebrew",
+              "level": "Native or Bilingual Proficiency"
+            },
+            {
+              "name": "English",
+              "level": "Full Professional Proficiency"
+            }
+          ]
+        }
+      ],
+      "side": [
+        {
+          "type": "skills",
+          "title": "Skills",
+          "items": [
+            {
+              "label": "",
+              "items": [
+                "Object Oriented Programming",
+                "C#",
+                "C++",
+                "Unity Engine",
+                "Unreal Engine",
+                "Game Development",
+                "Game Production",
+                "Agile Development",
+                "Software Integration",
+                "System Maintenance",
+                "Troubleshooting",
+                "VR Knowledge",
+                "AI",
+                "Git",
+                "Asset Management",
+                "Version Control"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "projects",
+          "title": "Projects",
+          "items": [
+            {
+              "name": "Isometric Story-Driven Game (3 week hackathon)",
+              "meta": "",
+              "dates": "10/2023 – 11/2023",
+              "link": "https://www.roeetal.com/projects/shards.html",
+              "link_label": "Link to project",
+              "bullets": [
+                "Architected a modular dialogue system utilizing ScriptableObjects for efficient data",
+                "Developed complex UI interactions and event-driven mechanics (e.g., OnLetterTyped) to enhance narrative flow"
+              ]
+            },
+            {
+              "name": "Boss Rush – A Grid-Based Tactical Combat (Unity)",
+              "meta": "producer & game designer",
+              "dates": "12/2023 – 09/2024",
+              "link": "https://www.roeetal.com/projects/boss-rush.html",
+              "link_label": "Link to project",
+              "bullets": [
+                "Led a cross-functional team of programmers and artists, managing the development pipeline to ensure successful project delivery",
+                "Designed core gameplay loops, tactical grid mechanics, and overall game balancing",
+                "Handled conflicts and resolved issues between team members to maintain a smooth and productive workflow"
+              ]
+            },
+            {
+              "name": "Shooter Game (Unreal Engine)",
+              "meta": "",
+              "dates": "06/2024 – 08/2024",
+              "link": "https://www.roeetal.com/projects/infiltration.html",
+              "link_label": "Link to project",
+              "bullets": [
+                "Programmed core FPS mechanics including raycast-based shooting, recoil feedback, and dynamic weapon pickups using C++ and Blueprints",
+                "Developed AI behavior and detection logic to support stealth mechanics and enemy patrol routes, showcasing expertise in Unreal Engine systems"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "studio": {
+      "label": "Studio sidebar",
+      "template": "studio",
+      "accent": "#1f5fa8",
+      "font": "Inter",
+      "density": "normal",
+      "photo": "/assets/cv/roee.jpg",
+      "show_photo": true,
+      "dir": "ltr",
+      "lang": "en",
+      "public": true,
+      "person": {
+        "name": "Roee Tal",
+        "title": "Game Developer — Unity",
+        "summary": "Game developer with 1.5 years of professional real-time 3D development at 3DVision and a 3-year game design and development program at Tiltan. Strong Unity and C# foundation: modular, data-driven systems, event-driven gameplay and UI.",
+        "email": "roeetal17@gmail.com",
+        "phone": "053-337-4350",
+        "location": "Israel",
+        "links": [
+          {
+            "label": "roeetal.com",
+            "url": "https://www.roeetal.com/"
+          },
+          {
+            "label": "LinkedIn",
+            "url": "https://linkedin.com/in/roee-tal"
+          },
+          {
+            "label": "GitHub",
+            "url": "https://github.com/Deadchu-R"
+          }
+        ]
+      },
+      "main": [
+        {
+          "type": "experience",
+          "title": "Experience",
+          "items": [
+            {
+              "role": "Unreal Developer",
+              "org": "3DVision",
+              "dates": "02/2025 – Present",
+              "location": "Tel Aviv",
+              "about": "Real-time interactive apps for real-estate companies, built in Unreal Engine",
+              "label": "",
+              "bullets": [
+                "Develop and integrate interactive features based on client requirements across multiple projects",
+                "Debug and optimize complex logic for stability and performance",
+                "Implement custom UI elements and functionality tailored to client needs"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "projects",
+          "title": "Projects",
+          "items": [
+            {
+              "name": "Isometric Story-Driven Game",
+              "meta": "Unity · 3-week hackathon",
+              "dates": "2023",
+              "link": "https://www.roeetal.com/projects/shards.html",
+              "link_label": "",
+              "bullets": [
+                "Built the full dialogue system: ScriptableObject sheets and pages, with page types via inheritance for branching answers and level changes",
+                "Typewriter text raising per-letter, per-word and finish events that drive talking sounds and mouth animation"
+              ]
+            },
+            {
+              "name": "Boss Rush: Grid-Based Tactical Combat",
+              "meta": "Unity · Producer & Team Lead",
+              "dates": "2023–2024",
+              "link": "https://www.roeetal.com/projects/boss-rush.html",
+              "link_label": "",
+              "bullets": [
+                "Led a cross-functional team of programmers and artists for nine months, through delivery",
+                "Oversaw the second programmer's code to keep it working and maintainable"
+              ]
+            },
+            {
+              "name": "FPS Stealth Level",
+              "meta": "Unreal Engine, C++ & Blueprints",
+              "dates": "2024",
+              "link": "https://www.roeetal.com/projects/infiltration.html",
+              "link_label": "",
+              "bullets": [
+                "Programmed raycast shooting with recoil, weapon pickups and a shot event that triggers sound and VFX",
+                "Built patrolling enemy AI with a detection meter: escape or shoot enemies before it fills"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "education",
+          "title": "Education",
+          "items": [
+            {
+              "degree": "Game Design and Development",
+              "school": "Tiltan School of Design and Visual Communication",
+              "dates": "10/2021 – 10/2024",
+              "location": "Haifa",
+              "about": "",
+              "label": "Courses",
+              "bullets": [
+                "C# 1–2",
+                "Unity Development 1–2",
+                "C++",
+                "Multiplayer",
+                "Unreal Development 1–2",
+                "Game Design 1–2",
+                "Game Production"
+              ]
+            }
+          ]
+        }
+      ],
+      "side": [
+        {
+          "type": "skills",
+          "title": "Skills",
+          "items": [
+            {
+              "label": "Engines",
+              "items": [
+                "Unity",
+                "Unreal Engine (Blueprints, C++)"
+              ]
+            },
+            {
+              "label": "Programming",
+              "items": [
+                "C#",
+                "C++"
+              ]
+            },
+            {
+              "label": "Practices",
+              "items": [
+                "OOP",
+                "design patterns",
+                "event-driven and data-driven design",
+                "debugging and optimization",
+                "Git",
+                "Agile"
+              ]
+            },
+            {
+              "label": "AI-assisted development",
+              "items": [
+                "GitHub Copilot",
+                "OpenCode",
+                "ChatGPT",
+                "Gemini",
+                "local LLMs (Ollama, LM Studio)",
+                "adopting Claude Code"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "languages",
+          "title": "Languages",
+          "items": [
+            {
+              "name": "Hebrew",
+              "level": "Native"
+            },
+            {
+              "name": "English",
+              "level": "Full professional proficiency"
+            }
+          ]
+        },
+        {
+          "type": "tags",
+          "title": "Interests",
+          "items": [
+            {
+              "label": "",
+              "items": [
+                "Video games",
+                "Bouldering",
+                "Manga",
+                "Tinkering with PCs"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

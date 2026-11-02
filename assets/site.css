@@ -842,3 +842,10 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .t-banner{color:var(--sec-ink,#fff)}
 .custom-sec .xrow:empty{display:none}
 .custom-sec.al-center .xrow{justify-content:center}
+/* résumé page */
+.cv-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding-top:calc(86px + env(safe-area-inset-top,0px));padding-bottom:16px}
+.cv-bar-r{display:flex;flex-wrap:wrap;gap:8px}
+.cv-bar .btn .ic:empty{display:none}
+.cv-stage{padding:0 24px 64px;display:flex;justify-content:center}
+.cv-stage .cvdoc{flex:none;box-shadow:0 30px 70px -30px rgba(0,0,0,.65),0 0 0 1px rgba(0,0,0,.08);border-radius:2px}
+@media (max-width:600px){.cv-stage{padding:0 8px 40px}.cv-bar{padding-top:calc(76px + env(safe-area-inset-top,0px))}}

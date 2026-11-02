@@ -7,7 +7,7 @@
   if(window.__rtEdit)return;window.__rtEdit=1;
   const ME=(document.currentScript&&document.currentScript.src)||location.href;
   const REPO="Deadchu-R/Deadchu-R.github.io",BR="main",API="https://api.github.com";
-  const FILES={site:"content/site.json",projects:"content/projects.json","code-pages":"content/code-pages.json",lab:"content/lab.json","early-work":"content/early-work.json",about:"content/about.json"};
+  const FILES={site:"content/site.json",projects:"content/projects.json","code-pages":"content/code-pages.json",lab:"content/lab.json","early-work":"content/early-work.json",about:"content/about.json",cv:"content/cv.json"};
   const TOKEN_KEY="rt-edit-token";
   const NEW_TOKEN="https://github.com/settings/personal-access-tokens/new?name=roeetal.com+editor&description=Visual+editor+for+roeetal.com&target_name=Deadchu-R&contents=write&actions=read";
   const store={get(k){try{return localStorage.getItem(k)||""}catch(e){return ""}},set(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}};
@@ -27,7 +27,9 @@
     const[f,ks]=parse(p);
     if(!ks.length)docs[f]=v;
     else{let o=docs[f];for(let i=0;i<ks.length-1;i++){const k=ks[i];if(o[k]==null)o[k]=/^\d+$/.test(ks[i+1])?[]:{};o=o[k]}o[ks[ks.length-1]]=v}
+    if(f==="cvlocal"){try{localStorage.setItem("rt-cv-local",JSON.stringify(docs.cvlocal))}catch(e){}cvChanged(p,v);return}
     dirty.add(f);changes++;updateBar();
+    if(f==="cv")cvChanged(p,v);
     const m_=p.match(/^site:custom_sections\.(\w+)\.(.+)$/);if(m_&&csStruct(m_[2]))csChanged(m_[1],m_[2],v);
   }
 
@@ -56,6 +58,9 @@
       catch(e){const r=await gh(`/repos/${REPO}/contents/${path}?ref=${BR}&t=${Date.now()}`);o=JSON.parse(b64dec(r.content))}
       out[k]=o;orig[k]=canon(o);
     }));
+    try{out.cvlocal=JSON.parse(localStorage.getItem("rt-cv-local")||"null")}catch(e){}
+    if(!out.cvlocal||typeof out.cvlocal!=="object")out.cvlocal={variants:{}};
+    if(!out.cv||typeof out.cv!=="object")out.cv={default:"",variants:{}};if(!out.cv.variants)out.cv.variants={};
     docs=out;
   }
 
@@ -267,6 +272,15 @@
   .rt-pm-opt em{font-style:normal;font-size:12px;color:#8d8d8d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%}
   .rt-pm-opt i{font-style:normal;color:#ffd23f;font-weight:800}
   .rt-pm-opt.hi,.rt-pm-opt:hover{background:#ffd23f;color:#111}.rt-pm-opt.hi em,.rt-pm-opt:hover em,.rt-pm-opt.hi i,.rt-pm-opt:hover i{color:#111}
+  .rt-cvbar{max-width:1160px;margin:0 auto 14px;padding:0 18px;font:500 13px/1.2 system-ui,sans-serif;color:#eee}
+  .rt-cvtag{display:block;color:#ffd23f;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+  .rt-cvrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#111;border:1px solid #333;border-radius:12px;padding:6px}
+  .rt-cvpick,.rt-cvbtn{appearance:none;border:1px solid #333;background:#1c1c1c;color:#fff;border-radius:9px;padding:8px 11px;font:600 13.5px/1 system-ui,sans-serif;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+  .rt-cvpick{border-color:#ffd23f;max-width:min(260px,60vw)}.rt-cvpick span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rt-cvpick i{font-style:normal;color:#ffd23f}
+  .rt-cvwhere{font-size:12px;color:#aaa;padding:0 4px}.rt-cvwhere.local{color:#7ee0a6}
+  .rt-cvpages{font-size:12px;font-weight:700;color:#7ee0a6;padding:0 4px}.rt-cvpages.warn{color:#ffb35c}
+  .rt-on #cvStage .cvdoc{background-image:repeating-linear-gradient(180deg,transparent 0 calc(297mm - 2px),rgba(230,60,60,.6) calc(297mm - 2px) 297mm)}
+  @media print{.rt-on [data-e]{outline:none!important}.rt-ui{display:none!important}}
   .rt-addlist{display:grid;gap:6px}.rt-addlist.grid{grid-template-columns:1fr 1fr}
   .rt-addopt{appearance:none;text-align:left;border:1px solid #333;background:#1e1e1e;color:#eee;border-radius:10px;padding:11px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font:600 14.5px/1.25 system-ui,sans-serif}
   .rt-addopt:hover{border-color:#ffd23f;background:#262626}.rt-addopt span{font-weight:400;font-size:12.5px;color:#aaa}
@@ -463,6 +477,10 @@
   const listPath=item=>{const l=listOf(item);return l&&l.dataset.l};
   function unitName(u){
     if(u.hasAttribute("data-i")){const lp=listPath(u)||"";
+      const cvm=lp.match(/^cv(?:local)?:variants\.[^.]+\.(main|side)(?:\.(\d+)\.items(?:\.\d+\.(items|bullets))?)?$/)||lp.match(/^cv(?:local)?:variants\.[^.]+\.(person)\.links$/);
+      if(cvm){if(cvm[1]==="person")return "Link";if(!cvm[2])return "Section";if(cvm[3]==="bullets")return "Bullet";
+        const ty=get(lp.replace(/\.items(\.\d+\.items)?$/,"")+".type")||"";if(cvm[3]==="items")return ty==="tags"?"Interest":"Skill";
+        return {experience:"Job",projects:"Project",education:"School",skills:"Skill group",tags:"Interest group",languages:"Language",list:"Entry",text:"Paragraph"}[ty]||"Item"}
       const cm=lp.match(/^site:custom_sections\.(\w+)\.items$/);if(cm)return {cards:"Card",stats:"Number",gallery:"Picture",list:"Point",faq:"Question",steps:"Step"}[get(`site:custom_sections.${cm[1]}.type`)]||"Item";const last=lp.split(/[:.]/).pop();return LIST_NAMES[last]||LIST_NAMES[lp]||"Item"}
     if(u.hasAttribute("data-k"))return "Section · "+(KEY_NAMES[u.dataset.k]||(u.dataset.k.startsWith("cs_")?(get(`site:custom_sections.${u.dataset.k.slice(3)}.title`)||"yours"):u.dataset.k));
     if(u.classList.contains("bp"))return "Illustration window";
@@ -631,6 +649,15 @@
     listsIn(sec).forEach(l=>{const items=[...l.children].filter(c=>c.hasAttribute("data-i"));const last=items[items.length-1];if(!last)return;
       const n=unitName(last);if(l.dataset.l===((sec.dataset.add||u.dataset.add)||"")&&last.tagName==="A")return;
       push("L"+l.dataset.l,"A "+n.toLowerCase(),()=>addLike(last),"at the end of the list",n)});
+    // résumé: a new section (any type), a bullet for an entry that has none
+    const sheet=u.closest(".cvdoc");
+    if(sheet){
+      const it=u.closest(".cv-item");const ip=it&&cvItemPath(it);
+      if(ip&&Array.isArray((get(ip)||{}).bullets)&&!(get(ip).bullets.length))push("CVB","A bullet point",()=>cvPush(ip+".bullets","New point"),"","Bullet");
+      push("CVS","A section…",()=>{},"","Section");out[out.length-1].sub=()=>Object.entries(RTCV.SECTION_TYPES).map(([k,t])=>({label:t.label,fn:()=>cvAddSection(u,k)}));
+      push("AI","✨ Something else…",()=>{select(u);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="בקורות החיים: ";ta.focus()}},150)},"tell the AI","AI");
+      return out;
+    }
     // 3. a button
     const holder=u.hasAttribute("data-add")?u:sec.hasAttribute("data-add")?sec:null;
     if(holder)push("B","A button",()=>addItem(holder),"label, icon and link","Button");
@@ -805,7 +832,7 @@
     holdMenu(anchor||null,sectionItems(after),"New section");
   }
   /* ---- sections you add yourself (main page) */
-  function delPath(p){const[f,ks]=parse(p);let o=docs[f];for(let i=0;i<ks.length-1;i++){if(o==null)return;o=o[ks[i]]}if(o)delete o[ks[ks.length-1]];dirty.add(f);changes++;updateBar()}
+  function delPath(p){const[f,ks]=parse(p);let o=docs[f];for(let i=0;i<ks.length-1;i++){if(o==null)return;o=o[ks[i]]}if(o)delete o[ks[ks.length-1]];if(f==="cvlocal"){try{localStorage.setItem("rt-cv-local",JSON.stringify(docs.cvlocal))}catch(e){}return}dirty.add(f);changes++;updateBar()}
   /* one renderer (assets/sections.js) draws these on the site and here, so what you see is what gets published */
   function csStruct(k){return /^(type|layout|cols|width|align|pad|height|icon|media|buttons\.align|items\.\d+\.(icon|image))$/.test(k)}
   let SEC=window.RTSections||null;
@@ -1251,7 +1278,7 @@
   /* ------------------------------------------------------------ start */
   function staleCheck(){
     let bad=0;
-    $$("[data-e]").forEach(el=>{const v=get(el.dataset.e);if(typeof v!=="string")return;
+    $$("[data-e]").forEach(el=>{const v=get(el.dataset.e);if(typeof v!=="string"||el.closest("#cvStage"))return;   // the résumé is redrawn from the saved data anyway
       const a=el.hasAttribute("data-code")?v.trim():norm(v),b=el.hasAttribute("data-code")?el.textContent.trim():norm(el.textContent);if(a!==b)bad++});
     if(bad){
       const b=h("div",{class:"rt-banner rt-ui"},`This page is older than the saved content (${bad} text${bad>1?"s":""} differ), probably because a rebuild is still running. Reload in a minute before editing. `,
@@ -1766,6 +1793,147 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   }
   function leaveQuietly(){try{sessionStorage.removeItem("rt-edit");sessionStorage.removeItem("rt-login")}catch(e){}
     const u=new URL(location.href);u.searchParams.delete("edit");if(u.hash==="#edit")u.hash="";location.replace(u.toString())}
+  /* ------------------------------------------------------------ résumé builder (cv.html) */
+  const CVS=()=>window.RTCVPage&&window.RTCV&&$("#cvStage");
+  let cvCur=null,cvT=null,cvBarEl=null;
+  const cvDocOf=id=>docs.cvlocal&&docs.cvlocal.variants&&docs.cvlocal.variants[id]?"cvlocal":"cv";
+  const cvBase=id=>`${cvDocOf(id)}:variants.${id}`;
+  const cvVar=id=>get(cvBase(id));
+  function cvAll(){const o=[];for(const d of ["cv","cvlocal"])for(const[k,v]of Object.entries((docs[d]&&docs[d].variants)||{}))o.push({id:k,doc:d,v});return o}
+  function cvItemPath(el){const l=el.parentElement&&el.parentElement.closest("[data-l]");return l?l.dataset.l+"."+el.dataset.i:null}
+  function cvChanged(p,v){
+    const m=p.match(/^(cv|cvlocal):variants\.([^.]+)\.(.+)$/);if(!m||!CVS())return;
+    const key=m[3];
+    if(/^(main|side)\.\d+\.col$/.test(key)){                      // a section moves to the other column
+      const [col,i]=key.split(".");if(v&&v!==col){const V=get(`${m[1]}:variants.${m[2]}`);const sec=V[col].splice(+i,1)[0];delete sec.col;(V[v]=V[v]||[]).push(sec)}
+      return cvSoon()}
+    if(/^(template|font|density|show_photo|photo|dir|person\.links)$/.test(key)||/^(main|side)$/.test(key))cvSoon();
+  }
+  function cvSoon(){clearTimeout(cvT);cvT=setTimeout(()=>cvShow(cvCur,true),140)}
+  function cvEnv(id){return {doc:cvDocOf(id),edit:true,photo:(p,path)=>{const pd=pending.get(path);return pd?pd.url:"/"+String(p).replace(/^\//,"")}}}
+  function cvShow(id,keepSel){
+    if(!CVS())return;const V=cvVar(id);if(!V)return;cvCur=id;
+    const ae=document.activeElement,editing=ae&&ae.isContentEditable&&ae.dataset&&ae.dataset.e&&$("#cvStage").contains(ae)?ae.dataset.e:null;
+    const keep=keepSel&&current&&$("#cvStage").contains(current)?{e:current.dataset.e,l:current.parentElement&&current.parentElement.dataset.l,i:current.dataset.i}:null,wasOpen=panelOpen;
+    RTCVPage.show(id,V,cvEnv(id));
+    const st=$("#cvStage");
+    $$("[data-edit-show]",st).forEach(x=>{x.hidden=false});$$("[data-e]",st).forEach(initText);$$("a",st).forEach(a=>{a.draggable=false});
+    if(keep){const el=(keep.l&&itemEl(keep.l,keep.i))||(keep.e&&$(`[data-e="${CSS.escape(keep.e)}"]`,st))||$(".cvdoc",st);select(el);if(wasOpen){panelOpen=true;renderPanel();place()}}
+    else{current=null;chain=[];renderPanel();place()}
+    if(editing){const el=$(`[data-e="${CSS.escape(editing)}"]`,st);if(el){select(el);startEdit(el)}}
+    cvBar();setTimeout(cvPages,60);
+  }
+  function cvPages(){
+    const d=$("#cvStage .cvdoc");if(!d||!cvBarEl)return;
+    const z=parseFloat(d.style.zoom)||1,hh=d.getBoundingClientRect().height/z,n=Math.max(1,Math.ceil(hh/1122.5-0.01));
+    const b=$(".rt-cvpages",cvBarEl);if(b){b.textContent=n===1?"1 page ✓":n+" pages";b.classList.toggle("warn",n>1)}
+  }
+  function cvPush(lp,val){const a=get(lp)||[];a.push(val);set(lp,a);cvShow(cvCur);const el=$(`#cvStage [data-e="${CSS.escape(lp+"."+(a.length-1))}"]`);if(el){select(el);startEdit(el);try{getSelection().selectAllChildren(el)}catch(e){}}}
+  function cvAddSection(u,type){
+    const base=cvBase(cvCur),secEl=u.closest(".cv-sec");let col="main",at=null;
+    if(secEl){const lp=secEl.parentElement.dataset.l;col=lp.split(".").pop();at=+secEl.dataset.i+1}
+    const arr=get(base+"."+col)||[];const ns=RTCV.newSection(type);if(at==null)arr.push(ns);else arr.splice(at,0,ns);set(base+"."+col,arr);
+    cvShow(cvCur);const i=at==null?arr.length-1:at;const t=$(`#cvStage [data-e="${CSS.escape(`${base}.${col}.${i}.title`)}"]`);
+    if(t){t.closest(".cv-sec").scrollIntoView({block:"center"});select(t);flash(t.closest(".cv-sec"))}
+  }
+  const slugId=s=>(String(s||"cv").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24)||"cv")+"-"+Math.random().toString(36).slice(2,5);
+  function cvNew(kind){
+    let label=prompt(kind==="friend"?"Whose résumé is it? (their name)":"Name for this version (only you see it), e.g. \"Unity · short\"",kind==="copy"?(cvVar(cvCur).label||"")+" copy":"");
+    if(label==null)return;label=label.trim()||"New résumé";
+    const v=kind==="copy"?JSON.parse(JSON.stringify(cvVar(cvCur))):RTCV.blank(kind==="friend"?label:((cvVar(cvCur)||{}).person||{}).name);
+    v.label=kind==="friend"?label+" (friend)":label;if(kind!=="copy")v.photo="";v.show_photo=kind==="copy"?v.show_photo:false;
+    const doc=kind==="friend"?"cvlocal":"cv",id=slugId(label);
+    if(!docs[doc].variants)docs[doc].variants={};
+    set(`${doc}:variants.${id}`,v);cvShow(id);
+    toast(kind==="friend"?"Saved only on this device (private). Fill it in, then ⬇ PDF.":"New version. Switch between versions with the menu at the top.");
+  }
+  function cvMoveDoc(to){
+    const from=cvDocOf(cvCur);if(from===to)return;const v=cvVar(cvCur);
+    if(to==="cv"&&!confirm("Put this résumé on the site? Everything published is stored in your GitHub repository, which anyone can read."))return;
+    delPath(`${from}:variants.${cvCur}`);if(!docs[to].variants)docs[to].variants={};set(`${to}:variants.${cvCur}`,v);
+    if(from==="cv"&&get("cv:default")===cvCur){const o=Object.keys(docs.cv.variants)[0];if(o)set("cv:default",o)}
+    cvShow(cvCur);toast(to==="cv"?"On the site after you publish.":"Now only on this device. Publish to remove it from the site.");
+  }
+  function cvDelete(){
+    const all=cvAll();if(all.length<2){toast("This is the only résumé; make another one first.");return}
+    if(!confirm("Delete \""+(cvVar(cvCur).label||cvCur)+"\"?"))return;
+    const d=cvDocOf(cvCur),id=cvCur;delPath(`${d}:variants.${id}`);
+    if(d==="cv"&&get("cv:default")===id)set("cv:default",Object.keys(docs.cv.variants)[0]||"");
+    cvShow((cvAll()[0]||{}).id);
+  }
+  async function cvPrint(){
+    const v=cvVar(cvCur);if(!v)return;const st=$("#cvStage");
+    const pr=h("div",{class:"cv-print-root rt-cvprint"});pr.innerHTML=RTCV.render(v,cvCur,{photo:cvEnv(cvCur).photo});document.body.append(pr);
+    st.classList.remove("cv-print-root");const old=document.title;document.title=(v.person&&v.person.name||"CV").replace(/\s+/g,"-")+"-CV";
+    try{await document.fonts.ready}catch(e){}
+    const done=()=>{pr.remove();st.classList.add("cv-print-root");document.title=old;removeEventListener("afterprint",done)};addEventListener("afterprint",done);
+    setTimeout(()=>window.print(),80);
+  }
+  async function cvImage(){
+    toast("Making the image…");
+    try{
+      if(!window.htmlToImage)await new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js";sc.onload=ok;sc.onerror=()=>no(new Error("couldn't load the image maker"));document.head.append(sc)});
+      const v=cvVar(cvCur),box=h("div",{style:"position:fixed;left:-10000px;top:0;background:#fff"});box.innerHTML=RTCV.render(v,cvCur,{photo:cvEnv(cvCur).photo});document.body.append(box);
+      try{await document.fonts.ready}catch(e){}
+      const url=await htmlToImage.toPng(box.firstElementChild,{pixelRatio:2,backgroundColor:"#fff"});box.remove();
+      const a=h("a",{href:url,download:(v.person&&v.person.name||"CV").replace(/\s+/g,"-")+"-CV.png"});document.body.append(a);a.click();a.remove();toast("Image saved.");
+    }catch(e){toast("Couldn't make the image here ("+errText(e)+"). After you publish, the Image button gives the ready file.")}
+  }
+  function cvFit(){
+    const b=cvBase(cvCur),order=["roomy","normal","compact"],d=get(b+".density")||"normal";
+    if(d!=="compact"){set(b+".density","compact");setTimeout(()=>{cvPages();const t=$(".rt-cvpages",cvBarEl).textContent;toast(t.startsWith("1")?"Fits on one page now.":"Still longer than a page: shorten a few bullets or remove a section.")},400)}
+    else toast("Already at the tightest spacing: shorten a few bullets, or move a section to the other column.");
+  }
+  function cvBar(){
+    if(!CVS())return;
+    if(!cvBarEl){cvBarEl=h("div",{class:"rt-cvbar rt-ui"});$("#cvBar").after(cvBarEl)}
+    const V=cvVar(cvCur)||{},isMain=get("cv:default")===cvCur&&cvDocOf(cvCur)==="cv",doc=cvDocOf(cvCur);
+    const pick=h("button",{type:"button",class:"rt-cvpick",title:"Switch résumé (tap, or hold and slide)"},h("span",{},V.label||cvCur),h("i",{},"▾"));
+    const design=h("button",{type:"button",class:"rt-cvbtn",title:"Design"},"🎨 Design ▾");
+    cvBarEl.replaceChildren(h("span",{class:"rt-cvtag"},"Editing only · visitors see the main résumé"),
+      h("div",{class:"rt-cvrow"},pick,
+        h("span",{class:"rt-cvwhere"+(doc==="cvlocal"?" local":"")},doc==="cvlocal"?"🔒 this device":isMain?"★ main":(V.public===false?"site · hidden":"site")),
+        design,h("span",{class:"rt-cvpages"},"…"),
+        h("button",{type:"button",class:"rt-cvbtn",title:"Make the PDF now (includes unpublished changes)",on:{click:cvPrint}},"⬇ PDF"),
+        h("button",{type:"button",class:"rt-cvbtn",title:"Save as an image now",on:{click:cvImage}},"🖼 PNG")));
+    wireHold(pick,{menu:()=>({title:"Résumés",items:cvAll().map(x=>({label:(x.v.label||x.id),hint:x.doc==="cvlocal"?"🔒 device":(get("cv:default")===x.id?"★ main":""),def:x.id===cvCur,fn:()=>cvShow(x.id)})).concat([
+      {label:"＋ New résumé…",sub:()=>[{label:"Copy of this one",hint:"then change it",fn:()=>cvNew("copy")},{label:"Blank",fn:()=>cvNew("blank")},{label:"For a friend",hint:"🔒 only this device",fn:()=>cvNew("friend")}]},
+      {label:"✎ Rename this one",fn:()=>{const n=prompt("Name for this version",V.label||"");if(n!=null){set(cvBase(cvCur)+".label",n.trim()||V.label);cvBar()}}},
+      {label:"★ Make it the main one",hint:"visitors see it",off:doc!=="cv",fn:()=>{set("cv:default",cvCur);cvBar();toast("Visitors will see this résumé after you publish.")}},
+      {label:"Where it's kept…",sub:()=>[
+        {label:"On the site · listed",hint:"PDF + image built",def:doc==="cv"&&V.public!==false,fn:()=>{cvMoveDoc("cv");set(cvBase(cvCur)+".public",true);cvBar()}},
+        {label:"On the site · hidden",hint:"no PDF, not linked",def:doc==="cv"&&V.public===false,fn:()=>{cvMoveDoc("cv");if(get("cv:default")===cvCur){toast("The main résumé can't be hidden.");return}set(cvBase(cvCur)+".public",false);cvBar()}},
+        {label:"🔒 Only on this device",hint:"private",def:doc==="cvlocal",fn:()=>cvMoveDoc("cvlocal")}]},
+      {label:"🗑 Delete this one",dan:true,fn:cvDelete}])})});
+    const b=cvBase(cvCur);
+    wireHold(design,{menu:()=>({title:"Design",items:[
+      {label:"Template",hint:RTCV.TEMPLATES[V.template||"ats"].label,sub:()=>Object.entries(RTCV.TEMPLATES).map(([k,t])=>({label:t.label,hint:k==="ats"?"best for ATS":k==="novo"?"photo, 2 columns":"sidebar",def:(V.template||"ats")===k,fn:()=>set(b+".template",k)}))},
+      {label:"Color",sub:()=>RTCV.COLORS.map(c=>({label:c,ico:`<span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${c}"></span>`,def:V.accent===c,fn:()=>{set(b+".accent",c);$("#cvStage .cvdoc").style.setProperty("--cv-accent",c)}})).concat([{label:"Any color…",fn:()=>{select($("#cvStage .cvdoc"));panelOpen=true;renderPanel();place()}}])},
+      {label:"Font",hint:V.font||"Inter",sub:()=>Object.keys(RTCV.FONTS).map(f=>({label:f,def:(V.font||"Inter")===f,fn:()=>set(b+".font",f)}))},
+      {label:"Spacing",hint:V.density||"normal",sub:()=>RTCV.DENSITY.map(d=>({label:d,def:(V.density||"normal")===d,fn:()=>set(b+".density",d)}))},
+      {label:V.show_photo?"Hide the photo":"Show the photo",fn:()=>set(b+".show_photo",!V.show_photo)},
+      {label:"Change the photo…",fn:()=>replaceMedia(b+".photo","image",$("#cvStage .cvdoc"))},
+      {label:"Fit on one page",fn:cvFit},
+      {label:"Text direction",hint:V.dir==="rtl"?"right to left":"left to right",sub:()=>[["ltr","Left to right (English)"],["rtl","Right to left (עברית)"]].map(([k,l])=>({label:l,def:(V.dir||"ltr")===k,fn:()=>{set(b+".dir",k);set(b+".lang",k==="rtl"?"he":"en");if(k==="rtl"&&!/Rubik|Assistant/.test(V.font||""))set(b+".font","Rubik")}}))},
+      {label:"ATS check",hint:"what a robot reads",fn:()=>cvAts()}]})});
+  }
+  function cvAts(){
+    const V=cvVar(cvCur),txt=RTCV.plainText(V),tips=[];
+    if((V.template||"ats")!=="ats")tips.push("Two-column designs look great to people, but some older ATS read across both columns. For online applications, send the ATS Pro template.");
+    if(!V.person.email)tips.push("Add an email address.");if(!V.person.phone)tips.push("Add a phone number.");
+    if(!(V.main||[]).concat(V.side||[]).some(s=>s.type==="skills"))tips.push("Add a Skills section: ATS match keywords from the job ad against it.");
+    const words=txt.split(/\s+/).length;if(words>750)tips.push(`About ${words} words: aim for one page (roughly 450–650 words).`);
+    const vague=(txt.match(/\b(responsible for|helped|worked on|various)\b/gi)||[]).length;if(vague)tips.push(`${vague} vague phrase(s) like "responsible for" / "helped": start bullets with a strong verb and a result.`);
+    modal(h("h3",{},"ATS check"),h("p",{class:"rt-hint"},"This is the text an applicant-tracking system gets from the PDF, in order."),
+      h("ul",{},...(tips.length?tips:["Looks good: standard headings, real text, contact details on top."]).map(t=>h("li",{},t))),
+      h("pre",{style:"white-space:pre-wrap;max-height:40vh;overflow:auto;background:#0e0e0e;border:1px solid #333;border-radius:8px;padding:10px;font:12px/1.45 ui-monospace,monospace"},txt),
+      h("div",{class:"rt-row",style:"justify-content:flex-end"},h("button",{class:"rt-btn",type:"button",on:{click:e=>e.target.closest(".rt-modal").remove()}},"Close")));
+  }
+  function cvInit(){
+    if(!CVS())return;
+    const want=RTCVPage.current;cvCur=cvVar(want)?want:(get("cv:default")&&cvVar(get("cv:default"))?get("cv:default"):(cvAll()[0]||{}).id);
+    if(cvCur)cvShow(cvCur);
+  }
   async function start(){
     let viaLogin=false;try{viaLogin=!!sessionStorage.getItem("rt-login")}catch(e){}
     if(viaLogin||!store.get(TOKEN_KEY)){
@@ -1790,6 +1958,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     $$("a").forEach(a=>{a.draggable=false});
     $$("summary").forEach(su=>su.addEventListener("keyup",e=>{if(e.key===" ")e.preventDefault()},true));
     staleCheck();
+    try{cvInit()}catch(e){console.error(e)}
     loaded=true;updateBar();
     status("Tap anything to select it · double-tap text to change it");
     if(!store.get("rt-edit-helped")){store.set("rt-edit-helped","1");help()}

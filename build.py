@@ -547,7 +547,7 @@ def jump_menu(items, depth, site=None):
     if site:
         body += '<p class="jump-h pages">Main page</p>' + "".join(link(*it) for it in site)
     body += (f'<p class="jump-h pages">Pages</p><div class="jump-pages"><a href="{p}gallery.html">Gallery</a><a href="{p}lab.html">Lab</a>'
-             f'<a href="{p}Roee-Tal-CV.pdf" target="_blank" rel="noopener">CV</a></div>')
+             f'<a href="{p}cv.html">CV</a></div>')
     return f'''<div class="jump" id="jump">
   <nav class="jump-panel" id="jumpPanel" aria-label="Page sections" hidden>{body}</nav>
   <button class="jump-btn" type="button" aria-expanded="false" aria-controls="jumpPanel" aria-label="Jump to a section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="d1" cx="5" cy="6" r="2"/><circle class="d2" cx="5" cy="12" r="2"/><circle class="d3" cx="5" cy="18" r="2"/><path d="M10 6h10M10 12h10M10 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="x" d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
@@ -1009,6 +1009,110 @@ def build_gallery():
     (ROOT / "gallery.html").write_text(html)
 
 
+# ---------------------------------------------------------------- résumé (CV) page + PDF / PNG files
+def _cv_render(variants, depth, edit=False):
+    """Run assets/cv.js (the same renderer the editor uses) on every variant."""
+    import subprocess
+    js = ("const C=require(process.argv[1]);let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);const o={};"
+          "for(const[id,v]of Object.entries(j.v))o[id]=C.render(v,id,{photo:p=>j.pre+String(p).replace(/^\\//,''),edit:j.edit});process.stdout.write(JSON.stringify(o))})")
+    r = subprocess.run(["node", "-e", js, str(ROOT / "assets/cv.js")], input=_json.dumps({"v": variants, "pre": "../" * depth, "edit": edit}),
+                       capture_output=True, text=True, check=True)
+    return _json.loads(r.stdout)
+
+def _cv_font(v):
+    fonts = {"Open Sans": "Open+Sans:ital,wght@0,400;0,600;0,700;1,400", "Inter": "Inter:wght@400;500;600;700", "Lato": "Lato:ital,wght@0,400;0,700;1,400",
+             "Source Serif 4": "Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400", "Rubik": "Rubik:ital,wght@0,400;0,500;0,700;1,400", "Assistant": "Assistant:wght@400;600;700"}
+    return "https://fonts.googleapis.com/css2?family=" + fonts.get(v.get("font"), fonts["Inter"]) + "&display=swap"
+
+def _cv_file(v):
+    name = re.sub(r"[^A-Za-z0-9]+", "-", (v.get("person") or {}).get("name") or "CV").strip("-") or "CV"
+    return name + "-CV"
+
+def _chrome():
+    import shutil, glob, os
+    for c in (os.environ.get("CHROME"), shutil.which("google-chrome"), shutil.which("google-chrome-stable"), shutil.which("chromium"), shutil.which("chromium-browser"),
+              *sorted(glob.glob(os.path.expanduser("~/.cache/ms-playwright/chromium-*/chrome-linux*/chrome")))):
+        if c and os.path.exists(c):
+            return c
+    return None
+
+def build_cv():
+    global DEPTH
+    DEPTH = 0
+    path = ROOT / "content/cv.json"
+    if not path.exists():
+        return
+    cv = _json.loads(path.read_text())
+    allv = cv.get("variants") or {}
+    pub = {k: v for k, v in allv.items() if v.get("public", True)}
+    if not pub:
+        return
+    default = cv.get("default") if cv.get("default") in pub else next(iter(pub))
+    sheets = _cv_render(pub, 0)
+    files = {k: "cv/" + k + ".pdf" for k in pub}
+    data = {"default": default, "files": files, "names": {k: _cv_file(v) for k, v in pub.items()},
+            "variants": pub}
+    dv = pub[default]
+    html = head(f"Résumé — {(dv.get('person') or {}).get('name', 'Roee Tal')}", "Résumé of Roee Tal, game developer (Unity / Unreal). Download as PDF.", 0)
+    html = html.replace("</head>", f'<link rel="stylesheet" href="{_cv_font(dv)}" id="cv-font">\n<link rel="stylesheet" href="assets/cv.css?v={ver("assets/cv.css")}">\n</head>', 1)
+    html += topbar(0, "cv")
+    nm = data["names"][default]
+    html += f"""<div class="cv-bar wrap" id="cvBar">
+  <div class="cv-bar-l"><p class="kicker">Résumé</p></div>
+  <div class="cv-bar-r">
+    <a class="btn small" id="cvPdf" href="{files[default]}" download="{nm}.pdf"><span class="ic">{_icon("download", 16) if "download" in ICONS_22 else ""}</span>Download PDF</a>
+    <a class="btn small ghost" id="cvPng" href="cv/{default}.png" download="{nm}.png">Image</a>
+    <button class="btn small ghost" type="button" id="cvShare">Share</button>
+  </div>
+</div>
+<div class="cv-print-root cv-stage" id="cvStage">{sheets[default]}</div>
+<script id="cv-data" type="application/json">{_json.dumps(data, ensure_ascii=False).replace("</", "<\\/")}</script>
+<script src="assets/cv.js?v={ver('assets/cv.js')}"></script>
+<script src="assets/cv-page.js?v={ver('assets/cv-page.js')}"></script>
+"""
+    html += footer(0, peek=False)
+    (ROOT / "cv.html").write_text(html)
+    _cv_files(pub, default)
+
+def _cv_files(pub, default):
+    """PDF + PNG of every public résumé, made by headless Chrome. Only redone when that résumé or its design changed."""
+    import subprocess, shutil
+    out = ROOT / "cv"
+    out.mkdir(exist_ok=True)
+    sheets = _cv_render(pub, 1)
+    code = hashlib.md5(((ROOT / "assets/cv.js").read_bytes() + (ROOT / "assets/cv.css").read_bytes())).hexdigest()
+    hp = out / ".hashes.json"
+    old = _json.loads(hp.read_text()) if hp.exists() else {}
+    new, chrome = {}, _chrome()
+    for k, v in pub.items():
+        page = (f'<!doctype html><html lang="{e(v.get("lang", "en"))}"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
+                f'<title>{e(_cv_file(v))}</title><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="{_cv_font(v)}">'
+                f'<link rel="stylesheet" href="../assets/cv.css"><style>html,body{{margin:0;background:#fff}}</style></head>'
+                f'<body><div class="cv-print-root">{sheets[k]}</div></body></html>')
+        (out / f"{k}.html").write_text(page)
+        h = hashlib.md5((page + code).encode()).hexdigest()
+        new[k] = h
+        pdf, png = out / f"{k}.pdf", out / f"{k}.png"
+        if old.get(k) == h and pdf.exists() and png.exists():
+            continue
+        if not chrome:
+            print("cv: no Chrome here, PDF for", k, "not rebuilt")
+            new[k] = old.get(k, "")
+            continue
+        src = (out / f"{k}.html").resolve().as_uri()
+        base = [chrome, "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars", "--virtual-time-budget=10000", "--run-all-compositor-stages-before-draw"]
+        try:
+            subprocess.run(base + ["--no-pdf-header-footer", f"--print-to-pdf={pdf}", src], capture_output=True, timeout=120)
+            subprocess.run(base + ["--window-size=794,1123", "--force-device-scale-factor=2", f"--screenshot={png}", src], capture_output=True, timeout=120)
+        except subprocess.TimeoutExpired:
+            print("cv: Chrome took too long for", k)
+        print("cv: built", pdf.name, png.name)
+    hp.write_text(_json.dumps(new, indent=1))
+    d = out / f"{default}.pdf"
+    if d.exists():                                    # the old address keeps working: it is always the main résumé
+        shutil.copyfile(d, ROOT / (_cv_file(pub[default]) + ".pdf"))
+
+
 if __name__ == "__main__":
     (ROOT / "assets/icons.json").write_text(_json.dumps({**ICONS_22, **ICON_RAW}))  # icon previews in the visual editor
     build_gallery()
@@ -1016,6 +1120,7 @@ if __name__ == "__main__":
     for i, pj in enumerate(PROJECTS):
         build_project(i, pj)
     build_lab()
+    build_cv()
     for i, cp in enumerate(CODE_PAGES):
         build_code_page(i, cp)
     print("built", 3 + len(PROJECTS), "pages")
