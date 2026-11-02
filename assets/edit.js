@@ -129,6 +129,14 @@
   .rt-secbar button:disabled{opacity:.25;cursor:default}
   .rt-on .xrow-block{min-height:52px;border:1px dashed rgba(255,210,63,.45);border-radius:12px;padding:6px}
   .rt-on .xrow-block:has(.xrow:empty)::after{content:"Button row · tap + to add buttons";display:block;color:rgba(255,210,63,.75);font:600 13px/40px system-ui,sans-serif;padding-left:8px}
+  .rt-preview .rt-secbar,.rt-preview #rt-sel,.rt-preview #rt-tb,.rt-preview #rt-panel{display:none!important}
+  .rt-preview [data-e]{outline:none!important;background:none!important}
+  .rt-preview .xrow-block{border:0!important;min-height:0!important;padding:0!important}
+  .rt-preview .xrow-block:has(.xrow:empty){display:none}
+  .rt-preview .xrow-block:has(.xrow:empty)::after{content:none}
+  #rt-bar .rt-eye{font-size:17px}
+  .rt-gif{object-fit:cover}
+  .clip .rt-gif{position:absolute;inset:0;width:100%;height:100%;border-radius:inherit}
   .rt-hist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;margin:10px 0}
   .rt-hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid #2c2c2c;border-radius:10px;background:#1b1b1b}
   .rt-hrow div{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -187,7 +195,15 @@
   const menu=h("div",{id:"rt-menu"});
   const item=(label,fn,cls)=>h("button",{type:"button",class:cls||"",on:{click:()=>{menu.style.display="none";fn()}}},label);
   menu.append(item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
-  const bar=h("div",{id:"rt-bar"},pubBtn,h("button",{class:"rt-more",type:"button",title:"More",on:{click:e=>{e.stopPropagation();menu.style.display=menu.style.display==="block"?"none":"block"}}},"⋯"));
+  const prevBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"Preview the page as visitors will see it",on:{click:e=>{e.stopPropagation();togglePreview()}}},"👁");
+  function togglePreview(){
+    const on=document.documentElement.classList.toggle("rt-preview");
+    prevBtn.textContent=on?"✎":"👁";prevBtn.title=on?"Back to editing":"Preview the page as visitors will see it";
+    if(on){current=null;chain=[];panelOpen=false;renderPanel();if(document.activeElement?.isContentEditable)document.activeElement.blur();
+      status("Preview: this is how the page will look after Publish. Videos and images play like for visitors. Tap ✎ to keep editing.")}
+    else status("Back to editing.");
+  }
+  const bar=h("div",{id:"rt-bar"},pubBtn,prevBtn,h("button",{class:"rt-more",type:"button",title:"More",on:{click:e=>{e.stopPropagation();menu.style.display=menu.style.display==="block"?"none":"block"}}},"⋯"));
   const toastEl=h("div",{id:"rt-toast"});
   const panel=h("div",{id:"rt-panel"});
   const sel=h("div",{id:"rt-sel"});
@@ -295,6 +311,7 @@
         h("li",{},h("b",{},"🖼"),", replace the image or video (photos, GIFs and MP4s all work). ",h("b",{},"🎬")," changes a background video or cover. ",h("b",{},"⧉")," duplicate. ",h("b",{},"🗑")," delete."),
         h("li",{},h("b",{},"＋"),", adds a button. Every section has + in its corner; the hero and footer get it in their toolbar. Then ⚙ sets its link, icon and style, and ⤴ › ⚙ sets where the row sits."),
         h("li",{},h("b",{},"⚙"),", more options: links, icons, colors, layouts, background videos. ",h("b",{},"⤴")," selects what's around it."),
+        h("li",{},h("b",{},"👁 Preview"),", shows the page exactly as visitors will see it, with your new images and videos, before you publish. ✎ goes back to editing."),
         h("li",{},h("b",{},"Publish"),", saves to the site; it rebuilds in about 2 minutes. ⋯ › Versions brings back any earlier version.")),
       h("p",{style:"color:#aaa;font-size:13px"},"Publish before moving to another page. Links and videos don't open while editing; use the top menu or the jump menu to change pages."),
       h("div",{class:"rt-row"},h("button",{class:"rt-btn pri",type:"button",on:{click:()=>m.remove()}},"Got it")));
@@ -502,6 +519,27 @@
   /* ------------------------------------------------------------ media */
   const rand=()=>Math.random().toString(36).slice(2,6);
   const slugify=s=>(s||"file").toLowerCase().replace(/\.[^.]+$/,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"file";
+  const pending=new Map();              // content path -> {url,type,name} of media chosen but not published yet
+  function previewBox(url,type,name){
+    return new Promise(done=>{
+      const media=type==="video"
+        ?h("video",{src:url,controls:true,autoplay:true,muted:true,loop:true,playsinline:true,style:"width:100%;max-height:55vh;border-radius:10px;background:#000;display:block"})
+        :h("img",{src:url,alt:"",style:"width:100%;max-height:55vh;object-fit:contain;border-radius:10px;background:#0b0b0b;display:block"});
+      const note=h("p",{style:"color:#aaa;font-size:13px;margin:8px 0 0"},name);
+      if(type==="video")media.addEventListener("error",()=>{note.textContent="This browser can't play "+name+" here, but it will be converted to a web video when you publish."});
+      const close=v=>{m.remove();done(v)};
+      const m=modal(h("h3",{},"Preview"),media,note,
+        h("div",{class:"rt-row"},h("button",{class:"rt-btn",type:"button",on:{click:()=>close("cancel")}},"Cancel"),
+          h("button",{class:"rt-btn",type:"button",on:{click:()=>close("again")}},"Choose another"),
+          h("button",{class:"rt-btn pri",type:"button",on:{click:()=>close("use")}},"Use it")));
+    });
+  }
+  function thumb(path){
+    const p=pending.get(path);if(!p)return null;
+    const el=p.type==="video"?h("video",{src:p.url,muted:true,loop:true,autoplay:true,playsinline:true}):h("img",{src:p.url,alt:""});
+    el.style.cssText="width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-top:6px;display:block;background:#000";
+    return h("div",{},el,h("div",{class:"rt-file"},"New, not published yet · "+p.name));
+  }
   function pickFile(kind){
     return new Promise(done=>{
       const inp=h("input",{type:"file",accept:kind==="video"?"video/*,image/gif":"image/*",style:"display:none"});
@@ -532,17 +570,30 @@
         if(!/^(mp4|mov|webm|m4v|gif)$/.test(ext))ext="mp4";      // a GIF here becomes a looping video
       }else({blob,ext}=await prepImage(file,kind));
     }catch(e){alertBox(e.message);return}
+    const url=URL.createObjectURL(blob),isGif=blob.type==="image/gif"||ext==="gif";
+    const choice=await previewBox(url,kind==="video"&&!isGif?"video":"image",file.name);
+    if(choice==="again"){URL.revokeObjectURL(url);return replaceMedia(path,kind,el)}
+    if(choice!=="use"){URL.revokeObjectURL(url);return}
     const repoPath=`assets/uploads/${slugify(file.name)}-${rand()}.${ext}`;
     const old=get(path);if(typeof old==="string"&&old.startsWith("/assets/uploads/"))uploads.delete(old.slice(1));
     uploads.set(repoPath,blob);set(path,"/"+repoPath);
-    const url=URL.createObjectURL(blob);
+    pending.set(path,{url,type:kind==="video"&&!isGif?"video":"image",name:file.name});
+    const swapVideo=v=>{                     // a GIF can't play inside <video>: lay an image over it
+      let im=v.nextElementSibling;if(!(im&&im.classList.contains("rt-gif"))){im=document.createElement("img");im.className=v.className+" rt-gif";im.alt="";v.after(im)}
+      im.src=url;v.style.visibility="hidden";
+    };
+    const setVideo=v=>{const g=v.nextElementSibling;if(g&&g.classList.contains("rt-gif"))g.remove();v.style.visibility="";v.removeAttribute("poster");v.src=url;v.load();v.play().catch(()=>{})};
     $$(`[data-m="${CSS.escape(path)}"]`).forEach(m=>{
       if(m.tagName==="IMG"){m.src=url;m.removeAttribute("srcset");m.style.visibility=""}
-      else{const v=$("video",m);if(v){v.removeAttribute("poster");v.src=url;v.play().catch(()=>{})}m.dataset.src=url}
+      else{const v=$("video",m);if(v)isGif?swapVideo(v):setVideo(v);if(!isGif)m.dataset.src=url;m.classList.add("rt-new")}
     });
     if(path.endsWith(".cover")&&$(".phero-bg"))$(".phero-bg").src=url;
-    $$("[data-bg]").filter(b=>b.dataset.bg.split(" ").includes(path)).forEach(b=>{b.removeAttribute("poster");b.src=url;if(b.play)b.play().catch(()=>{})});
-    toast(kind==="video"?"New video ready. It gets compressed when you publish.":"New image ready.");
+    $$("[data-bg]").filter(b=>b.dataset.bg.split(" ").includes(path)).forEach(b=>{
+      if(b.tagName==="VIDEO"){const tall=matchMedia("(max-aspect-ratio: 1/1)").matches;
+        if(path.endsWith("_mobile")!==tall&&$$("[data-bg]").length)toast(tall?"That's the wide-screen video: it shows on computers. Tap Preview on a computer to see it.":"That's the phone video: it shows on phones.");
+        else isGif?swapVideo(b):setVideo(b)}
+      else b.src=url});
+    toast(kind==="video"?"Swapped in. Tap 👁 Preview to see the page as visitors will, then Publish.":"Swapped in. Tap 👁 Preview to see the page as visitors will, then Publish.");
     renderPanel();
   }
 
@@ -582,7 +633,7 @@
     }else if(type==="image"||type==="art"||type==="video"){
       wrap.append(h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,type,holder)}},val?"Replace…":"Add…"),
         val&&!/^(cover)$/.test(path.split(".").pop())?h("button",{class:"rt-btn sm dan",type:"button",on:{click:()=>{set(path,"");renderPanel();toast("Removed. The site updates after you publish.")}}},"Remove"):null),
-        h("div",{class:"rt-file"},val?String(val).split("/").pop():"none"));
+        thumb(path)||h("div",{class:"rt-file"},val?String(val).split("/").pop():"none"));
     }else if(type==="link"){
       const t=h("input",{type:"text",value:val,list:"rt-links",spellcheck:"false"});
       t.addEventListener("input",()=>{set(path,t.value.trim());if(holder.tagName==="A")holder.setAttribute("href",t.value.trim())});
@@ -613,7 +664,7 @@
     const mseen=new Set();
     mediaOf(u).forEach(m=>{const p=m.dataset.m;if(mseen.has(p))return;mseen.add(p);
       const kind=m.dataset.mk,last=p.split(".").pop(),lab={showreel_video:"Showreel video",full_video:"Full video",mascot:"Character cut-out",cover:"Cover image",video:"Clip video"}[last]||(kind==="video"?"Video":"Image");
-      panel.append(h("label",{},lab),h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(p,kind,m)}},"Replace…")),h("div",{class:"rt-file"},String(get(p)||"").split("/").pop()))});
+      panel.append(h("label",{},lab),h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(p,kind,m)}},"Replace…")),thumb(p)||h("div",{class:"rt-file"},String(get(p)||"").split("/").pop()))});
     fieldsOf(u).filter(f=>!mseen.has(f[1])).forEach(f=>panel.append(field(u,f)));
     if(u.tagName==="A"&&u.getAttribute("href"))panel.append(h("div",{class:"rt-row",style:"margin-top:12px"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{if(!changes||confirm("Leave without publishing? Changes on this page will be lost.")){changes=0;location.href=u.href}}}},"↗ Open this link")));
     panel.style.display="block";
@@ -660,6 +711,11 @@
   document.addEventListener("click",e=>{
     const t=e.target;
     if(!loaded||t.closest(".rt-ui,.rt-modal,#rt-sel"))return;
+    if(document.documentElement.classList.contains("rt-preview")){   // preview: everything works except leaving the page
+      const a=t.closest("a[href]");const hr=a&&a.getAttribute("href");
+      if(a&&hr&&!hr.startsWith("#")){e.preventDefault();e.stopImmediatePropagation();toast("Links stay off until you publish, so your changes aren't lost.")}
+      return;
+    }
     if(t.closest(".topbar,.jump,.viewer"))return;            // site navigation still works
     const act=t.closest("a,button,summary,label,.clip,.zoom");
     const te=t.closest("[data-e]");
@@ -670,7 +726,7 @@
     lastTap={el:te,t:now};
     select(t);
   },true);
-  document.addEventListener("dblclick",e=>{const te=e.target.closest("[data-e]");if(loaded&&te&&!e.target.closest(".rt-ui")){e.preventDefault();startEdit(te,e.clientX,e.clientY)}},true);
+  document.addEventListener("dblclick",e=>{const te=e.target.closest("[data-e]");if(loaded&&!document.documentElement.classList.contains("rt-preview")&&te&&!e.target.closest(".rt-ui")){e.preventDefault();startEdit(te,e.clientX,e.clientY)}},true);
   document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(document.activeElement?.isContentEditable)document.activeElement.blur();else{current=null;chain=[];panelOpen=false;renderPanel();place()}}});
 
   /* ------------------------------------------------------------ start */
