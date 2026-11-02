@@ -4,7 +4,11 @@
   "iter": 300000,
   "check": "e9026cb1ea8828e559f31f75babba56eab628ac19c710f8a5a1280c73aa284e4",
   "token": {
-    "iv": "gkoB233glrlU80RA",
-    "ct": "9nKD5G0bhjl43EMN/+nZBkvLco/SMkDVDcfJtqNngiiBg9nZ65svK8sbCs+HOgtZDGRJ7RYUat8gtrJ1qk0p8Ydr3Ze2ZC/WHK+stMoviDpHnzRDesqPs4n7e3QBELUM9fbu48G3g6lxSxoBTw=="
+    "iv": "q09SjgLP+g9vJWrJ",
+    "ct": "X8JFUhyw7Fvr0nPsF/qpb3RuxtICbZ4WM5JUONaiPFIsR2UHppw5MyrVMn+r53pQC/hbk8tzXRrFhDkKfLM4nYoxCDivtIzXErWKYGppkoRoL75qCB3qYRXyV4m0hHkhQWlL0cAg7v1FgLu1PA=="
+  },
+  "gemini": {
+    "iv": "RT17S8v/0xtO41Se",
+    "ct": "2uyAlHfD9gNU/WD+nPv17n70E3eKmMMJ6J+FW2dMfMhVCUF4QbV1cxGr1dU+TBhOQIIG7r658F62dW83PsghjtBmzXZ2"
   }
 }
