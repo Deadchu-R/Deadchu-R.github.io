@@ -338,7 +338,10 @@ def timeline_html():
     out = []
     for i, t in enumerate(items):
         now = i == len(items) - 1 and not SITE_TEXT.get("job_end")
-        out.append(f'<li{" class=\"tl-now\"" if now else ""}{I(i)}><span class="when"{E(f"site:timeline.{i}.when")}>{e(t["when"])}</span><b{E(f"site:timeline.{i}.title")}>{e(t["title"])}</b><span class="muted"{E(f"site:timeline.{i}.text")}>{e(t["text"])}</span></li>')
+        tp = f"site:timeline.{i}"
+        x = X(("Dot icon", tp + ".icon", "select", icon_choices()), ("Dot color", tp + ".color", "color", ["", "--dot"]))
+        dot = f'<span class="ui-ic tl-ic"{ICO(tp + ".icon")}{"" if t.get("icon") else " hidden"}>{_icon(t["icon"], 13) if t.get("icon") else ""}</span>'
+        out.append(f'<li{" class=\"tl-now\"" if now else ""}{I(i)}{x}{f" style=\"--dot:{t["color"]}\"" if t.get("color") else ""}>{dot}<span class="when"{E(f"site:timeline.{i}.when")}>{e(t["when"])}</span><b{E(f"site:timeline.{i}.title")}>{e(t["title"])}</b><span class="muted"{E(f"site:timeline.{i}.text")}>{e(t["text"])}</span></li>')
     return "".join(out)
 
 ICONS_22 = {  # icon choices for hobbies and games in the editor
@@ -371,6 +374,17 @@ ICONS_22 = {  # icon choices for hobbies and games in the editor
     "chip": '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
 }
 
+def ticks(items, list_path, key, team=False):
+    """Bullet list; its dots can become an icon and change color (shared by every list of this kind)."""
+    d = UI.get(key) or {}
+    ic, col = d.get("icon", ""), d.get("color", "")
+    style = f' style="--tick:{col}"' if col else ""
+    x = X(("Bullet icon · every bullet in this kind of list", f"site:ui.{key}.icon", "select", icon_choices()),
+          ("Bullet color", f"site:ui.{key}.color", "color", ["^ul", "--tick"]))
+    lis = "".join(f'<li{I(j)}{x}><span class="ui-ic tick-ic"{ICO(f"site:ui.{key}.icon")}{"" if ic else " hidden"}>{_icon(ic, 16) if ic else ""}</span>'
+                  f'<span{E(f"{list_path}.{j}")}>{e(v)}</span></li>' for j, v in enumerate(items))
+    return f'<ul class="ticks{" team" if team else ""}"{L(list_path)}{style}>{lis}</ul>'
+
 def heading(key, tag="h2"):
     """Section heading with its icon and color, all editable."""
     hd = SITE_TEXT["headings"][key]; hp = f"site:headings.{key}"
@@ -388,7 +402,9 @@ def btn_list(path, items, depth, cls_fn):
                    f'<span class="ic"{ICO(bp + ".icon")}>{_icon(b["icon"], 18) if b.get("icon") else ""}</span><span{E(bp + ".label")}>{e(b["label"])}</span></a>')
     return "".join(out)
 
-ICON_RAW = {  # brand marks, drawn filled
+ICON_RAW = {  # brand marks and solid shapes, drawn filled
+    "play-solid": '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15l12.5-7.5z"/></svg>',
+    "dot": '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" fill="currentColor"/></svg>',
     "unreal": '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 0a12 12 0 1012 12A12 12 0 0012 0zm0 23.52A11.52 11.52 0 1123.52 12 11.52 11.52 0 0112 23.52zm7.13-9.791c-.206.997-1.126 3.557-4.06 4.942l-1.179-1.325-1.988 2a7.338 7.338 0 01-5.804-2.978 2.859 2.859 0 00.65.123c.326.006.678-.114.678-.66v-5.394a.89.89 0 00-1.116-.89c-.92.212-1.656 2.509-1.656 2.509a7.304 7.304 0 012.528-5.597 7.408 7.408 0 013.73-1.721c-1.006.573-1.57 1.507-1.57 2.29 0 1.262.76 1.109.984.923v7.28a1.157 1.157 0 00.148.256 1.075 1.075 0 00.88.445c.76 0 1.747-.868 1.747-.868V9.172c0-.6-.452-1.324-.905-1.572 0 0 .838-.149 1.484.346a5.537 5.537 0 01.387-.425c1.508-1.48 2.929-1.902 4.112-2.112 0 0-2.151 1.69-2.151 3.96 0 1.687.043 5.801.043 5.801.799.771 1.986-.342 3.059-1.441Z"/></svg>',
     "blueprints": '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="3" width="8" height="6" rx="1.6" fill="currentColor"/><rect x="14.5" y="8.5" width="8" height="6" rx="1.6" fill="currentColor"/><rect x="1.5" y="15" width="8" height="6" rx="1.6" fill="currentColor" opacity=".75"/><path d="M9.5 6c3 0 2 5.5 5 5.5M9.5 18c3 0 2-6.5 5-6.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
     "cesium": '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.0283 10.216c-.3959 0-.7785.22-1.0792.6168l-3.7755 4.994c-.625.8275-1.5128 1.3012-2.4355 1.3012h-.0143c-.9236 0-1.8115-.4737-2.4355-1.3012l-3.7754-4.994c-.2998-.3969-.6823-.6168-1.0802-.6168-.3949 0-.7795.22-1.0781.6168l-3.7765 4.994c-.621.8204-1.4996 1.294-2.414 1.3012C3.088 21.186 7.2113 24 12.0004 24 18.6268 24 24 18.6276 24 12.001c0-.4705-.0338-.9308-.086-1.382-.2638-.2598-.5697-.403-.8857-.403m-7.019-2.5972c-.6936 0-1.2542-.5616-1.2542-1.2541s.5606-1.2541 1.2541-1.2541c.6925 0 1.254.5616 1.254 1.254s-.5615 1.2542-1.254 1.2542M12.0005 0C5.3732 0 0 5.3714 0 12.001c0 1.0536.1504 2.0704.406 3.0463.2272.175.4788.2762.7366.2762.3979 0 .7804-.2189 1.0812-.6138l3.7754-4.996c.623-.8285 1.5129-1.3021 2.4335-1.3021.9226 0 1.8095.4736 2.4355 1.3021l3.6323 4.8037.1565.1923c.2997.3939.6812.6107 1.074.6138.3918-.003.7743-.22 1.072-.6138l.1595-.1923 3.6323-4.8037c.624-.8285 1.5118-1.3021 2.4335-1.3021.1462 0 .2935.0163.4367.0388C21.9522 3.5557 17.3922 0 12.0005 0"/></svg>',
@@ -579,7 +595,7 @@ def build_index():
       <h2{E("site:job_title")}>{e(SITE_TEXT["job_title"])}</h2>
       <p class="muted"{E("site:job_subtitle")}>{e(SITE_TEXT["job_subtitle"])}</p>
       <div class="tools"{L("site:job_tools")}>{"".join(f'<span class="tool {TOOL_CLS.get(t.get("icon"), "")}"{I(i)}{X(("Icon", f"site:job_tools.{i}.icon", "select", icon_choices()))}><span class="ic"{ICO(f"site:job_tools.{i}.icon")}>{_icon(t["icon"], 18) if t.get("icon") else ""}</span><span{E(f"site:job_tools.{i}.label")}>{e(t["label"])}</span></span>' for i, t in enumerate(SITE_TEXT["job_tools"]))}</div>
-      <ul class="ticks"{L("site:job_bullets")}>{''.join(f'<li{I(i)}{E(f"site:job_bullets.{i}")}>{e(b)}</li>' for i, b in enumerate(SITE_TEXT["job_bullets"]))}</ul>
+      {ticks(SITE_TEXT["job_bullets"], "site:job_bullets", "bullet_job")}
     </div>
     <figure class="bp"{X(("Picture inside the window (image, GIF or video)", "site:bp_media", "media"))}>
       <div class="win-bar"><span class="win-ico" aria-hidden="true"></span>{ui("bp_title", "BP_ApartmentTour (illustration)", cls="win-title")}<span class="win-ctl" aria-hidden="true"><i>&#x2212;</i><i>&#x25A1;</i><i class="x">&#x2715;</i></span></div>
@@ -722,7 +738,7 @@ def build_code_page(i, cp):
     <div class="intro-text">
       <p class="hook"{E(B + ".hook")}>{e(cp['hook'])}</p>
       {ui("h_built", "What I built", tag="h3", cls="kicker")}
-      <ul class="ticks"{L(B + ".what_i_built")}>{''.join(f'<li{I(j)}{E(f"{B}.what_i_built.{j}")}>{e(d)}</li>' for j, d in enumerate(cp['did']))}</ul>
+      {ticks(cp['did'], B + ".what_i_built", "bullet_built")}
       {ui("h_tech", "Tech & principles", tag="h3", cls="kicker")}
       <div class="techs"{L(B + ".tech")}>{''.join(f'<span{I(j)}{E(f"{B}.tech.{j}")}>{e(t)}</span>' for j, t in enumerate(cp['tech']))}</div>
     </div>
@@ -772,7 +788,7 @@ def build_project(i, pj):
             f'<button class="zoom" type="button"{I(si)}{X(("Caption", f"{B}.screenshots.{si}.caption", "text"))} data-full="{thumb(s, 2000)}" data-group="shots" data-title="Screenshot" data-cap="{e(SHOT_CAPS.get(s, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge screenshot"><img loading="lazy"{M(f"{B}.screenshots.{si}.image")} onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s, si in zip(pj["shots"], pj["shot_idx"])) + "</div></section>"
     full = ""
     if pj["full"]:
-        full = f'<section class="mech-sec center" id="full">{ui("h_full", "Full video showcase", tag="h2", big=True)}<button class="btn" type="button"{M(B + ".full_video", "video")} {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}{credit_attr(pj['slug'])}>{ui("play_full", "▶ Play full video")}</button></section>'
+        full = f'<section class="mech-sec center" id="full">{ui("h_full", "Full video showcase", tag="h2", big=True)}<button class="btn" type="button"{M(B + ".full_video", "video")} {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}{credit_attr(pj['slug'])}>{ui("play_full", "Play full video", icon="play-solid")}</button></section>'
     cast = ""
     if pj.get("cast"):
         cast = f'<section class="mech-sec" id="characters">{ui("h_chars", "Characters", tag="h2", big=True)}<div class="cast"{L(B + ".characters")}>' + "".join(
@@ -821,8 +837,8 @@ def build_project(i, pj):
     <div class="intro-text">
       <p class="hook"{E(B + ".hook")}>{e(pj['hook'])}</p>
       {ui("h_built", "What I built", tag="h3", cls="kicker")}
-      <ul class="ticks"{L(B + ".what_i_built")}>{''.join(f'<li{I(j)}{E(f"{B}.what_i_built.{j}")}>{e(d)}</li>' for j, d in enumerate(pj['did']))}</ul>
-      {ui("h_team", "The rest of the engine (my teammates)", tag="h3", cls="kicker") + f'<ul class="ticks team"{L(B + ".teammates_built")}>' + ''.join(f'<li{I(j)}{E(f"{B}.teammates_built.{j}")}>{e(d)}</li>' for j, d in enumerate(pj['did_team'])) + '</ul>' if pj.get('did_team') else ''}
+      {ticks(pj['did'], B + ".what_i_built", "bullet_built")}
+      {ui("h_team", "The rest of the engine (my teammates)", tag="h3", cls="kicker") + ticks(pj['did_team'], B + ".teammates_built", "bullet_team", team=True) if pj.get('did_team') else ''}
       {ui("h_tech", "Tech & principles", tag="h3", cls="kicker")}
       <div class="techs"{L(B + ".tech")}>{''.join(f'<span{I(j)}{E(f"{B}.tech.{j}")}>{e(t)}</span>' for j, t in enumerate(TECH[pj['slug']]))}</div>
     </div>

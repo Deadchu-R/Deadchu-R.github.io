@@ -37,7 +37,7 @@
     "about",
     "gallery_lab"
   ],
-  "showreel_label": "▶ Watch showreel",
+  "showreel_label": "Watch showreel",
   "hero_buttons": [
     {
       "label": "Experience",
@@ -184,5 +184,13 @@
       "icon": "cesium"
     }
   ],
-  "ui": {}
+  "ui": {
+    "showreel_btn": {
+      "icon": "play-solid"
+    },
+    "play_full": {
+      "text": "Play full video",
+      "icon": "play-solid"
+    }
+  }
 }

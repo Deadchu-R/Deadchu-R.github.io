@@ -123,7 +123,7 @@
   .rt-on pre code[data-e]{display:block;white-space:pre}
   .rt-on .reveal,.rt-on [data-reveal]{opacity:1!important;transform:none!important}
   #rt-sel{position:fixed;z-index:2147483000;pointer-events:none;border:2px solid #ffd23f;border-radius:8px;box-shadow:0 0 0 1px rgba(0,0,0,.35);display:none}
-  #rt-tb{position:fixed;z-index:2147483050;display:none;align-items:center;gap:2px;background:#111;border:1px solid #333;border-radius:11px;padding:3px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  #rt-tb{position:fixed;z-index:2147483050;display:none;align-items:center;flex-wrap:wrap;max-width:calc(100vw - 16px);gap:2px;background:#111;border:1px solid #333;border-radius:11px;padding:3px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
   #rt-tb .rt-name{color:#ffd23f;font:700 11px/1 system-ui,sans-serif;padding:0 6px 0 5px;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
   #rt-tb button{appearance:none;width:32px;height:30px;border:0;border-radius:8px;background:none;color:#fff;font:600 16px/1 system-ui,sans-serif;cursor:pointer;display:grid;place-items:center;padding:0}
   #rt-tb button:hover:not(:disabled){background:#2a2a2a;color:#ffd23f}
@@ -234,9 +234,10 @@
     gear:B("⚙","Settings",()=>{panelOpen=!panelOpen;renderPanel()}),
     bg:B("🎬","Background / cover: change the video or image",()=>{panelOpen=true;renderPanel()}),
     add:B("＋","Add a button here",()=>current&&addItem(current)),
+    plus:B("＋","Add a new one after this",()=>current&&addNew(current)),
     parent:B("⤴","Select what's around it",()=>{const k=chain.indexOf(current);if(chain[k+1]){current=chain[k+1];clickedText=clickedMedia=null;panelOpen=false;renderPanel();place()}}),
   };
-  tb.append(T.name,T.grip,T.up,T.down,T.edit,T.media,T.bg,T.add,T.dup,T.del,T.gear,T.parent);
+  tb.append(T.name,T.grip,T.up,T.down,T.edit,T.media,T.bg,T.add,T.plus,T.dup,T.del,T.gear,T.parent);
   const drop=h("div",{id:"rt-drop"}),ghost=h("div",{id:"rt-ghost"});
   const isIndex=!!$("#projects .ptiles");
   const linkOpts=(isIndex?["#now","#projects","#more-code","#about","#gallery-lab","#contact"]:["index.html","index.html#projects","index.html#more-code","index.html#contact"])
@@ -421,7 +422,8 @@
     show(T.dup,current.hasAttribute("data-i"));show(T.del,current.hasAttribute("data-i"));
     show(T.gear,hasSettings(current));
     show(T.bg,fieldsOf(current).some(f=>/^(video|image|art|media)$/.test(f[2])&&/background|cover|picture|thumbnail/i.test(f[0])));
-    show(T.add,current.hasAttribute("data-add"));T.gear.classList.toggle("on",panelOpen);
+    show(T.add,current.hasAttribute("data-add"));
+    show(T.plus,current.hasAttribute("data-i")&&(()=>{const lp=listPath(current)||"";return typeof get(lp+(lp.includes(":")?".":":")+current.dataset.i)==="string"})());T.gear.classList.toggle("on",panelOpen);
     show(T.parent,!!chain[chain.indexOf(current)+1]);
     tb.style.display="flex";
     const tw=tb.offsetWidth,th=tb.offsetHeight;
@@ -525,6 +527,14 @@
     initText(lab);flash(a);select(lab);startEdit(lab);
     try{getSelection().selectAllChildren(lab)}catch(e){}
     secBars();
+  }
+  function addNew(item){
+    // a fresh item right after this one: same look, text ready to type
+    duplicate(item);
+    const c=item.nextElementSibling;if(!c)return;
+    const te=c.matches("[data-e]")?c:$("[data-e]",c);
+    if(te){set(te.dataset.e,"New");te.textContent="New";select(te);startEdit(te);try{getSelection().selectAllChildren(te)}catch(e){}}
+    if(c.parentElement&&c.parentElement.classList.contains("repo-tech"))status("The card shows the first 4 skills, the code page shows all of them. Move one with the arrows to choose which 4.");
   }
   function remove(item){
     if(!confirm(`Delete this ${unitName(item).toLowerCase()}?`))return;
@@ -645,7 +655,7 @@
   const COLOR_VAR={color_main:"--mid",color_deep:"--deep",color_accent:"--accent"};
   function previewColor(holder,path,v,opts){
     const k=path.split(".").pop();
-    if(opts&&opts.length){const t=opts[0]?$(opts[0],holder):holder;if(t)t.style.setProperty(opts[1],v);return}
+    if(opts&&opts.length){const t=!opts[0]?holder:opts[0][0]==="^"?holder.closest(opts[0].slice(1)):$(opts[0],holder);if(t)t.style.setProperty(opts[1],v);return}
     const cv=COLOR_VAR[k];if(!cv){holder.style.setProperty("--c",v);return}
     const tgt=holder.classList.contains("phero")?document.documentElement:holder;
     tgt.style.setProperty(cv,v);
