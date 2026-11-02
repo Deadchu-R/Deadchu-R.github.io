@@ -1096,6 +1096,16 @@ def build_cv():
     (ROOT / "cv.html").write_text(html)
     _cv_files(pub, default)
 
+def build_tv():
+    """tv.html: the Netflix-style screen for TVs (assets/tv.js builds it from the site's own pages)."""
+    html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+            f'<title>{e(SITE_TEXT.get("hero_title") or "Roee Tal")} · TV</title><meta name="robots" content="noindex"><meta name="theme-color" content="#0b0b10">'
+            f'<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@600;800;900&display=swap">'
+            f'<link rel="stylesheet" href="assets/tv.css?v={ver("assets/tv.css")}"></head>'
+            f'<body><div class="tv" id="tv"><div class="tv-loading">{e((SITE_TEXT.get("hero_title") or "Roee Tal").upper())}</div></div>'
+            f'<script src="assets/tv.js?v={ver("assets/tv.js")}"></script></body></html>')
+    (ROOT / "tv.html").write_text(html)
+
 def _cv_files(pub, default):
     """PDF + PNG of every public résumé, made by headless Chrome. Only redone when that résumé or its design changed."""
     import subprocess, shutil
@@ -1143,6 +1153,7 @@ if __name__ == "__main__":
         build_project(i, pj)
     build_lab()
     build_cv()
+    build_tv()
     for i, cp in enumerate(CODE_PAGES):
         build_code_page(i, cp)
     print("built", 3 + len(PROJECTS), "pages")

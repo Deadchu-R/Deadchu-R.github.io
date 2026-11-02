@@ -380,6 +380,10 @@
   if(/[?&]tv=0/.test(location.search)){try{localStorage.removeItem("rt-tv")}catch(e){}return}
   if(!isTV)return;
   try{if(/[?&]tv=1/.test(location.search))localStorage.setItem("rt-tv","1")}catch(e){}
+  // the home page on a TV opens the Netflix-style TV screen (tv.html), unless "Website view" was chosen
+  try{if(/[?&]web=1/.test(location.search))sessionStorage.setItem("rt-web","1")}catch(e){}
+  const web=(()=>{try{return sessionStorage.getItem("rt-web")==="1"}catch(e){return false}})();
+  if(!web&&/(^|\/)(index\.html)?$/.test(location.pathname)&&!/[?&](edit|web)/.test(location.search)&&!sessionStorage.getItem("rt-edit")){location.replace("tv.html"+location.hash);return}
   const html=document.documentElement;html.classList.add("tv");
   const play0=HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play=function(){

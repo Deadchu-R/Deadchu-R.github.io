@@ -1,0 +1,56 @@
+/* The TV app (tv.html): a Netflix-style screen for the remote. Sized in vw/vh so it fits any TV. */
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0b10;color:#f4f1ea;font-family:"Poppins","Urbanist",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+.tv{position:fixed;inset:0;overflow:hidden}
+.tv-loading{position:fixed;inset:0;display:grid;place-items:center;font:700 2vw/1 system-ui;color:#ffd23f;letter-spacing:.1em}
+/* billboard */
+.tv-bill{position:absolute;inset:0 0 auto 0;height:62vh}
+.tv-bg{position:absolute;inset:0;background:#0b0b10 center/cover no-repeat;opacity:0;transition:opacity .35s}
+.tv-bg.on{opacity:1}
+.tv-bill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0b0b10 0%,rgba(11,11,16,.92) 28%,rgba(11,11,16,.35) 62%,rgba(11,11,16,.1)),linear-gradient(0deg,#0b0b10 0%,rgba(11,11,16,0) 38%)}
+.tv-info{position:absolute;z-index:2;left:8vw;top:9vh;width:44vw}
+.tv-brand{position:absolute;z-index:3;left:8vw;top:3.2vh;font:900 1.5vw/1 "Urbanist",system-ui;letter-spacing:.18em;color:#ffd23f;display:flex;align-items:center;gap:.8vw}
+.tv-brand img{width:2.4vw;height:2.4vw;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.6)}
+.tv-kick{font:700 1.05vw/1.2 system-ui;letter-spacing:.14em;text-transform:uppercase;color:var(--ac,#ffd23f);margin:0 0 .9vh}
+.tv-title{font:900 4.2vw/1 "Urbanist",system-ui;margin:0 0 1.4vh;letter-spacing:-.01em;text-shadow:0 .3vw 1.5vw rgba(0,0,0,.6)}
+.tv-meta{font:600 1.15vw/1.3 system-ui;color:#cfcfd8;margin:0 0 1.2vh}
+.tv-desc{font:400 1.25vw/1.5 system-ui;color:#e6e3dc;margin:0 0 2.6vh;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;max-width:40vw}
+.tv-acts{display:flex;gap:1vw}
+.tv-btn{appearance:none;border:0;border-radius:.5vw;padding:1.1vh 1.8vw;font:800 1.25vw/1 system-ui;display:inline-flex;align-items:center;gap:.7vw;cursor:pointer;background:rgba(109,109,110,.7);color:#fff}
+.tv-btn.pri{background:#fff;color:#111}
+.tv-btn.f{outline:.25vw solid #ffd23f;outline-offset:.25vw;transform:scale(1.06)}
+/* rows */
+.tv-rows{position:absolute;left:0;right:0;top:58vh;bottom:0;overflow:hidden}
+.tv-rowsin{position:absolute;left:0;right:0;top:0;transition:transform .25s ease}
+.tv-row{height:30vh;padding-left:8vw;opacity:.35;transition:opacity .2s}
+.tv-row.cur{opacity:1}
+.tv-row.gone{opacity:0}
+.tv-rt{font:800 1.45vw/1 system-ui;margin:0 0 1.4vh;color:#f4f1ea}
+.tv-track{display:flex;gap:1vw;transition:transform .22s ease;will-change:transform}
+.tv-card{flex:none;width:19vw;aspect-ratio:16/9;border-radius:.6vw;overflow:hidden;position:relative;background:linear-gradient(135deg,var(--c1,#1f2b4d),var(--c2,#0b0b10));border:0;padding:0;cursor:pointer;color:#fff;text-align:left;
+  transform-origin:center;transition:transform .18s ease,box-shadow .18s}
+.tv-card img{width:100%;height:100%;object-fit:cover;display:block}
+.tv-card .tv-cl{position:absolute;left:0;right:0;bottom:0;padding:2.2vh .9vw .9vh;background:linear-gradient(0deg,rgba(0,0,0,.88),transparent);font:700 1.05vw/1.25 system-ui}
+.tv-card .tv-cl small{display:block;font-weight:500;opacity:.8;font-size:.85vw;margin-top:.3vh}
+.tv-card .tv-play{position:absolute;right:.7vw;top:.7vw;width:2.2vw;height:2.2vw;border-radius:50%;background:rgba(0,0,0,.6);display:grid;place-items:center;font-size:1vw}
+.tv-card.text{display:flex;flex-direction:column;justify-content:flex-end;padding:1.4vw}
+.tv-card.text b{font:800 1.5vw/1.15 system-ui}
+.tv-card.text span{font:500 .95vw/1.35 system-ui;opacity:.85;margin-top:.6vh}
+.tv-card.text .tv-ico{position:absolute;left:1.4vw;top:1.4vw;font-size:2.4vw}
+.tv-card.f{transform:scale(1.12);box-shadow:0 0 0 .25vw #fff,0 1.2vw 2.4vw rgba(0,0,0,.6);z-index:2}
+/* left menu */
+.tv-rail{position:absolute;z-index:5;left:0;top:0;bottom:0;width:5vw;display:flex;flex-direction:column;justify-content:center;gap:2.2vh;padding-left:1.4vw;background:linear-gradient(90deg,rgba(0,0,0,.75),transparent);transition:width .2s,background .2s}
+.tv-rail.open{width:22vw;background:linear-gradient(90deg,rgba(0,0,0,.96) 70%,transparent)}
+.tv-ri{display:flex;align-items:center;gap:1vw;font:700 1.25vw/1 system-ui;color:#bbb;white-space:nowrap;border:0;background:none;padding:.6vh .4vw;cursor:pointer;text-align:left}
+.tv-ri i{font-style:normal;width:2vw;text-align:center;font-size:1.4vw}
+.tv-ri span{opacity:0;transition:opacity .15s}
+.tv-rail.open .tv-ri span{opacity:1}
+.tv-ri.f{color:#fff;transform:scale(1.08)}.tv-ri.f i{color:#ffd23f}
+/* player + picture */
+.tv-over{position:fixed;inset:0;z-index:20;background:#000;display:grid;place-items:center}
+.tv-over video,.tv-over iframe,.tv-over img{width:100vw;height:100vh;object-fit:contain;border:0;background:#000}
+.tv-ohint{position:fixed;z-index:21;left:50%;bottom:4vh;transform:translateX(-50%);font:600 1.1vw/1 system-ui;background:rgba(0,0,0,.7);padding:1vh 1.4vw;border-radius:.6vw;color:#ddd;transition:opacity .4s}
+.tv-ohint.hide{opacity:0}
+.tv-otitle{position:fixed;z-index:21;left:4vw;top:4vh;font:800 1.6vw/1.2 system-ui;text-shadow:0 2px 8px #000;transition:opacity .4s}
+.tv-otitle.hide{opacity:0}
+.tv-hint{position:fixed;z-index:6;right:3vw;bottom:2.6vh;font:600 .95vw/1 system-ui;color:#8d8d99}
