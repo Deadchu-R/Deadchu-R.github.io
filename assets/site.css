@@ -718,8 +718,10 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .foot-meta{display:flex;align-items:center;gap:10px}
 .edit-in{appearance:none;background:none;border:0;padding:6px;margin:-6px 0;color:inherit;opacity:.35;cursor:pointer;border-radius:6px;line-height:0}
 .edit-in:hover,.edit-in:focus-visible{opacity:.9}
-.edit-in.top{margin:0 auto 0 -10px;opacity:.45;color:#fff}
-@media (max-width:480px){.edit-in.top{margin-left:-12px;padding:6px 4px}}
+/* the pencil sits clearly apart from the name: name = home, pencil = edit */
+.edit-in.top{margin:0 auto 0 14px;padding:7px;opacity:.5;color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:50%;flex:none}
+.edit-in.top:hover,.edit-in.top:focus-visible{opacity:1;border-color:rgba(255,255,255,.6)}
+@media (max-width:480px){.edit-in.top{margin-left:12px;padding:6px}}
 .ico-img{object-fit:contain;display:block;flex:none}
 .h-ico .ico-img{width:72%;height:72%}
 .ui-ic{display:inline-flex;align-items:center;vertical-align:-.14em;margin-right:.4em;color:var(--c,currentColor)}
