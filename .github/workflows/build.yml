@@ -1,7 +1,7 @@
 name: Build and deploy site
 
 # Runs after every Save in Pages CMS (and any push to main):
-# converts new uploads, rebuilds the HTML from content/*.json, and publishes to GitHub Pages.
+# converts new uploads and rebuilds the HTML from content/*.json. Its commit then publishes via GitHub Pages.
 on:
   push:
     branches: [main]
@@ -9,11 +9,9 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: site-build
   cancel-in-progress: false
 
 jobs:
@@ -39,9 +37,3 @@ jobs:
             git commit -m "Rebuild site [skip ci]"
             git push
           fi
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-      - id: deployment
-        uses: actions/deploy-pages@v4
