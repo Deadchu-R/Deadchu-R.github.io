@@ -150,6 +150,28 @@
   .clip .rt-gif{position:absolute;inset:0;width:100%;height:100%;border-radius:inherit}
   .rt-on .peekcat{pointer-events:auto}
   .rt-on .peekcat img{transform:translateY(8%) rotate(-4deg)!important;cursor:pointer}
+  #rt-ai{position:fixed;z-index:2147483120;right:12px;bottom:12px;width:380px;max-height:min(70vh,620px);display:flex;flex-direction:column;background:#151515;color:#eee;border:1px solid #333;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.55);padding:10px 12px 12px;font-size:14px}
+  #rt-ai[hidden]{display:none}
+  #rt-ai .rt-head{display:flex;justify-content:space-between;align-items:center;color:#ffd23f;font:700 13px/1 system-ui,sans-serif;margin-bottom:8px}
+  #rt-ai .rt-x{background:none;border:0;color:#aaa;font-size:16px;cursor:pointer;padding:2px 6px}
+  .rt-ailog{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;min-height:120px;padding:2px}
+  .rt-msg{padding:8px 11px;border-radius:12px;line-height:1.45;max-width:92%;white-space:pre-wrap;word-break:break-word;unicode-bidi:plaintext}
+  .rt-msg.me{align-self:flex-end;background:#ffd23f;color:#111}
+  .rt-msg.ai{align-self:flex-start;background:#232323}
+  .rt-msg.act{align-self:flex-start;background:none;color:#9be15d;font:12px ui-monospace,monospace;padding:0 4px}
+  .rt-msg.sys{align-self:flex-start;color:#888;animation:rtpulse 1s infinite alternate}
+  .rt-msg.err{align-self:flex-start;background:#3b1414;color:#ffb3b3}
+  @keyframes rtpulse{to{opacity:.3}}
+  .rt-files{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}
+  .rt-chip{display:inline-flex;align-items:center;gap:4px;background:#222;border:1px solid #444;border-radius:8px;padding:3px 4px 3px 8px;font-size:12px}
+  .rt-chip button{background:none;border:0;color:#aaa;cursor:pointer;font-size:14px}
+  .rt-airow{display:flex;gap:6px;align-items:flex-end;margin-top:8px}
+  .rt-airow textarea{flex:1;resize:none;background:#0e0e0e;color:#fff;border:1px solid #3a3a3a;border-radius:10px;padding:9px;font:14px/1.35 system-ui,sans-serif;unicode-bidi:plaintext;min-height:42px;max-height:120px}
+  .rt-aibtn{appearance:none;width:40px;height:42px;border-radius:10px;border:1px solid #3a3a3a;background:#222;color:#fff;font-size:17px;cursor:pointer;flex:none}
+  .rt-aibtn.sm{width:34px;font:700 12px system-ui,sans-serif}
+  .rt-aibtn.pri{background:#ffd23f;color:#111;border-color:#ffd23f}
+  .rt-aibtn.on{background:#e03b3b;border-color:#e03b3b;animation:rtpulse .7s infinite alternate}
+  @media (max-width:640px){#rt-ai{left:8px;right:8px;width:auto;bottom:8px;max-height:62vh}}
   .rt-hist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;margin:10px 0}
   .rt-hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid #2c2c2c;border-radius:10px;background:#1b1b1b}
   .rt-hrow div{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -230,7 +252,7 @@
   const pubBtn=h("button",{class:"rt-pub",type:"button",disabled:true,on:{click:publish}},h("i"),"Publish");
   const menu=h("div",{id:"rt-menu"});
   const item=(label,fn,cls)=>h("button",{type:"button",class:cls||"",on:{click:()=>{menu.style.display="none";fn()}}},label);
-  menu.append(item("⚙  Site settings · sound",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
+  menu.append(item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
   const prevBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"Preview the page as visitors will see it",on:{click:e=>{e.stopPropagation();togglePreview()}}},"👁");
   function togglePreview(){
     const on=document.documentElement.classList.toggle("rt-preview");
@@ -239,7 +261,8 @@
       status("Preview: this is how the page will look after Publish. Videos and images play like for visitors. Tap ✎ to keep editing.")}
     else status("Back to editing.");
   }
-  const bar=h("div",{id:"rt-bar"},pubBtn,prevBtn,h("button",{class:"rt-more",type:"button",title:"More",on:{click:e=>{e.stopPropagation();menu.style.display=menu.style.display==="block"?"none":"block"}}},"⋯"));
+  const aiBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"AI assistant",on:{click:e=>{e.stopPropagation();openAI()}}},"✨");
+  const bar=h("div",{id:"rt-bar"},pubBtn,prevBtn,aiBtn,h("button",{class:"rt-more",type:"button",title:"More",on:{click:e=>{e.stopPropagation();menu.style.display=menu.style.display==="block"?"none":"block"}}},"⋯"));
   const toastEl=h("div",{id:"rt-toast"});
   const panel=h("div",{id:"rt-panel"});
   const sel=h("div",{id:"rt-sel"});
@@ -627,8 +650,8 @@
     const blob=await new Promise(ok=>c.toBlob(ok,alpha?"image/png":"image/jpeg",.88));
     return{blob,ext:alpha?"png":"jpg"};
   }
-  async function replaceMedia(path,kind0,el){
-    const file=await pickFile(kind0);if(!file)return;
+  async function replaceMedia(path,kind0,el,given){
+    const file=given||await pickFile(kind0);if(!file)return;
     let kind=kind0;if(kind==="media")kind=file.type.startsWith("video/")||file.type==="image/gif"?"video":"image";   // either works here
     let blob=file,ext=(file.name.split(".").pop()||"").toLowerCase(),note="";
     try{
@@ -642,7 +665,7 @@
       else({blob,ext}=await prepImage(file,kind));
     }catch(e){alertBox(e.message);return}
     const url=URL.createObjectURL(blob),isGif=blob.type==="image/gif"||ext==="gif";
-    const choice=await previewBox(url,kind==="audio"?"audio":kind==="video"&&!isGif?"video":"image",file.name,note,kind==="icon");
+    const choice=given?"use":await previewBox(url,kind==="audio"?"audio":kind==="video"&&!isGif?"video":"image",file.name,note,kind==="icon");
     if(choice==="again"){URL.revokeObjectURL(url);return replaceMedia(path,kind0,el)}
     if(choice!=="use"){URL.revokeObjectURL(url);return}
     const repoPath=`assets/uploads/${slugify(file.name)}-${rand()}.${ext}`;
@@ -748,6 +771,10 @@
     if(type==="color"){
       const apply=v=>{set(path,v);previewColor(holder,path,v,opts)};
       wrap.append(colorField(/^#[0-9a-f]{6}$/i.test(val)?val:"",apply));
+    }else if(type==="textarea"){
+      const t=h("textarea",{rows:"8",spellcheck:"false",style:"width:100%;background:#0e0e0e;color:#e6edf3;border:1px solid #3a3a3a;border-radius:8px;padding:8px;font:12.5px/1.5 ui-monospace,Consolas,monospace;direction:ltr"},String(val||""));
+      t.addEventListener("input",()=>{set(path,t.value);if(path==="site:custom_css")applyCustomCss(t.value)});
+      wrap.append(t);
     }else if(type==="range"){
       const [mn,mx,st,unit,cssVar,sel]=opts,tg=()=>tgtOf(holder,sel);
       const num=h("span",{class:"rt-num"}),r=h("input",{type:"range",min:String(mn),max:String(mx),step:String(st),value:String(val===""?mn:val)});
@@ -828,6 +855,8 @@
       F(["Click volume",sp+".cv","range",[0,100,5,"%",null]]),
       h("div",{class:"rt-row",style:"margin-top:8px"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{
         const k=get(sp+".click")||"soft",u=/^\//.test(k)?audioUrl(sp+".click"):k;window.rtSound&&window.rtSound.click(u,(get(sp+".cv")??50)/100)}}},"▶ Test click")),
+      h("div",{style:"margin-top:16px;border-top:1px solid #2c2c2c"}),
+      F(["Custom CSS (advanced, all pages · the ✨ AI writes here for layout changes)","site:custom_css","textarea"]),
       h("p",{class:"rt-hint"},"Everything is off until you switch on the first option. Browsers only let music start after the visitor touches the page; music pauses while a video plays."));
     const sel_=$$("select",panel).pop();if(own&&sel_&&sel_.options[0])sel_.options[0].textContent="(your sound)";
     panel.style.display="block";
@@ -920,6 +949,175 @@
       document.body.append(b);
     }
   }
+  /* ------------------------------------------------------------ ✨ AI assistant (Gemini, free key from Google AI Studio)
+     It reads what this page can change, then calls the same tools you use by hand. Nothing is published until you press Publish. */
+  const AI_KEY="rt-gemini-key",AI_MODEL="rt-gemini-model",GAPI="https://generativelanguage.googleapis.com/v1beta";
+  let aiBox=null,aiLog=null,aiHist=[],aiFiles=[],aiBusy=false,rec=null,aiLang="he-IL";
+  function applyCustomCss(css){let st=document.getElementById("custom-css");if(!st){st=document.createElement("style");st.id="custom-css";document.head.append(st)}st.textContent=css||""}
+  function fieldDef(path){
+    for(const el of $$("[data-x]")){if(!el.dataset.x.includes(path))continue;try{const f=JSON.parse(el.dataset.x).find(x=>x[1]===path);if(f)return{holder:el,f}}catch(e){}}
+    return null;
+  }
+  function applyValue(path,raw){
+    const fd=fieldDef(path),type=fd?fd.f[2]:"text",opts=fd?fd.f[3]:null,holder=fd&&fd.holder;
+    const texts=$$(`[data-e="${CSS.escape(path)}"]`);
+    if(!fd&&!texts.length&&path!=="site:custom_css"&&get(path)===undefined)return "unknown path "+path+" (use one from the list)";
+    let v=raw;
+    if(type==="range")v=Number(raw);else if(type==="toggle")v=raw===true||raw==="true"||raw==="on";
+    if(type==="color"&&v&&!/^#[0-9a-f]{6}$/i.test(v))return "colors must be #rrggbb";
+    if(type==="select"&&opts&&!opts.includes(v)&&!/icon$/.test(path))return "allowed values: "+opts.join(", ");
+    set(path,v);
+    texts.forEach(t=>{t.textContent=v});
+    if(path==="site:custom_css")applyCustomCss(v);
+    if(fd){
+      if(type==="color")previewColor(holder,path,v,opts);
+      else if(type==="select"){if(/icon$/.test(path))previewIcon(path,v);if(path.endsWith(".layout"))previewLayout(holder,v);
+        if(path.endsWith(".style")&&holder.classList.contains("btn"))holder.classList.toggle("ghost",v==="ghost");
+        if(path.endsWith(".align"))holder.className=holder.className.replace(/\bal-\w+/,"al-"+v)}
+      else if(type==="range"){const [, , , unit,cssVar,sel]=opts;const t=cssVar&&tgtOf(holder,sel);if(t)t.style.setProperty(cssVar,v+unit)}
+      else if(type==="toggle"){const [cls,sel]=opts;const t=cls&&tgtOf(holder,sel);if(t)t.classList.toggle(cls,!!v)}
+      else if(type==="link"&&holder.tagName==="A")holder.setAttribute("href",v);
+    }
+    return "ok";
+  }
+  const itemEl=(lp,i)=>{const c=$(`[data-l="${CSS.escape(lp)}"]`);return c&&[...c.children].find(x=>x.dataset.i===String(i))};
+  const AI_TOOLS={
+    set_value:({path,value})=>applyValue(path,value),
+    move_item:({list_path,index,to_index})=>{let it=itemEl(list_path,index);if(!it)return "no item "+index+" in "+list_path;
+      for(let n=0;n<60&&it.dataset.i!==String(to_index);n++){const sib=siblingsOf(it),k=sib.indexOf(it);const d=+to_index>+it.dataset.i?1:-1;if(!sib[k+d])break;step(it,d)}return "now at "+it.dataset.i},
+    move_section:({order_path,key,to_index})=>{const s_=$$(`[data-ok="${CSS.escape(order_path)}"]`).find(x=>x.dataset.k===key);if(!s_)return "no section "+key;
+      for(let n=0;n<30;n++){const sib=siblingsOf(s_),k=sib.indexOf(s_);if(k===+to_index)break;step(s_,+to_index>k?1:-1);if(siblingsOf(s_).indexOf(s_)===k)break}return "order: "+siblingsOf(s_).map(x=>x.dataset.k).join(",")},
+    add_item:({list_path,after_index,text})=>{const it=itemEl(list_path,after_index);if(!it)return "no item "+after_index+" to copy in "+list_path;
+      duplicate(it);const c=it.nextElementSibling;const te=c&&(c.matches("[data-e]")?c:$("[data-e]",c));if(te&&text!=null){set(te.dataset.e,text);te.textContent=text}return "added at index "+(c?c.dataset.i:"?")},
+    remove_item:({list_path,index})=>{const it=itemEl(list_path,index);if(!it)return "no item "+index;listOp(it,(arr,perm,pos)=>{arr.splice(pos,1);perm.splice(pos,1)});it.remove();secBars();return "removed"},
+    set_custom_css:({css})=>applyValue("site:custom_css",css||""),
+    use_attachment:async({path,attachment})=>{const f=aiFiles[+attachment||0];if(!f)return "no attachment "+attachment;
+      const fd=fieldDef(path),m=$(`[data-m="${CSS.escape(path)}"]`);const kind=(fd&&fd.f[2])||(m&&m.dataset.mk)||"image";
+      await replaceMedia(path,kind,(fd&&fd.holder)||m||document.body,f);return "placed "+f.name},
+  };
+  const AI_DECL=[
+    {name:"set_value",description:"Set any text or setting from the catalog (text, color #rrggbb, icon name, select option, link, number for ranges, true/false for switches).",parameters:{type:"OBJECT",properties:{path:{type:"STRING"},value:{type:"STRING"}},required:["path","value"]}},
+    {name:"move_item",description:"Reorder an item inside a LIST.",parameters:{type:"OBJECT",properties:{list_path:{type:"STRING"},index:{type:"INTEGER"},to_index:{type:"INTEGER"}},required:["list_path","index","to_index"]}},
+    {name:"move_section",description:"Reorder a whole section or page block (ORDER lists).",parameters:{type:"OBJECT",properties:{order_path:{type:"STRING"},key:{type:"STRING"},to_index:{type:"INTEGER"}},required:["order_path","key","to_index"]}},
+    {name:"add_item",description:"Add an item to a LIST by copying the item at after_index and giving it new text.",parameters:{type:"OBJECT",properties:{list_path:{type:"STRING"},after_index:{type:"INTEGER"},text:{type:"STRING"}},required:["list_path","after_index"]}},
+    {name:"remove_item",description:"Delete an item from a LIST.",parameters:{type:"OBJECT",properties:{list_path:{type:"STRING"},index:{type:"INTEGER"}},required:["list_path","index"]}},
+    {name:"set_custom_css",description:"Replace the site's custom CSS (applies to every page). Use for layout, spacing, sizes, fonts, backgrounds, animations and anything without a setting. Send the full stylesheet: it replaces the old one.",parameters:{type:"OBJECT",properties:{css:{type:"STRING"}},required:["css"]}},
+    {name:"use_attachment",description:"Put a file the owner attached (0 = first) into an image/video/media/icon/audio slot.",parameters:{type:"OBJECT",properties:{path:{type:"STRING"},attachment:{type:"INTEGER"}},required:["path"]}},
+  ];
+  function catalog(){
+    const L=[],seen=new Set(),cut=(v,n=160)=>{v=v==null?"":typeof v==="string"?v:JSON.stringify(v);return v.length>n?v.slice(0,n)+"…":v};
+    L.push("PAGE "+location.pathname+(document.title?" · "+document.title:""));
+    const oks=[...new Set($$("[data-ok]").map(e=>e.dataset.ok))];
+    oks.forEach(o=>{const s_=$$(`[data-ok="${CSS.escape(o)}"]`);L.push(`ORDER ${o} = [${siblingsOf(s_[0]).map(x=>x.dataset.k).join(", ")}]`)});
+    $$("[data-l]").forEach(c=>{const lp=c.dataset.l;if(seen.has("L"+lp))return;seen.add("L"+lp);const arr=get(lp);L.push(`LIST ${lp} (${Array.isArray(arr)?arr.length:0} items)`)});
+    $$("[data-e]").forEach(el=>{const p=el.dataset.e;if(seen.has(p))return;seen.add(p);L.push(`TEXT ${p} = ${cut(get(p)??el.textContent)}`)});
+    $$("[data-x]").forEach(el=>{let fs=[];try{fs=JSON.parse(el.dataset.x)}catch(e){}fs.forEach(([lab,p,t,o])=>{if(seen.has(p))return;seen.add(p);
+      const opt=t==="select"?(/icon$/.test(p)?" icon names: see ICONS":" options: "+o.join("|")):t==="range"?` ${o[0]}-${o[1]}${o[3]}`:"";
+      L.push(`FIELD ${p} [${t}${opt}] "${lab}" = ${cut(get(p)??"",60)}`)})});
+    $$("[data-m]").forEach(el=>{const p=el.dataset.m;if(seen.has(p))return;seen.add(p);L.push(`MEDIA ${p} [${el.dataset.mk}] = ${cut(get(p),80)}`)});
+    L.push("ICONS "+Object.keys(ICONS).join(", "));
+    L.push("CUSTOM_CSS (site:custom_css) =\n"+(get("site:custom_css")||"(empty)"));
+    L.push("PAGE STRUCTURE (for CSS selectors):");
+    $$("body>header,body>section,body>div:not(.rt-ui):not([id^=rt-]),body>footer,.project>*,.project section,[data-k]").slice(0,60).forEach(el=>{
+      if(el.closest(".rt-ui"))return;const id=el.id?"#"+el.id:"",cl=(el.className&&typeof el.className==="string")?"."+el.className.trim().split(/\s+/).filter(c=>!c.startsWith("rt-")).join("."):"";
+      const k=id+cl;if(k&&!seen.has("S"+k)){seen.add("S"+k);L.push("  "+el.tagName.toLowerCase()+k)}});
+    return L.join("\n").slice(0,60000);
+  }
+  const AI_SYS=`You are the design-and-content assistant inside the visual editor of Roee Tal's portfolio site (a game developer).
+The owner talks to you (often in Hebrew, sometimes by voice) and you change the CURRENT PAGE live with tools. Changes stay unpublished until he presses Publish, and every publish is kept in Versions, so act directly; don't ask for confirmation unless the request is unclear.
+Rules:
+- Only use paths that appear in the catalog. Text: set_value on TEXT paths. Settings: FIELD paths (respect their type). Colors are #rrggbb.
+- Reorder with move_item / move_section; add/remove list items with add_item / remove_item.
+- Layout and visual design without a FIELD (sizes, spacing, columns, fonts, backgrounds, effects, animations): write CSS with set_custom_css. Keep the existing custom CSS and add to it; scope rules to selectors from PAGE STRUCTURE; keep it mobile-friendly; never hide the editor (classes starting with rt-).
+- Images/videos/GIFs/sounds: only files the owner attached, via use_attachment into a MEDIA or media FIELD path. You cannot create images.
+- Keep the site's English text in English unless he asks otherwise. Reply in the language he used, in 1-3 short sentences: what you changed, and remind him to check with 👁 Preview and press Publish.`;
+  async function pickModel(key){
+    let m=store.get(AI_MODEL);if(m)return m;
+    try{const r=await fetchT(`${GAPI}/models?key=${encodeURIComponent(key)}&pageSize=200`,{},20000);const j=await r.json();
+      const ok=(j.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes("generateContent")&&/flash/.test(x.name)&&!/(image|tts|audio|live|embedding|lite|thinking|vision)/.test(x.name));
+      const ver=n=>parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/)||[,0])[1]);
+      ok.sort((a,b)=>(ver(b.name)-ver(a.name))||((/preview|exp/.test(a.name)?1:0)-(/preview|exp/.test(b.name)?1:0)));
+      m=ok.length?ok[0].name.replace(/^models\//,""):"gemini-2.5-flash";
+    }catch(e){m="gemini-2.5-flash"}
+    store.set(AI_MODEL,m);return m;
+  }
+  const fileToPart=f=>new Promise(ok=>{const r=new FileReader();r.onload=()=>ok({inlineData:{mimeType:f.type||"application/octet-stream",data:String(r.result).split(",")[1]}});r.readAsDataURL(f)});
+  function aiSay(who,text){const el=h("div",{class:"rt-msg "+who},text);aiLog.append(el);aiLog.scrollTop=aiLog.scrollHeight;return el}
+  async function aiSend(text){
+    const key=store.get(AI_KEY);if(!key){aiKeyBox();return}
+    if(aiBusy||!text.trim()&&!aiFiles.length)return;
+    aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
+    const thinking=aiSay("sys","…");
+    try{
+      const model=await pickModel(key);
+      const parts=[{text:`CATALOG OF THE CURRENT PAGE:\n${catalog()}\n\nREQUEST: ${text}`+(aiFiles.length?`\n(${aiFiles.length} attachment(s): ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")})`:"")}];
+      for(const f of aiFiles.filter(f=>/^image\//.test(f.type)&&f.size<4e6))parts.push(await fileToPart(f));
+      // keep the chat short: drop whole old turns (a turn starts with a typed request), never half of one
+      while(aiHist.length>20){const i=aiHist.findIndex((m,k)=>k>0&&m.role==="user"&&m.parts[0]&&m.parts[0].text);if(i<1)break;aiHist=aiHist.slice(i)}
+      aiHist.push({role:"user",parts});
+      for(let round=0;round<8;round++){
+        const r=await fetchT(`${GAPI}/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({systemInstruction:{parts:[{text:AI_SYS}]},contents:aiHist,tools:[{functionDeclarations:AI_DECL}]})},90000);
+        const j=await r.json();
+        if(!r.ok){const msg=(j.error&&j.error.message)||r.status;if(r.status===404)store.set(AI_MODEL,"");throw new Error(msg)}
+        const c=(j.candidates||[])[0],ps=(c&&c.content&&c.content.parts)||[];
+        aiHist.push({role:"model",parts:ps.length?ps:[{text:"(no answer)"}]});
+        const calls=ps.filter(p=>p.functionCall);
+        if(!calls.length){thinking.remove();aiSay("ai",ps.map(p=>p.text||"").join("").trim()||"Done.");break}
+        const out=[];
+        for(const p of calls){const {name,args}=p.functionCall;let res;
+          try{res=AI_TOOLS[name]?await AI_TOOLS[name](args||{}):"unknown tool"}catch(e){res="error: "+e.message}
+          aiSay("act",(res==="ok"||/^(now|added|removed|order|placed)/.test(res)?"✓ ":"⚠ ")+name.replace("_"," ")+" "+(args.path||args.list_path||args.key||"")+(res==="ok"?"":" · "+res));
+          out.push({functionResponse:{name,response:{result:res}}})}
+        aiHist.push({role:"user",parts:out});
+        if(round===7){thinking.remove();aiSay("ai","Done. Check with 👁 Preview, then Publish.")}
+      }
+      aiFiles=[];renderFiles();place();secBars();
+    }catch(e){thinking.remove();aiSay("err","AI error: "+e.message)}
+    aiBusy=false;
+  }
+  let filesRow=null;
+  function renderFiles(){if(filesRow)filesRow.replaceChildren(...aiFiles.map((f,i)=>h("span",{class:"rt-chip"},`${i}: ${f.name}`,h("button",{type:"button",on:{click:()=>{aiFiles.splice(i,1);renderFiles()}}},"×"))))}
+  function aiKeyBox(){
+    const inp=h("input",{type:"password",placeholder:"AIza…",autocomplete:"off",value:store.get(AI_KEY)});
+    const m=modal(h("h3",{},"✨ Free AI key (one time)"),
+      h("ol",{},h("li",{},h("a",{href:"https://aistudio.google.com/apikey",target:"_blank",rel:"noopener"},"Open Google AI Studio › API keys"),", sign in with Google."),
+        h("li",{},"Create API key (free, no credit card). Copy it."),h("li",{},"Paste it here.")),inp,
+      h("p",{style:"font-size:13px;color:#999;margin:4px 0 0"},"Stays in this browser, and is saved encrypted with your editor password so other devices get it when you sign in. On the free plan Google may use the requests to improve its products; your site is public anyway."),
+      h("div",{class:"rt-row"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel"),
+        h("button",{class:"rt-btn pri",type:"button",on:{click:()=>{const v=inp.value.trim();if(!v)return;store.set(AI_KEY,v);store.set(AI_MODEL,"");m.remove();saveTokenForLogin(true);openAI()}}},"Save")));
+    setTimeout(()=>inp.focus(),50);
+  }
+  function openAI(){
+    if(!store.get(AI_KEY)){aiKeyBox();return}
+    if(aiBox){aiBox.hidden=!aiBox.hidden;return}
+    aiLog=h("div",{class:"rt-ailog"});
+    const ta=h("textarea",{rows:"2",placeholder:"מה לשנות? / What should I change?"});
+    const send=()=>{const t=ta.value;ta.value="";aiSend(t)};
+    ta.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    const mic=h("button",{type:"button",class:"rt-aibtn",title:"Talk",on:{click:()=>{
+      if(!SR){toast("Voice isn't supported in this browser; Chrome works.");return}
+      if(rec){rec.stop();return}
+      rec=new SR();rec.lang=aiLang;rec.interimResults=true;rec.continuous=false;const base=ta.value;mic.classList.add("on");
+      rec.onresult=ev=>{let t="";for(const r of ev.results)t+=r[0].transcript;ta.value=(base?base+" ":"")+t};
+      rec.onend=()=>{mic.classList.remove("on");rec=null;if(ta.value.trim())send()};rec.onerror=()=>{mic.classList.remove("on");rec=null};rec.start()}}},"🎤");
+    const lang=h("button",{type:"button",class:"rt-aibtn sm",title:"Voice language",on:{click:()=>{aiLang=aiLang==="he-IL"?"en-US":"he-IL";lang.textContent=aiLang==="he-IL"?"עב":"EN"}}},"עב");
+    const att=h("input",{type:"file",accept:"image/*,video/*,audio/*",multiple:true,style:"display:none"});
+    att.addEventListener("change",()=>{aiFiles.push(...att.files);att.value="";renderFiles()});
+    filesRow=h("div",{class:"rt-files"});
+    aiBox=h("div",{id:"rt-ai",class:"rt-ui"},
+      h("div",{class:"rt-head"},h("span",{},"✨ AI assistant"),h("span",{},
+        h("button",{class:"rt-x",type:"button",title:"Undo everything not published yet",on:{click:()=>{if(changes&&confirm("Throw away every change that isn't published yet (yours and the AI's)?")){changes=0;location.reload()}}}},"↺"),
+        h("button",{class:"rt-x",type:"button",title:"Change the AI key",on:{click:aiKeyBox}},"🔑"),
+        h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{aiBox.hidden=true}}},"✕"))),
+      aiLog,filesRow,
+      h("div",{class:"rt-airow"},h("button",{type:"button",class:"rt-aibtn",title:"Attach image, video or sound",on:{click:()=>ui.append(att)||att.click()}},"📎"),ta,lang,mic,h("button",{type:"button",class:"rt-aibtn pri",title:"Send",on:{click:send}},"➤")));
+    document.body.append(aiBox);
+    aiSay("ai","Hi! Tell me what to change on this page: text, colors, icons, layout, button styles, order, or attach a picture/video to put somewhere. Changes show up right away; Publish when you like them.");
+    setTimeout(()=>ta.focus(),50);
+  }
+
   /* ------------------------------------------------------------ sign in */
   const AUTH_PATH="assets/editor-auth.json";
   let authKey=null,authDoc=null;
@@ -942,6 +1140,7 @@
           const d=await derive(u.value,p.value,authDoc);
           if(d.check!==authDoc.check){await new Promise(r=>setTimeout(r,700));err.style.color="#ff8a8a";err.textContent="Wrong name or password.";return}
           authKey=d.key;
+          if(authDoc.gemini&&!store.get(AI_KEY)){try{const g=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(authDoc.gemini.iv)},authKey,unb64(authDoc.gemini.ct));store.set(AI_KEY,new TextDecoder().decode(g))}catch(e){}}
           if(authDoc.token&&!store.get(TOKEN_KEY)){
             const tk=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(authDoc.token.iv)},authKey,unb64(authDoc.token.ct));
             store.set(TOKEN_KEY,new TextDecoder().decode(tk));
@@ -962,6 +1161,7 @@
       const iv=crypto.getRandomValues(new Uint8Array(12));
       const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},authKey,new TextEncoder().encode(store.get(TOKEN_KEY)));
       const doc={...authDoc,token:{iv:b64(iv),ct:b64(ct)}};
+      if(store.get(AI_KEY)){const iv2=crypto.getRandomValues(new Uint8Array(12));const ct2=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv2},authKey,new TextEncoder().encode(store.get(AI_KEY)));doc.gemini={iv:b64(iv2),ct:b64(ct2)}}
       const cur=await gh(`/repos/${REPO}/contents/${AUTH_PATH}?ref=${BR}&t=${Date.now()}`);
       const body=JSON.stringify(doc,null,2)+"\n";
       await gh(`/repos/${REPO}/contents/${AUTH_PATH}`,{method:"PUT",body:JSON.stringify({message:"Editor sign-in: keep the GitHub token encrypted",content:btoa(unescape(encodeURIComponent(body))),sha:cur.sha,branch:BR})});
