@@ -645,9 +645,9 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 
 .fav-h{margin:26px 0 10px;font:700 13px/1 var(--f);letter-spacing:.16em;text-transform:uppercase;color:#ffd23f}
 .favs{display:flex;flex-wrap:wrap;gap:8px}
-.favs span{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;background:rgba(255,210,63,.08);border:1px solid rgba(255,210,63,.35);font:600 14.5px/1.2 var(--f);color:#fff}
-.favs span i{display:grid;place-items:center;color:var(--c)}
-.favs span{border-color:color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 9%,transparent)}
+.favs>span{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;background:rgba(255,210,63,.08);border:1px solid rgba(255,210,63,.35);font:600 14.5px/1.2 var(--f);color:#fff}
+.favs>span i{display:grid;place-items:center;color:var(--c)}
+.favs>span{border-color:color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 9%,transparent)}
 
 .rig{margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1)}
 .rig-h{margin:0 0 10px;font:700 12px/1 var(--f);letter-spacing:.14em;text-transform:uppercase;color:#ffd23f}
@@ -666,7 +666,7 @@ body:has(.viewer:not([hidden])) .jump{display:none}
   .hobbies{gap:8px}
   .hobbies li{padding:7px 12px 7px 7px;font-size:14px;gap:8px}
   .hb-ico{width:28px;height:28px;border-radius:8px}.hb-ico svg{width:17px;height:17px}
-  .favs span{padding:6px 11px;font-size:13.5px}
+  .favs>span{padding:6px 11px;font-size:13.5px}
 }
 
 /* More code: the card in focus gets an outline + glow in its own color (background stays green) */

@@ -16,6 +16,28 @@ from content_loader import (SITE, SITE_TEXT, ABOUT, FULL, PROJECTS, TECH, CARD_T
 
 DEPTH = 0  # set per page so local asset paths resolve
 
+# ---- visual-editor markers (assets/edit.js reads these; visitors never load the editor)
+import json as _json
+def E(path, ph=""):
+    """Editable text bound to a content field, e.g. E('site:hero_lead')."""
+    return f' data-e="{path}"' + (f' data-ph="{e(ph)}"' if ph else "")
+def L(path):
+    """Container of a reorderable list (items carry data-i)."""
+    return f' data-l="{path}"'
+def I(i):
+    return f' data-i="{i}"'
+def M(path, kind="image"):
+    """Replaceable media: kind image | art | video."""
+    return f' data-m="{path}" data-mk="{kind}"'
+def X(*fields):
+    """Extra settings shown in edit mode: (label, path, type[, options])."""
+    return f' data-x="{e(_json.dumps([list(f) for f in fields]))}"'
+def K(key, order_path):
+    """A block whose position is stored in a page-order list."""
+    return f' data-k="{key}" data-ok="{order_path}"'
+def colors(base):
+    return (("Main color", f"{base}.color_main", "color"), ("Dark color", f"{base}.color_deep", "color"), ("Accent color", f"{base}.color_accent", "color"))
+
 
 def thumb(i, w=1280):
     small = w <= 900
@@ -98,8 +120,8 @@ def footer(depth, peek=True):
     <p class="muted">Open to Unity and Unreal developer roles in Israel.</p>
   </div>
   <div class="contact-lines">
-    <div class="copyrow"><span class="email" id="email">{SITE['email']}</span><button class="btn ghost" type="button" data-copy="#email">Copy</button></div>
-    <span class="muted">{e(SITE['phone'])}</span>
+    <div class="copyrow"><span class="email" id="email"{E("site:email")}>{SITE['email']}</span><button class="btn ghost" type="button" data-copy="#email">Copy</button></div>
+    <span class="muted"{E("site:phone")}>{e(SITE['phone'])}</span>
     <div class="btns">
       <a class="btn" href="mailto:{SITE['email']}">Email me</a>
       <a class="btn ghost" href="{SITE['linkedin']}" target="_blank" rel="noopener">LinkedIn</a>
@@ -115,7 +137,7 @@ def footer(depth, peek=True):
   <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
 </div>
-<script src="{p}assets/site.js?v={ver('assets/site.js')}" defer></script>
+<script src="{p}assets/site.js?v={ver('assets/site.js')}" data-edit="{p}assets/edit.js?v={ver('assets/edit.js')}" defer></script>
 </body>
 </html>
 """
@@ -137,13 +159,13 @@ def more_attrs(text, href=""):
 FS_ICON = '<span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg></span>'
 
 
-def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False, more="", credit=""):
+def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False, more="", credit="", mpath=""):
     p = "../" * depth
     poster = f"{p}assets/posters/{file.replace('.mp4', '.jpg')}"
     if not (ROOT / "assets/posters" / file.replace(".mp4", ".jpg")).exists():
         poster = thumb(did, 960)
     src = f"{p}assets/clips/{file}" if has_clip(file) else ""
-    return (f'<button class="clip{" big" if big else ""}" type="button"{f' data-group="{group}"' if group else ""}{" data-still" if still else ""} data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}"{more}{credit} aria-label="Play video: {e(label)}">'
+    return (f'<button class="clip{" big" if big else ""}" type="button"{f' data-group="{group}"' if group else ""}{" data-still" if still else ""}{M(mpath, "video") if mpath else ""} data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}"{more}{credit} aria-label="Play video: {e(label)}">'
             f'<video muted loop playsinline preload="none" poster="{poster}"></video>'
             f'{FS_ICON}</button>')
 
@@ -255,15 +277,15 @@ def peek(path, n=9):
 
 def more_code_html():
     cards = "".join(
-        f'<a class="repo" id="c-{cp["slug"]}" href="code/{cp["slug"]}.html" style="--deep:{cp["theme"][0]};--mid:{cp["theme"][1]};--accent:{cp["theme"][2]}"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>{e(cp["code"][0][0])}</span>'
-        f'<span class="repo-body"><span class="repo-title">{e(cp["title"])}</span><span class="repo-tech">{"".join(f"<span>{e(x)}</span>" for x in cp["tech"][:4])}</span>'
-        f'<span class="repo-desc">{e(cp["hook"])}</span><span class="more">See the code →</span></span>'
+        f'<a class="repo"{I(ci)} id="c-{cp["slug"]}" href="code/{cp["slug"]}.html" style="--deep:{cp["theme"][0]};--mid:{cp["theme"][1]};--accent:{cp["theme"][2]}"><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span>{e(cp["code"][0][0])}</span>'
+        f'<span class="repo-body"><span class="repo-title"{E(f"code-pages:{ci}.title")}>{e(cp["title"])}</span><span class="repo-tech">{"".join(f"<span>{e(x)}</span>" for x in cp["tech"][:4])}</span>'
+        f'<span class="repo-desc"{E(f"code-pages:{ci}.hook")}>{e(cp["hook"])}</span><span class="more">See the code →</span></span>'
         f'<span class="repo-peek" aria-hidden="true"><pre><code>{peek(cp["code"][0][1])}</code></pre></span></a>'
-        for cp in CODE_PAGES)
-    return f"""<section class="band more-code" id="more-code">
+        for ci, cp in enumerate(CODE_PAGES))
+    return f"""<section class="band more-code" id="more-code"{K("more_code", "site:section_order")}>
   <div class="wrap">
-    <div class="sec-head"><h2><span class="h-ico" style="--c:#9be15d">{ICON_CODE}</span>More code</h2><p class="muted">{e(SITE_TEXT["more_code_intro"])}</p></div>
-    <div class="repos">{cards}</div>
+    <div class="sec-head"><h2><span class="h-ico" style="--c:#9be15d">{ICON_CODE}</span>More code</h2><p class="muted"{E("site:more_code_intro")}>{e(SITE_TEXT["more_code_intro"])}</p></div>
+    <div class="repos"{L("code-pages")}>{cards}</div>
   </div>
 </section>
 """
@@ -290,7 +312,7 @@ def timeline_html():
     out = []
     for i, t in enumerate(items):
         now = i == len(items) - 1 and not SITE_TEXT.get("job_end")
-        out.append(f'<li{" class=\"tl-now\"" if now else ""}><span class="when">{e(t["when"])}</span><b>{e(t["title"])}</b><span class="muted">{e(t["text"])}</span></li>')
+        out.append(f'<li{" class=\"tl-now\"" if now else ""}{I(i)}><span class="when"{E(f"site:timeline.{i}.when")}>{e(t["when"])}</span><b{E(f"site:timeline.{i}.title")}>{e(t["title"])}</b><span class="muted"{E(f"site:timeline.{i}.text")}>{e(t["text"])}</span></li>')
     return "".join(out)
 
 ICONS_22 = {  # icon choices for hobbies and games in the editor
@@ -318,27 +340,28 @@ def _icon(name, size):
             f'stroke-width="{1.9 if size > 18 else 2}" stroke-linecap="round" stroke-linejoin="round">{body}</svg>')
 
 def about_html():
-    I = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
-    cards = "".join(f'<li style="--c:{h["color"]}"><span class="hb-ico">{_icon(h["icon"], 22)}</span>{e(h["name"])}</li>' for h in ABOUT["hobbies"])
-    favs = "".join(f'<span style="--c:{g["color"]}"><i>{_icon(g["icon"], 16)}</i>{e(g["name"])}</span>' for g in ABOUT["games"])
-    chips = "".join(f'<span>{e(t)}</span>' for t in ABOUT["ai_tools"])
-    rig = "".join(f'<li><b>{e(r["part"])}</b>{e(r["value"])}</li>' for r in ABOUT["rig"])
-    return f"""<section class="band about" id="about">
+    SV = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
+    ICN = list(ICONS_22)
+    cards = "".join(f'<li style="--c:{h["color"]}"{I(i)}{X(("Icon", f"about:hobbies.{i}.icon", "select", ICN), ("Color", f"about:hobbies.{i}.color", "color"))}><span class="hb-ico">{_icon(h["icon"], 22)}</span><span{E(f"about:hobbies.{i}.name")}>{e(h["name"])}</span></li>' for i, h in enumerate(ABOUT["hobbies"]))
+    favs = "".join(f'<span style="--c:{g["color"]}"{I(i)}{X(("Icon", f"about:games.{i}.icon", "select", ICN), ("Color", f"about:games.{i}.color", "color"))}><i>{_icon(g["icon"], 16)}</i><span{E(f"about:games.{i}.name")}>{e(g["name"])}</span></span>' for i, g in enumerate(ABOUT["games"]))
+    chips = "".join(f'<span{I(i)}{E(f"about:ai_tools.{i}")}>{e(t)}</span>' for i, t in enumerate(ABOUT["ai_tools"]))
+    rig = "".join(f'<li{I(i)}><b{E(f"about:rig.{i}.part")}>{e(r["part"])}</b><span{E(f"about:rig.{i}.value")}>{e(r["value"])}</span></li>' for i, r in enumerate(ABOUT["rig"]))
+    return f"""<section class="band about" id="about"{K("about", "site:section_order")}>
   <div class="wrap about-grid">
     <div>
-      <div class="sec-head"><h2><span class="h-ico" style="--c:#ff9f5a">{I}<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Get to know me</h2></div>
-      <p class="muted">{e(ABOUT["intro"])}</p>
-      <ul class="hobbies">{cards}</ul>
+      <div class="sec-head"><h2><span class="h-ico" style="--c:#ff9f5a">{SV}<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Get to know me</h2></div>
+      <p class="muted"{E("about:intro")}>{e(ABOUT["intro"])}</p>
+      <ul class="hobbies"{L("about:hobbies")}>{cards}</ul>
       <p class="fav-h">Favorite games</p>
-      <div class="favs">{favs}</div>
+      <div class="favs"{L("about:games")}>{favs}</div>
     </div>
     <div class="ai-card">
-      <p class="kicker">{e(ABOUT["ai_kicker"])}</p>
-      <h3>{e(ABOUT["ai_title"])}</h3>
-      <p class="muted">{e(ABOUT["ai_text"])}</p>
-      <div class="ai-tools">{chips}</div>
-      <details class="rig" data-open-wide><summary class="rig-h">{e(ABOUT["rig_title"])}</summary>
-        <ul>{rig}</ul><p class="rig-note">{e(ABOUT["rig_note"])}</p></details>
+      <p class="kicker"{E("about:ai_kicker")}>{e(ABOUT["ai_kicker"])}</p>
+      <h3{E("about:ai_title")}>{e(ABOUT["ai_title"])}</h3>
+      <p class="muted"{E("about:ai_text")}>{e(ABOUT["ai_text"])}</p>
+      <div class="ai-tools"{L("about:ai_tools")}>{chips}</div>
+      <details class="rig" data-open-wide><summary class="rig-h"><span{E("about:rig_title")}>{e(ABOUT["rig_title"])}</span></summary>
+        <ul{L("about:rig")}>{rig}</ul><p class="rig-note"{E("about:rig_note")}>{e(ABOUT["rig_note"])}</p></details>
     </div>
   </div>
 </section>
@@ -397,13 +420,13 @@ def build_index():
     DEPTH = 0
     tiles = []
     for i, pj in enumerate(PROJECTS):
-        tiles.append(f"""<a class="ptile" id="p-{pj['slug']}" href="projects/{pj['slug']}.html" data-mid="{pj['theme'][1]}" data-deep="{pj['theme'][0]}" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
-  <span class="ptile-img"><img loading="lazy" onerror="this.style.visibility='hidden'" src="{thumb(pj['cover'], 900)}" alt="{e(pj['title'])} screenshot">{f'<img class="peek" loading="lazy" src="assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}</span>
+        tiles.append(f"""<a class="ptile"{I(i)}{X(("Page address (lowercase-with-dashes)", f"projects:{i}.slug", "text"), *colors(f"projects:{i}"))} id="p-{pj['slug']}" href="projects/{pj['slug']}.html" data-mid="{pj['theme'][1]}" data-deep="{pj['theme'][0]}" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
+  <span class="ptile-img"><img loading="lazy"{M(f"projects:{i}.cover")} onerror="this.style.visibility='hidden'" src="{thumb(pj['cover'], 900)}" alt="{e(pj['title'])} screenshot">{f'<img class="peek"{M(f"projects:{i}.mascot", "art")} loading="lazy" src="assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}</span>
   <span class="ptile-body">
-    <span class="kicker">{e(pj['engine'])}</span>
-    <span class="role-tag">{e(CARD_ROLE[pj['slug']])}</span>
-    <span class="ptile-title">{e(pj['title'])}</span>
-    <span class="ptile-hook tech">{e(CARD_TECH[pj['slug']])}</span>
+    <span class="kicker"{E(f"projects:{i}.engine")}>{e(pj['engine'])}</span>
+    <span class="role-tag"{E(f"projects:{i}.card_role")}>{e(CARD_ROLE[pj['slug']])}</span>
+    <span class="ptile-title"{E(f"projects:{i}.title")}>{e(pj['title'])}</span>
+    <span class="ptile-hook tech"{E(f"projects:{i}.card_tech")}>{e(CARD_TECH[pj['slug']])}</span>
     <span class="more">View project →</span>
   </span>
 </a>""")
@@ -421,11 +444,11 @@ def build_index():
     html += f"""<section class="hero" id="top">
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
-    <p class="kicker">{e(SITE_TEXT["hero_kicker"])}</p>
+    <p class="kicker"{E("site:hero_kicker")}>{e(SITE_TEXT["hero_kicker"])}</p>
     <h1>Roee Tal</h1>
-    <p class="lead">{e(SITE_TEXT["hero_lead"])}</p>
+    <p class="lead"{E("site:hero_lead")}>{e(SITE_TEXT["hero_lead"])}</p>
     <div class="btns">
-      <button class="btn" type="button" {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}>▶ Watch showreel</button>
+      <button class="btn" type="button"{M("site:showreel_video", "video")} {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}>▶ Watch showreel</button>
     </div>
     <nav class="hero-links" aria-label="Jump to">
       <a href="#now" style="--c:#38b6ff">{ICON_BRIEF}Experience</a>
@@ -437,14 +460,14 @@ def build_index():
 </section>
 """
     blocks = {}
-    blocks["experience"] = f"""<section class="band now" id="now">
+    blocks["experience"] = f"""<section class="band now" id="now"{K("experience", "site:section_order")}>
   <div class="wrap now-grid">
     <div class="now-copy">
       <p class="kicker exp-kicker"><span class="h-ico" style="--c:#38b6ff">{ICON_BRIEF}</span>Experience · {job_dates()}{job_live()}</p>
-      <h2>{e(SITE_TEXT["job_title"])}</h2>
-      <p class="muted">{e(SITE_TEXT["job_subtitle"])}</p>
+      <h2{E("site:job_title")}>{e(SITE_TEXT["job_title"])}</h2>
+      <p class="muted"{E("site:job_subtitle")}>{e(SITE_TEXT["job_subtitle"])}</p>
       <div class="tools"><span class="tool ue"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 0a12 12 0 1012 12A12 12 0 0012 0zm0 23.52A11.52 11.52 0 1123.52 12 11.52 11.52 0 0112 23.52zm7.13-9.791c-.206.997-1.126 3.557-4.06 4.942l-1.179-1.325-1.988 2a7.338 7.338 0 01-5.804-2.978 2.859 2.859 0 00.65.123c.326.006.678-.114.678-.66v-5.394a.89.89 0 00-1.116-.89c-.92.212-1.656 2.509-1.656 2.509a7.304 7.304 0 012.528-5.597 7.408 7.408 0 013.73-1.721c-1.006.573-1.57 1.507-1.57 2.29 0 1.262.76 1.109.984.923v7.28a1.157 1.157 0 00.148.256 1.075 1.075 0 00.88.445c.76 0 1.747-.868 1.747-.868V9.172c0-.6-.452-1.324-.905-1.572 0 0 .838-.149 1.484.346a5.537 5.537 0 01.387-.425c1.508-1.48 2.929-1.902 4.112-2.112 0 0-2.151 1.69-2.151 3.96 0 1.687.043 5.801.043 5.801.799.771 1.986-.342 3.059-1.441Z"/></svg>Unreal Engine 5</span><span class="tool bpi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="3" width="8" height="6" rx="1.6" fill="currentColor"/><rect x="14.5" y="8.5" width="8" height="6" rx="1.6" fill="currentColor"/><rect x="1.5" y="15" width="8" height="6" rx="1.6" fill="currentColor" opacity=".75"/><path d="M9.5 6c3 0 2 5.5 5 5.5M9.5 18c3 0 2-6.5 5-6.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Blueprints</span><span class="tool cs"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.0283 10.216c-.3959 0-.7785.22-1.0792.6168l-3.7755 4.994c-.625.8275-1.5128 1.3012-2.4355 1.3012h-.0143c-.9236 0-1.8115-.4737-2.4355-1.3012l-3.7754-4.994c-.2998-.3969-.6823-.6168-1.0802-.6168-.3949 0-.7795.22-1.0781.6168l-3.7765 4.994c-.621.8204-1.4996 1.294-2.414 1.3012C3.088 21.186 7.2113 24 12.0004 24 18.6268 24 24 18.6276 24 12.001c0-.4705-.0338-.9308-.086-1.382-.2638-.2598-.5697-.403-.8857-.403m-7.019-2.5972c-.6936 0-1.2542-.5616-1.2542-1.2541s.5606-1.2541 1.2541-1.2541c.6925 0 1.254.5616 1.254 1.254s-.5615 1.2542-1.254 1.2542M12.0005 0C5.3732 0 0 5.3714 0 12.001c0 1.0536.1504 2.0704.406 3.0463.2272.175.4788.2762.7366.2762.3979 0 .7804-.2189 1.0812-.6138l3.7754-4.996c.623-.8285 1.5129-1.3021 2.4335-1.3021.9226 0 1.8095.4736 2.4355 1.3021l3.6323 4.8037.1565.1923c.2997.3939.6812.6107 1.074.6138.3918-.003.7743-.22 1.072-.6138l.1595-.1923 3.6323-4.8037c.624-.8285 1.5118-1.3021 2.4335-1.3021.1462 0 .2935.0163.4367.0388C21.9522 3.5557 17.3922 0 12.0005 0"/></svg>Cesium for Unreal</span></div>
-      <ul class="ticks">{''.join(f'<li>{e(b)}</li>' for b in SITE_TEXT["job_bullets"])}</ul>
+      <ul class="ticks"{L("site:job_bullets")}>{''.join(f'<li{I(i)}{E(f"site:job_bullets.{i}")}>{e(b)}</li>' for i, b in enumerate(SITE_TEXT["job_bullets"]))}</ul>
     </div>
     <figure class="bp">
       <div class="win-bar"><span class="win-ico" aria-hidden="true"></span><span class="win-title">BP_ApartmentTour (illustration)</span><span class="win-ctl" aria-hidden="true"><i>&#x2212;</i><i>&#x25A1;</i><i class="x">&#x2715;</i></span></div>
@@ -455,23 +478,23 @@ def build_index():
     </figure>
   </div>
   <div class="wrap">
-    <ol class="timeline">
+    <ol class="timeline"{L("site:timeline")}>
       {timeline_html()}
       <li class="tl-next"><span class="when">Next</span><b>Your team?</b><a class="muted" href="#contact">Open to Unity and Unreal roles →</a></li>
     </ol>
   </div>
 </section>
 """
-    blocks["projects"] = f"""<section class="band blue palette-band" id="projects">
+    blocks["projects"] = f"""<section class="band blue palette-band" id="projects"{K("projects", "site:section_order")}>
   <div class="wrap">
-    <div class="sec-head"><h2><span class="h-ico" style="--c:#ffd23f">{ICON_PAD}</span>Projects</h2><p class="muted">{e(SITE_TEXT["projects_intro"])}</p></div>
-    <div class="ptiles">{''.join(tiles)}</div>
+    <div class="sec-head"><h2><span class="h-ico" style="--c:#ffd23f">{ICON_PAD}</span>Projects</h2><p class="muted"{E("site:projects_intro")}>{e(SITE_TEXT["projects_intro"])}</p></div>
+    <div class="ptiles"{L("projects")}>{''.join(tiles)}</div>
   </div>
 </section>
 """
     blocks["more_code"] = more_code_html()
     blocks["about"] = about_html()
-    blocks["gallery_lab"] = f"""<section class="band lab-teaser" id="gallery-lab">
+    blocks["gallery_lab"] = f"""<section class="band lab-teaser" id="gallery-lab"{K("gallery_lab", "site:section_order")}>
   {mosaic}
   <div class="wrap lab-row">
     <div><h2>Gallery &amp; lab</h2><p class="muted">Every clip, screenshot and character in one place, plus shaders, mini-games and other things I built to learn how they work.</p></div>
@@ -529,34 +552,35 @@ def highlight_cs(code):
     out.append(html.escape(code[last:]))
     return "".join(out)
 
-def code_section(pj):
+def code_section(pj, base=""):
     if pj["slug"] not in SNIPPETS:
         return ""
     name, url, path = SNIPPETS[pj["slug"]]
     code = (ROOT / path).read_text().rstrip()
     return (f'<section class="mech-sec code-sec" id="code"><h2>Code sample</h2>'
-            f'<figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>{e(name)}</span>'
-            f'</figcaption><pre><code>{highlight_cs(code)}</code></pre></figure>'
+            f'<figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span{E(base + ".code_sample.file_label")}>{e(name)}</span>'
+            f'</figcaption><pre><code{E(base + ".code_sample.code")} data-code>{highlight_cs(code)}</code></pre></figure>'
             f'<p class="muted small center">Trimmed and commented for this page.</p></section>')
 
-def code_figure(name, path):
+def code_figure(name, path, base="", idx=0):
     code = (ROOT / path).read_text().rstrip()
-    return (f'<figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>{e(name)}</span></figcaption>'
-            f'<pre><code>{highlight_cs(code)}</code></pre></figure>')
+    return (f'<figure class="code"{I(idx)}><figcaption><span class="dots"><i></i><i></i><i></i></span><span{E(f"{base}.code.{idx}.file_label")}>{e(name)}</span></figcaption>'
+            f'<pre><code{E(f"{base}.code.{idx}.code")} data-code>{highlight_cs(code)}</code></pre></figure>')
 
 def build_code_page(i, cp):
     global DEPTH
     depth = DEPTH = 1
     nxt = CODE_PAGES[i + 1] if i + 1 < len(CODE_PAGES) else None
-    flow = '<div class="flow">' + '<span class="flow-arrow" aria-hidden="true">→</span>'.join(
-        f'<div class="flow-step"><b>{e(a)}</b><span>{e(b)}</span></div>' for a, b in cp["flow"]) + '</div>'
+    B = f"code-pages:{i}"
+    flow = f'<div class="flow"{L(B + ".flow")}>' + '<span class="flow-arrow" aria-hidden="true">→</span>'.join(
+        f'<div class="flow-step"{I(j)}><b{E(f"{B}.flow.{j}.name")}>{e(a)}</b><span{E(f"{B}.flow.{j}.note")}>{e(b)}</span></div>' for j, (a, b) in enumerate(cp["flow"])) + '</div>'
     media = ""
     if cp.get("clip"):
         lbl, cap, f, d = cp["clip"]
-        media = f'<section class="mech-sec" id="action"><h2>In action</h2><div class="mech-grid n1"><figure class="mech">{clip_tile(lbl, f, d, depth, big=True, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure></div></section>'
-    codes = "".join(code_figure(n, pth) for n, pth in cp["code"])
-    cb = {"flow": f'<section class="mech-sec" id="flow"><h2>How it fits together</h2>{flow}</section>', "clip": media,
-          "code": f'<section class="mech-sec code-sec" id="the-code"><h2>The code</h2>{codes}<p class="muted small center">Trimmed and commented for this page.</p></section>'}
+        media = f'<section class="mech-sec" id="action"{K("clip", B + ".page_order")}><h2>In action</h2><div class="mech-grid n1"><figure class="mech">{clip_tile(lbl, f, d, depth, big=True, cap=cap, mpath=B + ".clip.video")}<figcaption><b{E(B + ".clip.label")}>{e(lbl)}</b> <span{E(B + ".clip.caption")}>{e(cap)}</span></figcaption></figure></div></section>'
+    codes = "".join(code_figure(n, pth, B, ix) for (n, pth), ix in zip(cp["code"], cp["code_idx"]))
+    cb = {"flow": f'<section class="mech-sec" id="flow"{K("flow", B + ".page_order")}><h2>How it fits together</h2>{flow}</section>', "clip": media,
+          "code": f'<section class="mech-sec code-sec" id="the-code"{K("code", B + ".page_order")}{L(B + ".code")}><h2>The code</h2>{codes}<p class="muted small center">Trimmed and commented for this page.</p></section>'}
     corder = [k for k in cp.get("page_order", []) if k in cb]
     corder += [k for k in cb if k not in corder]
     code_blocks = "\n".join(cb[k] for k in corder)
@@ -567,24 +591,24 @@ def build_code_page(i, cp):
                        ("#flow", "How it fits together", acc, "sub", "")]
                       + ([("#action", "In action", acc, "sub", "")] if cp.get("clip") else [])
                       + [("#the-code", "The code", acc, "sub", ""), ("#next", "Next", acc, "sub", "")], depth, site_jump(depth))
-    html += f"""<section class="phero short code-hero" id="top">
-  <div class="wrap phero-copy"><p class="kicker">More code · {e(cp['lang'])}</p><h1>{e(cp['title'])}</h1><p class="lead">{e(cp['sub'])}</p></div>
+    html += f"""<section class="phero short code-hero" id="top"{X(*colors(B))}>
+  <div class="wrap phero-copy"><p class="kicker">More code · <span{E(B + ".language")}>{e(cp['lang'])}</span></p><h1{E(B + ".title")}>{e(cp['title'])}</h1><p class="lead"{E(B + ".subtitle")}>{e(cp['sub'])}</p></div>
   {WAVE}
 </section>
 <div class="project">
   <section class="wrap intro" id="built">
     <div class="intro-text">
-      <p class="hook">{e(cp['hook'])}</p>
+      <p class="hook"{E(B + ".hook")}>{e(cp['hook'])}</p>
       <h3 class="kicker">What I built</h3>
-      <ul class="ticks">{''.join(f'<li>{e(d)}</li>' for d in cp['did'])}</ul>
+      <ul class="ticks"{L(B + ".what_i_built")}>{''.join(f'<li{I(j)}{E(f"{B}.what_i_built.{j}")}>{e(d)}</li>' for j, d in enumerate(cp['did']))}</ul>
       <h3 class="kicker">Tech &amp; principles</h3>
-      <div class="techs">{''.join(f'<span>{e(t)}</span>' for t in cp['tech'])}</div>
+      <div class="techs"{L(B + ".tech")}>{''.join(f'<span{I(j)}{E(f"{B}.tech.{j}")}>{e(t)}</span>' for j, t in enumerate(cp['tech']))}</div>
     </div>
     <dl class="facts">
-      <div><dt>Role</dt><dd>{e(cp['role'])}</dd></div>
-      <div><dt>Language</dt><dd>{e(cp['lang'])}</dd></div>
-      <div><dt>When</dt><dd>{e(cp['when'])}</dd></div>
-      {f"<div><dt>Context</dt><dd>{e(cp['context'])}</dd></div>" if cp['context'] else ''}
+      <div><dt>Role</dt><dd{E(B + ".role")}>{e(cp['role'])}</dd></div>
+      <div><dt>Language</dt><dd{E(B + ".language")}>{e(cp['lang'])}</dd></div>
+      <div><dt>When</dt><dd{E(B + ".when")}>{e(cp['when'])}</dd></div>
+      <div{'' if cp['context'] else ' hidden data-edit-show'}><dt>Context</dt><dd{E(B + ".context")}>{e(cp['context'])}</dd></div>
     </dl>
   </section>
   <div class="wrap">
@@ -608,35 +632,40 @@ def build_project(i, pj):
     sections = []
     first = True
     layouts = pj.get("layouts", [])
+    B = f"projects:{i}"
     for title, intro, clips in pj["sections"]:
+        S = f"{B}.sections.{len(sections)}"
         sec_more = more_attrs(more_text(pj, (title, intro)))
         tiles = "".join(
-            f'<figure class="mech">{clip_tile(lbl, f, d, depth, big=(len(clips) == 1), cap=cap, more=sec_more, credit=credit_attr(pj['slug']))}<figcaption><b>{e(lbl)}</b>{(" " + e(cap)) if cap else ""}</figcaption></figure>'
-            for lbl, cap, f, d in clips)
-        sections.append(f"""<section class="mech-sec" id="s{len(sections)+1}">
-  <h2>{e(title)}</h2>{f'<p class="muted center">{e(intro)}</p>' if intro else ''}
-  <div class="mech-grid n{grid_cols(layouts[len(sections)], len(clips))}">{tiles}</div>
+            f'<figure class="mech"{I(j)}>{clip_tile(lbl, f, d, depth, big=(len(clips) == 1), cap=cap, more=sec_more, credit=credit_attr(pj['slug']), mpath=f"{S}.clips.{j}.video")}<figcaption><b{E(f"{S}.clips.{j}.label")}>{e(lbl)}</b> <span{E(f"{S}.clips.{j}.caption", "caption")}>{e(cap)}</span></figcaption></figure>'
+            for j, (lbl, cap, f, d) in enumerate(clips))
+        sections.append(f"""<section class="mech-sec" id="s{len(sections)+1}"{I(len(sections))}{X(("Clip layout", S + ".layout", "select", ["auto", "one-big", "two", "three"]))}>
+  <h2{E(S + ".title")}>{e(title)}</h2><p class="muted center"{E(S + ".intro", "intro (optional)")}{'' if intro else ' hidden data-edit-show'}>{e(intro)}</p>
+  <div class="mech-grid n{grid_cols(layouts[len(sections)], len(clips))}"{L(S + ".clips")}>{tiles}</div>
 </section>""")
         first = False
     shots = ""
     if pj["shots"]:
-        shots = '<section class="mech-sec" id="shots"><h2>Screenshots</h2><div class="shots">' + "".join(
-            f'<button class="zoom" type="button" data-full="{thumb(s, 2000)}" data-group="shots" data-title="Screenshot" data-cap="{e(SHOT_CAPS.get(s, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge screenshot"><img loading="lazy" onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s in pj["shots"]) + "</div></section>"
+        shots = f'<section class="mech-sec" id="shots"><h2>Screenshots</h2><div class="shots"{L(B + ".screenshots")}>' + "".join(
+            f'<button class="zoom" type="button"{I(si)}{X(("Caption", f"{B}.screenshots.{si}.caption", "text"))} data-full="{thumb(s, 2000)}" data-group="shots" data-title="Screenshot" data-cap="{e(SHOT_CAPS.get(s, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge screenshot"><img loading="lazy"{M(f"{B}.screenshots.{si}.image")} onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s, si in zip(pj["shots"], pj["shot_idx"])) + "</div></section>"
     full = ""
     if pj["full"]:
-        full = f'<section class="mech-sec center" id="full"><h2>Full video showcase</h2><button class="btn" type="button" {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}{credit_attr(pj['slug'])}>▶ Play full video</button></section>'
+        full = f'<section class="mech-sec center" id="full"><h2>Full video showcase</h2><button class="btn" type="button"{M(B + ".full_video", "video")} {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}{credit_attr(pj['slug'])}>▶ Play full video</button></section>'
     cast = ""
     if pj.get("cast"):
-        cast = '<section class="mech-sec" id="characters"><h2>Characters</h2><div class="cast">' + "".join(
-            f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
+        cast = f'<section class="mech-sec" id="characters"><h2>Characters</h2><div class="cast"{L(B + ".characters")}>' + "".join(
+            f'<figure{I(ci)}{X(("Caption", f"{B}.characters.{ci}.caption", "text"))}><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge: {e(c)}"><img loading="lazy"{M(f"{B}.characters.{ci}.image", "art")} src="../assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button><figcaption{E(f"{B}.characters.{ci}.name")}>{e(c)}</figcaption></figure>' for (f, c), ci in zip(pj["cast"], pj["cast_idx"])) + "</div></section>"
+    PO = B + ".page_order"
+    def blk(key, inner, cls="wrap"):
+        return f'<div class="{cls}"{K(key, PO)}>{inner}</div>' if inner else ""
     pb = {
-        "code_sample": f'<div class="wrap">{code_section(pj)}</div>',
-        "clips": f'<div class="wrap">{"".join(sections)}</div>',
-        "screenshots": f'<div class="wrap">{shots}</div>',
-        "full_video": f'<div class="wrap">{full}</div>',
-        "about": f'<section class="wrap about-game" id="about-project"><h2>About the project</h2>{"".join(f"<p>{e(a)}</p>" for a in pj["about"])}</section>',
-        "characters": f'<div class="wrap">{cast}</div>',
-        "credits": (f'<div class="wrap credits"><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span><b>Credits.</b> {e(ART_NOTES[pj["slug"]])}</span></p></div>' if pj["slug"] in ART_NOTES else ""),
+        "code_sample": blk("code_sample", code_section(pj, B)),
+        "clips": f'<div class="wrap"{K("clips", PO)}{L(B + ".sections")}>{"".join(sections)}</div>' if sections else "",
+        "screenshots": blk("screenshots", shots),
+        "full_video": blk("full_video", full),
+        "about": f'<section class="wrap about-game" id="about-project"{K("about", PO)}{L(B + ".about")}><h2>About the project</h2>{"".join(f"<p{I(j)}{E(f'{B}.about.{j}')}>{e(a)}</p>" for j, a in enumerate(pj["about"]))}</section>',
+        "characters": blk("characters", cast),
+        "credits": (f'<div class="wrap credits"{K("credits", PO)}><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span><b>Credits.</b> <span{E(B + ".credits")}>{e(ART_NOTES[pj["slug"]])}</span></span></p></div>' if pj["slug"] in ART_NOTES else ""),
     }
     order = [k for k in pj.get("page_order", []) if k in pb]
     order += [k for k in pb if k not in order]
@@ -653,13 +682,13 @@ def build_project(i, pj):
     if pj.get("cast"): items.append(("#characters", "Characters", acc, "sub", ""))
     items.append(("#next", "Next project", acc, "sub", ""))
     html += jump_menu(items, depth, site_jump(depth))
-    html += f"""<section class="phero" id="top">
-  <img class="phero-bg" onerror="this.remove()" src="{thumb(pj['cover'], 1800)}" alt="">
-  {f'<img class="mascot" src="../assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}
+    html += f"""<section class="phero" id="top"{X(*colors(B), ("Cover image", B + ".cover", "image"), ("Character cut-out (transparent PNG)", B + ".mascot", "art"), ("Square image for 'Next project'", B + ".next_card_image", "art"), ("Full video", B + ".full_video", "video"))}>
+  <img class="phero-bg"{M(B + ".cover")} onerror="this.remove()" src="{thumb(pj['cover'], 1800)}" alt="">
+  {f'<img class="mascot"{M(B + ".mascot", "art")} src="../assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}
   <div class="wrap phero-copy">
-    <p class="kicker">{e(pj['engine'])}</p>
-    <h1>{e(pj['title'])}</h1>
-    <p class="lead">{e(pj['sub'])}</p>
+    <p class="kicker"{E(B + ".engine")}>{e(pj['engine'])}</p>
+    <h1{E(B + ".title")}>{e(pj['title'])}</h1>
+    <p class="lead"{E(B + ".subtitle")}>{e(pj['sub'])}</p>
   </div>
   {WAVE}
 </section>
@@ -667,18 +696,18 @@ def build_project(i, pj):
 <div class="project">
   <section class="wrap intro" id="built">
     <div class="intro-text">
-      <p class="hook">{e(pj['hook'])}</p>
+      <p class="hook"{E(B + ".hook")}>{e(pj['hook'])}</p>
       <h3 class="kicker">What I built</h3>
-      <ul class="ticks">{''.join(f'<li>{e(d)}</li>' for d in pj['did'])}</ul>
-      {f'<h3 class="kicker">The rest of the engine (my teammates)</h3><ul class="ticks team">' + ''.join(f'<li>{e(d)}</li>' for d in pj['did_team']) + '</ul>' if pj.get('did_team') else ''}
+      <ul class="ticks"{L(B + ".what_i_built")}>{''.join(f'<li{I(j)}{E(f"{B}.what_i_built.{j}")}>{e(d)}</li>' for j, d in enumerate(pj['did']))}</ul>
+      {f'<h3 class="kicker">The rest of the engine (my teammates)</h3><ul class="ticks team"{L(B + ".teammates_built")}>' + ''.join(f'<li{I(j)}{E(f"{B}.teammates_built.{j}")}>{e(d)}</li>' for j, d in enumerate(pj['did_team'])) + '</ul>' if pj.get('did_team') else ''}
       <h3 class="kicker">Tech &amp; principles</h3>
-      <div class="techs">{''.join(f'<span>{e(t)}</span>' for t in TECH[pj['slug']])}</div>
+      <div class="techs"{L(B + ".tech")}>{''.join(f'<span{I(j)}{E(f"{B}.tech.{j}")}>{e(t)}</span>' for j, t in enumerate(TECH[pj['slug']]))}</div>
     </div>
     <dl class="facts">
-      <div><dt>Role</dt><dd>{e(pj['role'])}</dd></div>
-      <div><dt>Engine</dt><dd>{e(pj['engine'])}</dd></div>
-      <div><dt>When</dt><dd>{e(pj['when'])}</dd></div>
-      <div><dt>Context</dt><dd>{e(pj['context'])}</dd></div>
+      <div><dt>Role</dt><dd{E(B + ".role")}>{e(pj['role'])}</dd></div>
+      <div><dt>Engine</dt><dd{E(B + ".engine")}>{e(pj['engine'])}</dd></div>
+      <div><dt>When</dt><dd{E(B + ".when")}>{e(pj['when'])}</dd></div>
+      <div><dt>Context</dt><dd{E(B + ".context")}>{e(pj['context'])}</dd></div>
     </dl>
   </section>
   {page_blocks}
@@ -693,8 +722,11 @@ def build_project(i, pj):
 def build_lab():
     global DEPTH
     DEPTH = 0
-    tiles = "".join(f'<figure class="mech">{clip_tile(lbl, f, d, 0, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure>' for lbl, f, d, cap in LAB)
-    early = "".join(f'<figure class="mech">{clip_tile(lbl, f, d, 0, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure>' for lbl, f, d, cap in EARLY)
+    def labfig(fn, j, lbl, f, d, cap):
+        return (f'<figure class="mech"{I(j)}>{clip_tile(lbl, f, d, 0, cap=cap, mpath=f"{fn}:{j}.video")}'
+                f'<figcaption><b{E(f"{fn}:{j}.label")}>{e(lbl)}</b> <span{E(f"{fn}:{j}.caption")}>{e(cap)}</span></figcaption></figure>')
+    tiles = "".join(labfig("lab", j, *t) for j, t in enumerate(LAB))
+    early = "".join(labfig("early-work", j, *t) for j, t in enumerate(EARLY))
     html = head("The Lab — Roee Tal", "Shaders, systems and course experiments by Roee Tal.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
     html += topbar(0, "lab")
     html += jump_menu([("#top", "The lab", "#ffd23f", "", J_FLASK), ("#experiments", "Experiments", "#ffd23f", "sub", ""),
@@ -703,8 +735,8 @@ def build_lab():
   <div class="wrap phero-copy"><p class="kicker">Experiments</p><h1>The lab</h1><p class="lead">Small things I built to learn how they work: shaders, engines, UI and mini-games.</p></div>
   {WAVE}
 </section>
-<div class="project"><div class="wrap"><section class="mech-sec" id="experiments"><div class="mech-grid n3">{tiles}</div></section>
-<section class="mech-sec appendix" id="early"><p class="kicker">Appendix</p><h2>Early work</h2><p class="muted center">Where I started: small first projects and exercises, kept here for the record.</p><div class="mech-grid n3">{early}</div></section></div></div>
+<div class="project"><div class="wrap"><section class="mech-sec" id="experiments"><div class="mech-grid n3"{L("lab")}>{tiles}</div></section>
+<section class="mech-sec appendix" id="early"><p class="kicker">Appendix</p><h2>Early work</h2><p class="muted center">Where I started: small first projects and exercises, kept here for the record.</p><div class="mech-grid n3"{L("early-work")}>{early}</div></section></div></div>
 """
     html += footer(0)
     (ROOT / "lab.html").write_text(html)

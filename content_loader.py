@@ -156,17 +156,17 @@ SHOT_CAPS, CAST_CAPS, ART_NOTES, NEXT_CARD, SNIPPETS = {}, {}, {}, {}, {}
 ART_CREDIT_SLUGS, TEAM_BUILT = set(), set()
 for p in _load("projects.json"):
     s = p["slug"]
-    shots = []
-    for sh in p.get("screenshots", []):
+    shots, shot_idx = [], []
+    for j, sh in enumerate(p.get("screenshots", [])):
         k = image_key(sh.get("image"))
         if k:
-            shots.append(k)
+            shots.append(k); shot_idx.append(j)
             SHOT_CAPS[k] = sh.get("caption", "")
-    cast = []
-    for ch in p.get("characters", []):
+    cast, cast_idx = [], []
+    for j, ch in enumerate(p.get("characters", [])):
         k = art_key(ch.get("image"))
         if k:
-            cast.append((k, ch.get("name", "")))
+            cast.append((k, ch.get("name", ""))); cast_idx.append(j)
             CAST_CAPS[k] = ch.get("caption", "")
     full_key = ""
     fv = full_video(p.get("full_video"))
@@ -182,7 +182,7 @@ for p in _load("projects.json"):
         hook=p.get("hook", ""), about=p.get("about", []), did=p.get("what_i_built", []), did_team=p.get("teammates_built", []),
         sections=[(sec.get("title", ""), sec.get("intro", ""), [_clip_tuple(c) for c in sec.get("clips", [])])
                   for sec in p.get("sections", [])],
-        full=full_key or None, shots=shots, cast=cast,
+        full=full_key or None, shots=shots, cast=cast, shot_idx=shot_idx, cast_idx=cast_idx,
         layouts=[sec.get("layout", "auto") for sec in p.get("sections", [])], page_order=p.get("page_order", []),
     ))
     TECH[s] = p.get("tech", [])
@@ -204,8 +204,8 @@ for p in _load("projects.json"):
 # ---------------------------------------------------------------- code pages
 CODE_PAGES = []
 for cp in _load("code-pages.json"):
-    codes = [(c.get("file_label", ""), _write_snippet(f"{cp['slug']}-{i + 1}.txt", c.get("code", "")))
-             for i, c in enumerate(cp.get("code", [])) if (c.get("code") or "").strip()]
+    _cs = [(i, c) for i, c in enumerate(cp.get("code", [])) if (c.get("code") or "").strip()]
+    codes = [(c.get("file_label", ""), _write_snippet(f"{cp['slug']}-{i + 1}.txt", c.get("code", ""))) for i, c in _cs]
     CODE_PAGES.append(dict(
         slug=cp["slug"], title=cp["title"], sub=cp.get("subtitle", ""), lang=cp.get("language", ""), role=cp.get("role", ""),
         when=cp.get("when", ""), context=cp.get("context", ""),
@@ -213,7 +213,7 @@ for cp in _load("code-pages.json"):
         hook=cp.get("hook", ""), did=cp.get("what_i_built", []), tech=cp.get("tech", []),
         flow=[(f.get("name", ""), f.get("note", "")) for f in cp.get("flow", [])],
         clip=_clip_tuple(cp["clip"]) if cp.get("clip") and cp["clip"].get("video") else None,
-        code=codes, page_order=cp.get("page_order", []),
+        code=codes, code_idx=[i for i, _ in _cs], page_order=cp.get("page_order", []),
     ))
 
 # ---------------------------------------------------------------- lab + early work

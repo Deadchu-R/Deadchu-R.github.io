@@ -1,5 +1,13 @@
 // Clips: muted loops that play only while on screen. Tap (or the full-screen icon) opens the video
 // full screen, like YouTube. Screenshots and character art open in a zoomable lightbox.
+// Visual editor: roeetal.com/?edit turns on edit mode for this tab (assets/edit.js). Visitors never load it.
+(function(){
+  const me=document.currentScript;
+  try{
+    if(/[?&]edit\b/.test(location.search)||location.hash==="#edit")sessionStorage.setItem("rt-edit","1");
+    if(sessionStorage.getItem("rt-edit")&&me&&me.dataset.edit)document.head.appendChild(Object.assign(document.createElement("script"),{src:me.dataset.edit}));
+  }catch(e){}
+})();
 (function(){
   const drivePreview=id=>`https://drive.google.com/file/d/${id}/preview`;
   const $=s=>document.querySelector(s);
