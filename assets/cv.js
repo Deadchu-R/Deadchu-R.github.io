@@ -122,7 +122,7 @@
     return rows;
   }
   function photo(v,base,env,cls){
-    if(!v.show_photo||!v.photo)return "";
+    if(!v.show_photo||!v.photo)return env.edit?`<button type="button" class="${cls} cv-photo-add rt-pick" data-m="${base}.photo" data-mk="image" data-cls="${cls}" title="Add your photo">＋ Photo</button>`:"";
     return `<img class="${cls}" src="${esc(env.photo?env.photo(v.photo,base+".photo"):v.photo)}" alt="" data-m="${base}.photo" data-mk="image">`;
   }
   function render(v,id,env){
@@ -138,7 +138,7 @@
     if(T==="ats"){
       const line=links.filter(r=>env.edit||!/ hidden data-edit-show/.test(r.slice(0,40))).map(r=>r.replace(/^<li/,"<span").replace(/<\/li>$/,"</span>")).join('<span class="cv-dot" aria-hidden="true"> · </span>');
       const ph=photo(v,base,env,"cv-photo");
-      body=`<header class="cv-head${ph?" has-photo":""}">${ph}<div class="cv-id">${name}${title}<p class="cv-contact" data-l="${pp}.links">${line}</p></div></header>`+
+      body=`<header class="cv-head${ph&&!/cv-photo-add/.test(ph)?" has-photo":ph?" has-photo add":""}">${ph}<div class="cv-id">${name}${title}<p class="cv-contact" data-l="${pp}.links">${line}</p></div></header>`+
         (P.summary||env.edit?`<section class="cv-sec cv-sum"><h2>Summary</h2>${summary}</section>`:"")+column(v,base,"main",env)+column(v,base,"side",env);
     }else if(T==="novo"){
       body=`<header class="cv-head"><div class="cv-id">${name}${title}${summary}</div>${photo(v,base,env,"cv-photo")}<ul class="cv-contact" data-l="${pp}.links">${links.join("")}</ul></header>`+

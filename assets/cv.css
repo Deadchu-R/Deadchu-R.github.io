@@ -120,3 +120,6 @@
 .t-ats .cv-hi{width:auto;height:auto;background:none;color:var(--a)}
 .t-studio .cv-hi{width:auto;height:auto;background:none;color:var(--a)}
 .t-ats .cv-inline b[data-edit-show]:empty{margin-inline-end:6px}
+.cv-photo-add{display:grid;place-items:center;border:2px dashed var(--a)!important;background:color-mix(in srgb,var(--a) 8%,#fff)!important;color:var(--a);
+  font:700 11px/1.1 system-ui,sans-serif;cursor:pointer;padding:0;box-shadow:none!important}
+.t-ats .cv-head.has-photo.add .cv-photo{width:20mm;height:20mm}

@@ -849,3 +849,9 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .cv-stage{padding:0 24px 64px;display:flex;justify-content:center}
 .cv-stage .cvdoc{flex:none;box-shadow:0 30px 70px -30px rgba(0,0,0,.65),0 0 0 1px rgba(0,0,0,.08);border-radius:2px}
 @media (max-width:600px){.cv-stage{padding:0 8px 40px}.cv-bar{padding-top:calc(76px + env(safe-area-inset-top,0px))}}
+/* small photo next to the name in the top bar (optional) */
+.mark{display:inline-flex;align-items:center;gap:10px}
+.mark-ava{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none;border:2px solid rgba(255,255,255,.55);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.mark-ava.add{display:grid;place-items:center;padding:0;background:rgba(255,255,255,.08);border:2px dashed rgba(255,210,63,.8);color:#ffd23f;font:800 16px/1 system-ui,sans-serif;cursor:pointer}
+.mark-ava.add[hidden]{display:none}
+@media (max-width:480px){.mark-ava{width:26px;height:26px}.mark{gap:8px}}

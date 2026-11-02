@@ -1024,6 +1024,7 @@
     };
     const setVideo=v=>{const g=v.nextElementSibling;if(g&&g.classList.contains("rt-gif"))g.remove();v.style.visibility="";v.removeAttribute("poster");v.src=url;v.load();v.play().catch(()=>{})};
     $$(`[data-m="${CSS.escape(path)}"]`).forEach(m=>{
+      if(m.classList.contains("rt-pick")){const im=h("img",{class:m.dataset.cls||"",src:url,alt:"","data-m":path,"data-mk":"image"});m.replaceWith(im);return}
       if(m.tagName==="IMG"){m.src=url;m.removeAttribute("srcset");m.style.visibility=""}
       else{const v=$("video",m);if(v)isGif?swapVideo(v):setVideo(v);if(!isGif)m.dataset.src=url;m.classList.add("rt-new")}
     });
@@ -1821,6 +1822,8 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   }
   function leaveQuietly(){try{sessionStorage.removeItem("rt-edit");sessionStorage.removeItem("rt-login")}catch(e){}
     const u=new URL(location.href);u.searchParams.delete("edit");if(u.hash==="#edit")u.hash="";location.replace(u.toString())}
+  window.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rt-pick[data-m]");if(!b||!document.documentElement.classList.contains("rt-on")||document.documentElement.classList.contains("rt-preview"))return;
+    e.preventDefault();e.stopPropagation();replaceMedia(b.dataset.m,b.dataset.mk||"image",b)},true);
   /* ------------------------------------------------------------ résumé builder (cv.html) */
   const CVS=()=>window.RTCVPage&&window.RTCV&&$("#cvStage");
   let cvCur=null,cvT=null,cvBarEl=null;
@@ -1832,6 +1835,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   function cvChanged(p,v){
     const m=p.match(/^(cv|cvlocal):variants\.([^.]+)\.(.+)$/);if(!m||!CVS())return;
     const key=m[3];
+    if(key==="photo"&&v&&!get(`${m[1]}:variants.${m[2]}.show_photo`)){set(`${m[1]}:variants.${m[2]}.show_photo`,true);return}
     if(/^(main|side)\.\d+\.col$/.test(key)){                      // a section moves to the other column
       const [col,i]=key.split(".");if(v&&v!==col){const V=get(`${m[1]}:variants.${m[2]}`);const sec=V[col].splice(+i,1)[0];delete sec.col;(V[v]=V[v]||[]).push(sec)}
       return cvSoon()}
@@ -2164,7 +2168,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     const std=["experience","education","skills"];c(std.every(t=>secs.some(s=>s.type===t)),"Standard sections (Experience, Education, Skills)","ATS map these headings to their fields.",2);
     const items=secs.filter(s=>["experience","education","projects"].includes(s.type)).flatMap(s=>s.items||[]);
     c(items.every(it=>String(it.dates||"").trim()),"Dates on every job, project and school","Used to calculate years of experience.",2);
-    const bul=items.flatMap(it=>it.bullets||[]).map(String);
+    const bul=secs.filter(s=>["experience","projects"].includes(s.type)).flatMap(s=>s.items||[]).flatMap(it=>it.bullets||[]).map(String);
     const strong=bul.filter(t=>VERBS[(t.match(/^[A-Za-z]+/)||[""])[0].toLowerCase()]||PAST2PRES[(t.match(/^[A-Za-z]+/)||[""])[0].toLowerCase()]).length;
     c(!bul.length||strong/bul.length>=.6,`Bullets start with action verbs (${strong}/${bul.length})`,"Harvard career services: start with an action verb.");
     const nums=bul.filter(t=>/\d/.test(t)).length;c(bul.length&&nums/bul.length>=.3,`Bullets with numbers (${nums}/${bul.length})`,"Google's X-Y-Z formula: show measurable results.");

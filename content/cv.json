@@ -61,29 +61,29 @@
             {
               "name": "Isometric Story-Driven Game",
               "meta": "Unity · 3-week hackathon",
-              "dates": "2023",
+              "dates": "11/2023",
               "link": "https://www.roeetal.com/projects/shards.html",
               "link_label": "",
               "bullets": [
-                "Built the full dialogue system: ScriptableObject sheets and pages, with page types via inheritance for branching answers and level changes",
+                "Built the full dialogue system in a 3-week hackathon: ScriptableObject sheets and pages, with page types via inheritance for branching answers and level changes",
                 "Typewriter text raising per-letter, per-word and finish events that drive talking sounds and mouth animation"
               ]
             },
             {
               "name": "Boss Rush: Grid-Based Tactical Combat",
               "meta": "Unity · Producer & Team Lead",
-              "dates": "2023–2024",
+              "dates": "12/2023 – 09/2024",
               "link": "https://www.roeetal.com/projects/boss-rush.html",
               "link_label": "",
               "bullets": [
-                "Led a cross-functional team of programmers and artists for nine months, through delivery",
+                "Led a cross-functional team of programmers and artists for 9 months, through delivery",
                 "Oversaw the second programmer's code to keep it working and maintainable"
               ]
             },
             {
               "name": "FPS Stealth Level",
               "meta": "Unreal Engine, C++ & Blueprints",
-              "dates": "2024",
+              "dates": "06/2024 – 08/2024",
               "link": "https://www.roeetal.com/projects/infiltration.html",
               "link_label": "",
               "bullets": [
@@ -189,7 +189,7 @@
       "person": {
         "name": "Roee Tal",
         "title": "Game Developer",
-        "summary": "Experienced Game Developer with a strong foundation in Unity and C#, currently active in the Unreal Engine ecosystem at 3DVision. Proven ability to architect complex technical systems and solve intricate development challenges. Looking to bring my cross-engine proficiency, technical design skills, and passion for gameplay back to the Unity platform to build engaging gaming experiences.",
+        "summary": "Experienced Game Developer with a strong foundation in Unity and C#, currently active in the Unreal Engine ecosystem at 3DVision. Proven ability to architect complex technical systems and solve intricate development challenges. Looking to bring cross-engine proficiency, technical design skills, and a passion for gameplay back to the Unity platform to build engaging gaming experiences.",
         "email": "roeetal17@gmail.com",
         "phone": "053-337-4350",
         "location": "Israel",
@@ -221,9 +221,9 @@
               "about": "A company that makes real time simulation interfaces for real estate companies in Unreal Engine",
               "label": "Achievements/Tasks",
               "bullets": [
-                "Debugged and optimized complex logic and Blueprints across multiple projects",
-                "Developed and integrated interactive features based on client requests",
-                "Implemented custom UI elements and functionalities tailored to client needs"
+                "Debug and optimize complex logic and Blueprints across multiple projects",
+                "Develop and integrate interactive features based on client requests",
+                "Implement custom UI elements and functionalities tailored to client needs"
               ]
             }
           ]
@@ -321,7 +321,7 @@
               "link": "https://www.roeetal.com/projects/shards.html",
               "link_label": "Link to project",
               "bullets": [
-                "Architected a modular dialogue system utilizing ScriptableObjects for efficient data",
+                "Architected a modular dialogue system in 3 weeks, using ScriptableObjects for efficient data",
                 "Developed complex UI interactions and event-driven mechanics (e.g., OnLetterTyped) to enhance narrative flow"
               ]
             },
@@ -332,7 +332,7 @@
               "link": "https://www.roeetal.com/projects/boss-rush.html",
               "link_label": "Link to project",
               "bullets": [
-                "Led a cross-functional team of programmers and artists, managing the development pipeline to ensure successful project delivery",
+                "Led a cross-functional team of programmers and artists for 9 months, managing the development pipeline to ensure successful project delivery",
                 "Designed core gameplay loops, tactical grid mechanics, and overall game balancing",
                 "Handled conflicts and resolved issues between team members to maintain a smooth and productive workflow"
               ]
@@ -412,29 +412,29 @@
             {
               "name": "Isometric Story-Driven Game",
               "meta": "Unity · 3-week hackathon",
-              "dates": "2023",
+              "dates": "11/2023",
               "link": "https://www.roeetal.com/projects/shards.html",
               "link_label": "",
               "bullets": [
-                "Built the full dialogue system: ScriptableObject sheets and pages, with page types via inheritance for branching answers and level changes",
+                "Built the full dialogue system in a 3-week hackathon: ScriptableObject sheets and pages, with page types via inheritance for branching answers and level changes",
                 "Typewriter text raising per-letter, per-word and finish events that drive talking sounds and mouth animation"
               ]
             },
             {
               "name": "Boss Rush: Grid-Based Tactical Combat",
               "meta": "Unity · Producer & Team Lead",
-              "dates": "2023–2024",
+              "dates": "12/2023 – 09/2024",
               "link": "https://www.roeetal.com/projects/boss-rush.html",
               "link_label": "",
               "bullets": [
-                "Led a cross-functional team of programmers and artists for nine months, through delivery",
+                "Led a cross-functional team of programmers and artists for 9 months, through delivery",
                 "Oversaw the second programmer's code to keep it working and maintainable"
               ]
             },
             {
               "name": "FPS Stealth Level",
               "meta": "Unreal Engine, C++ & Blueprints",
-              "dates": "2024",
+              "dates": "06/2024 – 08/2024",
               "link": "https://www.roeetal.com/projects/infiltration.html",
               "link_label": "",
               "bullets": [

@@ -120,6 +120,13 @@ def head(title, desc, depth, theme=None):
 """
 
 
+def brand_photo(p):
+    """Optional small round photo before the name in the top bar (chosen in the editor)."""
+    ph = SITE_TEXT.get("brand_photo") or ""
+    if ph:
+        return f'<img class="mark-ava" src="{p}{e(ph.lstrip("/"))}" alt="" width="30" height="30" data-m="site:brand_photo" data-mk="image">'
+    return '<span role="button" class="mark-ava rt-pick add" data-m="site:brand_photo" data-mk="image" data-cls="mark-ava" hidden data-edit-show title="Add your photo">＋</span>'
+
 def topbar(depth, current=""):
     p = "../" * depth
     cur_map = {"projects": "#projects", "gallery": "gallery.html", "lab": "lab.html"}
@@ -130,7 +137,7 @@ def topbar(depth, current=""):
         links.append(f'<a href="{href(n["link"], depth)}"{cur}{ext(n["link"])}{I(i)}{X(("Link", np_ + ".link", "link"), ("Icon", np_ + ".icon", "select", icon_choices()))}>'
                      f'<span class="ic"{ICO(np_ + ".icon")}>{_icon(n["icon"], 16) if n.get("icon") else ""}</span><span{E(np_ + ".label")}>{e(n["label"])}</span></a>')
     return f"""<header class="topbar"><div class="wrap">
-<a class="mark" href="{p}index.html"><span{E("site:ui.brand.text")}>{e((UI.get("brand") or {}).get("text", "Roee Tal"))}</span></a><button class="edit-in top" type="button" aria-label="Edit the site" title="Edit the site"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/></svg></button>
+<a class="mark" href="{p}index.html"{X(("Your photo next to your name (small)", "site:brand_photo", "image"))}>{brand_photo(p)}<span{E("site:ui.brand.text")}>{e((UI.get("brand") or {}).get("text", "Roee Tal"))}</span></a><button class="edit-in top" type="button" aria-label="Edit the site" title="Edit the site"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/></svg></button>
 <nav{L("site:nav")}>{"".join(links)}</nav>
 </div></header>
 """
