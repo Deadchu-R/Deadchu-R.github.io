@@ -136,7 +136,7 @@
   .rt-secbar:hover{opacity:1}
   .rt-secbar .rt-sl{padding:0 4px 0 6px;max-width:0;overflow:hidden;white-space:nowrap;transition:max-width .2s;text-transform:uppercase;letter-spacing:.05em}
   .rt-secbar:hover .rt-sl{max-width:200px}
-  .rt-secbar button{appearance:none;width:32px;height:30px;border-radius:7px;border:0;background:#222;color:#fff;font:800 17px/1 system-ui,sans-serif;cursor:pointer}
+  .rt-secbar button{appearance:none;min-width:32px;height:30px;border-radius:7px;border:0;background:#222;color:#fff;font:800 17px/1 system-ui,sans-serif;cursor:pointer}
   .rt-secbar button:hover:not(:disabled){color:#ffd23f}
   .rt-secbar button:disabled{opacity:.25;cursor:default}
   .rt-on .xrow-block{min-height:52px;border:1px dashed rgba(255,210,63,.45);border-radius:12px;padding:6px}
@@ -234,6 +234,25 @@
   #rt-panel .rt-hint{color:#999;font-size:12px;margin:6px 0 0;line-height:1.4}
   .rt-modal{position:fixed;inset:0;z-index:2147483200;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
   .rt-card{background:#151515;color:#eee;border:1px solid #333;border-radius:16px;max-width:520px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.6);font-size:15px;line-height:1.5;max-height:90vh;overflow:auto}
+  .rt-plus{width:auto!important;min-width:32px;padding:0 7px 0 6px!important;display:inline-flex!important;align-items:center;gap:4px;position:relative;
+    user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;overflow:hidden;isolation:isolate}
+  .rt-plus small{font:700 11px/1 system-ui,sans-serif;color:#ffd23f;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rt-plus small:empty{display:none}
+  .rt-plus::after{content:"";position:absolute;right:2px;bottom:2px;border:3px solid transparent;border-right-color:#ffd23f;border-bottom-color:#ffd23f;opacity:.75}
+  .rt-plus::before{content:"";position:absolute;inset:0;z-index:-1;background:#ffd23f;opacity:.28;transform:scaleX(0);transform-origin:left}
+  .rt-plus.rt-holding::before{transform:scaleX(1);transition:transform .38s linear}
+  .rt-pm-back{position:fixed;inset:0;z-index:2147483300;background:rgba(0,0,0,.18)}
+  .rt-pm{position:fixed;z-index:2147483310;min-width:220px;max-width:min(320px,calc(100vw - 16px));max-height:min(70vh,520px);overflow:auto;padding:5px;border-radius:14px;
+    background:rgba(30,30,32,.92);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 18px 50px rgba(0,0,0,.55);animation:rtPm .17s cubic-bezier(.2,.9,.3,1.2);touch-action:none}
+  @keyframes rtPm{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+  .rt-pm-t{font:700 11px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#999;padding:8px 10px 6px}
+  .rt-pm-opt{appearance:none;display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;border:0;background:none;color:#f2f2f2;
+    font:500 15px/1.2 system-ui,sans-serif;padding:11px 10px;border-radius:9px;cursor:pointer;text-align:left}
+  .rt-pm-opt+.rt-pm-opt{box-shadow:0 -1px 0 rgba(255,255,255,.07)}
+  .rt-pm-opt em{font-style:normal;font-size:12px;color:#8d8d8d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%}
+  .rt-pm-opt i{font-style:normal;color:#ffd23f;font-weight:800}
+  .rt-pm-opt.hi,.rt-pm-opt:hover{background:#ffd23f;color:#111}.rt-pm-opt.hi em,.rt-pm-opt:hover em,.rt-pm-opt.hi i,.rt-pm-opt:hover i{color:#111}
   .rt-addlist{display:grid;gap:6px}.rt-addlist.grid{grid-template-columns:1fr 1fr}
   .rt-addopt{appearance:none;text-align:left;border:1px solid #333;background:#1e1e1e;color:#eee;border-radius:10px;padding:11px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font:600 14.5px/1.25 system-ui,sans-serif}
   .rt-addopt:hover{border-color:#ffd23f;background:#262626}.rt-addopt span{font-weight:400;font-size:12.5px;color:#aaa}
@@ -257,7 +276,7 @@
   const pubBtn=h("button",{class:"rt-pub",type:"button",disabled:true,on:{click:publish}},h("i"),"Publish");
   const menu=h("div",{id:"rt-menu"});
   const item=(label,fn,cls)=>h("button",{type:"button",class:cls||"",on:{click:()=>{menu.style.display="none";fn()}}},label);
-  menu.append(item("＋  New section (main page)",()=>sectionPicker(current&&current.closest('[data-ok="site:section_order"]'))),item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
+  menu.append(item("＋  New section (main page)",()=>sectionPicker(current&&current.closest('[data-ok="site:section_order"]'),$(".rt-more"))),item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
   const prevBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"Preview the page as visitors will see it",on:{click:e=>{e.stopPropagation();togglePreview()}}},"👁");
   function togglePreview(){
     const on=document.documentElement.classList.toggle("rt-preview");
@@ -284,7 +303,7 @@
     del:B("🗑","Delete",()=>current&&remove(current)),
     gear:B("⚙","Settings",()=>{panelOpen=!panelOpen;renderPanel()}),
     bg:B("🎬","Background / cover: change the video or image",()=>{panelOpen=true;renderPanel()}),
-    add:B("＋","Add something here",()=>current&&addMenu(current)),
+    add:(()=>{const pb=h("button",{type:"button",class:"rt-plus",title:"Add"},"＋");wirePlus(pb,()=>current,()=>plusTap(current,pb));return pb})(),
     plus:B("＋","Add a new one after this",()=>current&&addNew(current)),
     parent:B("⤴","Select what's around it",()=>{const k=chain.indexOf(current);if(chain[k+1]){current=chain[k+1];clickedText=clickedMedia=null;panelOpen=false;renderPanel();place()}}),
   };
@@ -474,7 +493,7 @@
     show(T.dup,current.hasAttribute("data-i"));show(T.del,current.hasAttribute("data-i")||(current.dataset.k||"").startsWith("cs_"));
     show(T.gear,hasSettings(current));
     show(T.bg,fieldsOf(current).some(f=>/^(video|image|art|media)$/.test(f[2])&&/background|cover|picture|thumbnail/i.test(f[0])));
-    show(T.add,addOptions(current).length>0);show(T.plus,false);T.gear.classList.toggle("on",panelOpen);
+    show(T.add,plusLabel(T.add,current));show(T.plus,false);T.gear.classList.toggle("on",panelOpen);
     show(T.parent,!!chain[chain.indexOf(current)+1]);
     tb.style.display="flex";
     const tw=tb.offsetWidth,th=tb.offsetHeight;
@@ -534,14 +553,14 @@
         if(getComputedStyle(sec).position==="static")sec.style.position="relative";
         const mainPage=sec.dataset.ok==="site:section_order";
         b=h("div",{class:"rt-secbar rt-ui"},h("span",{class:"rt-sl"},KEY_NAMES[sec.dataset.k]||(sec.dataset.k.startsWith("cs_")?"Your section":sec.dataset.k)),
-          mainPage?h("button",{type:"button",title:"Add a new section below this one",on:{click:()=>sectionPicker(sec)}},"⊞"):null,
+          mainPage?h("button",{type:"button",class:"rt-secadd",title:"Add a new section below this one",on:{click:e=>{e.stopPropagation();sectionPicker(sec,e.currentTarget)}}},"⊞"):null,
           h("button",{type:"button",class:"rt-up",title:"Move this whole section up",on:{click:()=>step(sec,-1)}},"↑"),
           h("button",{type:"button",class:"rt-down",title:"Move this whole section down",on:{click:()=>step(sec,1)}},"↓"),
-          h("button",{type:"button",class:"rt-addm",title:"Add something to this section",on:{click:()=>addMenu(sec)}},"+"));
+          (()=>{const pb=h("button",{type:"button",class:"rt-addm rt-plus"},"＋");wirePlus(pb,()=>sec,()=>plusTap(sec,pb));return pb})());
         sec.prepend(b);
       }
       const sib=siblingsOf(sec),k=sib.indexOf(sec),up=$(".rt-up",b),down=$(".rt-down",b),am=$(".rt-addm",b);
-      up.disabled=k<=0;down.disabled=k===sib.length-1;const can=addOptions(sec).length>0;am.hidden=!can;b.hidden=sib.length<2&&!can;
+      up.disabled=k<=0;down.disabled=k===sib.length-1;const can=plusLabel(am,sec);am.hidden=!can;b.hidden=sib.length<2&&!can;
     });
   }
   function step(u,dir){
@@ -587,29 +606,85 @@
   function addOptions(u){
     if(!u||!document.contains(u))return [];
     const out=[],seen=new Set(),sec=u.closest("[data-k]")||u;
-    const push=(key,label,fn,hint)=>{if(seen.has(key))return;seen.add(key);out.push({label,fn,hint})};
+    const push=(key,label,fn,hint,short)=>{if(seen.has(key))return;seen.add(key);out.push({key,label,fn,hint,short})};
     // 1. another one of the thing you tapped, right after it
-    for(const it of chain.length&&chain[0]===u?chain:[u])if(it.hasAttribute&&it.hasAttribute("data-i")&&listOf(it)){const n=unitName(it);push("L"+listPath(it),"Another "+n.toLowerCase()+" (after this one)",()=>addLike(it),"same look, new text");break}
+    for(const it of chain.length&&chain[0]===u?chain:[u])if(it.hasAttribute&&it.hasAttribute("data-i")&&listOf(it)){const n=unitName(it);push("L"+listPath(it),"Another "+n.toLowerCase(),()=>addLike(it),"right after this one",n);break}
     // 2. the other lists in this section
     listsIn(sec).forEach(l=>{const items=[...l.children].filter(c=>c.hasAttribute("data-i"));const last=items[items.length-1];if(!last)return;
       const n=unitName(last);if(l.dataset.l===((sec.dataset.add||u.dataset.add)||"")&&last.tagName==="A")return;
-      push("L"+l.dataset.l,"A "+n.toLowerCase(),()=>addLike(last),"at the end of the list")});
+      push("L"+l.dataset.l,"A "+n.toLowerCase(),()=>addLike(last),"at the end of the list",n)});
     // 3. a button
     const holder=u.hasAttribute("data-add")?u:sec.hasAttribute("data-add")?sec:null;
-    if(holder)push("B","A button",()=>addItem(holder),"label, icon and link");
+    if(holder)push("B","A button",()=>addItem(holder),"label, icon and link","Button");
     // 4. a whole new section (main page)
     const main=u.closest('[data-ok="site:section_order"]');
-    if(main||$("#projects .ptiles"))push("S","A new section below…",()=>sectionPicker(main),"cards, numbers, gallery, FAQ, banner…");
+    if(main||$("#projects .ptiles"))push("S","A new section below…",()=>sectionPicker(main,lastAnchor),"cards, numbers, FAQ, banner…","Section");
     // 5. anything else: describe it to the AI (it gets this spot as context)
-    push("AI","✨ Something else: describe it",()=>{select(u);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף כאן ";ta.focus()}},150)},"the AI sees what you selected");
+    push("AI","✨ Something else…",()=>{select(u);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף כאן ";ta.focus()}},150)},"tell the AI; it sees this spot","AI");
     return out.length>1?out:[];
   }
-  function addMenu(u){
-    if(u!==current)select(u);
-    const opts=addOptions(u);if(!opts.length)return;
-    const m=modal(h("h3",{},"Add here"),h("p",{class:"rt-hint",style:"margin:-4px 0 10px"},unitName(u)),
-      h("div",{class:"rt-addlist"},...opts.map(o=>h("button",{type:"button",class:"rt-addopt",on:{click:()=>{m.remove();o.fn()}}},h("b",{},o.label),o.hint?h("span",{},o.hint):null))),
-      h("div",{class:"rt-row",style:"justify-content:flex-end;margin-top:10px"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel")));
+  /* tap ＋ = add the usual thing (shown on the button); hold ＋ = menu, slide to a choice and let go (or tap one) */
+  const ADD_LAST="rt-add-last";
+  const addCtx=u=>(u.closest("[data-k]")||u).dataset.k||"page";
+  function lastMap(){try{return JSON.parse(store.get(ADD_LAST)||"{}")}catch(e){return {}}}
+  function defaultOpt(u,opts){const k=lastMap()[addCtx(u)];return opts.find(o=>o.key===k)||opts[0]}
+  function remember(u,key){const m=lastMap();m[addCtx(u)]=key;store.set(ADD_LAST,JSON.stringify(m))}
+  let lastAnchor=null;
+  function runOpt(u,o,btn){remember(u,o.key);lastAnchor=btn;o.fn();lastAnchor=null;secBars();place()}
+  function plusLabel(btn,u){
+    const opts=addOptions(u);if(!opts.length)return false;
+    const d=defaultOpt(u,opts);btn.replaceChildren("＋",h("small",{},d.short||""));
+    btn.title=`Tap: add ${d.label.replace(/^(A|An|Another) /,"a ").toLowerCase()} · Hold: more choices`;btn.setAttribute("aria-label",btn.title);return true;
+  }
+  let pm=null;                      // the open hold menu
+  function closePm(){if(pm){pm.el.remove();pm.back.remove();pm=null}}
+  function holdMenu(anchor,items,title){
+    closePm();
+    const back=h("div",{class:"rt-pm-back rt-ui",on:{pointerdown:e=>{e.preventDefault();closePm()}}});
+    const el=h("div",{class:"rt-pm rt-ui",role:"menu"},title?h("div",{class:"rt-pm-t"},title):null,
+      ...items.map((it,k)=>h("button",{type:"button",class:"rt-pm-opt"+(it.def?" def":""),"data-n":String(k),on:{click:e=>{e.stopPropagation();const f=it.fn;closePm();f()}}},
+        h("span",{},it.label),it.def?h("i",{},"✓"):it.hint?h("em",{},it.hint):null)));
+    document.body.append(back,el);
+    const r=anchor?anchor.getBoundingClientRect():{left:innerWidth/2-120,right:innerWidth/2+120,top:innerHeight-80,bottom:innerHeight-80};
+    const w=el.offsetWidth,hh=el.offsetHeight;
+    let top=r.bottom+8;if(top+hh>innerHeight-8)top=Math.max(8,r.top-hh-8);
+    el.style.left=Math.max(8,Math.min(innerWidth-w-8,r.right-w))+"px";el.style.top=top+"px";
+    el.style.transformOrigin=(top<r.top?"bottom ":"top ")+(r.right-w>8?"right":"left");
+    pm={el,back,items,hi:-1};
+    try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}
+    return pm;
+  }
+  function pmHover(x,y){
+    if(!pm)return;const b=document.elementFromPoint(x,y),o=b&&b.closest(".rt-pm-opt");const k=o?+o.dataset.n:-1;
+    if(k!==pm.hi){$$(".rt-pm-opt",pm.el).forEach(x=>x.classList.toggle("hi",+x.dataset.n===k));pm.hi=k;if(k>=0)try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}}
+  }
+  function wirePlus(btn,getU,onTap){
+    let timer=null,held=false,sx=0,sy=0,moved=false;
+    const reset=()=>{clearTimeout(timer);timer=null;btn.classList.remove("rt-holding")};
+    btn.addEventListener("contextmenu",e=>e.preventDefault());
+    btn.addEventListener("click",e=>{e.stopPropagation();e.preventDefault()},true);
+    btn.addEventListener("pointerdown",e=>{
+      if(e.button>0)return;e.preventDefault();e.stopPropagation();held=false;moved=false;sx=e.clientX;sy=e.clientY;
+      btn.classList.add("rt-holding");
+      timer=setTimeout(()=>{timer=null;held=true;btn.classList.remove("rt-holding");
+        const u=getU();if(!u)return;if(u!==current)select(u);
+        const opts=addOptions(u);if(!opts.length)return;const d=defaultOpt(u,opts);
+        holdMenu(btn,opts.map(o=>({label:o.label,hint:o.hint,def:o===d,fn:()=>runOpt(u,o,btn)})),"Add here");
+      },380);
+      const mv=ev=>{if(pm&&held)pmHover(ev.clientX,ev.clientY);else if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>12){moved=true;reset()}};
+      const up=ev=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",up,true);removeEventListener("pointercancel",up,true);
+        if(timer){reset();if(!moved&&ev.type==="pointerup")onTap();return}
+        if(held){const eat=e2=>{if(e2.target.closest&&e2.target.closest(".rt-pm"))return;e2.stopPropagation();e2.preventDefault()};addEventListener("click",eat,true);setTimeout(()=>removeEventListener("click",eat,true),450)}   // the click that follows letting go
+        if(pm&&held&&pm.hi>=0){const it=pm.items[pm.hi];closePm();it.fn()}      // let go on a choice = pick it; let go elsewhere = menu stays open
+      };
+      addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true);addEventListener("pointercancel",up,true);
+    });
+  }
+  function plusTap(u,btn){
+    if(!u)return;if(u!==current)select(u);
+    const opts=addOptions(u);if(!opts.length)return;const d=defaultOpt(u,opts);
+    runOpt(u,d,btn);
+    if(!store.get("rt-hold-tip")){store.set("rt-hold-tip","1");setTimeout(()=>toast("Tip: hold ＋ for more choices (slide to one and let go)."),1200)}
   }
   function addLike(item){
     // a copy of this item after it, with fresh text ready to type
@@ -619,14 +694,13 @@
     texts.forEach((te,k)=>{const v=k?"Write something here.":"New "+unitName(c).toLowerCase();set(te.dataset.e,v);te.textContent=v});
     const t0=texts[0];if(t0){select(t0);startEdit(t0);try{getSelection().selectAllChildren(t0)}catch(e){}}
   }
-  function sectionPicker(after){
+  function sectionPicker(after,anchor){
     if(!SEC){toast("One moment, still loading…");return}
-    const pick=type=>{m.remove();const r_=addSection(after&&after.dataset.ok==="site:section_order"?after:null,{type});if(r_)startEdit($(`[data-e="${r_.base}.title"]`))};
-    const m=modal(h("h3",{},"New section"),h("p",{class:"rt-hint",style:"margin:-4px 0 10px"},"Pick a type. You can change it later in ⚙, and all of it is editable."),
-      h("div",{class:"rt-addlist grid"},...Object.entries(SEC.TYPES).map(([k,t])=>h("button",{type:"button",class:"rt-addopt",on:{click:()=>pick(k)}},h("b",{},t.label),h("span",{},t.about.split(". ")[0])))),
-      h("div",{class:"rt-row",style:"justify-content:space-between;margin-top:10px"},
-        h("button",{class:"rt-btn",type:"button",on:{click:()=>{m.remove();if(after)select(after);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף סקשן ";ta.focus()}},150)}}},"✨ Let the AI build it"),
-        h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel")));
+    const ref=after&&after.dataset.ok==="site:section_order"?after:null;
+    const pick=type=>{store.set("rt-last-section",type);const r_=addSection(ref,{type});if(r_)startEdit($(`[data-e="${r_.base}.title"]`))};
+    const last=store.get("rt-last-section");
+    holdMenu(anchor||null,Object.entries(SEC.TYPES).map(([k,t])=>({label:t.label,hint:t.about.split(/[.,(]/)[0].slice(0,34),def:k===last,fn:()=>pick(k)}))
+      .concat([{label:"✨ Let the AI build it",fn:()=>{if(ref)select(ref);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף סקשן ";ta.focus()}},150)}}]),"New section");
   }
   /* ---- sections you add yourself (main page) */
   function delPath(p){const[f,ks]=parse(p);let o=docs[f];for(let i=0;i<ks.length-1;i++){if(o==null)return;o=o[ks[i]]}if(o)delete o[ks[ks.length-1]];dirty.add(f);changes++;updateBar()}
