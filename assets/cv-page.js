@@ -13,7 +13,7 @@
   function setFont(href){let l=$("#cv-font");if(!l){l=document.createElement("link");l.rel="stylesheet";l.id="cv-font";document.head.append(l)}if(l.href!==href)l.href=href}
   function show(id,v,env){
     v=v||(data.variants||{})[id];if(!v||!window.RTCV)return;
-    cur=id;stage.innerHTML=RTCV.render(v,id,env||{});setFont(RTCV.fontHref(RTCV.normalize(v)));
+    cur=id;stage.innerHTML=RTCV.render(v,id,env||{icons:data.icons||{}});setFont(RTCV.fontHref(RTCV.normalize(v)));
     const f=(data.files||{})[id],nm=(data.names||{})[id]||"CV";
     const pdf=$("#cvPdf"),png=$("#cvPng");
     if(pdf&&f){pdf.href=f;pdf.download=nm+".pdf"}if(png&&f){png.href=f.replace(/\.pdf$/,".png");png.download=nm+".png"}

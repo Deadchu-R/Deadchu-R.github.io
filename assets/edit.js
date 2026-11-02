@@ -27,9 +27,9 @@
     const[f,ks]=parse(p);
     if(!ks.length)docs[f]=v;
     else{let o=docs[f];for(let i=0;i<ks.length-1;i++){const k=ks[i];if(o[k]==null)o[k]=/^\d+$/.test(ks[i+1])?[]:{};o=o[k]}o[ks[ks.length-1]]=v}
-    if(f==="cvlocal"){try{localStorage.setItem("rt-cv-local",JSON.stringify(docs.cvlocal))}catch(e){}cvChanged(p,v);return}
+    if(f==="cvlocal"){try{localStorage.setItem("rt-cv-local",JSON.stringify(docs.cvlocal))}catch(e){}cvChanged(p,v);if(cvTipLayer)cvTips();return}
     dirty.add(f);changes++;updateBar();
-    if(f==="cv")cvChanged(p,v);
+    if(f==="cv"){cvChanged(p,v);if(cvTipLayer)cvTips()}
     const m_=p.match(/^site:custom_sections\.(\w+)\.(.+)$/);if(m_&&csStruct(m_[2]))csChanged(m_[1],m_[2],v);
   }
 
@@ -281,6 +281,34 @@
   .rt-cvpages{font-size:12px;font-weight:700;color:#7ee0a6;padding:0 4px}.rt-cvpages.warn{color:#ffb35c}
   .rt-on #cvStage .cvdoc{background-image:repeating-linear-gradient(180deg,transparent 0 calc(297mm - 2px),rgba(230,60,60,.6) calc(297mm - 2px) 297mm)}
   @media print{.rt-on [data-e]{outline:none!important}.rt-ui{display:none!important}}
+  .rt-cvtips{appearance:none;border:0;background:#e5484d;color:#fff;border-radius:999px;padding:7px 11px;font:800 13px/1 system-ui,sans-serif;cursor:pointer}
+  .rt-cvtips.ok{background:#1f7a46}
+  .rt-cvadd{border-color:#ffd23f!important;color:#ffd23f!important}
+  .rt-tiplayer{position:absolute;top:0;left:0;width:0;height:0;z-index:2147482900}
+  .rt-tip{position:absolute;width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:#e5484d;color:#fff;font:900 12px/1 system-ui,sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;
+    box-shadow:0 2px 8px rgba(0,0,0,.35);animation:rtTip .3s ease-out}
+  .rt-tip:hover{transform:scale(1.15)}
+  @keyframes rtTip{from{transform:scale(0)}to{transform:none}}
+  .rt-preview .rt-tiplayer{display:none}
+  .rt-tipdot{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#e5484d;color:#fff;font-size:13px;vertical-align:2px}
+  .rt-cur{background:#0e0e0e;border:1px solid #333;border-radius:8px;padding:8px 10px;margin:8px 0}.rt-cur p{margin:4px 0 0}
+  .rt-sug{margin-top:8px}.rt-sugtext{background:#10251a;border:1px solid #2f7a4f;border-radius:8px;padding:9px 10px;margin:6px 0 8px;outline:none;white-space:pre-wrap}
+  #rt-ats{position:fixed;inset:0;z-index:2147483100;background:#0d0d0f;color:#eee;overflow:auto;font:15px/1.5 system-ui,sans-serif}
+  .rt-atsin{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+  .rt-atshead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #2a2a2a;padding-bottom:12px;margin-bottom:16px}.rt-atshead h2{margin:0;font-size:24px}.rt-atshead .rt-btn{margin-left:auto}
+  .rt-atsgrid{display:grid;grid-template-columns:1fr 1fr;gap:24px}@media (max-width:860px){.rt-atsgrid{grid-template-columns:1fr}}
+  #rt-ats h3{margin:0 0 8px}#rt-ats h4{margin:16px 0 6px;font-size:14px;color:#ffd23f}
+  #rt-ats input,#rt-ats textarea{width:100%;box-sizing:border-box;background:#0e0e0e;color:#eee;border:1px solid #3a3a3a;border-radius:8px;padding:9px 10px;font:14px/1.4 system-ui,sans-serif}
+  .rt-rings{display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 12px}
+  .rt-ring{--p:0;width:104px;height:104px;border-radius:50%;display:grid;place-items:center;align-content:center;background:radial-gradient(closest-side,#0d0d0f 78%,transparent 80%),conic-gradient(var(--c,#2fbf71) calc(var(--p)*1%),#2a2a2a 0)}
+  .rt-ring b{font-size:28px;line-height:1}.rt-ring span{font-size:11px;color:#aaa;text-align:center;max-width:80px}
+  .rt-checks{list-style:none;padding:0;margin:0;display:grid;gap:6px}.rt-checks li{background:#151515;border:1px solid #2a2a2a;border-radius:9px;padding:8px 10px;display:grid}
+  .rt-checks li.ok b{color:#7ee0a6}.rt-checks li.bad b{color:#ff7b7b}.rt-checks span{font-size:12.5px;color:#9a9a9a}
+  .rt-plain{white-space:pre-wrap;background:#0e0e0e;border:1px solid #2a2a2a;border-radius:8px;padding:10px;font:12px/1.5 ui-monospace,monospace;max-height:42vh;overflow:auto}
+  .rt-kws{display:flex;flex-wrap:wrap;gap:6px}.rt-kw{border-radius:999px;padding:4px 10px;font:600 12.5px/1.3 system-ui,sans-serif;border:1px solid}
+  .rt-kw.ok{background:#10251a;border-color:#2f7a4f;color:#9fe6bd}.rt-kw.miss{background:#2a1214;border-color:#7a2f35;color:#ffb3b8;cursor:pointer}
+  .rt-chg{background:#151515;border:1px solid #2a2a2a;border-radius:9px;padding:8px 10px;margin-top:8px}.rt-now{color:#b9b9b9;text-decoration:line-through;margin:4px 0}.rt-better{color:#9fe6bd;margin:4px 0 6px}
+  .rt-aireview{margin-top:14px;border-top:1px solid #2a2a2a;padding-top:10px}
   .rt-addlist{display:grid;gap:6px}.rt-addlist.grid{grid-template-columns:1fr 1fr}
   .rt-addopt{appearance:none;text-align:left;border:1px solid #333;background:#1e1e1e;color:#eee;border-radius:10px;padding:11px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font:600 14.5px/1.25 system-ui,sans-serif}
   .rt-addopt:hover{border-color:#ffd23f;background:#262626}.rt-addopt span{font-weight:400;font-size:12.5px;color:#aaa}
@@ -1807,10 +1835,10 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     if(/^(main|side)\.\d+\.col$/.test(key)){                      // a section moves to the other column
       const [col,i]=key.split(".");if(v&&v!==col){const V=get(`${m[1]}:variants.${m[2]}`);const sec=V[col].splice(+i,1)[0];delete sec.col;(V[v]=V[v]||[]).push(sec)}
       return cvSoon()}
-    if(/^(template|font|density|show_photo|photo|dir|person\.links)$/.test(key)||/^(main|side)$/.test(key))cvSoon();
+    if(/^(template|font|density|show_photo|show_icons|photo|dir|person\.links)$/.test(key)||/^(main|side)\.\d+\.(icon|items\.\d+\.link)$/.test(key)||/^(main|side)$/.test(key))cvSoon();
   }
   function cvSoon(){clearTimeout(cvT);cvT=setTimeout(()=>cvShow(cvCur,true),140)}
-  function cvEnv(id){return {doc:cvDocOf(id),edit:true,photo:(p,path)=>{const pd=pending.get(path);return pd?pd.url:"/"+String(p).replace(/^\//,"")}}}
+  function cvEnv(id){return {doc:cvDocOf(id),edit:true,icons:ICONS,photo:(p,path)=>{const pd=pending.get(path);return pd?pd.url:"/"+String(p).replace(/^\//,"")}}}
   function cvShow(id,keepSel){
     if(!CVS())return;const V=cvVar(id);if(!V)return;cvCur=id;
     const ae=document.activeElement,editing=ae&&ae.isContentEditable&&ae.dataset&&ae.dataset.e&&$("#cvStage").contains(ae)?ae.dataset.e:null;
@@ -1821,7 +1849,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     if(keep){const el=(keep.l&&itemEl(keep.l,keep.i))||(keep.e&&$(`[data-e="${CSS.escape(keep.e)}"]`,st))||$(".cvdoc",st);select(el);if(wasOpen){panelOpen=true;renderPanel();place()}}
     else{current=null;chain=[];renderPanel();place()}
     if(editing){const el=$(`[data-e="${CSS.escape(editing)}"]`,st);if(el){select(el);startEdit(el)}}
-    cvBar();setTimeout(cvPages,60);
+    cvBar();setTimeout(()=>{cvPages();cvTips()},60);
   }
   function cvPages(){
     const d=$("#cvStage .cvdoc");if(!d||!cvBarEl)return;
@@ -1890,14 +1918,17 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     const V=cvVar(cvCur)||{},isMain=get("cv:default")===cvCur&&cvDocOf(cvCur)==="cv",doc=cvDocOf(cvCur);
     const pick=h("button",{type:"button",class:"rt-cvpick",title:"Switch résumé (tap, or hold and slide)"},h("span",{},V.label||cvCur),h("i",{},"▾"));
     const design=h("button",{type:"button",class:"rt-cvbtn",title:"Design"},"🎨 Design ▾");
+    const addB=h("button",{type:"button",class:"rt-cvbtn rt-cvadd",title:"Add: section, bullet, date, photo, icons, links"},"＋ Add ▾");
+    wireHold(addB,{menu:cvAddMenu});
     cvBarEl.replaceChildren(h("span",{class:"rt-cvtag"},"Editing only · visitors see the main résumé"),
       h("div",{class:"rt-cvrow"},pick,
         h("span",{class:"rt-cvwhere"+(doc==="cvlocal"?" local":"")},doc==="cvlocal"?"🔒 this device":isMain?"★ main":(V.public===false?"site · hidden":"site")),
-        design,h("span",{class:"rt-cvpages"},"…"),
+        addB,design,h("button",{type:"button",class:"rt-cvtips",title:"Tips to improve this résumé",on:{click:cvTipList}},"!"),
+        h("button",{type:"button",class:"rt-cvbtn",title:"Check it like an applicant-tracking system, and against a job ad",on:{click:cvAtsPage}},"🤖 ATS check"),h("span",{class:"rt-cvpages"},"…"),
         h("button",{type:"button",class:"rt-cvbtn",title:"Make the PDF now (includes unpublished changes)",on:{click:cvPrint}},"⬇ PDF"),
         h("button",{type:"button",class:"rt-cvbtn",title:"Save as an image now",on:{click:cvImage}},"🖼 PNG")));
     wireHold(pick,{menu:()=>({title:"Résumés",items:cvAll().map(x=>({label:(x.v.label||x.id),hint:x.doc==="cvlocal"?"🔒 device":(get("cv:default")===x.id?"★ main":""),def:x.id===cvCur,fn:()=>cvShow(x.id)})).concat([
-      {label:"＋ New résumé…",sub:()=>[{label:"Copy of this one",hint:"then change it",fn:()=>cvNew("copy")},{label:"Blank",fn:()=>cvNew("blank")},{label:"For a friend",hint:"🔒 only this device",fn:()=>cvNew("friend")}]},
+      {label:"＋ New résumé…",sub:()=>[{label:"Copy of this one",hint:"then change it",fn:()=>cvNew("copy")},{label:"Blank",fn:()=>cvNew("blank")},{label:"For a friend",hint:"🔒 only this device",fn:()=>cvNew("friend")},{label:"✨ From an old résumé",hint:"paste or PDF",fn:cvImport}]},
       {label:"✎ Rename this one",fn:()=>{const n=prompt("Name for this version",V.label||"");if(n!=null){set(cvBase(cvCur)+".label",n.trim()||V.label);cvBar()}}},
       {label:"★ Make it the main one",hint:"visitors see it",off:doc!=="cv",fn:()=>{set("cv:default",cvCur);cvBar();toast("Visitors will see this résumé after you publish.")}},
       {label:"Where it's kept…",sub:()=>[
@@ -1915,19 +1946,310 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       {label:"Change the photo…",fn:()=>replaceMedia(b+".photo","image",$("#cvStage .cvdoc"))},
       {label:"Fit on one page",fn:cvFit},
       {label:"Text direction",hint:V.dir==="rtl"?"right to left":"left to right",sub:()=>[["ltr","Left to right (English)"],["rtl","Right to left (עברית)"]].map(([k,l])=>({label:l,def:(V.dir||"ltr")===k,fn:()=>{set(b+".dir",k);set(b+".lang",k==="rtl"?"he":"en");if(k==="rtl"&&!/Rubik|Assistant/.test(V.font||""))set(b+".font","Rubik")}}))},
-      {label:"ATS check",hint:"what a robot reads",fn:()=>cvAts()}]})});
+      {label:"ATS check",hint:"what a robot reads",fn:()=>cvAtsPage()}]})});
   }
-  function cvAts(){
-    const V=cvVar(cvCur),txt=RTCV.plainText(V),tips=[];
-    if((V.template||"ats")!=="ats")tips.push("Two-column designs look great to people, but some older ATS read across both columns. For online applications, send the ATS Pro template.");
-    if(!V.person.email)tips.push("Add an email address.");if(!V.person.phone)tips.push("Add a phone number.");
-    if(!(V.main||[]).concat(V.side||[]).some(s=>s.type==="skills"))tips.push("Add a Skills section: ATS match keywords from the job ad against it.");
-    const words=txt.split(/\s+/).length;if(words>750)tips.push(`About ${words} words: aim for one page (roughly 450–650 words).`);
-    const vague=(txt.match(/\b(responsible for|helped|worked on|various)\b/gi)||[]).length;if(vague)tips.push(`${vague} vague phrase(s) like "responsible for" / "helped": start bullets with a strong verb and a result.`);
-    modal(h("h3",{},"ATS check"),h("p",{class:"rt-hint"},"This is the text an applicant-tracking system gets from the PDF, in order."),
-      h("ul",{},...(tips.length?tips:["Looks good: standard headings, real text, contact details on top."]).map(t=>h("li",{},t))),
-      h("pre",{style:"white-space:pre-wrap;max-height:40vh;overflow:auto;background:#0e0e0e;border:1px solid #333;border-radius:8px;padding:10px;font:12px/1.45 ui-monospace,monospace"},txt),
-      h("div",{class:"rt-row",style:"justify-content:flex-end"},h("button",{class:"rt-btn",type:"button",on:{click:e=>e.target.closest(".rt-modal").remove()}},"Close")));
+  /* ---- one call to whichever AI is set up (Gemini / the app / in the browser); answers JSON */
+  const parseJ=t=>{t=String(t||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/^```(?:json)?|```$/gm,"").trim();try{return JSON.parse(t)}catch(e){const m=t.match(/\{[\s\S]*\}/);if(m)try{return JSON.parse(m[0])}catch(_){}return null}};
+  async function aiText(sys,user,{max=900,status,tools}={}){
+    const p=provider(),st=status||{set textContent(v){}};
+    if(p==="gemini"){
+      const key=store.get(AI_KEY);if(!key)throw new Error("add a Gemini key first (🔑)");
+      let list=[];try{list=await rankModels(key)}catch(e){}
+      const models=[...new Set([await pickModel(key),...list.slice(0,4)])];let last="";
+      for(const m of models){for(let a=0;a<2;a++){
+        const r=await fetchT(`${GAPI}/models/${m}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:"user",parts:[{text:user}]}],...(tools?{tools}:{}),
+            generationConfig:{maxOutputTokens:max*2,...(tools?{}:{responseMimeType:"application/json"})}})},120000);
+        const j=await r.json().catch(()=>({}));
+        if(r.ok){const c=(j.candidates||[])[0];return ((c&&c.content&&c.content.parts)||[]).map(x=>x.text||"").join("")}
+        last=String((j.error&&j.error.message)||r.status);st.textContent="Gemini is busy, trying again…";
+        if(!/demand|overload|unavailable|exhausted|quota|try again|503|429|500/i.test(last+r.status))break;await new Promise(o=>setTimeout(o,1500))}}
+      throw new Error(last);
+    }
+    if(p==="app")return await appChat([{role:"system",content:sys},{role:"user",content:user}],st,max);
+    const eng=await ensureEngine(r=>{st.textContent=`Downloading the AI model… ${Math.round((r.progress||0)*100)}%`});
+    const res=await eng.chat.completions.create({messages:[{role:"system",content:sys},{role:"user",content:user}],temperature:.3,max_tokens:max,extra_body:{enable_thinking:false},response_format:{type:"json_object"}});
+    return res.choices[0].message.content;
+  }
+  let CVGUIDE="";
+  const cvGuide=async()=>{if(CVGUIDE)return CVGUIDE;try{const r=await fetchT(new URL("cv-guide.md",ME).href,{cache:"no-cache"},15000);CVGUIDE=r.ok?await r.text():""}catch(e){}return CVGUIDE};
+  const cvGuideShort=g=>g.replace(/## Sources[\s\S]*$/,"").replace(/\[[^\]]*\]/g,"").slice(0,5200);
+
+  /* ---- red ! tips on the résumé */
+  const VERBS={build:"built",design:"designed",develop:"developed",implement:"implemented",create:"created",lead:"led",manage:"managed",optimize:"optimized",debug:"debugged",
+    integrate:"integrated",program:"programmed",write:"wrote",ship:"shipped",launch:"launched",improve:"improved",reduce:"reduced",increase:"increased",automate:"automated",
+    architect:"architected",prototype:"prototyped",refactor:"refactored",test:"tested",maintain:"maintained",deliver:"delivered",coordinate:"coordinated",mentor:"mentored",
+    oversee:"oversaw",run:"ran",make:"made",teach:"taught",drive:"drove",grow:"grew",own:"owned",support:"supported",collaborate:"collaborated",research:"researched",
+    analyze:"analyzed",produce:"produced",handle:"handled",resolve:"resolved",establish:"established",train:"trained",model:"modeled",animate:"animated",publish:"published",
+    port:"ported",profile:"profiled",fix:"fixed",add:"added",tune:"tuned",balance:"balanced",script:"scripted",set:"set",lower:"lowered",cut:"cut",speed:"sped",convert:"converted",
+    migrate:"migrated",document:"documented",present:"presented",plan:"planned",organize:"organized",streamline:"streamlined",customize:"customized",configure:"configured",deploy:"deployed"};
+  const PAST2PRES=Object.fromEntries(Object.entries(VERBS).map(([a,b])=>[b,a]));
+  const cap=w=>w?w[0].toUpperCase()+w.slice(1):w;
+  // change the verbs that lead each clause ("Debugged and optimized…" → "Debug and optimize…")
+  const retense=(t,map)=>t.replace(/(^|\b(?:and|&)\s+|,\s+)([A-Za-z]+)/g,(m0,pre,w)=>{const r=map[w.toLowerCase()];return r?pre+(w[0]===w[0].toUpperCase()?cap(r):r):m0});
+  const WEAK=[[/^responsible for (\w+ing)\b/i,m=>cap(m[1].replace(/ing$/,"").replace(/(.)\1$/,"$1"))],[/^responsible for\b/i,"Owned"],[/^(helped|helping) (to )?/i,"Contributed to "],[/^worked on\b/i,"Built"],[/^participated in\b/i,"Contributed to"],
+    [/^assisted (with|in)\b/i,"Supported"],[/^involved in\b/i,"Contributed to"],[/^in charge of\b/i,"Led"],[/^duties included\b/i,""],[/^tasked with\b/i,""]];
+  let cvTipsOn=true,cvTipT=null,cvTipLayer=null;
+  const ignoreKey="rt-cv-ignore";
+  const ignored=()=>{try{return new Set(JSON.parse(store.get(ignoreKey)||"[]"))}catch(e){return new Set()}};
+  function cvLint(){
+    const V=cvVar(cvCur);if(!V)return [];
+    const base=cvBase(cvCur),P=V.person||{},pp=base+".person",out=[];
+    const add=(key,at,title,why,o={})=>out.push(Object.assign({key:cvCur+"|"+key,at,title,why},o));
+    if(!P.email)add("email",pp+".email","Add your email","Recruiters and ATS need contact details on top. Missing contact info is one of the most common mistakes (Harvard career services).");
+    if(!P.phone)add("phone",pp+".phone","Add your phone number","Contact details go at the top of the page (Harvard career services).");
+    if(!P.location)add("loc",pp+".location","Add your city / country","Many ATS filter by location; a city or country is enough.");
+    const urls=(P.links||[]).map(l=>String(l.url||""));
+    if(!urls.some(u=>/linkedin/i.test(u)))add("li",pp+".name","Add your LinkedIn","Recruiters check LinkedIn right after the résumé.",{act:{label:"＋ Add LinkedIn",fn:()=>cvAddLink("LinkedIn","linkedin.com/in/")}});
+    if(!urls.some(u=>/github/i.test(u)))add("gh",pp+".name","Add a GitHub link","Google's recruiters advise technical applicants to include GitHub and list programming languages prominently.",{act:{label:"＋ Add GitHub",fn:()=>cvAddLink("GitHub","github.com/")}});
+    const sum=String(P.summary||"");
+    if(sum.length>480)add("sumlong",pp+".summary","Make the summary shorter","Recruiters skim for about 7 seconds (Ladders eye-tracking study, 2018). 2–3 lines works best.",{ai:"Shorten this summary to 2-3 lines (under 320 characters) keeping the strongest facts.",text:sum});
+    if(/\b(I|my|me)\b/.test(sum))add("sumI",pp+".summary","Drop \"I\" and \"my\"","Résumés leave out personal pronouns (Harvard career services).",{text:sum,fix:sum.replace(/\bI am\b/g,"").replace(/\b(I|my|me)\b\s*/g,"").replace(/\s{2,}/g," ").trim(),ai:"Rewrite without personal pronouns."});
+    const secs=(V.main||[]).map((s,i)=>[s,`${base}.main.${i}`]).concat((V.side||[]).map((s,i)=>[s,`${base}.side.${i}`]));
+    if(!secs.some(([s])=>s.type==="skills"))add("noskills",pp+".name","Add a Skills section","ATS match the keywords of a job ad against your skills; for developers, list languages and engines prominently (Google recruiters).",{act:{label:"＋ Add Skills",fn:()=>cvAddSectionTo("skills")}});
+    if((V.template||"ats")!=="ats")add("cols",pp+".name","Two columns: fine for people, risky for ATS","Some ATS read straight across both columns and mix them up; multiple columns also lowered engagement in the Ladders study. Send the ATS Pro design to online application forms.",{act:{label:"Switch to ATS Pro",fn:()=>set(base+".template","ats")}});
+    const fmts=new Set();
+    for(const [s,sp] of secs){
+      if(!["experience","projects","education"].includes(s.type))continue;
+      (s.items||[]).forEach((it,k)=>{
+        const ip=`${sp}.items.${k}`,cur=/present|now|current|היום|כיום/i.test(it.dates||"");
+        if(!String(it.dates||"").trim())add("dates"+ip,ip+".dates","Add the dates","ATS read dates to work out how much experience you have; an entry without dates looks hidden.");
+        else{const d=String(it.dates);fmts.add(/\d{1,2}\/\d{4}/.test(d)?"mm/yyyy":/[A-Za-z]{3,}\.? \d{4}/.test(d)?"Mon YYYY":/\d{4}/.test(d)?"yyyy":"other")}
+        if(s.type==="projects"&&!String(it.link||"").trim())add("plink"+ip,ip+".name","Add a link to this project","Recruiters want to open your work in one click: a portfolio page, video, itch.io, Steam or GitHub.",{act:{label:"＋ Add link",fn:()=>cvSetLink(ip)}});
+        const b=Array.isArray(it.bullets)?it.bullets:[];
+        if(s.type!=="education"){
+          if(!b.length)add("nob"+ip,ip+"."+(s.type==="projects"?"name":"role"),"Add 2–4 bullet points","Bullets that start with an action verb and show results are what recruiters scan for (Ladders 2018; Harvard career services).",{act:{label:"＋ Add a bullet",fn:()=>cvPush(ip+".bullets","New point")}});
+          if(b.length>6)add("many"+ip,ip+"."+(s.type==="projects"?"name":"role"),"Too many bullets","3–5 for the main job, 2–3 for older jobs and projects. Keep the best ones.");
+          if(b.length&&!b.some(t=>/\d/.test(t)))add("num"+ip,`${ip}.bullets.0`,"Add a number","Show impact with the X-Y-Z formula: accomplished X, as measured by Y, by doing Z (Google's recruiters). Players, FPS, load time, team size, weeks, % faster…",
+            {text:b[0],ai:"Rewrite this bullet with the X-Y-Z formula. If a number is needed but unknown, use a placeholder like [N] for the owner to fill in. Never invent numbers."});
+        }
+        b.forEach((t,n)=>{t=String(t||"");const bp=`${ip}.bullets.${n}`;if(s.type==="education")return;
+          for(const [re,rep] of WEAK)if(re.test(t)){const m=t.match(re);const r=typeof rep==="function"?rep(m):rep;add("weak"+bp,bp,"Start with a strong verb","\"Responsible for\", \"helped\", \"worked on\" hide what you did. Start with an action verb: built, designed, led, optimized… (Harvard career services).",
+            {text:t,fix:cap((r+t.replace(re,"")).replace(/\s{2,}/g," ").trim()),ai:"Rewrite starting with a strong action verb, keep it true and specific."});return}
+          if(/^(I|My|We)\b/.test(t)){add("pron"+bp,bp,"Drop \"I\" / \"we\"","Bullets start with the verb, without pronouns (Harvard career services).",{text:t,fix:cap(t.replace(/^(I|We)\s+/,"").replace(/^My\s+/,""))});return}
+          if(t.length>210){add("long"+bp,bp,"Make this bullet shorter","Long sentences lowered engagement in the Ladders eye-tracking study. Aim for one or two lines.",{text:t,ai:"Shorten this bullet to under 160 characters, keep the key result and technologies."});return}
+          const w=(t.match(/^[A-Za-z]+/)||[""])[0],lw=w.toLowerCase();
+          if(cur&&PAST2PRES[lw])add("tense"+bp,bp,"Use present tense for your current job","Current role: present tense (Build, Lead). Past roles: past tense (Built, Led).",{text:t,fix:retense(t,PAST2PRES)});
+          else if(!cur&&s.type==="experience"&&VERBS[lw])add("tense"+bp,bp,"Use past tense for a past job","Past roles read in past tense (Built, Led); the current role in present tense.",{text:t,fix:retense(t,VERBS)});
+        });
+      });
+    }
+    if(fmts.size>1)add("datefmt",pp+".name","Write all dates the same way","Mixed formats (e.g. 02/2025 and 2023) look careless and some ATS misread them. Pick one, like MM/YYYY.");
+    const txt=RTCV.plainText(V);if(/references (available|upon)/i.test(txt))add("refs",pp+".name","Remove \"References available\"","Not needed; give references only when asked (Harvard career services).");
+    const d=$("#cvStage .cvdoc");if(d){const z=parseFloat(d.style.zoom)||1,n=Math.ceil(d.getBoundingClientRect().height/z/1122.5-.01);
+      if(n>1)add("pages",pp+".name",n+" pages: aim for one","Early-career résumés should fit one page (Google's recruiters).",{act:{label:"Fit on one page",fn:cvFit}})}
+    const ig=ignored();return out.filter(x=>!ig.has(x.key));
+  }
+  function cvTargetEl(path){
+    const st=$("#cvStage");if(!st)return null;
+    return $(`[data-e="${CSS.escape(path)}"]`,st)||(()=>{const l=path.replace(/\.\d+$/,""),i=path.match(/\.(\d+)$/);return i?itemEl(l,i[1]):null})()||$(`[data-e="${CSS.escape(path.replace(/\.[^.]+$/,".name"))}"]`,st);
+  }
+  function cvTips(){
+    clearTimeout(cvTipT);cvTipT=setTimeout(()=>{
+      if(!CVS()||!cvBarEl)return;
+      if(!cvTipLayer){cvTipLayer=h("div",{class:"rt-tiplayer rt-ui"});document.body.append(cvTipLayer)}
+      const tips=cvLint(),chip=$(".rt-cvtips",cvBarEl);
+      if(chip){chip.textContent=tips.length?`! ${tips.length} tip${tips.length>1?"s":""}`:"✓ no tips";chip.classList.toggle("ok",!tips.length)}
+      cvTipLayer.replaceChildren();if(!cvTipsOn||document.documentElement.classList.contains("rt-preview"))return;
+      const used=new Map();
+      for(const t of tips){const el=cvTargetEl(t.at);if(!el||!el.getClientRects().length)continue;
+        const r=el.getBoundingClientRect(),k=Math.round(r.top+scrollY)+":"+Math.round(r.left);const n=used.get(k)||0;used.set(k,n+1);
+        const b=h("button",{type:"button",class:"rt-tip",title:t.title,on:{click:e=>{e.stopPropagation();cvTipBox(t)}}},"!");
+        b.style.top=(r.top+scrollY-9)+"px";b.style.left=(Math.max(4,r.left+scrollX-24-n*22))+"px";cvTipLayer.append(b)}
+    },350);
+  }
+  addEventListener("resize",()=>{if(cvTipLayer)cvTips()});
+  function cvTipBox(t){
+    const el=cvTargetEl(t.at);if(el){select(el.closest(UNIT)||el)}
+    const sugBox=h("div",{class:"rt-sug"});
+    const showSug=(txt,from)=>{sugBox.replaceChildren(h("p",{class:"rt-hint"},from),h("div",{class:"rt-sugtext",contenteditable:"true",spellcheck:"true"},txt),
+      h("div",{class:"rt-row"},h("button",{class:"rt-btn pri",type:"button",on:{click:()=>{const v=$(".rt-sugtext",sugBox).textContent.trim();applyValue(t.at,v);m.remove();cvShow(cvCur,true);cvTips();toast("Changed. ✓")}}},"Use it")))};
+    const aiBtn=t.ai?h("button",{class:"rt-btn",type:"button",on:{click:async()=>{
+      aiBtn.disabled=true;const st=h("p",{class:"rt-hint"},"Asking the AI…");sugBox.replaceChildren(st);
+      try{const g=cvGuideShort(await cvGuide());const V=cvVar(cvCur);
+        const raw=await aiText(`You improve one line of a game developer's résumé. Follow this guide:\n${g}\nReply ONLY with JSON {"text":"..."}. Keep the language of the original. Never invent facts or numbers; use placeholders like [N] where a number is missing.`,
+          `ROLE CONTEXT: ${(V.person||{}).title||""}\nTASK: ${t.ai}\nORIGINAL: ${t.text||""}`,{max:300,status:st});
+        const j=parseJ(raw);if(!j||!j.text)throw new Error("the AI didn't answer in the expected format");showSug(String(j.text).trim(),"✨ AI suggestion (you can edit it before using it):")}
+      catch(e){sugBox.replaceChildren(h("p",{class:"rt-hint"},"⚠ "+errText(e)))}aiBtn.disabled=false}}},"✨ Better wording (AI)"):null;
+    const m=modal(h("h3",{},h("span",{class:"rt-tipdot"},"!")," ",t.title),h("p",{},t.why),
+      t.text?h("div",{class:"rt-cur"},h("span",{class:"rt-hint"},"Now:"),h("p",{},t.text)):null,sugBox,
+      h("div",{class:"rt-row",style:"flex-wrap:wrap;gap:8px;margin-top:10px"},
+        t.act?h("button",{class:"rt-btn pri",type:"button",on:{click:()=>{m.remove();t.act.fn();setTimeout(cvTips,300)}}},t.act.label):null,aiBtn,
+        el&&el.matches("[data-e]")?h("button",{class:"rt-btn",type:"button",on:{click:()=>{m.remove();select(el);startEdit(el)}}},"✎ Edit it myself"):null,
+        h("button",{class:"rt-btn",type:"button",on:{click:()=>{const s_=ignored();s_.add(t.key);store.set(ignoreKey,JSON.stringify([...s_]));m.remove();cvTips()}}},"Ignore"),
+        h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Close")));
+    if(t.fix&&t.fix!==t.text)showSug(t.fix,"Suggested change (you can edit it before using it):");
+  }
+  function cvTipList(){
+    const tips=cvLint();
+    const m=modal(h("h3",{},tips.length?`${tips.length} tips for this résumé`:"No tips ✓"),
+      h("div",{class:"rt-addlist"},...tips.map(t=>h("button",{type:"button",class:"rt-addopt",on:{click:()=>{m.remove();const el=cvTargetEl(t.at);if(el)el.scrollIntoView({block:"center"});setTimeout(()=>cvTipBox(t),250)}}},h("b",{},"! "+t.title),h("span",{},t.why.slice(0,110)+(t.why.length>110?"…":""))))),
+      h("div",{class:"rt-row",style:"justify-content:space-between;margin-top:10px"},
+        h("button",{class:"rt-btn",type:"button",on:{click:()=>{cvTipsOn=!cvTipsOn;m.remove();cvTips();toast(cvTipsOn?"Tips shown on the page.":"Tips hidden (the counter stays).")}}},cvTipsOn?"Hide the ! marks":"Show the ! marks"),
+        h("button",{class:"rt-btn",type:"button",on:{click:()=>{store.set(ignoreKey,"");m.remove();cvTips()}}},"Bring back ignored tips"),
+        h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Close")));
+  }
+
+  /* ---- easy adding */
+  function cvAddLink(label,prefix){
+    const u=prompt(`${label} address`,prefix||"https://");if(!u||u===prefix)return;
+    const lp=cvBase(cvCur)+".person.links";const a=get(lp)||[];a.push({label:label||"",url:u.trim()});set(lp,a);cvShow(cvCur);cvTips();toast("Link added.");
+  }
+  function cvSetLink(ip){const it=get(ip)||{};const u=prompt("Link (portfolio page, video, itch.io, Steam, GitHub…)",it.link||"https://");if(u==null)return;set(ip+".link",u.trim());cvShow(cvCur);cvTips()}
+  function cvAddSectionTo(type){const base=cvBase(cvCur),col=(cvVar(cvCur).template==="ats")?"main":(type==="skills"||type==="languages"||type==="tags")?"side":"main";
+    const arr=get(base+"."+col)||[];arr.push(RTCV.newSection(type));set(base+"."+col,arr);cvShow(cvCur);
+    const t=$(`#cvStage [data-e="${CSS.escape(`${base}.${col}.${arr.length-1}.title`)}"]`);if(t){t.scrollIntoView({block:"center"});flash(t.closest(".cv-sec"))}cvTips()}
+  function cvSections(){const V=cvVar(cvCur),b=cvBase(cvCur),o=[];for(const c of ["main","side"])(V[c]||[]).forEach((s,i)=>o.push({s,sp:`${b}.${c}.${i}`}));return o}
+  function cvSelItem(){const it=current&&current.closest&&current.closest(".cv-item");return it&&$("#cvStage").contains(it)?cvItemPath(it):null}
+  function cvAddEntry(sp){const s=get(sp);const T=RTCV.SECTION_TYPES[s.type]||RTCV.SECTION_TYPES.text;const a=s.items||[];a.unshift(JSON.parse(JSON.stringify(T.item)));set(sp+".items",a);cvShow(cvCur);
+    const first=$(`#cvStage [data-l="${CSS.escape(sp+".items")}"] > [data-i="0"] [data-e]`);if(first){first.scrollIntoView({block:"center"});select(first);startEdit(first);try{getSelection().selectAllChildren(first)}catch(e){}}cvTips()}
+  function cvAddMenu(){
+    const ip=cvSelItem(),V=cvVar(cvCur),b=cvBase(cvCur);
+    const secsWith=f=>cvSections().filter(x=>f(x.s));
+    return {title:"Add",items:[
+      {label:"Section",hint:"jobs, projects, skills…",sub:()=>Object.entries(RTCV.SECTION_TYPES).map(([k,t])=>({label:t.label,fn:()=>{const u=current&&$("#cvStage").contains(current)?current:$("#cvStage .cvdoc");cvAddSection(u,k)}}))},
+      {label:"Job / project / school…",hint:"new entry on top",sub:()=>cvSections().map(x=>({label:(x.s.title||x.s.type),hint:({experience:"job",projects:"project",education:"school",skills:"skill group",tags:"group",languages:"language",list:"entry",text:"paragraph"})[x.s.type]||"",fn:()=>cvAddEntry(x.sp)}))},
+      {label:"Bullet point",hint:ip?"to the selected entry":"pick an entry",sub:ip?null:()=>secsWith(s=>["experience","projects","education"].includes(s.type)).flatMap(x=>(x.s.items||[]).map((it,k)=>({label:it.role||it.name||it.degree||"entry",hint:x.s.title,fn:()=>cvPush(`${x.sp}.items.${k}.bullets`,"New point")})))
+        ,fn:()=>{if(ip&&Array.isArray((get(ip)||{}).bullets))cvPush(ip+".bullets","New point");else toast("Tap a job or project first.")}},
+      {label:"Date",hint:ip?"for the selected entry":"pick an entry",fn:()=>{const el=ip&&$(`#cvStage [data-e="${CSS.escape(ip+".dates")}"]`);if(el){select(el);startEdit(el);try{getSelection().selectAllChildren(el)}catch(e){}}else toast("Tap a job, project or school first, then Add › Date.")}},
+      {label:"Skill",hint:"to Skills",fn:()=>{const sk=secsWith(s=>s.type==="skills")[0];if(!sk){cvAddSectionTo("skills");return}const n=prompt("Skill (e.g. Unity, C#, Multiplayer)");if(!n)return;
+        const g=get(sk.sp+".items.0.items")||[];g.push(n.trim());set(sk.sp+".items.0.items",g);cvShow(cvCur);cvTips()}},
+      {label:"Link",sub:()=>[{label:"LinkedIn",fn:()=>cvAddLink("LinkedIn","linkedin.com/in/")},{label:"GitHub",fn:()=>cvAddLink("GitHub","github.com/")},{label:"Portfolio",fn:()=>cvAddLink("Portfolio","https://")},
+        {label:"Other link",fn:()=>{const l=prompt("Label (e.g. itch.io)");if(l!=null)cvAddLink(l,"https://")}},
+        ...(ip&&/\.(main|side)\.\d+\.items\.\d+$/.test(ip)?[{label:"On the selected entry",hint:"project / job link",fn:()=>cvSetLink(ip)}]:[])]},
+      {label:"Photo",hint:V.show_photo&&V.photo?"replace":"add",fn:()=>{if(!V.show_photo)set(b+".show_photo",true);replaceMedia(b+".photo","image",$("#cvStage .cvdoc"))}},
+      {label:V.show_icons?"Section icons: on":"Section icons",hint:V.show_icons?"tap to turn off":"icon next to each heading",fn:()=>set(b+".show_icons",!V.show_icons)},
+      {label:"Icon for a section",sub:()=>cvSections().map(x=>({label:x.s.title||x.s.type,sub:()=>Object.keys(ICONS).map(n=>({label:n,ico:iconSvg(n),def:(x.s.icon||RTCV.SEC_ICON[x.s.type])===n,fn:()=>{if(!V.show_icons)set(b+".show_icons",true);set(x.sp+".icon",n)}}))}))},
+    ]};
+  }
+
+  /* ---- ATS check page (editing only) */
+  const KW=["Unity","Unreal Engine","Unreal","C#","C++","Blueprints","Python","Lua","JavaScript","TypeScript","Java","Go","Rust","SQL","HLSL","GLSL","Shader Graph","shaders","URP","HDRP","Niagara",
+    "Gameplay Ability System","GAS","DOTS","ECS","Addressables","ScriptableObjects","UI Toolkit","UMG","Netcode","Photon","Mirror","Fish-Net","multiplayer","networking","dedicated servers",
+    "physics","AI","behavior trees","state machines","pathfinding","animation","rigging","VFX","rendering","graphics","OpenGL","DirectX","Vulkan","Metal","optimization","profiling","performance",
+    "memory management","debugging","gameplay","game design","level design","tools","editor tools","pipelines","build systems","CI/CD","Jenkins","GitHub Actions","Git","Perforce","Plastic SCM","Jira","Confluence",
+    "Agile","Scrum","Kanban","unit testing","automated testing","TDD","design patterns","OOP","SOLID","data structures","algorithms","3D math","linear algebra","mobile","iOS","Android","console",
+    "PlayStation","Xbox","Nintendo Switch","PC","Steam","VR","AR","XR","OpenXR","Meta Quest","LiveOps","analytics","A/B testing","monetization","F2P","PlayFab","Firebase","REST","JSON","backend",
+    "cloud","AWS","Azure","Docker","Kubernetes","React","Node.js","prototyping","UX","UI","localization","accessibility","shipped","mentoring","leadership","team lead","communication","English","Hebrew",
+    "Bachelor","B.Sc","degree","Computer Science","real-time","simulation","digital twin","Cesium","Houdini","Blender","Maya","3ds Max","Substance","Photoshop","Figma","Visual Studio","Rider","LLM","Copilot"];
+  const SYN={"Unreal Engine":["unreal","ue4","ue5","unreal engine"],"Unreal":["unreal","ue4","ue5"],"C#":["c#","csharp","c sharp"],"C++":["c++","cpp"],"JavaScript":["javascript","js"],"TypeScript":["typescript","ts"],
+    "Blueprints":["blueprint","blueprints"],"ScriptableObjects":["scriptableobject","scriptable objects","scriptableobjects"],"multiplayer":["multiplayer","multi-player","online"],"CI/CD":["ci/cd","continuous integration"],
+    "AI":["ai","artificial intelligence"],"VR":["vr","virtual reality"],"AR":["ar","augmented reality"],"UI":["ui","user interface"],"UX":["ux","user experience"],"Git":["git","github","gitlab"],"Agile":["agile"],"Scrum":["scrum"],
+    "OOP":["oop","object oriented","object-oriented"],"3D math":["3d math","vector math","linear algebra"],"team lead":["team lead","led a team","lead a team","team leader"],"shipped":["shipped","released","launched","published"]};
+  const esc_=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  function hasTerm(text,term){const alts=SYN[term]||[term.toLowerCase()];return alts.some(a=>new RegExp("(^|[^a-z0-9+#])"+esc_(a.toLowerCase())+"($|[^a-z0-9+#])","i").test(text))}
+  function jobTerms(job){
+    const t=" "+job.toLowerCase()+" ",found=KW.filter(k=>hasTerm(t,k));
+    // also words the ad repeats (capitalized tech-ish terms)
+    const caps={};(job.match(/\b[A-Z][A-Za-z0-9+#.]{1,20}\b/g)||[]).forEach(w=>{if(!/^(The|And|You|We|Our|Your|This|With|For|In|To|Of|A|An|As|At|On|Is|Are|Be|Or|If|It|Will|Have|Has|Job|About|Who|What|Must|Should|Nice|Plus|Requirements|Responsibilities|Experience|Years|Team|Work|Join|Apply|Location|Remote|Hybrid|Office|Benefits|Company|Role|Position|Studio|Games?|Developer|Engineer|Programmer)$/.test(w))caps[w]=(caps[w]||0)+1});
+    const extra=Object.entries(caps).filter(([w,n])=>n>=2&&!found.some(f=>f.toLowerCase()===w.toLowerCase())).map(([w])=>w).slice(0,12);
+    let all=[...new Set(found.concat(extra))];if(all.includes("Unreal Engine"))all=all.filter(x=>x!=="Unreal");if(all.includes("UI Toolkit"))all=all.filter(x=>x!=="UI");return all;
+  }
+  async function fetchJob(url,st){
+    url=url.trim();if(!/^https?:\/\//.test(url))url="https://"+url;
+    try{const r=await fetchT(url,{},12000);if(r.ok){const t=await r.text();const d=new DOMParser().parseFromString(t,"text/html");const x=(d.body&&d.body.innerText||d.body.textContent||"").trim();if(x.length>300)return x}}catch(e){}
+    st.textContent="Reading the page through a reader service…";
+    try{const r=await fetchT("https://r.jina.ai/"+url,{headers:{"Accept":"text/plain"}},30000);if(r.ok){const t=(await r.text()).trim();if(t.length>300&&!/captcha|access denied|enable javascript/i.test(t.slice(0,600)))return t}}catch(e){}
+    if(provider()==="gemini"&&store.get(AI_KEY)){st.textContent="Asking Gemini to read the page…";
+      const t=await aiText("Return the full text of the job advertisement at the URL the user gives: title, company, requirements, responsibilities, nice-to-haves. Plain text only.",url,{max:2500,status:st,tools:[{url_context:{}}]});if(t&&t.length>200)return t}
+    throw new Error("couldn't read that page (many job sites block it). Copy the job text and paste it in the box instead.");
+  }
+  function cvAtsChecks(V){
+    const txt=RTCV.plainText(V),P=V.person||{},secs=(V.main||[]).concat(V.side||[]),R=[];
+    const c=(ok,title,why,w=1)=>R.push({ok:!!ok,title,why,w});
+    c((V.template||"ats")==="ats","One-column layout","Two-column layouts can be read across both columns by some ATS.",2);
+    c(P.email&&P.phone,"Email and phone on top","Every ATS looks for contact details first.",2);
+    c((P.links||[]).some(l=>/linkedin/i.test(l.url)),"LinkedIn link","Recruiters check it next.");
+    c((P.links||[]).some(l=>/github|itch|portfolio|roeetal|\.com/i.test(l.url)),"Portfolio / GitHub link","For game developers, a link to your work matters most.");
+    const std=["experience","education","skills"];c(std.every(t=>secs.some(s=>s.type===t)),"Standard sections (Experience, Education, Skills)","ATS map these headings to their fields.",2);
+    const items=secs.filter(s=>["experience","education","projects"].includes(s.type)).flatMap(s=>s.items||[]);
+    c(items.every(it=>String(it.dates||"").trim()),"Dates on every job, project and school","Used to calculate years of experience.",2);
+    const bul=items.flatMap(it=>it.bullets||[]).map(String);
+    const strong=bul.filter(t=>VERBS[(t.match(/^[A-Za-z]+/)||[""])[0].toLowerCase()]||PAST2PRES[(t.match(/^[A-Za-z]+/)||[""])[0].toLowerCase()]).length;
+    c(!bul.length||strong/bul.length>=.6,`Bullets start with action verbs (${strong}/${bul.length})`,"Harvard career services: start with an action verb.");
+    const nums=bul.filter(t=>/\d/.test(t)).length;c(bul.length&&nums/bul.length>=.3,`Bullets with numbers (${nums}/${bul.length})`,"Google's X-Y-Z formula: show measurable results.");
+    c(!bul.some(t=>t.length>210),"Bullets are 1–2 lines","Long sentences lower engagement (Ladders 2018).");
+    const words=txt.split(/\s+/).filter(Boolean).length;c(words>=250&&words<=750,`Length: ${words} words`,"About 350–650 words fits one page.");
+    c(!/\b(I|my|me)\b/.test(txt.replace(/\n.*@.*\n/,"")),"No \"I\" / \"my\"","Résumés leave out pronouns.");
+    return R;
+  }
+  function cvAtsPage(){
+    const V=cvVar(cvCur);if(!V)return;
+    let old=$("#rt-ats");if(old)old.remove();
+    const checks=cvAtsChecks(V),wsum=checks.reduce((a,x)=>a+x.w,0),got=checks.reduce((a,x)=>a+(x.ok?x.w:0),0),base=Math.round(got/wsum*100);
+    const ring=(n,label)=>h("div",{class:"rt-ring",style:`--p:${n};--c:${n<50?"#e5484d":n<75?"#f5a524":"#2fbf71"}`},h("b",{},String(n)),h("span",{},label));
+    const res=h("div",{class:"rt-jobres"});
+    const url=h("input",{type:"url",placeholder:"Link to the job ad (LinkedIn, company site, AllJobs…)",value:store.get("rt-job-url")||""});
+    const job=h("textarea",{rows:"7",placeholder:"…or paste the job description here",spellcheck:"false"},store.get("rt-job-text")||"");
+    const st=h("p",{class:"rt-hint"},"");
+    const run=()=>{const jt=job.value.trim();store.set("rt-job-text",jt);if(jt.length<80){st.textContent="Paste the job text (or fetch it from the link) first.";return}
+      const terms=jobTerms(jt),cvText=" "+RTCV.plainText(V).toLowerCase()+" ",have=terms.filter(t=>hasTerm(cvText,t)),miss=terms.filter(t=>!hasTerm(cvText,t));
+      const pct=terms.length?Math.round(have.length/terms.length*100):0;
+      const yrs=(jt.match(/(\d+)\+?\s*(?:-\s*\d+\s*)?years?/gi)||[]).slice(0,4);
+      res.replaceChildren(h("div",{class:"rt-rings"},ring(pct,"keyword match"),ring(Math.round(pct*.6+base*.4),"overall")),
+        h("h4",{},`✓ In your résumé (${have.length})`),h("div",{class:"rt-kws"},...have.map(k=>h("span",{class:"rt-kw ok"},k))),
+        h("h4",{},`✕ Missing (${miss.length})`),h("p",{class:"rt-hint"},"Tap one you really have to add it to your Skills. Better still, also mention it in a bullet where you used it."),
+        h("div",{class:"rt-kws"},...miss.map(k=>h("button",{type:"button",class:"rt-kw miss",on:{click:e=>{const sk=cvSections().find(x=>x.s.type==="skills");if(!sk){toast("Add a Skills section first (＋ Add › Section › Skills).");return}
+          const g=get(sk.sp+".items.0.items")||[];if(!g.includes(k)){g.push(k);set(sk.sp+".items.0.items",g);cvShow(cvCur);cvTips()}e.target.classList.replace("miss","ok");e.target.disabled=true}}},"＋ "+k))),
+        yrs.length?h("p",{class:"rt-hint"},"The ad asks for: "+yrs.join(", ")+" of experience. Make sure your dates show it."):null,
+        h("div",{class:"rt-row",style:"margin-top:12px"},h("button",{class:"rt-btn pri",type:"button",on:{click:()=>aiReview(jt,miss)}},"✨ Deep review with AI")));
+    };
+    const aiReview=async(jt,miss)=>{
+      const box=h("div",{class:"rt-aireview"},h("p",{class:"rt-hint"},"The AI is reading your résumé and the job…"));res.append(box);box.scrollIntoView({block:"nearest"});
+      try{const g=cvGuideShort(await cvGuide());
+        const raw=await aiText(`You are an expert technical recruiter for game studios and an ATS specialist. Follow this guide:\n${g}\nCompare the résumé with the job ad. Be specific and honest; never suggest adding skills or experience the résumé doesn't show — list those as gaps to discuss instead. Reply ONLY with JSON:
+{"score":0-100,"verdict":"one sentence","strengths":["..."],"gaps":["must-haves the résumé doesn't show"],"keywords":["exact job terms worth adding where true"],"changes":[{"where":"section or bullet","now":"current text or empty","better":"suggested text"}]}`,
+          `JOB AD:\n${jt.slice(0,7000)}\n\nRÉSUMÉ:\n${RTCV.plainText(V).slice(0,6000)}`,{max:1500,status:$("p",box)});
+        const j=parseJ(raw);if(!j)throw new Error("the AI didn't answer in the expected format");
+        const L=(t,a)=>a&&a.length?[h("h4",{},t),h("ul",{},...a.map(x=>h("li",{},String(x))))]:[];
+        box.replaceChildren(h("div",{class:"rt-rings"},ring(Math.max(0,Math.min(100,+j.score||0)),"AI match")),h("p",{},j.verdict||""),...L("Strengths",j.strengths),...L("Gaps (talk about them, don't fake them)",j.gaps),...L("Keywords to use where true",j.keywords),
+          ...(j.changes&&j.changes.length?[h("h4",{},"Suggested changes"),...j.changes.slice(0,8).map(c_=>h("div",{class:"rt-chg"},h("span",{class:"rt-hint"},c_.where||""),c_.now?h("p",{class:"rt-now"},c_.now):null,h("p",{class:"rt-better"},c_.better||""),
+            h("button",{class:"rt-btn sm",type:"button",on:{click:async e=>{try{await navigator.clipboard.writeText(c_.better||"");e.target.textContent="Copied ✓"}catch(_){}}}},"Copy")))]:[]));
+      }catch(e){box.replaceChildren(h("p",{class:"rt-hint"},"⚠ "+errText(e)))}
+    };
+    const page=h("div",{id:"rt-ats",class:"rt-ui"},h("div",{class:"rt-atsin"},
+      h("div",{class:"rt-atshead"},h("h2",{},"ATS check"),h("span",{class:"rt-hint"},"Editing only · "+(V.label||cvCur)),h("button",{class:"rt-btn",type:"button",on:{click:()=>page.remove()}},"✕ Close")),
+      h("div",{class:"rt-atsgrid"},
+        h("section",{},h("div",{class:"rt-rings"},ring(base,"ATS-ready")),
+          h("ul",{class:"rt-checks"},...checks.map(x=>h("li",{class:x.ok?"ok":"bad"},h("b",{},(x.ok?"✓ ":"✕ ")+x.title),h("span",{},x.why)))),
+          h("h4",{},"What an ATS reads (in order)"),h("pre",{class:"rt-plain"},RTCV.plainText(V))),
+        h("section",{},h("h3",{},"Check against a job"),url,
+          h("div",{class:"rt-row",style:"margin:6px 0"},h("button",{class:"rt-btn",type:"button",on:{click:async()=>{store.set("rt-job-url",url.value.trim());if(!url.value.trim())return;st.textContent="Fetching the job ad…";
+            try{job.value=(await fetchJob(url.value,st)).slice(0,12000);st.textContent="Got it. Check the text, then press Check.";run()}catch(e){st.textContent="⚠ "+errText(e)}}}},"Fetch from link")),
+          job,st,h("div",{class:"rt-row",style:"margin-top:6px"},h("button",{class:"rt-btn pri",type:"button",on:{click:run}},"Check")),res))));
+    document.body.append(page);if((store.get("rt-job-text")||"").length>80)run();
+  }
+
+  /* ---- start from an old résumé: paste text or a PDF, the AI fills a new version */
+  async function pdfText(file){
+    if(!window.pdfjsLib)await new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";sc.onload=ok;sc.onerror=()=>no(new Error("couldn't load the PDF reader"));document.head.append(sc)});
+    pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let out="";
+    for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i),tc=await pg.getTextContent();let y=null;for(const it of tc.items){if(y!==null&&Math.abs(it.transform[5]-y)>4)out+="\n";else if(out&&!out.endsWith(" "))out+=" ";out+=it.str;y=it.transform[5]}out+="\n\n"}
+    return out;
+  }
+  function cvImport(){
+    const ta=h("textarea",{rows:"9",placeholder:"Paste the text of an old résumé or a LinkedIn profile…",spellcheck:"false"});
+    const fi=h("input",{type:"file",accept:"application/pdf,.pdf,.txt",style:"display:none"});
+    const where=h("select",{},h("option",{value:"cv"},"On the site (hidden until you list it)"),h("option",{value:"cvlocal"},"🔒 Only on this device (for a friend)"));
+    const st=h("p",{class:"rt-hint"},"");
+    fi.addEventListener("change",async()=>{const f=fi.files[0];if(!f)return;st.textContent="Reading "+f.name+"…";try{ta.value=/\.txt$/i.test(f.name)?await f.text():await pdfText(f);st.textContent="Read. Check the text, then press Build."}catch(e){st.textContent="⚠ "+errText(e)}});
+    const go=h("button",{class:"rt-btn pri",type:"button",on:{click:async()=>{
+      const t=ta.value.trim();if(t.length<100){st.textContent="Paste more text first.";return}go.disabled=true;st.textContent="The AI is building the résumé…";
+      try{const raw=await aiText(`Turn the résumé text into JSON for a résumé builder. Use ONLY facts from the text; don't invent or embellish. Keep the original language. Clean up wording only where it is clearly broken.
+JSON shape: {"person":{"name":"","title":"","summary":"","email":"","phone":"","location":"","links":[{"label":"","url":""}]},
+"main":[sections],"side":[]} where a section is {"type":"experience|projects|education|skills|tags|languages|list|text","title":"","items":[...]}
+items by type: experience {"role","org","dates","location","about","bullets":[]}; projects {"name","meta","dates","link","bullets":[]}; education {"degree","school","dates","location","label":"Courses","bullets":[]};
+skills/tags {"label":"group name or empty","items":["..."]}; languages {"name","level"}; list {"title","sub","dates","text"}; text {"text"}. Newest first. Reply ONLY with the JSON.`,t.slice(0,12000),{max:3500,status:st});
+        const j=parseJ(raw);if(!j||!j.person)throw new Error("the AI didn't answer in the expected format; try again or use Gemini");
+        const v=RTCV.normalize(Object.assign({template:"ats",accent:"#1f5fa8",font:"Inter",density:"normal",show_photo:false,public:false},j));
+        v.label=(v.person.name||"Imported")+" (imported)";const doc=where.value,id=slugId(v.person.name||"cv");
+        if(!docs[doc].variants)docs[doc].variants={};set(`${doc}:variants.${id}`,v);m.remove();cvShow(id);cvTips();
+        toast("Built. Check every line (the ! marks show what to improve), then ⬇ PDF.");
+      }catch(e){st.textContent="⚠ "+errText(e)}go.disabled=false}}},"✨ Build the résumé");
+    const m=modal(h("h3",{},"Start from an old résumé"),h("p",{class:"rt-hint"},"Paste the text, or pick a PDF. The AI sorts it into sections; it doesn't invent anything."),
+      ta,h("div",{class:"rt-row",style:"margin:8px 0;gap:8px;flex-wrap:wrap"},h("button",{class:"rt-btn",type:"button",on:{click:()=>{ui.append(fi);fi.click()}}},"📄 Pick a PDF"),where),st,
+      h("div",{class:"rt-row",style:"justify-content:flex-end;gap:8px"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel"),go));
   }
   function cvInit(){
     if(!CVS())return;

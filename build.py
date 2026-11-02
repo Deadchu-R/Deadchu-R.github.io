@@ -346,6 +346,10 @@ def timeline_html():
     return "".join(out)
 
 ICONS_22 = {  # icon choices for hobbies and games in the editor
+    "school": '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5M22 9v6"/>',
+    "trophy": '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M10 17h4"/>',
+    "tools": '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z"/>',
+    "globe": '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
     "climbing": '<path d="M5 20 9 9l4 5 3-7 3 13z"/><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="4.5" r="1.2"/>',
     "book": '<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/>',
     "speech": '<path d="M4 5h16v10H10l-4 4v-4H4z"/><path d="M8 9h8M8 12h5"/>',
@@ -1014,8 +1018,8 @@ def _cv_render(variants, depth, edit=False):
     """Run assets/cv.js (the same renderer the editor uses) on every variant."""
     import subprocess
     js = ("const C=require(process.argv[1]);let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);const o={};"
-          "for(const[id,v]of Object.entries(j.v))o[id]=C.render(v,id,{photo:p=>j.pre+String(p).replace(/^\\//,''),edit:j.edit});process.stdout.write(JSON.stringify(o))})")
-    r = subprocess.run(["node", "-e", js, str(ROOT / "assets/cv.js")], input=_json.dumps({"v": variants, "pre": "../" * depth, "edit": edit}),
+          "for(const[id,v]of Object.entries(j.v))o[id]=C.render(v,id,{photo:p=>j.pre+String(p).replace(/^\\//,''),edit:j.edit,icons:j.icons});process.stdout.write(JSON.stringify(o))})")
+    r = subprocess.run(["node", "-e", js, str(ROOT / "assets/cv.js")], input=_json.dumps({"v": variants, "pre": "../" * depth, "edit": edit, "icons": {**ICONS_22, **ICON_RAW}}),
                        capture_output=True, text=True, check=True)
     return _json.loads(r.stdout)
 
@@ -1051,7 +1055,7 @@ def build_cv():
     sheets = _cv_render(pub, 0)
     files = {k: "cv/" + k + ".pdf" for k in pub}
     data = {"default": default, "files": files, "names": {k: _cv_file(v) for k, v in pub.items()},
-            "variants": pub}
+            "variants": pub, "icons": {**ICONS_22, **ICON_RAW} if any(v.get("show_icons") for v in pub.values()) else {}}
     dv = pub[default]
     html = head(f"Résumé — {(dv.get('person') or {}).get('name', 'Roee Tal')}", "Résumé of Roee Tal, game developer (Unity / Unreal). Download as PDF.", 0)
     html = html.replace("</head>", f'<link rel="stylesheet" href="{_cv_font(dv)}" id="cv-font">\n<link rel="stylesheet" href="assets/cv.css?v={ver("assets/cv.css")}">\n</head>', 1)

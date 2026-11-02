@@ -63,13 +63,14 @@
     const b=Array.isArray(list)?list:[];
     return `<ul class="cv-bul" data-l="${ip}.bullets"${b.length?"":" hidden data-edit-show"}>`+b.map((t,k)=>`<li data-i="${k}"${E(`${ip}.bullets.${k}`)}>${esc(t)}</li>`).join("")+`</ul>`;
   }
+  function linkHTML(ip,it){const url=full(it.link);return url?`<p class="cv-link"><a href="${esc(url)}">${svg("link",11)}<span${E(ip+".link_label")}>${esc(it.link_label||pretty(url))}</span></a></p>`:""}
   function itemHTML(s,sp,it,i,v){
     const ip=`${sp}.items.${i}`,T=v.template;
     switch(s.type){
-      case "experience":return `<div class="cv-item" data-i="${i}">`+
+      case "experience":return `<div class="cv-item" data-i="${i}"${X(["Link (web address, optional)",ip+".link","text"])}>`+
         `<div class="cv-row"><h3><span${E(ip+".role")}>${esc(it.role)}</span>${T!=="novo"?`<span class="cv-sep"> — </span>`:""}<span class="cv-org"${E(ip+".org")}>${esc(it.org)}</span></h3>`+
         `<p class="cv-when"><span${E(ip+".dates")}>${esc(it.dates)}</span>${opt("span","cv-loc",ip+".location",it.location,"city")}</p></div>`+
-        opt("p","cv-about",ip+".about",it.about,"one line about the company")+opt("p","cv-lbl",ip+".label",it.label,"label above the list")+bullets(ip,it.bullets)+`</div>`;
+        opt("p","cv-about",ip+".about",it.about,"one line about the company")+linkHTML(ip,it)+opt("p","cv-lbl",ip+".label",it.label,"label above the list")+bullets(ip,it.bullets)+`</div>`;
       case "education":return `<div class="cv-item" data-i="${i}">`+
         `<div class="cv-row"><h3><span${E(ip+".degree")}>${esc(it.degree)}</span>${T!=="novo"?`<span class="cv-sep"> — </span>`:""}<span class="cv-org"${E(ip+".school")}>${esc(it.school)}</span></h3>`+
         `<p class="cv-when"><span${E(ip+".dates")}>${esc(it.dates)}</span>${opt("span","cv-loc",ip+".location",it.location,"city")}</p></div>`+
@@ -80,7 +81,7 @@
         return `<div class="cv-item" data-i="${i}"${X(["Link (web address)",ip+".link","text"])}>`+
         `<div class="cv-row"><h3><span${E(ip+".name")}>${esc(it.name)}</span>${it.meta||T!=="ats"?`<span class="cv-sep"> — </span>`:""}${opt("span","cv-meta",ip+".meta",it.meta,"engine · role")}</h3>`+
         `<p class="cv-when"><span${E(ip+".dates")}>${esc(it.dates)}</span></p></div>`+
-        (url?`<p class="cv-link"><a href="${esc(url)}">${svg("link",11)}<span${E(ip+".link_label")}>${esc(it.link_label||pretty(url))}</span></a></p>`:"")+
+        linkHTML(ip,it)+
         bullets(ip,it.bullets)+`</div>`}
       case "skills":case "tags":{
         const lp=`${ip}.items`,chips=T!=="ats";
@@ -94,16 +95,22 @@
       default:return `<div class="cv-item" data-i="${i}"><p class="cv-text"${E(ip+".text","text")}>${esc(it.text)}</p></div>`;
     }
   }
-  function sectionHTML(s,sp,i,col,v){
+  const SEC_ICON={experience:"brief",projects:"gamepad",education:"school",skills:"code",tags:"heart",languages:"language",list:"trophy",text:"user"};
+  function iconHTML(env,name,size){
+    const I=env.icons||{},raw=I[name];if(!raw)return "";
+    return raw.startsWith("<svg")?raw.replace("<svg ",`<svg width="${size}" height="${size}" `):`<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${raw}</svg>`;
+  }
+  function sectionHTML(s,sp,i,col,v,env){
     const lay=(s.type==="languages"&&v.template!=="ats")?" cv-lang-grid":"";
+    const ic=v.show_icons?(s.icon||SEC_ICON[s.type]||"star"):"";
     return `<section class="cv-sec cv-${s.type}" data-i="${i}"`+
-      X(["Column",sp+".col","select",[col,col==="main"?"side":"main"]])+
-      `><h2><span${E(sp+".title")}>${esc(s.title||SECTION_TYPES[s.type]&&SECTION_TYPES[s.type].label||"")}</span></h2>`+
+      X(["Column",sp+".col","select",[col,col==="main"?"side":"main"]],...(env.icons?[["Icon (when section icons are on)",sp+".icon","select",[""].concat(Object.keys(env.icons))]]:[]))+
+      `><h2>${ic?`<span class="cv-hi" data-ico="${sp}.icon">${iconHTML(env,ic,15)}</span>`:""}<span${E(sp+".title")}>${esc(s.title||SECTION_TYPES[s.type]&&SECTION_TYPES[s.type].label||"")}</span></h2>`+
       `<div class="cv-items${lay}" data-l="${sp}.items">`+s.items.map((it,k)=>itemHTML(s,sp,it||{},k,v)).join("")+`</div></section>`;
   }
-  function column(v,base,col){
+  function column(v,base,col,env){
     const list=v[col];
-    return `<div class="cv-col cv-${col}" data-l="${base}.${col}">`+list.map((s,i)=>sectionHTML(s,`${base}.${col}.${i}`,i,col,v)).join("")+`</div>`;
+    return `<div class="cv-col cv-${col}" data-l="${base}.${col}">`+list.map((s,i)=>sectionHTML(s,`${base}.${col}.${i}`,i,col,v,env)).join("")+`</div>`;
   }
   function contact(v,base,withIcons,edit){
     const P=v.person,pp=base+".person",rows=[];
@@ -122,7 +129,7 @@
     env=env||{};v=normalize(v);
     const base=`${env.doc||"cv"}:variants.${id}`,P=v.person,pp=base+".person",T=v.template;
     const settings=X(["Design",base+".template","select",Object.keys(TEMPLATES)],["Color",base+".accent","color",["","--cv-accent"]],
-      ["Font",base+".font","select",Object.keys(FONTS)],["Spacing",base+".density","select",DENSITY],["Show photo",base+".show_photo","toggle",["",""]],
+      ["Font",base+".font","select",Object.keys(FONTS)],["Spacing",base+".density","select",DENSITY],["Show photo",base+".show_photo","toggle",["",""]],["Section icons",base+".show_icons","toggle",["",""]],
       ["Photo",base+".photo","image"],["Text direction",base+".dir","select",["ltr","rtl"]]);
     const name=`<h1${E(pp+".name","Your name")}>${esc(P.name)}</h1>`,title=opt("p","cv-title",pp+".title",P.title,"Job title");
     const summary=opt("p","cv-summary",pp+".summary",P.summary,"2-3 lines: who you are and what you are looking for");
@@ -130,14 +137,15 @@
     let body;
     if(T==="ats"){
       const line=links.filter(r=>env.edit||!/ hidden data-edit-show/.test(r.slice(0,40))).map(r=>r.replace(/^<li/,"<span").replace(/<\/li>$/,"</span>")).join('<span class="cv-dot" aria-hidden="true"> · </span>');
-      body=`<header class="cv-head">${name}${title}<p class="cv-contact" data-l="${pp}.links">${line}</p></header>`+
-        (P.summary||env.edit?`<section class="cv-sec cv-sum"><h2>Summary</h2>${summary}</section>`:"")+column(v,base,"main")+column(v,base,"side");
+      const ph=photo(v,base,env,"cv-photo");
+      body=`<header class="cv-head${ph?" has-photo":""}">${ph}<div class="cv-id">${name}${title}<p class="cv-contact" data-l="${pp}.links">${line}</p></div></header>`+
+        (P.summary||env.edit?`<section class="cv-sec cv-sum"><h2>Summary</h2>${summary}</section>`:"")+column(v,base,"main",env)+column(v,base,"side",env);
     }else if(T==="novo"){
       body=`<header class="cv-head"><div class="cv-id">${name}${title}${summary}</div>${photo(v,base,env,"cv-photo")}<ul class="cv-contact" data-l="${pp}.links">${links.join("")}</ul></header>`+
-        `<div class="cv-cols">${column(v,base,"main")}${column(v,base,"side")}</div>`;
+        `<div class="cv-cols">${column(v,base,"main",env)}${column(v,base,"side",env)}</div>`;
     }else{
-      body=`<aside class="cv-aside">${photo(v,base,env,"cv-photo")}<ul class="cv-contact" data-l="${pp}.links">${links.join("")}</ul>${column(v,base,"side")}</aside>`+
-        `<div class="cv-body"><header class="cv-head">${name}${title}</header>${P.summary||env.edit?`<section class="cv-sec cv-sum">${summary}</section>`:""}${column(v,base,"main")}</div>`;
+      body=`<aside class="cv-aside">${photo(v,base,env,"cv-photo")}<ul class="cv-contact" data-l="${pp}.links">${links.join("")}</ul>${column(v,base,"side",env)}</aside>`+
+        `<div class="cv-body"><header class="cv-head">${name}${title}</header>${P.summary||env.edit?`<section class="cv-sec cv-sum">${summary}</section>`:""}${column(v,base,"main",env)}</div>`;
     }
     return `<article class="cvdoc t-${T} d-${v.density}" id="cv-${esc(id)}" dir="${v.dir==="rtl"?"rtl":"ltr"}" lang="${esc(v.lang||"en")}" style="--cv-accent:${esc(v.accent||"#2a8a8f")};--cv-font:'${esc(v.font||"Inter")}'" data-cv="${esc(id)}"${settings}>${body}</article>`;
   }
@@ -150,6 +158,6 @@
     for(const s of v.main.concat(v.side)){out.push("",(s.title||"").toUpperCase());for(const it of s.items){out.push(Object.values(it).flat().filter(x=>typeof x==="string"&&x).join(" | "))}}
     return out.filter(x=>x!=null).join("\n");
   }
-  const api={TEMPLATES,FONTS,DENSITY,COLORS,SECTION_TYPES,render,normalize,fontHref,newSection,blank,plainText,esc};
+  const api={SEC_ICON,TEMPLATES,FONTS,DENSITY,COLORS,SECTION_TYPES,render,normalize,fontHref,newSection,blank,plainText,esc};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;else root.RTCV=api;
 })(typeof self!=="undefined"?self:this);

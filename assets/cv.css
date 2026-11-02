@@ -109,3 +109,14 @@
   .cv-print-root{display:block!important;padding:0!important;margin:0!important}
   .cv-print-root .cvdoc{zoom:1!important;box-shadow:none!important;margin:0!important}
 }
+
+/* photo in ATS Pro (optional), section icons (optional) */
+.t-ats .cv-head.has-photo{display:flex;align-items:center;gap:6mm;text-align:start}
+.t-ats .cv-head.has-photo .cv-photo{width:25mm;height:25mm;border-radius:50%;object-fit:cover;flex:none;border:2px solid var(--a)}
+.t-ats .cv-head.has-photo .cv-contact{text-align:start}
+.cv-sec h2{display:flex;align-items:center;gap:7px}
+.cv-hi{display:inline-grid;place-items:center;width:1.7em;height:1.7em;border-radius:50%;background:var(--a);color:#fff;flex:none}
+.cv-hi svg{width:.95em;height:.95em}
+.t-ats .cv-hi{width:auto;height:auto;background:none;color:var(--a)}
+.t-studio .cv-hi{width:auto;height:auto;background:none;color:var(--a)}
+.t-ats .cv-inline b[data-edit-show]:empty{margin-inline-end:6px}
