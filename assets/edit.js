@@ -837,7 +837,7 @@
     // saved on this device only (not on the site)
     const pv=h("select",{},h("option",{value:"app",selected:provider()==="app"},"🔌 AI app on this device (Ollama / LM Studio)"),h("option",{value:"local",selected:provider()==="local"},"📱 Inside the browser (free, private)"),h("option",{value:"gemini",selected:provider()==="gemini"},"Gemini (free key, backup)"));
     pv.addEventListener("change",()=>{store.set(AI_PROV,pv.value);if(provBtn)provBtn.textContent=PROV_ICON[pv.value]});
-    const au=h("input",{type:"text",value:appUrl(),spellcheck:"false"});au.addEventListener("change",()=>{store.set(APP_URL,au.value.trim());store.set(APP_MODEL,"")});
+    const au=h("input",{type:"text",value:appUrl(),spellcheck:"false"});au.addEventListener("change",()=>{store.set(APP_URL,au.value.trim());store.set(APP_MODEL,"");isOllama=null});
     const am=h("select",{},h("option",{value:store.get(APP_MODEL)||""},store.get(APP_MODEL)||"(first model the app offers)"));
     am.addEventListener("change",()=>store.set(APP_MODEL,am.value));
     const ast=h("p",{class:"rt-hint"},"");
@@ -1135,21 +1135,49 @@ Actions (use paths exactly as listed):
     const r=await fetchT(appUrl()+"/models",{},8000);if(!r.ok)throw new Error("the app answered "+r.status);
     const j=await r.json();return (j.data||j.models||[]).map(m=>m.id||m.name).filter(Boolean);
   }
+  // Ollama has its own API that can switch off "thinking", force JSON and stream progress; LM Studio etc. use the OpenAI-style one
+  const appBase=()=>appUrl().replace(/\/v1$/,"");
+  let isOllama=null;
+  async function detectOllama(){if(isOllama!==null)return isOllama;try{const r=await fetchT(appBase()+"/api/tags",{},6000);isOllama=r.ok}catch(e){isOllama=false}return isOllama}
+  async function appModel(){
+    let model=store.get(APP_MODEL);
+    if(!model){const ms=await appModels();model=ms.find(m=>!/embed/i.test(m))||ms[0];if(!model)throw new Error("the app has no model loaded");store.set(APP_MODEL,model)}
+    return model;
+  }
+  async function warmApp(){   // load the model into memory while you type
+    try{if(provider()!=="app"||!(await detectOllama()))return;const model=await appModel();
+      fetchT(appBase()+"/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,prompt:"",keep_alive:"30m"})},300000).catch(()=>{})}catch(e){}
+  }
   async function appSend(text){
     const thinking=aiSay("sys","Asking the AI app…");
     try{
-      let model=store.get(APP_MODEL);
-      if(!model){const ms=await appModels();model=ms.find(m=>!/embed/i.test(m))||ms[0];if(!model)throw new Error("the app has no model loaded");store.set(APP_MODEL,model)}
-      const big=!isPhone();
-      const r=await fetchT(appUrl()+"/chat/completions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,temperature:.2,max_tokens:900,stream:false,
-        messages:[{role:"system",content:LOCAL_SYS+"\n/no_think"},{role:"user",content:`PAGE ${location.pathname}\n${big?catalog().slice(0,24000):smallCatalog(6000)}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`}]})},180000);
-      const j=await r.json().catch(()=>({}));
-      if(!r.ok)throw new Error((j.error&&(j.error.message||j.error))||("the app answered "+r.status));
-      await applyJsonAnswer(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content,thinking);
+      const model=await appModel(),big=!isPhone();
+      const userMsg=`PAGE ${location.pathname}\n${big?catalog().slice(0,24000):smallCatalog(current?3500:4500)}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`;
+      const messages=[{role:"system",content:LOCAL_SYS},{role:"user",content:userMsg}];
+      let content="";
+      if(await detectOllama()){
+        const r=await fetchT(appBase()+"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,messages,stream:true,think:false,format:"json",keep_alive:"30m",
+          options:{temperature:.2,num_ctx:big?16384:4096,num_predict:700}})},600000);
+        if(!r.ok){const t=await r.text().catch(()=>"");throw new Error((t.match(/"error":"([^"]+)/)||[,"the app answered "+r.status])[1])}
+        const rd=r.body.getReader(),dec=new TextDecoder();let buf="",t0=Date.now(),first=0;
+        thinking.textContent=`Reading the page… (${model})`;
+        for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;
+          while((i=buf.indexOf("\n"))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!line)continue;let j;try{j=JSON.parse(line)}catch(e){continue}
+            if(j.error)throw new Error(j.error);
+            if(j.message&&j.message.content){content+=j.message.content;if(!first)first=Date.now();thinking.textContent=`Writing… ${content.length} characters · ${Math.round((Date.now()-t0)/1000)}s`}}}
+      }else{
+        const r=await fetchT(appUrl()+"/chat/completions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,temperature:.2,max_tokens:900,stream:false,
+          messages:[{role:"system",content:LOCAL_SYS+"\n/no_think"},messages[1]]})},600000);
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok)throw new Error((j.error&&(j.error.message||j.error))||("the app answered "+r.status));
+        content=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
+      }
+      await applyJsonAnswer(content,thinking);
     }catch(e){thinking.remove();
       const m=errText(e);
-      aiSay("err",/fetch|network|load failed|no answer/i.test(m)
-        ?`Can't reach the AI app at ${appUrl()}. Phone: is Termux open with "ollama serve" running? PC: is the LM Studio server on (with CORS) or Ollama running? (${m})`
+      aiSay("err",/fetch|network|load failed/i.test(m)
+        ?`Can't reach the AI app at ${appUrl()}. Phone: is Termux open with ollama serve running (OLLAMA_ORIGINS="*")? PC: is the LM Studio server on (with CORS) or Ollama running? (${m})`
+        :/memory|ram|alloc/i.test(m)?"AI app: not enough memory for "+(store.get(APP_MODEL)||"this model")+". Try a smaller one (e.g. qwen3:1.7b) in ⋯ › Site settings. ("+m+")"
         :"AI app: "+m)}
   }
   async function localSend(text){
@@ -1229,7 +1257,7 @@ Actions (use paths exactly as listed):
   }
   function openAI(){
     if(provider()==="gemini"&&!store.get(AI_KEY)){aiKeyBox();return}
-    if(aiBox){aiBox.hidden=!aiBox.hidden;return}
+    if(aiBox){aiBox.hidden=!aiBox.hidden;if(!aiBox.hidden)warmApp();return}
     aiLog=h("div",{class:"rt-ailog"});
     const ta=h("textarea",{rows:"2",placeholder:"מה לשנות? / What should I change?"});
     const send=()=>{const t=ta.value;ta.value="";aiSend(t)};
@@ -1249,13 +1277,14 @@ Actions (use paths exactly as listed):
       h("div",{class:"rt-head"},h("span",{},"✨ AI assistant"),h("span",{},
         h("button",{class:"rt-x",type:"button",title:"Undo everything not published yet",on:{click:()=>{if(changes&&confirm("Throw away every change that isn't published yet (yours and the AI's)?")){changes=0;location.reload()}}}},"↺"),
         provBtn=h("button",{class:"rt-x",type:"button",title:"Switch AI: in the browser 📱 / AI app 🔌 / Gemini G",on:{click:()=>{const order=["app","local","gemini"];store.set(AI_PROV,order[(order.indexOf(provider())+1)%3]);provBtn.textContent=PROV_ICON[provider()];
-          aiSay("ai",{local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[provider()])}}},PROV_ICON[provider()]),
+          aiSay("ai",{local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[provider()]);warmApp()}}},PROV_ICON[provider()]),
         h("button",{class:"rt-x",type:"button",title:"Gemini key",on:{click:aiKeyBox}},"🔑"),
         h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{aiBox.hidden=true}}},"✕"))),
       aiLog,filesRow,
       h("div",{class:"rt-airow"},h("button",{type:"button",class:"rt-aibtn",title:"Attach image, video or sound",on:{click:()=>ui.append(att)||att.click()}},"📎"),ta,lang,mic,h("button",{type:"button",class:"rt-aibtn pri",title:"Send",on:{click:send}},"➤")));
     document.body.append(aiBox);
     if(provider()==="app")aiSay("ai","🔌 Using the AI app at "+appUrl()+". Tip: tap the thing you mean first, then ask.");
+    warmApp();
     if(provider()==="local")aiSay("ai","📱 Running on this device. The first message downloads the model once (use Wi-Fi). Tip: tap the thing you mean first, then ask, e.g. \"make this purple\" or \"תעביר את הסקשן הזה למעלה\".");
     aiSay("ai","Hi! Tell me what to change on this page: text, colors, icons, layout, button styles, order, or attach a picture/video to put somewhere. Changes show up right away; Publish when you like them.");
     setTimeout(()=>ta.focus(),50);
