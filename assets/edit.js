@@ -16,7 +16,8 @@
   const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
 
   /* ------------------------------------------------------------ state */
-  let docs={},shas={},loaded=false;
+  let docs={},orig={},loaded=false,inited=false;
+  const canon=o=>JSON.stringify(o);
   const dirty=new Set(),uploads=new Map();      // uploads: repo path -> Blob
   let changes=0;
 
@@ -30,8 +31,15 @@
   }
 
   /* ------------------------------------------------------------ GitHub */
+  // fetch that gives up instead of hanging forever on a bad connection
+  async function fetchT(url,opt={},ms=25000){
+    const ac=new AbortController(),t=setTimeout(()=>ac.abort(),ms);
+    try{return await fetch(url,{...opt,signal:ac.signal})}
+    catch(e){if(e.name==="AbortError")throw new Error("no answer after "+Math.round(ms/1000)+"s, check the connection");throw e}
+    finally{clearTimeout(t)}
+  }
   async function gh(path,opt={}){
-    const r=await fetch(API+path,{...opt,cache:"no-store",headers:{Authorization:"Bearer "+store.get(TOKEN_KEY),Accept:"application/vnd.github+json",...(opt.body?{"Content-Type":"application/json"}:{})}});
+    const r=await fetchT(API+path,{...opt,cache:"no-store",headers:{Authorization:"Bearer "+store.get(TOKEN_KEY),Accept:"application/vnd.github+json",...(opt.body?{"Content-Type":"application/json"}:{})}},opt.long?300000:25000);
     if(!r.ok){const t=await r.text().catch(()=>"");const err=new Error(r.status+" "+(t.match(/"message":"([^"]+)/)||[,t.slice(0,160)])[1]);err.status=r.status;throw err}
     return r.status===204?null:r.json();
   }
@@ -39,12 +47,15 @@
   const blobB64=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=no;r.readAsDataURL(b)});
 
   async function loadDocs(){
-    const out={},sh={};
+    // read the content straight from the site (fast, no GitHub needed); GitHub is only used to publish
+    const root=new URL("../",ME).href,out={};
     await Promise.all(Object.entries(FILES).map(async([k,path])=>{
-      const r=await gh(`/repos/${REPO}/contents/${path}?ref=${BR}&t=${Date.now()}`);
-      out[k]=JSON.parse(b64dec(r.content));sh[k]=r.sha;
+      let o;
+      try{const r=await fetchT(root+path+"?t="+Date.now(),{cache:"no-store"},15000);if(!r.ok)throw new Error(r.status);o=await r.json()}
+      catch(e){const r=await gh(`/repos/${REPO}/contents/${path}?ref=${BR}&t=${Date.now()}`);o=JSON.parse(b64dec(r.content))}
+      out[k]=o;orig[k]=canon(o);
     }));
-    docs=out;shas=sh;loaded=true;
+    docs=out;
   }
 
   async function publish(){
@@ -55,13 +66,13 @@
       // someone else changed the same content file since this page opened? stop instead of overwriting it
       for(const f of dirty){
         const cur=await gh(`/repos/${REPO}/contents/${FILES[f]}?ref=${head}&t=${Date.now()}`);
-        if(cur.sha!==shas[f]){setBusy("");alertBox("The content changed somewhere else since you opened this page (another tab or Pages CMS). Copy anything you typed, reload, and edit again so nothing gets overwritten.");return}
+        if(canon(JSON.parse(b64dec(cur.content)))!==orig[f]){setBusy("");alertBox("The content changed somewhere else since you opened this page (another tab or Pages CMS). Copy anything you typed, reload, and edit again so nothing gets overwritten.");return}
       }
       const commit=await gh(`/repos/${REPO}/git/commits/${head}`);
       const tree=[];let n=0;
       for(const[p,blob]of uploads){
         setBusy(`Uploading ${++n} of ${uploads.size}…`);
-        const r=await gh(`/repos/${REPO}/git/blobs`,{method:"POST",body:JSON.stringify({content:await blobB64(blob),encoding:"base64"})});
+        const r=await gh(`/repos/${REPO}/git/blobs`,{method:"POST",long:true,body:JSON.stringify({content:await blobB64(blob),encoding:"base64"})});
         tree.push({path:p,mode:"100644",type:"blob",sha:r.sha});
       }
       setBusy("Saving…");
@@ -70,7 +81,7 @@
       const what=[...dirty].map(f=>FILES[f].replace("content/","")).concat(uploads.size?[`${uploads.size} upload${uploads.size>1?"s":""}`]:[]).join(", ");
       const c=await gh(`/repos/${REPO}/git/commits`,{method:"POST",body:JSON.stringify({message:"Edit on the site: "+what,tree:t.sha,parents:[head]})});
       await gh(`/repos/${REPO}/git/refs/heads/${BR}`,{method:"PATCH",body:JSON.stringify({sha:c.sha})});
-      for(const f of dirty){const cur=await gh(`/repos/${REPO}/contents/${FILES[f]}?ref=${c.sha}`).catch(()=>null);if(cur)shas[f]=cur.sha}
+      for(const f of dirty)orig[f]=canon(docs[f]);
       dirty.clear();uploads.clear();changes=0;updateBar();
       watchBuild(c.sha);
     }catch(err){
@@ -184,7 +195,7 @@
   @media (max-width:640px){
     #rt-panel{left:8px!important;right:8px;width:auto;top:auto!important;bottom:62px;max-height:40vh}
     #rt-menu{left:8px}
-    #rt-toast{left:8px;right:8px;max-width:none;bottom:auto;top:64px}
+    #rt-toast{left:8px;right:8px;max-width:none;bottom:auto;top:8px}
     .rt-secbar .rt-sl{display:none}
   }`;
   document.head.append(h("style",{id:"rt-css"},STYLE));
@@ -256,7 +267,7 @@
       const save=async()=>{
         const v=inp.value.trim();if(!v){err.textContent="Paste the token first.";return}
         store.set(TOKEN_KEY,v);err.style.color="#aaa";err.textContent="Checking…";
-        try{await loadDocs();m.remove();saveTokenForLogin(true);done(true)}catch(e){err.style.color="#ff8a8a";err.textContent="That token doesn't open the site's repo ("+e.message+").";}
+        try{await gh(`/repos/${REPO}`);m.remove();saveTokenForLogin(true);done(true)}catch(e){err.style.color="#ff8a8a";err.textContent="That token doesn't open the site's repo ("+e.message+").";}
       };
       const m=modal(
         h("h3",{},first===true?"One-time setup":"GitHub token"),
@@ -801,9 +812,14 @@
     if(document.body.classList.contains("gallery")||/gallery\.html$/.test(location.pathname)){
       document.body.append(h("div",{class:"rt-banner rt-ui"},"The gallery is built automatically from the project pages and the lab. Edit those, and it updates by itself."));
     }
-    if(!store.get(TOKEN_KEY)){if(!(await askToken(true))){status("No token: you can look around, but not publish.",true);return}}
-    else{try{await loadDocs()}catch(e){status("",true);if(!(await askToken()))return}}
+    if(!store.get(TOKEN_KEY)&&!(await askToken(true))){status("No token: you can look around, but not publish.",true);return}
+    status("Loading the page's content…",true);
+    try{await loadDocs()}
+    catch(e){status("Couldn't load the content: "+e.message+". ",true,h("button",{class:"rt-link",type:"button",on:{click:()=>start()}},"Try again"));return}
     saveTokenForLogin();
+    gh(`/repos/${REPO}`).catch(e=>{if(e.status===401||e.status===403||e.status===404)status("Your GitHub token isn't working any more. Open ⋯ › GitHub token and paste a new one before publishing.",true)});
+    if(inited){loaded=true;updateBar();status("Tap anything to select it · double-tap text to change it");return}
+    inited=true;
     $$("[data-edit-show]").forEach(x=>{x.hidden=false});
     $$("details").forEach(d=>{if($("[data-e]",d))d.open=true});
     $$("[data-e]").forEach(initText);

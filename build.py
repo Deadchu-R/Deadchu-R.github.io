@@ -126,7 +126,7 @@ def topbar(depth, current=""):
         cur = ' aria-current="page"' if key == current else ""
         return f'<a href="{p}{href}"{cur}>{label}</a>'
     return f"""<header class="topbar"><div class="wrap">
-<a class="mark" href="{p}index.html">Roee Tal</a>
+<a class="mark" href="{p}index.html">Roee Tal</a><button class="edit-in top" type="button" aria-label="Edit the site" title="Edit the site"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/></svg></button>
 <nav>{a('index.html#projects','Projects','projects')}{a('gallery.html','Gallery','gallery')}{a('lab.html','Lab','lab')}{a('Roee-Tal-CV.pdf','CV','cv')}{a('index.html#contact','Contact','contact')}</nav>
 </div></header>
 """
