@@ -309,6 +309,12 @@
   .rt-kw.ok{background:#10251a;border-color:#2f7a4f;color:#9fe6bd}.rt-kw.miss{background:#2a1214;border-color:#7a2f35;color:#ffb3b8;cursor:pointer}
   .rt-chg{background:#151515;border:1px solid #2a2a2a;border-radius:9px;padding:8px 10px;margin-top:8px}.rt-now{color:#b9b9b9;text-decoration:line-through;margin:4px 0}.rt-better{color:#9fe6bd;margin:4px 0 6px}
   .rt-aireview{margin-top:14px;border-top:1px solid #2a2a2a;padding-top:10px}
+  .rt-cropwrap{display:grid;place-items:center;background:repeating-conic-gradient(#222 0 25%,#1a1a1a 0 50%) 0 0/16px 16px;border-radius:10px;padding:10px}
+  .rt-crop{position:relative;overflow:hidden;touch-action:none;cursor:grab;border-radius:4px;box-shadow:0 0 0 2px #ffd23f;user-select:none;-webkit-user-select:none}
+  .rt-crop.round{border-radius:50%}
+  .rt-crop img{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;pointer-events:none}
+  .rt-cropmodal .rt-card{max-width:620px}
+  .rt-cropmodal input[type=range]{flex:1}
   .rt-addlist{display:grid;gap:6px}.rt-addlist.grid{grid-template-columns:1fr 1fr}
   .rt-addopt{appearance:none;text-align:left;border:1px solid #333;background:#1e1e1e;color:#eee;border-radius:10px;padding:11px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font:600 14.5px/1.25 system-ui,sans-serif}
   .rt-addopt:hover{border-color:#ffd23f;background:#262626}.rt-addopt span{font-weight:400;font-size:12.5px;color:#aaa}
@@ -994,10 +1000,62 @@
     const blob=await new Promise(ok=>c.toBlob(ok,alpha?"image/png":"image/jpeg",.88));
     return{blob,ext:alpha?"png":"jpg"};
   }
+  /* ---- crop & zoom a picture so it fits its spot exactly (drag to move, pinch / wheel / slider to zoom) */
+  function targetShape(path,el,kind){
+    if(kind==="icon")return{aspect:1,round:false,alpha:true};
+    const t=$(`[data-m="${CSS.escape(path)}"]`)||$$("[data-bg]").find(b=>b.dataset.bg.split(" ").includes(path))||(el&&el.querySelector&&$("img",el))||el;
+    if(!t||!t.getBoundingClientRect)return{aspect:null,round:false,alpha:kind==="art"};
+    const r=t.getBoundingClientRect();if(r.width<16||r.height<16)return{aspect:null,round:false,alpha:kind==="art"};
+    const br=parseFloat(getComputedStyle(t).borderTopLeftRadius)||0;
+    return{aspect:r.width/r.height,round:br>=Math.min(r.width,r.height)*.4,alpha:kind==="art"};
+  }
+  function cropBox(file,shape){
+    return new Promise(async done=>{
+      let img;try{img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(file)})}catch(e){done(file);return}
+      const nat=img.naturalWidth/img.naturalHeight;
+      const ASP=[["page","As on the page",shape.aspect],["1","Square",1],["orig","Whole picture",nat],["16:9","16:9",16/9],["4:5","4:5",.8]].filter(x=>x[2]);
+      let asp=ASP[0][2],round=shape.round,x=0,y=0,sc=1,minS=1,fw=0,fh=0;
+      const frame=h("div",{class:"rt-crop"+(round?" round":"")}),pic=h("img",{src:img.src,alt:"",draggable:"false"});frame.append(pic);
+      const zoom=h("input",{type:"range",min:"1",max:"6",step:"0.01",value:"1"});
+      const chips=h("div",{class:"rt-row",style:"flex-wrap:wrap;gap:6px;margin:8px 0"});
+      function layout(keep){
+        const maxW=Math.min(innerWidth*.86,560),maxH=innerHeight*.5;fw=maxW;fh=fw/asp;if(fh>maxH){fh=maxH;fw=fh*asp}
+        frame.style.width=fw+"px";frame.style.height=fh+"px";
+        const old=sc/minS||1;minS=Math.max(fw/img.naturalWidth,fh/img.naturalHeight);
+        sc=minS*(keep?old:1);if(!keep){x=(fw-img.naturalWidth*sc)/2;y=(fh-img.naturalHeight*sc)/2}zoom.value=String(sc/minS);clamp();draw();
+        chips.replaceChildren(...ASP.map(([k,l,v])=>h("button",{type:"button",class:"rt-btn sm"+(Math.abs(v-asp)<1e-3?" pri":""),on:{click:()=>{asp=v;round=shape.round&&k==="page";frame.classList.toggle("round",round);layout(false)}}},l)));
+      }
+      const clamp=()=>{const w=img.naturalWidth*sc,hh=img.naturalHeight*sc;x=Math.min(0,Math.max(fw-w,x));y=Math.min(0,Math.max(fh-hh,y))};
+      const draw=()=>{pic.style.width=img.naturalWidth*sc+"px";pic.style.height=img.naturalHeight*sc+"px";pic.style.transform=`translate(${x}px,${y}px)`};
+      const zoomAt=(ns,cx,cy)=>{ns=Math.max(minS,Math.min(minS*6,ns));const k=ns/sc;x=cx-(cx-x)*k;y=cy-(cy-y)*k;sc=ns;zoom.value=String(sc/minS);clamp();draw()};
+      zoom.addEventListener("input",()=>zoomAt(minS*+zoom.value,fw/2,fh/2));
+      frame.addEventListener("wheel",e=>{e.preventDefault();const r=frame.getBoundingClientRect();zoomAt(sc*(e.deltaY<0?1.08:1/1.08),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+      const pts=new Map();let last=null;
+      frame.addEventListener("pointerdown",e=>{e.preventDefault();frame.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});last=null});
+      frame.addEventListener("pointermove",e=>{if(!pts.has(e.pointerId))return;const prev=pts.get(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+        if(pts.size===1){x+=e.clientX-prev.x;y+=e.clientY-prev.y;clamp();draw()}
+        else{const [a,b]=[...pts.values()],d=Math.hypot(a.x-b.x,a.y-b.y),r=frame.getBoundingClientRect(),cx=(a.x+b.x)/2-r.left,cy=(a.y+b.y)/2-r.top;
+          if(last){zoomAt(sc*d/last.d,cx,cy);x+=cx-last.cx;y+=cy-last.cy;clamp();draw()}last={d,cx,cy}}});
+      const up=e=>{pts.delete(e.pointerId);last=null};frame.addEventListener("pointerup",up);frame.addEventListener("pointercancel",up);
+      const finish=v=>{m.remove();URL.revokeObjectURL(img.src);done(v)};
+      const use=()=>{
+        const sw=fw/sc,sh=fh/sc,sx=-x/sc,sy=-y/sc,maxOut=2000,k=Math.min(1,maxOut/Math.max(sw,sh));
+        const c=document.createElement("canvas");c.width=Math.max(1,Math.round(sw*k));c.height=Math.max(1,Math.round(sh*k));
+        c.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
+        const png=shape.alpha&&/png|webp/.test(file.type);                // photos → JPEG (small); transparent art / icons keep PNG
+        c.toBlob(b=>finish(new File([b],(file.name||"image").replace(/\.[^.]+$/,"")+(png?".png":".jpg"),{type:png?"image/png":"image/jpeg"})),png?"image/png":"image/jpeg",.92);
+      };
+      const m=modal(h("h3",{},"Fit the picture"),h("p",{class:"rt-hint",style:"margin-top:-4px"},"Drag to move · pinch, scroll or slide to zoom"),
+        h("div",{class:"rt-cropwrap"},frame),h("div",{class:"rt-row",style:"align-items:center;gap:10px;margin-top:10px"},h("span",{},"🔍"),zoom),chips,
+        h("div",{class:"rt-row",style:"justify-content:space-between;gap:8px;flex-wrap:wrap"},h("button",{class:"rt-btn",type:"button",on:{click:()=>finish("again")}},"Pick another"),
+          h("span",{},h("button",{class:"rt-btn",type:"button",style:"margin-right:6px",on:{click:()=>finish(null)}},"Cancel"),h("button",{class:"rt-btn pri",type:"button",on:{click:use}},"Use it"))));
+      m.classList.add("rt-cropmodal");layout(false);
+    });
+  }
   async function replaceMedia(path,kind0,el,given){
     const file=given||await pickFile(kind0);if(!file)return;
     let kind=kind0;if(kind==="media")kind=file.type.startsWith("video/")||file.type==="image/gif"?"video":"image";   // either works here
-    let blob=file,ext=(file.name.split(".").pop()||"").toLowerCase(),note="";
+    let blob=file,ext=(file.name.split(".").pop()||"").toLowerCase(),note="",cropped=false;
     try{
       if(kind==="audio"){
         if(file.size>25e6){alertBox("That sound is "+Math.round(file.size/1e6)+" MB. Keep it under about 25 MB (a few minutes of music).");return}
@@ -1005,11 +1063,17 @@
       }else if(kind==="video"){
         if(file.size>70e6){alertBox("That video is "+Math.round(file.size/1e6)+" MB. GitHub takes up to about 70 MB per file here; trim it or export it smaller first.");return}
         if(!/^(mp4|mov|webm|m4v|gif)$/.test(ext))ext="mp4";      // a GIF here becomes a looping video
-      }else if(kind==="icon")({blob,ext,note}=await prepIcon(file));
-      else({blob,ext}=await prepImage(file,kind));
+      }else{
+        let f=file;
+        if(!given&&file.type!=="image/gif"&&/^image\//.test(file.type)){           // fit it to its spot first
+          const r=await cropBox(file,targetShape(path,el,kind));
+          if(r==="again")return replaceMedia(path,kind0,el);if(!r)return;f=r;cropped=true;
+        }
+        if(kind==="icon")({blob,ext,note}=await prepIcon(f));else({blob,ext}=await prepImage(f,kind));
+      }
     }catch(e){alertBox(e.message);return}
     const url=URL.createObjectURL(blob),isGif=blob.type==="image/gif"||ext==="gif";
-    const choice=given?"use":await previewBox(url,kind==="audio"?"audio":kind==="video"&&!isGif?"video":"image",file.name,note,kind==="icon");
+    const choice=given||cropped?"use":await previewBox(url,kind==="audio"?"audio":kind==="video"&&!isGif?"video":"image",file.name,note,kind==="icon");
     if(choice==="again"){URL.revokeObjectURL(url);return replaceMedia(path,kind0,el)}
     if(choice!=="use"){URL.revokeObjectURL(url);return}
     const repoPath=`assets/uploads/${slugify(file.name)}-${rand()}.${ext}`;

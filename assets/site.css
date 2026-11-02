@@ -371,7 +371,7 @@ html.rv .timeline:not(.in)::before{transform:scaleX(0)}
 /* keep the name on one line next to five menu items on small phones */
 .mark{white-space:nowrap}
 @media (max-width:480px){.topbar nav{gap:12px}.topbar nav a{font-size:13px}.mark{font-size:18px}}
-@media (max-width:360px){.topbar nav a[href$="lab.html"]{display:none}}
+@media (max-width:340px){.topbar nav a[href$="lab.html"]{display:none}}
 
 /* project cards: screenshot fades into each game's own palette */
 .ptile{background:radial-gradient(120% 70% at 0% 100%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 60%),linear-gradient(180deg,var(--mid) 0%,var(--mid) 50%,var(--deep) 100%);
@@ -719,9 +719,9 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .edit-in{appearance:none;background:none;border:0;padding:6px;margin:-6px 0;color:inherit;opacity:.35;cursor:pointer;border-radius:6px;line-height:0}
 .edit-in:hover,.edit-in:focus-visible{opacity:.9}
 /* the pencil sits clearly apart from the name: name = home, pencil = edit */
-.edit-in.top{margin:0 auto 0 14px;padding:7px;opacity:.5;color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:50%;flex:none}
+.edit-in.top{margin:0 auto 0 8px;padding:7px;opacity:.5;color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:50%;flex:none}
 .edit-in.top:hover,.edit-in.top:focus-visible{opacity:1;border-color:rgba(255,255,255,.6)}
-@media (max-width:480px){.edit-in.top{margin-left:12px;padding:6px}}
+@media (max-width:480px){.edit-in.top{margin-left:6px;padding:5px}}
 .ico-img{object-fit:contain;display:block;flex:none}
 .h-ico .ico-img{width:72%;height:72%}
 .ui-ic{display:inline-flex;align-items:center;vertical-align:-.14em;margin-right:.4em;color:var(--c,currentColor)}
@@ -855,3 +855,14 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .mark-ava.add{display:grid;place-items:center;padding:0;background:rgba(255,255,255,.08);border:2px dashed rgba(255,210,63,.8);color:#ffd23f;font:800 16px/1 system-ui,sans-serif;cursor:pointer}
 .mark-ava.add[hidden]{display:none}
 @media (max-width:480px){.mark-ava{width:26px;height:26px}.mark{gap:8px}}
+/* top bar: everything fits on one line on any phone, no sideways scrolling */
+@media (max-width:600px){
+  .topbar .wrap{gap:8px;padding-block:14px}
+  .mark{font-size:clamp(13px,4.1vw,18px);gap:5px}
+  .mark-ava{width:clamp(20px,5.6vw,26px);height:clamp(20px,5.6vw,26px)}
+  .edit-in.top{margin-left:-4px;padding:4px}.edit-in.top svg{width:12px;height:12px}
+  .topbar nav{gap:clamp(6px,2.1vw,12px);overflow:visible;flex-wrap:nowrap}
+  .topbar nav a{font-size:clamp(10.5px,3.1vw,13px);letter-spacing:0}
+  .topbar:has(.mark-ava:not([hidden])) nav a{font-size:clamp(10.5px,2.95vw,13px)}
+  .topbar:has(.mark-ava:not([hidden])) nav{gap:clamp(5px,1.8vw,11px)}
+}
