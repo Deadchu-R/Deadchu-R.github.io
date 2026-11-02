@@ -833,6 +833,17 @@
   }
   function hasSettings(u){return mediaOf(u).some(m=>m!==clickedMedia)||fieldsOf(u).length>0||(u.tagName==="A"&&!!u.getAttribute("href"))}
   let settingsOpen=false;
+  function aiSettingsBlock(){
+    // saved on this device only (not on the site)
+    const pv=h("select",{},h("option",{value:"local",selected:provider()==="local"},"📱 On this device (free, private)"),h("option",{value:"gemini",selected:provider()==="gemini"},"Gemini (free key, backup)"));
+    pv.addEventListener("change",()=>{store.set(AI_PROV,pv.value);if(provBtn)provBtn.textContent=pv.value==="local"?"📱":"G"});
+    const md=h("select",{},...LOCAL_MODELS.map(([v,l])=>h("option",{value:v,selected:(store.get(AI_LOCAL)||"auto")===v},l)));
+    md.addEventListener("change",()=>{store.set(AI_LOCAL,md.value)});
+    const st=h("p",{class:"rt-hint"},"gpu" in navigator?"This browser can run it.":"This browser can't run on-device AI (no WebGPU); Gemini will be used.");
+    const dl=h("button",{class:"rt-btn sm",type:"button",on:{click:async()=>{dl.disabled=true;try{await ensureEngine(r=>{st.textContent=`Downloading… ${Math.round((r.progress||0)*100)}%`});st.textContent="Ready on this device ✓"}catch(e){st.textContent="Couldn't load: "+e.message}dl.disabled=false}}},"⬇ Download the model now (Wi-Fi)");
+    return h("div",{},h("label",{},"✨ AI assistant on this device"),pv,h("label",{},"On-device model"),md,h("div",{class:"rt-row",style:"margin-top:8px"},dl,
+      h("button",{class:"rt-btn sm",type:"button",on:{click:aiKeyBox}},"🔑 Gemini key")),st);
+  }
   function siteSettings(){
     // sound for the whole site; off until switched on here
     settingsOpen=true;current=null;chain=[];panelOpen=false;place();
@@ -856,9 +867,11 @@
       h("div",{class:"rt-row",style:"margin-top:8px"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{
         const k=get(sp+".click")||"soft",u=/^\//.test(k)?audioUrl(sp+".click"):k;window.rtSound&&window.rtSound.click(u,(get(sp+".cv")??50)/100)}}},"▶ Test click")),
       h("div",{style:"margin-top:16px;border-top:1px solid #2c2c2c"}),
+      aiSettingsBlock(),
+      h("div",{style:"margin-top:16px;border-top:1px solid #2c2c2c"}),
       F(["Custom CSS (advanced, all pages · the ✨ AI writes here for layout changes)","site:custom_css","textarea"]),
       h("p",{class:"rt-hint"},"Everything is off until you switch on the first option. Browsers only let music start after the visitor touches the page; music pauses while a video plays."));
-    const sel_=$$("select",panel).pop();if(own&&sel_&&sel_.options[0])sel_.options[0].textContent="(your sound)";
+    const sel_=$$("select",panel).find(x=>[...x.options].some(o=>o.value==="pop"));if(own&&sel_&&sel_.options[0])sel_.options[0].textContent="(your sound)";
     panel.style.display="block";
     if(innerWidth>640){panel.style.top="72px";panel.style.left="";panel.style.right="12px"}
   }
@@ -952,7 +965,7 @@
   /* ------------------------------------------------------------ ✨ AI assistant (Gemini, free key from Google AI Studio)
      It reads what this page can change, then calls the same tools you use by hand. Nothing is published until you press Publish. */
   const AI_KEY="rt-gemini-key",AI_MODEL="rt-gemini-model",GAPI="https://generativelanguage.googleapis.com/v1beta";
-  let aiBox=null,aiLog=null,aiHist=[],aiFiles=[],aiBusy=false,rec=null,aiLang="he-IL";
+  let provBtn=null,aiBox=null,aiLog=null,aiHist=[],aiFiles=[],aiBusy=false,rec=null,aiLang="he-IL";
   function applyCustomCss(css){let st=document.getElementById("custom-css");if(!st){st=document.createElement("style");st.id="custom-css";document.head.append(st)}st.textContent=css||""}
   function fieldDef(path){
     for(const el of $$("[data-x]")){if(!el.dataset.x.includes(path))continue;try{const f=JSON.parse(el.dataset.x).find(x=>x[1]===path);if(f)return{holder:el,f}}catch(e){}}
@@ -1043,9 +1056,80 @@ Rules:
   }
   const fileToPart=f=>new Promise(ok=>{const r=new FileReader();r.onload=()=>ok({inlineData:{mimeType:f.type||"application/octet-stream",data:String(r.result).split(",")[1]}});r.readAsDataURL(f)});
   function aiSay(who,text){const el=h("div",{class:"rt-msg "+who},text);aiLog.append(el);aiLog.scrollTop=aiLog.scrollHeight;return el}
+  /* ---- on-device AI (WebLLM): the model downloads once and runs on this phone's / PC's graphics chip. No key, nothing leaves the device. */
+  const WEBLLM="https://esm.run/@mlc-ai/web-llm@0.2.87",AI_PROV="rt-ai-provider",AI_LOCAL="rt-ai-local-model";
+  const LOCAL_MODELS=[["auto","Automatic (4B on phones, 9B on computers)"],["Qwen3.5-2B","Light · about 1.5 GB · fastest"],["Qwen3.5-4B","Balanced · about 2.5 GB"],["Qwen3.5-9B","Smartest · about 5 GB · computers"]];
+  let wl=null,engine=null,engineId="",loadingP=null;
+  const isPhone=()=>matchMedia("(pointer:coarse)").matches&&Math.min(screen.width,screen.height)<900;
+  const provider=()=>store.get(AI_PROV)||("gpu" in navigator?"local":"gemini");
+  async function localModelId(){
+    let base=store.get(AI_LOCAL)||"auto";if(base==="auto")base=isPhone()?"Qwen3.5-4B":"Qwen3.5-9B";
+    let f16=false;try{const ad=await navigator.gpu.requestAdapter();f16=!!(ad&&ad.features.has("shader-f16"))}catch(e){}
+    return base+(f16?"-q4f16_1-MLC":"-q4f32_1-MLC");
+  }
+  async function ensureEngine(onProgress){
+    if(!("gpu" in navigator))throw new Error("this browser has no WebGPU. Use Chrome, or switch to Gemini in ⋯ › Site settings");
+    const id=await localModelId();
+    if(engine&&engineId===id)return engine;
+    if(loadingP)return loadingP;
+    loadingP=(async()=>{
+      wl=wl||await import(WEBLLM);
+      const src=`import {WebWorkerMLCEngineHandler} from "${WEBLLM}";const h=new WebWorkerMLCEngineHandler();self.onmessage=m=>h.onmessage(m);`;
+      const worker=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})),{type:"module"});
+      engine=await wl.CreateWebWorkerMLCEngine(worker,id,{initProgressCallback:r=>onProgress&&onProgress(r)});
+      engineId=id;return engine;
+    })();
+    try{return await loadingP}finally{loadingP=null}
+  }
+  function smallCatalog(){
+    // the device model reads ~4k tokens: send the selected thing and its section, or a compact list of the page
+    const L=[],seen=new Set(),cut=(v,n)=>{v=v==null?"":typeof v==="string"?v:JSON.stringify(v);return v.length>n?v.slice(0,n)+"…":v};
+    const scope=current?(current.closest("[data-k]")||chain[chain.length-1]||current):document.body;
+    if(current){L.push("SELECTED (\"this\" means this): "+unitName(current));
+      const add=el=>{if(el.dataset.e&&!seen.has(el.dataset.e)){seen.add(el.dataset.e);L.push(`  TEXT ${el.dataset.e} = ${cut(get(el.dataset.e),60)}`)}
+        if(el.dataset.x)try{JSON.parse(el.dataset.x).forEach(([lab,p,t,o])=>{if(seen.has(p))return;seen.add(p);L.push(`  FIELD ${p} [${t}${t==="select"&&!/icon$/.test(p)?": "+o.join("|"):""}] ${lab} = ${cut(get(p)??"",40)}`)})}catch(e){}
+        if(el.dataset.m&&!seen.has(el.dataset.m)){seen.add(el.dataset.m);L.push(`  MEDIA ${el.dataset.m} [${el.dataset.mk}]`)}};
+      [current,...current.querySelectorAll("[data-e],[data-x],[data-m]")].forEach(add);}
+    [...new Set($$("[data-ok]").map(e=>e.dataset.ok))].forEach(o=>{const s_=$$(`[data-ok="${CSS.escape(o)}"]`);L.push(`ORDER ${o} = [${siblingsOf(s_[0]).map(x=>x.dataset.k).join(", ")}]`)});
+    $$("[data-l]",scope===document.body?document:scope).forEach(c=>{const lp=c.dataset.l;if(seen.has("L"+lp))return;seen.add("L"+lp);const a=get(lp);L.push(`LIST ${lp} (${Array.isArray(a)?a.length:0})`)});
+    const pool=scope===document.body?document:scope;
+    $$("[data-e]",pool).forEach(el=>{const p=el.dataset.e;if(seen.has(p))return;seen.add(p);L.push(`TEXT ${p} = ${cut(get(p)??el.textContent,45)}`)});
+    $$("[data-x]",pool).forEach(el=>{try{JSON.parse(el.dataset.x).forEach(([lab,p,t])=>{if(seen.has(p))return;seen.add(p);L.push(`FIELD ${p} [${t}] ${lab}`)})}catch(e){}});
+    L.push("ICONS: "+Object.keys(ICONS).join(","));
+    if(get("site:custom_css"))L.push("CUSTOM_CSS now: "+cut(get("site:custom_css"),600));
+    return L.join("\n").slice(0,7500);
+  }
+  const LOCAL_SYS=`You edit Roee Tal's portfolio page. Answer ONLY with JSON: {"actions":[...],"reply":"short text"}.
+Actions (use paths exactly as listed):
+{"do":"set","path":"<TEXT or FIELD path>","value":"<text | #rrggbb | icon name | option | number | true/false>"}
+{"do":"move_section","order_path":"<ORDER path>","key":"<key>","to_index":0}
+{"do":"move_item","list_path":"<LIST path>","index":0,"to_index":1}
+{"do":"add","list_path":"<LIST path>","after_index":0,"text":"..."}
+{"do":"remove","list_path":"<LIST path>","index":0}
+{"do":"css","css":"<full custom CSS: keep the old rules and add yours>"}
+{"do":"attach","path":"<MEDIA or image/video FIELD path>","attachment":0}
+"this"/"זה" means the SELECTED item. Keep the site's text in English unless asked. reply = one short sentence in the owner's language.`;
+  async function localSend(text){
+    const thinking=aiSay("sys","Loading the on-device model…");
+    try{
+      const eng=await ensureEngine(r=>{const pct=Math.round((r.progress||0)*100);thinking.textContent=engine?"…":`Downloading the AI model to this device (first time only)… ${pct}%`});
+      thinking.textContent="Thinking on this device…";
+      const user=`PAGE ${location.pathname}\n${smallCatalog()}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`;
+      const res=await eng.chat.completions.create({messages:[{role:"system",content:LOCAL_SYS},{role:"user",content:user}],
+        response_format:{type:"json_object"},temperature:.2,max_tokens:700,extra_body:{enable_thinking:false}});
+      let raw=(res.choices[0].message.content||"").replace(/<think>[\s\S]*?<\/think>/g,"").trim(),out;
+      try{out=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);out=m?JSON.parse(m[0]):{actions:[],reply:raw}}
+      const MAP={set:a=>AI_TOOLS.set_value(a),move_section:a=>AI_TOOLS.move_section(a),move_item:a=>AI_TOOLS.move_item(a),add:a=>AI_TOOLS.add_item(a),remove:a=>AI_TOOLS.remove_item(a),css:a=>AI_TOOLS.set_custom_css(a),attach:a=>AI_TOOLS.use_attachment(a)};
+      for(const a of (out.actions||[]).slice(0,20)){let r_;try{r_=MAP[a.do]?await MAP[a.do](a):"unknown action "+a.do}catch(e){r_="error: "+e.message}
+        aiSay("act",(r_==="ok"||/^(now|added|removed|order|placed)/.test(r_)?"✓ ":"⚠ ")+a.do+" "+(a.path||a.list_path||a.key||"")+(r_==="ok"?"":" · "+r_))}
+      thinking.remove();aiSay("ai",out.reply||((out.actions||[]).length?"Done. Check with 👁 Preview, then Publish.":"I didn't find what to change. Tap the thing first, then ask again."));
+      aiFiles=[];renderFiles();place();secBars();
+    }catch(e){thinking.remove();aiSay("err","On-device AI: "+e.message+". You can switch to Gemini in ⋯ › Site settings.")}
+  }
   async function aiSend(text){
-    const key=store.get(AI_KEY);if(!key){aiKeyBox();return}
     if(aiBusy||!text.trim()&&!aiFiles.length)return;
+    if(provider()==="local"){aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));await localSend(text);aiBusy=false;return}
+    const key=store.get(AI_KEY);if(!key){aiKeyBox();return}
     aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
     const thinking=aiSay("sys","…");
     try{
@@ -1089,7 +1173,7 @@ Rules:
     setTimeout(()=>inp.focus(),50);
   }
   function openAI(){
-    if(!store.get(AI_KEY)){aiKeyBox();return}
+    if(provider()==="gemini"&&!store.get(AI_KEY)){aiKeyBox();return}
     if(aiBox){aiBox.hidden=!aiBox.hidden;return}
     aiLog=h("div",{class:"rt-ailog"});
     const ta=h("textarea",{rows:"2",placeholder:"מה לשנות? / What should I change?"});
@@ -1109,11 +1193,14 @@ Rules:
     aiBox=h("div",{id:"rt-ai",class:"rt-ui"},
       h("div",{class:"rt-head"},h("span",{},"✨ AI assistant"),h("span",{},
         h("button",{class:"rt-x",type:"button",title:"Undo everything not published yet",on:{click:()=>{if(changes&&confirm("Throw away every change that isn't published yet (yours and the AI's)?")){changes=0;location.reload()}}}},"↺"),
-        h("button",{class:"rt-x",type:"button",title:"Change the AI key",on:{click:aiKeyBox}},"🔑"),
+        provBtn=h("button",{class:"rt-x",type:"button",title:"Switch between the on-device AI and Gemini",on:{click:()=>{store.set(AI_PROV,provider()==="local"?"gemini":"local");provBtn.textContent=provider()==="local"?"📱":"G";
+          aiSay("ai",provider()==="local"?"Using the AI on this device.":"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key."))}}},provider()==="local"?"📱":"G"),
+        h("button",{class:"rt-x",type:"button",title:"Gemini key",on:{click:aiKeyBox}},"🔑"),
         h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{aiBox.hidden=true}}},"✕"))),
       aiLog,filesRow,
       h("div",{class:"rt-airow"},h("button",{type:"button",class:"rt-aibtn",title:"Attach image, video or sound",on:{click:()=>ui.append(att)||att.click()}},"📎"),ta,lang,mic,h("button",{type:"button",class:"rt-aibtn pri",title:"Send",on:{click:send}},"➤")));
     document.body.append(aiBox);
+    if(provider()==="local")aiSay("ai","📱 Running on this device. The first message downloads the model once (use Wi-Fi). Tip: tap the thing you mean first, then ask, e.g. \"make this purple\" or \"תעביר את הסקשן הזה למעלה\".");
     aiSay("ai","Hi! Tell me what to change on this page: text, colors, icons, layout, button styles, order, or attach a picture/video to put somewhere. Changes show up right away; Publish when you like them.");
     setTimeout(()=>ta.focus(),50);
   }
