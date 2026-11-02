@@ -572,30 +572,38 @@ def bp_media_html():
         return f'<img class="bp-media" src="{thumb(v, 1600)}" alt=""{BG("site:bp_media")}>'
     return bp_svg()
 
-CS_LAYOUTS = ["text", "image-right", "image-left", "image-top"]
-def custom_section_html(cid, c):
-    """A section added in the editor: kicker, heading with icon, text, picture/video, buttons."""
-    b = f"site:custom_sections.{cid}"
-    kind, v = c.get("_media") or ("", "")
-    if kind == "video":
-        media = f'<video src="{v}" autoplay muted loop playsinline preload="metadata"></video>'
-    elif kind == "img":
-        media = f'<img src="{thumb(v, 1600)}" alt="" loading="lazy">'
-    else:
-        media = ""
-    lay = c.get("layout") or "text"
-    style = "".join(f"{var}:{c[k]};" for k, var in (("bg", "--sec-bg"), ("accent", "--accent"), ("text_color", "--sec-ink")) if c.get(k))
-    ic = c.get("icon") or ""
-    x = X(("Layout", b + ".layout", "select", CS_LAYOUTS), ("Picture, GIF or video", b + ".media", "media"),
-          ("Background color", b + ".bg", "color", ["", "--sec-bg"]), ("Accent color", b + ".accent", "color", ["", "--accent"]),
-          ("Text color", b + ".text_color", "color", ["", "--sec-ink"]), ("Heading icon", b + ".icon", "select", icon_choices()))
-    return (f'<section class="band custom-sec lay-{lay}" id="cs-{cid}"{K("cs_" + cid, "site:section_order")}{ADD(b + ".buttons.items")}{x}{f" style=\"{style}\"" if style else ""}>'
-            f'<div class="wrap cs-grid"><div class="cs-copy">'
-            f'<p class="kicker"{E(b + ".kicker", "small line above the title")}{"" if c.get("kicker") else " hidden data-edit-show"}>{e(c.get("kicker", ""))}</p>'
-            f'<h2><span class="h-ico" style="--c:var(--accent)"{ICO(b + ".icon")}{"" if ic else " hidden"}>{_icon(ic, 18) if ic else ""}</span><span{E(b + ".title")}>{e(c.get("title", ""))}</span></h2>'
-            f'<p class="muted cs-text"{E(b + ".text", "text")}>{e(c.get("text", ""))}</p>'
-            f'{xrow(b + ".buttons", c.get("buttons") or {}, 0, "blk")}</div>'
-            f'<div class="cs-media"{"" if media else " hidden"}>{media}</div></div></section>')
+def custom_sections_html():
+    """Sections the owner (or the AI) added: drawn by assets/sections.js, the same code the editor runs live."""
+    secs = SITE_TEXT.get("_custom") or {}
+    if not secs:
+        return {}
+    from content_loader import _media, icon_file
+    media, isrc = {}, {}
+    def walk(path, v):
+        if isinstance(v, dict):
+            for k, x in v.items():
+                walk(f"{path}.{k}", x)
+        elif isinstance(v, list):
+            for i, x in enumerate(v):
+                walk(f"{path}.{i}", x)
+        elif isinstance(v, str) and v:
+            key = path.rsplit(".", 1)[-1]
+            if key in ("media", "image"):
+                kind, val = _media(v)
+                if kind:
+                    media[path] = {"kind": kind, "url": thumb(val, 1600) if kind == "img" else val}
+            elif key == "icon" and v.startswith("/"):
+                isrc[v] = icon_file(v) or ""
+    for cid, c in secs.items():
+        walk(f"site:custom_sections.{cid}", {k: x for k, x in c.items() if k != "_media"})
+    data = {"sections": {cid: {k: x for k, x in c.items() if k != "_media"} for cid, c in secs.items()},
+            "media": media, "iconSrc": isrc, "icons": {**ICONS_22, **ICON_RAW}}
+    js = ("const S=require(process.argv[1]);let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);"
+          "const env={icons:j.icons,media:(p)=>j.media[p]||null,iconSrc:n=>j.iconSrc[n]||''};const o={};"
+          "for(const[id,c]of Object.entries(j.sections))o[id]=S.render(id,c,env);process.stdout.write(JSON.stringify(o))})")
+    import subprocess
+    r = subprocess.run(["node", "-e", js, str(ROOT / "assets/sections.js")], input=_json.dumps(data), capture_output=True, text=True, check=True)
+    return _json.loads(r.stdout)
 
 def build_index():
     global DEPTH
@@ -680,8 +688,8 @@ def build_index():
   </div>
 </section>
 """
-    for cid, c in SITE_TEXT.get("_custom", {}).items():
-        blocks["cs_" + cid] = custom_section_html(cid, c)
+    for cid, sec_html in custom_sections_html().items():
+        blocks["cs_" + cid] = sec_html
     for k, cfg in SITE_TEXT.get("section_buttons", {}).items():
         if k not in blocks:
             continue

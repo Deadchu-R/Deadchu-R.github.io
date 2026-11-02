@@ -28,6 +28,7 @@
     if(!ks.length)docs[f]=v;
     else{let o=docs[f];for(let i=0;i<ks.length-1;i++){const k=ks[i];if(o[k]==null)o[k]=/^\d+$/.test(ks[i+1])?[]:{};o=o[k]}o[ks[ks.length-1]]=v}
     dirty.add(f);changes++;updateBar();
+    const m_=p.match(/^site:custom_sections\.(\w+)\.(.+)$/);if(m_&&csStruct(m_[2]))csChanged(m_[1],m_[2],v);
   }
 
   /* ------------------------------------------------------------ GitHub */
@@ -501,6 +502,7 @@
     op(arr,perm,pos);
     set(lp,arr);
     renumber(lc,lp,it=>it.dataset.i==="new"?perm.indexOf(-1):perm.indexOf(+it.dataset.i));
+    const cm=lp.match(/^site:custom_sections\.(\w+)\.items$/);if(cm)setTimeout(()=>{const n=$(".cs-steps",$("#cs-"+cm[1]));if(n)$$(".cs-num",n).forEach((x,k)=>x.textContent=k+1)},0);
   }
   function moveItem(item,target,after){
     if(item===target)return;
@@ -578,23 +580,44 @@
   }
   /* ---- sections you add yourself (main page) */
   function delPath(p){const[f,ks]=parse(p);let o=docs[f];for(let i=0;i<ks.length-1;i++){if(o==null)return;o=o[ks[i]]}if(o)delete o[ks[ks.length-1]];dirty.add(f);changes++;updateBar()}
+  /* one renderer (assets/sections.js) draws these on the site and here, so what you see is what gets published */
+  function csStruct(k){return /^(type|layout|cols|width|align|pad|height|icon|media|buttons\.align|items\.\d+\.(icon|image))$/.test(k)}
+  let SEC=window.RTSections||null;
+  const secLib=SEC?Promise.resolve(SEC):new Promise(ok=>{const sc=document.createElement("script");sc.src=new URL("sections.js"+new URL(ME).search,ME).href;sc.onload=()=>ok(SEC=window.RTSections);sc.onerror=()=>ok(null);document.head.append(sc)});
+  function csEnv(){
+    return {icons:ICONS,
+      media:(path,value)=>{const p_=pending.get(path);if(p_)return{kind:p_.type==="video"?"video":"img",url:p_.url};if(!value)return null;
+        const old=$(`[data-cs="${CSS.escape(path)}"]`);if(old&&old.getAttribute("src")&&!/^\//.test(value))return{kind:old.tagName==="VIDEO"?"video":"img",url:old.getAttribute("src")};
+        const v=String(value);return{kind:/\.(mp4|mov|webm|m4v)$/i.test(v)?"video":"img",url:/^(\/|https?:|blob:)/.test(v)?v:"https://drive.google.com/thumbnail?id="+v+"&sz=w1600"}},
+      iconSrc:name=>{for(const[p_,x]of pending)if(get(p_)===name)return x.url;return name}};
+  }
   function csElement(id,c){
-    const b=`site:custom_sections.${id}`,ICN=[""].concat(Object.keys(ICONS));
-    const x=[["Layout",b+".layout","select",["text","image-right","image-left","image-top"]],["Picture, GIF or video",b+".media","media"],
-      ["Background color",b+".bg","color",["","--sec-bg"]],["Accent color",b+".accent","color",["","--accent"]],["Text color",b+".text_color","color",["","--sec-ink"]],["Heading icon",b+".icon","select",ICN]];
-    const sec=h("section",{class:`band custom-sec lay-${c.layout||"text"}`,id:"cs-"+id,"data-k":"cs_"+id,"data-ok":"site:section_order","data-add":b+".buttons.items","data-tpl":"btn","data-x":JSON.stringify(x)},
-      h("div",{class:"wrap cs-grid"},
-        h("div",{class:"cs-copy"},
-          h("p",{class:"kicker","data-e":b+".kicker","data-ph":"small line above the title"},c.kicker||""),
-          h("h2",{},h("span",{class:"h-ico",style:"--c:var(--accent)","data-ico":b+".icon",hidden:true}),h("span",{"data-e":b+".title"},c.title||"")),
-          h("p",{class:"muted cs-text","data-e":b+".text","data-ph":"text"},c.text||""),
-          h("div",{class:"xrow al-left blk","data-l":b+".buttons.items","data-x":JSON.stringify([["Align",b+".buttons.align","select",["left","center","right"]]])})),
-        h("div",{class:"cs-media",hidden:true})));
-    return sec;
+    const t=document.createElement("template");t.innerHTML=SEC.render(id,c,csEnv()).trim();return t.content.firstElementChild;
+  }
+  let csTimer={};
+  function csChanged(id,key,v){
+    if(key==="type"&&SEC){const T=SEC.TYPES[v];const c=get(`site:custom_sections.${id}`)||{};
+      if(T&&T.item)c.items=SEC.convertItems(v,c.items);
+      if((v==="cta"||v==="banner")&&!c.align)c.align="center";}
+    if(key==="media"&&v){const c=get(`site:custom_sections.${id}`)||{};if((c.type||"text-media")==="text-media"&&(c.layout||"text")==="text")c.layout="image-right"}
+    clearTimeout(csTimer[id]);csTimer[id]=setTimeout(()=>rerenderSection(id),120);
+  }
+  function rerenderSection(id){
+    const old=$("#cs-"+id),c=get(`site:custom_sections.${id}`);if(!old||!c||!SEC)return;
+    // remember what was selected so it stays selected
+    const keep=current&&old.contains(current)?(current===old?{k:1}:current.dataset.i!=null&&current.parentElement&&current.parentElement.dataset.l?{l:current.parentElement.dataset.l,i:current.dataset.i}:{k:1}):null,wasOpen=panelOpen;
+    const sec=csElement(id,c);old.replaceWith(sec);
+    $$("[data-e]",sec).forEach(initText);secBars();
+    if(keep){const el=keep.l?itemEl(keep.l,keep.i)||sec:sec;select(el);if(wasOpen){panelOpen=true;renderPanel();place()}}
   }
   function addSection(after,data){
     if(!$("#projects .ptiles")){toast("New sections go on the main page.");return null}
-    const id="s"+Math.random().toString(36).slice(2,7),c=Object.assign({title:"New section",text:"Write something here.",kicker:"",layout:"text"},data||{});
+    if(!SEC){toast("One moment, still loading…");return null}
+    const id="s"+Math.random().toString(36).slice(2,7);
+    data=Object.assign({},data||{});const type=SEC.TYPES[data.type]?data.type:"text-media";
+    const c=SEC.normalize(Object.assign({title:"New section",text:type==="text-media"?"Write something here.":""},type==="cta"||type==="banner"?{align:"center"}:{},
+      SEC.TYPES[type].item?{items:SEC.defaults(type,{}).items}:{},data,{type}));
+    for(const k of Object.keys(c))if(c[k]===""||c[k]==null)delete c[k];
     if(!get("site:custom_sections"))set("site:custom_sections",{});
     set(`site:custom_sections.${id}`,c);
     const sec=csElement(id,c);
@@ -729,9 +752,6 @@
     $$("[data-bg]").filter(b=>b.dataset.bg.split(" ").includes(path)).forEach(b=>{
       if(b.tagName==="VIDEO"){if(heroPhone&&!tall)return;isGif?swapVideo(b):setVideo(b);b.scrollIntoView&&scrollTo({top:0,behavior:"smooth"})}
       else{b.src=url;b.hidden=false;if(b.parentElement&&b.parentElement.hidden)b.parentElement.hidden=false}});
-    const csm=path.match(/^site:custom_sections\.(\w+)\.media$/);
-    if(csm){const box=$(`#cs-${csm[1]} .cs-media`);if(box){box.replaceChildren(kind==="video"&&!isGif?h("video",{src:url,autoplay:true,muted:true,loop:true,playsinline:true}):h("img",{src:url,alt:""}));box.hidden=false;
-      const sec=$(`#cs-${csm[1]}`);if(sec.classList.contains("lay-text")){sec.className=sec.className.replace(/\blay-\S+/,"lay-image-right");set(`site:custom_sections.${csm[1]}.layout`,"image-right")}}}
     if(path==="site:bp_media"){                 // the Blueprint window: swap the drawing for the new picture
       const body=$(".bp-body");if(body){$$(":scope>svg,:scope>.bp-media",body).forEach(x=>x.remove());
         const m=kind==="video"&&!isGif?h("video",{class:"bp-media",src:url,autoplay:true,muted:true,loop:true,playsinline:true}):h("img",{class:"bp-media",src:url,alt:""});
@@ -919,6 +939,7 @@
       h("div",{style:"margin-top:16px;border-top:1px solid #2c2c2c"}),
       aiSettingsBlock(),
       h("div",{style:"margin-top:16px;border-top:1px solid #2c2c2c"}),
+      F(["Notes for the AI (your own words, terms and style; it reads these every time, on top of its guide)","site:ai_notes","textarea"]),
       F(["Custom CSS (advanced, all pages · the ✨ AI writes here for layout changes)","site:custom_css","textarea"]),
       h("p",{class:"rt-hint"},"Everything is off until you switch on the first option. Browsers only let music start after the visitor touches the page; music pauses while a video plays."));
     const sel_=$$("select",panel).find(x=>[...x.options].some(o=>o.value==="pop"));if(own&&sel_&&sel_.options[0])sel_.options[0].textContent="(your sound)";
@@ -1044,11 +1065,28 @@
     }
     return "ok";
   }
+  // turn whatever the AI sent (fields, a JSON string, buttons as a plain list) into a clean section
+  function sectionData(a){
+    let d=a&&typeof a==="object"?Object.assign({},a):{};
+    for(const k of ["section","content","json"])if(typeof d[k]==="string"){try{Object.assign(d,JSON.parse(d[k]))}catch(e){}delete d[k]}else if(d[k]&&typeof d[k]==="object"){Object.assign(d,d[k]);delete d[k]}
+    delete d.after;delete d.do;
+    if(Array.isArray(d.buttons))d.buttons={align:d.align==="center"?"center":"left",items:d.buttons};
+    if(d.buttons&&Array.isArray(d.buttons.items))d.buttons.items=d.buttons.items.filter(b=>b&&b.label).slice(0,4).map(b=>({label:String(b.label).slice(0,40),link:String(b.link||"#contact"),icon:b.icon&&ICONS[b.icon]?b.icon:"",style:b.style==="solid"?"solid":"ghost"}));
+    if(d.icon&&!ICONS[d.icon])d.icon="";
+    if(Array.isArray(d.items))d.items=d.items.map(it=>it&&typeof it==="object"&&it.icon&&!ICONS[it.icon]?Object.assign({},it,{icon:"star"}):it);
+    for(const k of ["bg","accent","text_color"])if(d[k]&&!/^#[0-9a-f]{6}$/i.test(d[k]))delete d[k];
+    if(SEC&&!SEC.TYPES[d.type])d.type=d.media||d.layout?"text-media":(Array.isArray(d.items)&&d.items.length?(d.items[0].q?"faq":d.items[0].value?"stats":"cards"):"text-media");
+    if(d.width&&!["contained","full"].includes(d.width))d.width=/full|wide/.test(d.width)?"full":"contained";
+    for(const [k,ok] of [["align",["left","center"]],["pad",["compact","normal","spacious"]],["layout",["text","image-right","image-left","image-top"]],["height",["short","tall","screen"]]])if(d[k]&&!ok.includes(d[k]))delete d[k];
+    for(const k of ["title","kicker","text","quote","author","role"])if(d[k]!=null)d[k]=String(d[k]).slice(0,k==="text"||k==="quote"?900:120);
+    return d;
+  }
   const itemEl=(lp,i)=>{const c=$(`[data-l="${CSS.escape(lp)}"]`);return c&&[...c.children].find(x=>x.dataset.i===String(i))};
   const AI_TOOLS={
-    add_section:({title,text,kicker,after,layout})=>{const ref=after?$$('[data-ok="site:section_order"]').find(x=>x.dataset.k===after):null;
-      const r_=addSection(ref,{title:title||"New section",text:text||"",kicker:kicker||"",layout:layout||"text"});
-      return r_?`added section ${r_.key}; its paths start with ${r_.base} (.title .text .kicker .layout .bg .accent .text_color .icon .media; buttons list ${r_.base}.buttons.items)`:"sections can only be added on the main page"},
+    add_section:(a)=>{const ref=a.after?$$('[data-ok="site:section_order"]').find(x=>x.dataset.k===a.after):null;
+      const data=sectionData(a);
+      const r_=addSection(ref,data);
+      return r_?`added ${data.type} section ${r_.key}; its paths start with ${r_.base} (.title .text .kicker .type .width .align .pad .bg .accent .text_color .icon .media${data.items?", items list "+r_.base+".items":""}; buttons list ${r_.base}.buttons.items)`:"sections can only be added on the main page"},
     remove_section:({key})=>{const s_=$$('[data-ok="site:section_order"]').find(x=>x.dataset.k===key);if(!s_||!key.startsWith("cs_"))return "only sections added in the editor (cs_…) can be removed";return deleteSection(s_,true)},
     set_value:({path,value})=>applyValue(path,value),
     move_item:({list_path,index,to_index})=>{let it=itemEl(list_path,index);if(!it)return "no item "+index+" in "+list_path;
@@ -1070,7 +1108,7 @@
     {name:"add_item",description:"Add an item to a LIST by copying the item at after_index and giving it new text.",parameters:{type:"OBJECT",properties:{list_path:{type:"STRING"},after_index:{type:"INTEGER"},text:{type:"STRING"}},required:["list_path","after_index"]}},
     {name:"remove_item",description:"Delete an item from a LIST.",parameters:{type:"OBJECT",properties:{list_path:{type:"STRING"},index:{type:"INTEGER"}},required:["list_path","index"]}},
     {name:"set_custom_css",description:"Replace the site's custom CSS (applies to every page). Use for layout, spacing, sizes, fonts, backgrounds, animations and anything without a setting. Send the full stylesheet: it replaces the old one.",parameters:{type:"OBJECT",properties:{css:{type:"STRING"}},required:["css"]}},
-    {name:"add_section",description:"Add a brand-new section to the main page (title, text, optional kicker, layout text|image-right|image-left|image-top), after the section key given. Then set its colors/icon/media with set_value on the returned paths.",parameters:{type:"OBJECT",properties:{title:{type:"STRING"},text:{type:"STRING"},kicker:{type:"STRING"},layout:{type:"STRING"},after:{type:"STRING"}},required:["title","text"]}},
+    {name:"add_section",description:"Add a complete new section to the main page after the section key `after`. type: text-media|cards|stats|gallery|quote|cta|list|faq|steps|banner. section: the full section as a JSON string (kicker, title, text, icon, width, align, pad, bg, accent, text_color, layout, cols, items, buttons, quote, author, role, height, overlay) as described in GUIDE › Section types.",parameters:{type:"OBJECT",properties:{type:{type:"STRING"},section:{type:"STRING"},after:{type:"STRING"}},required:["type","section"]}},
     {name:"remove_section",description:"Delete a section that was added in the editor (key starts with cs_).",parameters:{type:"OBJECT",properties:{key:{type:"STRING"}},required:["key"]}},
     {name:"use_attachment",description:"Put a file the owner attached (0 = first) into an image/video/media/icon/audio slot.",parameters:{type:"OBJECT",properties:{path:{type:"STRING"},attachment:{type:"INTEGER"}},required:["path"]}},
   ];
@@ -1093,15 +1131,25 @@
       const k=id+cl;if(k&&!seen.has("S"+k)){seen.add("S"+k);L.push("  "+el.tagName.toLowerCase()+k)}});
     return L.join("\n").slice(0,60000);
   }
-  const AI_SYS=`You are the design-and-content assistant inside the visual editor of Roee Tal's portfolio site (a game developer).
+  /* the AI's guide: assets/ai-guide.md (words, section types, recipes) + the owner's own notes */
+  let GUIDE="";
+  const guideP=fetchT(new URL("ai-guide.md",ME).href,{cache:"no-cache"},15000).then(r=>r.ok?r.text():"").then(t=>GUIDE=t).catch(()=>"");
+  const smallGuide=()=>{const m=GUIDE.match(/<!-- small -->([\s\S]*?)<!-- \/small -->/);return (m?m[1]:GUIDE).trim()};
+  const notes=()=>{const n=String(get("site:ai_notes")||"").trim();return n?"\n\nOWNER'S NOTES (follow these first):\n"+n:""};
+  const guideFull=()=>GUIDE?"\n\nGUIDE:\n"+GUIDE+notes():notes();
+  const guidePart=re=>{const g=smallGuide(),i=g.search(re);if(i<0)return "";const j=g.slice(i+3).search(/\n## /);return g.slice(i,j<0?undefined:i+3+j).trim()};
+  const guideSmall=()=>(GUIDE?"\n\n"+guidePart(/## Words/):"")+notes();               // everyday requests: just the words
+  const guideSections=()=>(GUIDE?"\n\n"+guidePart(/## Words/)+"\n\n"+guidePart(/## Section types/)+"\n\n"+guidePart(/## Recipes/):"")+notes();
+  const AI_SYS_BASE=`You are the design-and-content assistant inside the visual editor of Roee Tal's portfolio site (a game developer).
 The owner talks to you (often in Hebrew, sometimes by voice) and you change the CURRENT PAGE live with tools. Changes stay unpublished until he presses Publish, and every publish is kept in Versions, so act directly; don't ask for confirmation unless the request is unclear.
 Rules:
 - Only use paths that appear in the catalog. Text: set_value on TEXT paths. Settings: FIELD paths (respect their type). Colors are #rrggbb.
 - Reorder with move_item / move_section; add/remove list items with add_item / remove_item.
-- A new section on the main page ("add a section about…"): add_section with a good English title and a short text, then style it with set_value on the paths it returns.
+- A new section on the main page ("add a section about…", "סקשן"): add_section with type and section = the FULL section JSON (see GUIDE › Section types): pick the type that fits, write real content (title, kicker, text, 3-6 items, buttons when useful), set width/align/pad/colors when asked. Afterwards adjust it with set_value on its paths.
 - Layout and visual design without a FIELD (sizes, spacing, columns, fonts, backgrounds, effects, animations): write CSS with set_custom_css. Keep the existing custom CSS and add to it; scope rules to selectors from PAGE STRUCTURE; keep it mobile-friendly; never hide the editor (classes starting with rt-).
 - Images/videos/GIFs/sounds: only files the owner attached, via use_attachment into a MEDIA or media FIELD path. You cannot create images.
 - Keep the site's English text in English unless he asks otherwise. Reply in the language he used, in 1-3 short sentences: what you changed, and remind him to check with 👁 Preview and press Publish.`;
+  const AI_SYS=()=>AI_SYS_BASE+guideFull();
   async function pickModel(key){
     let m=store.get(AI_MODEL);if(m)return m;
     try{const r=await fetchT(`${GAPI}/models?key=${encodeURIComponent(key)}&pageSize=200`,{},20000);const j=await r.json();
@@ -1166,10 +1214,11 @@ Actions (use paths exactly as listed):
 {"do":"add","list_path":"<LIST path>","after_index":0,"text":"..."}
 {"do":"remove","list_path":"<LIST path>","index":0}
 {"do":"css","css":"<full custom CSS: keep the old rules and add yours>"}
-{"do":"add_section","title":"...","text":"...","after":"<section key from ORDER>","layout":"text|image-right|image-left|image-top"}
+{"do":"add_section","after":"<section key from ORDER>","section":{"type":"<a section type>","kicker":"...","title":"...","text":"...","items":[...],"buttons":[{"label":"...","link":"..."}],"width":"contained|full","align":"left|center"}}
 {"do":"remove_section","key":"cs_…"}
 {"do":"attach","path":"<MEDIA or image/video FIELD path>","attachment":0}
 Only add a menu link (site:nav) or a button when the owner asks for a link/button. "this"/"זה" means the SELECTED item. Keep the site's text in English unless asked. reply = one short sentence in the owner's language.`;
+  const LOCAL_SYS_FULL=()=>LOCAL_SYS+guideSmall();
   async function applyJsonAnswer(content,thinking){
     const raw=String(content||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/^```(?:json)?|```$/gm,"").trim();let out;
     try{out=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);try{out=m?JSON.parse(m[0]):null}catch(e2){out=null}if(!out)out={actions:[],reply:raw}}
@@ -1204,8 +1253,8 @@ Only add a menu link (site:nav) or a button when the owner asks for a link/butto
     const thinking=aiSay("sys","Asking the AI app…");
     try{
       const model=await appModel(),big=!isPhone();
-      const userMsg=`PAGE ${location.pathname}\n${big?catalog().slice(0,24000):smallCatalog(current?3500:4500)}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`;
-      const content=await appChat([{role:"system",content:LOCAL_SYS},{role:"user",content:userMsg}],thinking,700);
+      const userMsg=`PAGE ${location.pathname}\n${big?catalog().slice(0,24000):smallCatalog(current?3000:3500)}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`;
+      const content=await appChat([{role:"system",content:LOCAL_SYS_FULL()},{role:"user",content:userMsg}],thinking,700);
       await applyJsonAnswer(content,thinking);
     }catch(e){thinking.remove();aiSay("err",appErr(e))}
   }
@@ -1241,30 +1290,44 @@ Only add a menu link (site:nav) or a button when the owner asks for a link/butto
   /* ---- "add a section about…": the editor builds the section itself; the small model only writes its words */
   const SECTION_ASK=/(סקשן|סעיף|אזור|קטע|בלוק|section|block)/i,SECTION_DO=/(הוסף|תוסיף|הכנס|תכניס|תכין|הכן|צור|תיצור|תעשה|תבנה|בנה|add|create|make|new|build|insert)/i;
   const wantsSection=t=>SECTION_ASK.test(t)&&SECTION_DO.test(t);
-  const SECTION_SYS=`You write one new section for Roee Tal's game-developer portfolio. Reply ONLY with JSON: {"title":"...","kicker":"...","text":"..."}
-title: English, at most 6 words. kicker: English, at most 4 words (a small label above the title). text: 2-3 short, friendly English sentences.
-If the owner explicitly asks for Hebrew, write in Hebrew instead.`;
+  const SECTION_SYS=()=>`You build one complete new section for Roee Tal's game-developer portfolio (main page). Reply ONLY with the section as JSON:
+{"type":"text-media|cards|stats|gallery|quote|cta|list|faq|steps|banner","kicker":"...","title":"...","text":"...","items":[...],"buttons":[{"label":"...","link":"..."}],"width":"contained|full","align":"left|center","pad":"compact|normal|spacious","bg":"#rrggbb","accent":"#rrggbb","text_color":"#rrggbb","icon":"<icon name>"}
+Leave out fields you don't need. items follow the type (see Section types). Write in English: title up to 6 words, kicker up to 4 words, text 1-3 short sentences, 3-6 items with real, specific content for a game developer. Only use colors when the owner asks for colors or a skin, with good contrast. If the owner asks for Hebrew, write in Hebrew.${guideSections()}`;
+  // a hint from the owner's words, in case the small model picks a type that doesn't fit
+  const TYPE_HINTS=[["faq",/(שאלות|faq|q&a)/i],["stats",/(מספרים|סטטיסטיק|stats|numbers|הישגים במספרים)/i],["gallery",/(גלרי|gallery|תמונות)/i],["quote",/(ציטוט|המלצ|quote|testimonial)/i],
+    ["steps",/(שלבים|תהליך|steps|process|איך אני עובד)/i],["cta",/(קריאה לפעולה|צור קשר|בוא נעבוד|cta|call to action|contact me)/i],["banner",/(באנר|banner|רקע וידאו|וידאו ברקע|רקע תמונה)/i],
+    ["cards",/(כרטיס|קלפים|cards?)/i],["list",/(רשימה|נקודות|bullet|list)/i]];
+  const hintType=t=>{for(const [k,re] of TYPE_HINTS)if(re.test(t))return k;return ""};
+  const WIDE=/(רחב|מלא|פול|פלאפ|מקצה לקצה|full|wide|edge)/i;
   async function sectionFlow(text){
-    const thinking=aiSay("sys","Writing the new section…");
+    const thinking=aiSay("sys","Building the new section…");
     try{
-      const msgs=[{role:"system",content:SECTION_SYS},{role:"user",content:text}];
+      await guideP;
+      const hint=hintType(text),icons="ICONS: "+Object.keys(ICONS).join(",");
+      const msgs=[{role:"system",content:SECTION_SYS()},{role:"user",content:icons+"\n"+(hint?`TYPE: ${hint}\n`:"")+(WIDE.test(text)?"WIDTH: full\n":"")+(aiFiles.length?"The owner attached a picture/video: it goes into the section's media.\n":"")+"REQUEST: "+text}];
       let content;
-      if(provider()==="app")content=await appChat(msgs,thinking,300);
+      if(provider()==="app")content=await appChat(msgs,thinking,900);
       else{const eng=await ensureEngine(r=>{thinking.textContent=`Downloading the AI model… ${Math.round((r.progress||0)*100)}%`});
-        const res=await eng.chat.completions.create({messages:msgs,temperature:.5,max_tokens:300,extra_body:{enable_thinking:false},response_format:{type:"json_object"}});
+        const res=await eng.chat.completions.create({messages:msgs,temperature:.5,max_tokens:900,extra_body:{enable_thinking:false},response_format:{type:"json_object"}});
         content=res.choices[0].message.content}
       const raw=String(content||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/^```(?:json)?|```$/gm,"").trim();
       let d={};try{d=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);try{d=m?JSON.parse(m[0]):{}}catch(e2){}}
+      if(d.section&&typeof d.section==="object")d=d.section;
+      if(hint&&(!SEC.TYPES[d.type]||(d.type==="text-media"&&hint!=="text-media")))d.type=hint;
+      if(WIDE.test(text)&&!d.width)d.width="full";
+      if(d.type==="banner"||WIDE.test(text)&&!d.align)d.align=d.align||"center";
       const fallback=text.replace(SECTION_DO,"").replace(SECTION_ASK,"").replace(/\b(a|an|the|me|for|of|about|לי|של|על|חדש|חדשה)\b/gi,"").trim();
+      if(!d.title)d.title=fallback.slice(0,60)||"New section";
       const after=current&&current.closest('[data-ok="site:section_order"]');
-      const r_=addSection(after,{title:String(d.title||fallback||"New section").slice(0,80),kicker:String(d.kicker||"").slice(0,40),text:String(d.text||"").slice(0,600),layout:"text"});
+      const data=sectionData(d);
+      const r_=addSection(after,data);
       thinking.remove();
       if(!r_){aiSay("err","New sections go on the main page. Open roeetal.com (the home page) and ask again.");return}
-      aiSay("act","✓ add section "+r_.key);
+      aiSay("act",`✓ add section ${r_.key} · ${SEC.TYPES[data.type].label}${data.items?" · "+data.items.length+" items":""}`);
       const file=aiFiles.find(f=>/^(image|video)\//.test(f.type));
       if(file){await replaceMedia(r_.base+".media","media",$(`#cs-${r_.id}`),file);aiSay("act","✓ picture placed in the section")}
       aiFiles=[];renderFiles();
-      aiSay("ai",/[\u0590-\u05FF]/.test(text)?"הוספתי סקשן חדש. אפשר לערוך את הטקסט בלחיצה כפולה, ובלחיצה עליו ואז ⚙ לבחור צבעים, פריסה ותמונה. אחר כך Publish.":"Added the section. Double-tap to edit its text; tap it, then ⚙ for colors, layout and a picture. Then Publish.");
+      aiSay("ai",/[֐-׿]/.test(text)?"בניתי סקשן חדש. לחיצה כפולה על טקסט כדי לערוך; לחיצה על הסקשן ואז ⚙ כדי להחליף סוג, רוחב, צבעים ותמונה. אחר כך Publish.":"Built the section. Double-tap any text to edit; tap the section, then ⚙ to change its type, width, colors and picture. Then Publish.");
     }catch(e){thinking.remove();aiSay("err",provider()==="app"?appErr(e):"On-device AI: "+errText(e))}
   }
   async function localSend(text){
@@ -1273,7 +1336,7 @@ If the owner explicitly asks for Hebrew, write in Hebrew instead.`;
       const eng=await ensureEngine(r=>{const pct=Math.round((r.progress||0)*100);thinking.textContent=engine?"…":`Downloading the AI model to this device (first time only)… ${pct}%`});
       thinking.textContent="Thinking on this device…";
       let cur=eng;
-      const ask=(limit,strict,maxTok=700)=>cur.chat.completions.create({messages:[{role:"system",content:LOCAL_SYS},
+      const ask=(limit,strict,maxTok=700)=>cur.chat.completions.create({messages:[{role:"system",content:LOCAL_SYS_FULL()},
           {role:"user",content:`PAGE ${location.pathname}\n${smallCatalog(limit)}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`}],
         temperature:.2,max_tokens:maxTok,extra_body:{enable_thinking:false},...(strict?{response_format:{type:"json_object"}}:{})});
       const gpuLost=m=>/dispos|device|lost|memory|out of/i.test(m||"");
@@ -1298,6 +1361,7 @@ If the owner explicitly asks for Hebrew, write in Hebrew instead.`;
   }
   async function aiSend(text){
     if(aiBusy||!text.trim()&&!aiFiles.length)return;
+    await Promise.race([guideP,new Promise(r=>setTimeout(r,4000))]);
     if(provider()==="local"||provider()==="app"){aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
       await (wantsSection(text)?sectionFlow(text):provider()==="app"?appSend(text):localSend(text));aiBusy=false;return}
     const key=store.get(AI_KEY);if(!key){aiKeyBox();return}
@@ -1312,7 +1376,7 @@ If the owner explicitly asks for Hebrew, write in Hebrew instead.`;
       aiHist.push({role:"user",parts});
       for(let round=0;round<8;round++){
         const r=await fetchT(`${GAPI}/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({systemInstruction:{parts:[{text:AI_SYS}]},contents:aiHist,tools:[{functionDeclarations:AI_DECL}]})},90000);
+          body:JSON.stringify({systemInstruction:{parts:[{text:AI_SYS()}]},contents:aiHist,tools:[{functionDeclarations:AI_DECL}]})},90000);
         const j=await r.json();
         if(!r.ok){const msg=(j.error&&j.error.message)||r.status;if(r.status===404)store.set(AI_MODEL,"");throw new Error(msg)}
         const c=(j.candidates||[])[0],ps=(c&&c.content&&c.content.parts)||[];
