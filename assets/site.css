@@ -866,3 +866,12 @@ body:has(.viewer:not([hidden])) .jump{display:none}
   .topbar:has(.mark-ava:not([hidden])) nav a{font-size:clamp(10.5px,2.95vw,13px)}
   .topbar:has(.mark-ava:not([hidden])) nav{gap:clamp(5px,1.8vw,11px)}
 }
+/* hero: a soft glass panel behind the name and text, so they read over any video (darkness set in the editor) */
+.hero{--hp:55%}
+.hero-panel{width:fit-content;max-width:min(100%,820px);margin-left:calc(-1 * clamp(14px,2.2vw,28px));padding:clamp(14px,2.2vw,26px) clamp(14px,2.2vw,28px) clamp(4px,1vw,8px);border-radius:22px;
+  background:linear-gradient(135deg,rgb(8 16 44 / var(--hp)),rgb(8 16 44 / calc(var(--hp) * .7)));
+  -webkit-backdrop-filter:blur(calc(var(--hp) / 6)) saturate(1.15);backdrop-filter:blur(calc(var(--hp) / 6)) saturate(1.15);
+  border:1px solid rgb(255 255 255 / calc(var(--hp) / 5));box-shadow:0 24px 60px -30px rgb(0 0 0 / calc(var(--hp) * 1.2));margin-bottom:22px}
+.hero-panel .lead{margin-bottom:16px}
+.hero-panel h1,.hero-panel .kicker,.hero-panel .lead{text-shadow:0 2px 14px rgba(0,0,0,.35)}
+@media (max-width:600px){.hero-panel{margin-left:-10px;margin-right:-10px;max-width:none;width:auto;border-radius:18px}}

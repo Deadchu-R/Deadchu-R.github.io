@@ -642,12 +642,12 @@ def build_index():
     mosaic = mosaic_html(mosaic_pool())
     PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
     html += jump_menu(INDEX_JUMP(), 0)
-    html += f"""<section class="hero" id="top"{ADD("site:hero_buttons", "hero")}{X(("Background video · plays behind your name", "site:hero_video", "video"), ("Phone-only background (optional)", "site:hero_video_mobile", "video"))}>
+    html += f"""<section class="hero" id="top"{ADD("site:hero_buttons", "hero")}{X(("Background video · plays behind your name", "site:hero_video", "video"), ("Phone-only background (optional)", "site:hero_video_mobile", "video"), ("Text panel darkness (0 = no panel)", "site:hero_panel", "range", [0, 90, 5, "%", "--hp", ""]))}{f' style="--hp:{SITE_TEXT.get("hero_panel")}%"' if SITE_TEXT.get("hero_panel") not in (None, "") else ""}>
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
-  <div class="wrap hero-copy">
+  <div class="wrap hero-copy"><div class="hero-panel">
     <p class="kicker"{E("site:hero_kicker")}>{e(SITE_TEXT["hero_kicker"])}</p>
     <h1{E("site:hero_title")}>{e(SITE_TEXT["hero_title"])}</h1>
-    <p class="lead"{E("site:hero_lead")}>{e(SITE_TEXT["hero_lead"])}</p>
+    <p class="lead"{E("site:hero_lead")}>{e(SITE_TEXT["hero_lead"])}</p></div>
     <div class="btns">
       <button class="btn{bstyle(UI.get("showreel_btn"))[1]}" type="button"{M("site:showreel_video", "video")} {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}{X(("Icon", "site:ui.showreel_btn.icon", "select", icon_choices()), ("Icon color", "site:ui.showreel_btn.color", "color", [".ui-ic", "--c"]), *btn_fields("site:ui.showreel_btn"))}{bs_attr("showreel_btn")}>{ui_icon("showreel_btn")}<span{E("site:showreel_label")}>{e(SITE_TEXT["showreel_label"])}</span></button>
     </div>
