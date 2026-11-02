@@ -56,7 +56,8 @@
             "video": "/assets/clips/fps-pickup.mp4",
             "drive_id": "1DwSYEwlV_wUiXQb3PpXpJhq6zZMLcemI"
           }
-        ]
+        ],
+        "layout": "auto"
       },
       {
         "title": "Stealth & objective",
@@ -74,7 +75,8 @@
             "video": "/assets/clips/fps-chip.mp4",
             "drive_id": "1woY9O2N8uW1xJGtTdQa_9ZSufwajvgii"
           }
-        ]
+        ],
+        "layout": "auto"
       }
     ],
     "screenshots": [
@@ -123,7 +125,16 @@
     "code_sample": {
       "file_label": "",
       "code": ""
-    }
+    },
+    "page_order": [
+      "code_sample",
+      "clips",
+      "screenshots",
+      "full_video",
+      "about",
+      "characters",
+      "credits"
+    ]
   },
   {
     "slug": "tile-map-engine",
@@ -181,7 +192,8 @@
             "video": "/assets/clips/lab-tilemap.mp4",
             "drive_id": "1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL"
           }
-        ]
+        ],
+        "layout": "auto"
       },
       {
         "title": "Chess on the engine",
@@ -193,7 +205,8 @@
             "video": "/assets/clips/lab-chess.mp4",
             "drive_id": "1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi"
           }
-        ]
+        ],
+        "layout": "auto"
       }
     ],
     "screenshots": [],
@@ -205,7 +218,16 @@
     "code_sample": {
       "file_label": "RenderingManager.cs",
       "code": "// RenderingManager: draws the tile map to the console in color.\n// Messages for the player are queued on an event and printed after the grid.\npublic class RenderingManager : IRendering\n{\n    public event Action OnPrint;\n\n    public void DrawGrid()\n    {\n        Console.Clear();\n        for (int y = 0; y < TileMap.Instance.Grid.GetLength(1); y++)\n        {\n            for (int x = 0; x < TileMap.Instance.Grid.GetLength(0); x++)\n            {\n                for (int i = 0; i < 3; i++)       // each tile is drawn as \"[\", its content, \"]\"\n                {\n                    Tile tile = TileMap.Instance.Grid[x, y];\n                    Console.ForegroundColor = i == 1 && tile.gameObject != null\n                        ? tile.gameObject.Color   // the piece's color\n                        : tile.TileColor;         // the board's color\n                    Console.Write(tile.TileContainer[i]);\n                }\n            }\n            Console.WriteLine();\n        }\n        PrintToUser();\n    }\n\n    public void AddToPrint(string message) => OnPrint += () => Console.WriteLine(message);\n    public void PrintToUser() => OnPrint?.Invoke();\n    public void ClearPrint() => OnPrint = null;\n}\n"
-    }
+    },
+    "page_order": [
+      "code_sample",
+      "clips",
+      "screenshots",
+      "full_video",
+      "about",
+      "characters",
+      "credits"
+    ]
   },
   {
     "slug": "shards",
@@ -264,7 +286,8 @@
             "video": "/assets/clips/shards-gameplay.mp4",
             "drive_id": "1tmPJS60ybrLUhAnFwKSwCj7VyI8NLrSG"
           }
-        ]
+        ],
+        "layout": "auto"
       }
     ],
     "screenshots": [
@@ -322,7 +345,16 @@
     "code_sample": {
       "file_label": "SimpleTypeWriterEffect.cs · DialoguePage.cs",
       "code": "// Types the page out letter by letter and raises events other systems hook into:\n// talking sounds and the speaker's mouth animation listen to onLetterTyped / onWordTyped.\nprivate IEnumerator TypeText()\n{\n    if (_isCoroutineRunning)\n    {\n        Debug.LogWarning(\"Coroutine is already running.\");\n        yield break;\n    }\n\n    _isCoroutineRunning = true;\n    _textBuilder.Length = 0;                  // reuse one StringBuilder, no per-letter strings\n    int characterCount = _fullText.Length;\n\n    for (int i = 0; i < characterCount; i++)\n    {\n        onLetterTyped?.Invoke();\n        if (_fullText[i] == ' ')\n            onWordTyped?.Invoke();\n\n        _textBuilder.Append(_fullText[i]);\n        textMeshProUGUI.text = _textBuilder.ToString();\n        if (IsFinishedText()) yield break;      // raises onFinishedText\n\n        for (int j = 0; j < (int)(typingSpeed * 60); j++)\n            yield return _waitForEndOfFrame;      // cached, no allocation per frame\n    }\n}\n\n// Each page type decides what happens when it is shown.\n[CreateAssetMenu(fileName = \"New Page\", menuName = \"Page/DialoguePage\")]\npublic class DialoguePage : Page\n{\n    public string[] Options;\n    public Page[] Pages;                          // where each answer leads\n\n    public override void PageAction(SpeechBubbleUI speechBubbleUI)\n    {\n        speechBubbleUI.SetDialogueOptions(this);\n        speechBubbleUI.SetButtonInteractable(speechBubbleUI.NextButton, false);\n    }\n}\n"
-    }
+    },
+    "page_order": [
+      "code_sample",
+      "clips",
+      "screenshots",
+      "full_video",
+      "about",
+      "characters",
+      "credits"
+    ]
   },
   {
     "slug": "boss-rush",
@@ -382,7 +414,8 @@
             "video": "/assets/clips/bossrush-attack.mp4",
             "drive_id": "12FAXoXFoiz_-gTPMpAHg0HDlMtjLlzJO"
           }
-        ]
+        ],
+        "layout": "auto"
       },
       {
         "title": "Effects",
@@ -400,7 +433,8 @@
             "video": "/assets/clips/bossrush-gather.mp4",
             "drive_id": "1OZmcyiAOi2JdeSAK5nQF3ZrqDwe8VoyK"
           }
-        ]
+        ],
+        "layout": "auto"
       }
     ],
     "screenshots": [],
@@ -433,7 +467,16 @@
     "code_sample": {
       "file_label": "",
       "code": ""
-    }
+    },
+    "page_order": [
+      "code_sample",
+      "clips",
+      "screenshots",
+      "full_video",
+      "about",
+      "characters",
+      "credits"
+    ]
   },
   {
     "slug": "almond-bar",
@@ -486,7 +529,8 @@
             "video": "/assets/clips/almond-mission.mp4",
             "drive_id": "1gJONPXImUmGUgLn0zeO4VT1worbnZSCu"
           }
-        ]
+        ],
+        "layout": "auto"
       }
     ],
     "screenshots": [
@@ -515,7 +559,16 @@
     "code_sample": {
       "file_label": "",
       "code": ""
-    }
+    },
+    "page_order": [
+      "code_sample",
+      "clips",
+      "screenshots",
+      "full_video",
+      "about",
+      "characters",
+      "credits"
+    ]
   },
   {
     "slug": "musical-level",
@@ -566,7 +619,8 @@
             "video": "/assets/clips/musical-attack.mp4",
             "drive_id": "1Wlay5mvFlwNrT6sQCLVBJ7hxzUvdk-CF"
           }
-        ]
+        ],
+        "layout": "auto"
       },
       {
         "title": "Platforms",
@@ -590,7 +644,8 @@
             "video": "/assets/clips/musical-shaking.mp4",
             "drive_id": "1hjmNAM8uoKoC1Wm-hAwvpBgZ1a2dcQqT"
           }
-        ]
+        ],
+        "layout": "auto"
       }
     ],
     "screenshots": [
@@ -622,6 +677,15 @@
     "code_sample": {
       "file_label": "",
       "code": ""
-    }
+    },
+    "page_order": [
+      "code_sample",
+      "clips",
+      "screenshots",
+      "full_video",
+      "about",
+      "characters",
+      "credits"
+    ]
   }
 ]

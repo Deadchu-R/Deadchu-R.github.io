@@ -356,13 +356,19 @@ J_NEXT = J_I + '<path d="M5 12h14M13 6l6 6-6 6"/></svg>'
 J_PLAY = J_I + '<path d="M7 5v14l11-7z"/></svg>'
 
 def INDEX_JUMP():
-    return ([("#top", "Home", "#3d84e6", "", J_HOME), ("#now", "Experience · 3DVision", "#38b6ff", "", ICON_BRIEF),
-             ("#projects", "Projects", "#ffd23f", "", ICON_PAD)]
-            + [(f"#p-{pj['slug']}", e(pj['title']), pj['theme'][2], "sub", "") for pj in PROJECTS]
-            + [("#more-code", "More code", "#9be15d", "", ICON_CODE)]
-            + [(f"#c-{cp['slug']}", e(cp['title']), cp['theme'][2], "sub", "") for cp in CODE_PAGES]
-            + [("#gallery-lab", "Gallery &amp; lab", "#ff8fc0", "", J_IMG), ("#about", "Get to know me", "#ff9f5a", "", J_USER),
-               ("#contact", "Contact", "#6fd3c2", "", J_MAIL)])
+    parts = {
+        "experience": [("#now", "Experience · 3DVision", "#38b6ff", "", ICON_BRIEF)],
+        "projects": [("#projects", "Projects", "#ffd23f", "", ICON_PAD)]
+                    + [(f"#p-{pj['slug']}", e(pj['title']), pj['theme'][2], "sub", "") for pj in PROJECTS],
+        "more_code": [("#more-code", "More code", "#9be15d", "", ICON_CODE)]
+                     + [(f"#c-{cp['slug']}", e(cp['title']), cp['theme'][2], "sub", "") for cp in CODE_PAGES],
+        "about": [("#about", "Get to know me", "#ff9f5a", "", J_USER)],
+        "gallery_lab": [("#gallery-lab", "Gallery &amp; lab", "#ff8fc0", "", J_IMG)],
+    }
+    order = [k for k in SITE_TEXT.get("section_order", []) if k in parts]
+    order += [k for k in parts if k not in order]
+    return ([("#top", "Home", "#3d84e6", "", J_HOME)] + [it for k in order for it in parts[k]]
+            + [("#contact", "Contact", "#6fd3c2", "", J_MAIL)])
 
 def site_jump(depth):
     """The landing page's main sections, reached from any other page."""
@@ -429,8 +435,9 @@ def build_index():
   </div>
   {WAVE}
 </section>
-
-<section class="band now" id="now">
+"""
+    blocks = {}
+    blocks["experience"] = f"""<section class="band now" id="now">
   <div class="wrap now-grid">
     <div class="now-copy">
       <p class="kicker exp-kicker"><span class="h-ico" style="--c:#38b6ff">{ICON_BRIEF}</span>Experience · {job_dates()}{job_live()}</p>
@@ -454,17 +461,17 @@ def build_index():
     </ol>
   </div>
 </section>
-
-<section class="band blue palette-band" id="projects">
+"""
+    blocks["projects"] = f"""<section class="band blue palette-band" id="projects">
   <div class="wrap">
     <div class="sec-head"><h2><span class="h-ico" style="--c:#ffd23f">{ICON_PAD}</span>Projects</h2><p class="muted">{e(SITE_TEXT["projects_intro"])}</p></div>
     <div class="ptiles">{''.join(tiles)}</div>
   </div>
 </section>
-
-{more_code_html()}
-
-{about_html()}<section class="band lab-teaser" id="gallery-lab">
+"""
+    blocks["more_code"] = more_code_html()
+    blocks["about"] = about_html()
+    blocks["gallery_lab"] = f"""<section class="band lab-teaser" id="gallery-lab">
   {mosaic}
   <div class="wrap lab-row">
     <div><h2>Gallery &amp; lab</h2><p class="muted">Every clip, screenshot and character in one place, plus shaders, mini-games and other things I built to learn how they work.</p></div>
@@ -472,6 +479,9 @@ def build_index():
   </div>
 </section>
 """
+    order = [k for k in SITE_TEXT.get("section_order", []) if k in blocks]
+    order += [k for k in blocks if k not in order]          # anything not listed keeps its default place at the end
+    html += "\n".join(blocks[k] for k in order)
     html += footer(0)
     (ROOT / "index.html").write_text(html)
 
@@ -545,6 +555,11 @@ def build_code_page(i, cp):
         lbl, cap, f, d = cp["clip"]
         media = f'<section class="mech-sec" id="action"><h2>In action</h2><div class="mech-grid n1"><figure class="mech">{clip_tile(lbl, f, d, depth, big=True, cap=cap)}<figcaption><b>{e(lbl)}</b> {e(cap)}</figcaption></figure></div></section>'
     codes = "".join(code_figure(n, pth) for n, pth in cp["code"])
+    cb = {"flow": f'<section class="mech-sec" id="flow"><h2>How it fits together</h2>{flow}</section>', "clip": media,
+          "code": f'<section class="mech-sec code-sec" id="the-code"><h2>The code</h2>{codes}<p class="muted small center">Trimmed and commented for this page.</p></section>'}
+    corder = [k for k in cp.get("page_order", []) if k in cb]
+    corder += [k for k in cb if k not in corder]
+    code_blocks = "\n".join(cb[k] for k in corder)
     html = head(f"{cp['title']} — Roee Tal", cp["hook"], depth, cp["theme"])
     html += topbar(depth, "projects")
     acc = cp["theme"][2]
@@ -573,9 +588,7 @@ def build_code_page(i, cp):
     </dl>
   </section>
   <div class="wrap">
-    <section class="mech-sec" id="flow"><h2>How it fits together</h2>{flow}</section>
-    {media}
-    <section class="mech-sec code-sec" id="the-code"><h2>The code</h2>{codes}<p class="muted small center">Trimmed and commented for this page.</p></section>
+    {code_blocks}
   </div>
   <div class="wrap code-next" id="next"><a class="btn ghost" href="../index.html#more-code">← All of More code</a>{f'<a class="btn" href="{nxt["slug"]}.html">Next: {e(nxt["title"])} →</a>' if nxt else '<span class="tbc-chip">Next: to be continued… <em>saved for future projects</em></span>'}</div>
 </div>
@@ -584,12 +597,17 @@ def build_code_page(i, cp):
     (ROOT / "code").mkdir(exist_ok=True)
     (ROOT / "code" / f"{cp['slug']}.html").write_text(html)
 
+def grid_cols(layout, n):
+    """Clip grid columns: 'auto' fits the number of clips (max 3), or a fixed 1 / 2 / 3."""
+    return {"one-big": 1, "two": 2, "three": 3}.get(layout or "auto", min(max(n, 1), 3))
+
 def build_project(i, pj):
     global DEPTH
     depth = DEPTH = 1
     nxt = PROJECTS[i + 1] if i + 1 < len(PROJECTS) else None
     sections = []
     first = True
+    layouts = pj.get("layouts", [])
     for title, intro, clips in pj["sections"]:
         sec_more = more_attrs(more_text(pj, (title, intro)))
         tiles = "".join(
@@ -597,7 +615,7 @@ def build_project(i, pj):
             for lbl, cap, f, d in clips)
         sections.append(f"""<section class="mech-sec" id="s{len(sections)+1}">
   <h2>{e(title)}</h2>{f'<p class="muted center">{e(intro)}</p>' if intro else ''}
-  <div class="mech-grid n{min(len(clips), 3)}">{tiles}</div>
+  <div class="mech-grid n{grid_cols(layouts[len(sections)], len(clips))}">{tiles}</div>
 </section>""")
         first = False
     shots = ""
@@ -611,6 +629,18 @@ def build_project(i, pj):
     if pj.get("cast"):
         cast = '<section class="mech-sec" id="characters"><h2>Characters</h2><div class="cast">' + "".join(
             f'<figure><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge: {e(c)}"><img loading="lazy" src="../assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button><figcaption>{e(c)}</figcaption></figure>' for f, c in pj["cast"]) + "</div></section>"
+    pb = {
+        "code_sample": f'<div class="wrap">{code_section(pj)}</div>',
+        "clips": f'<div class="wrap">{"".join(sections)}</div>',
+        "screenshots": f'<div class="wrap">{shots}</div>',
+        "full_video": f'<div class="wrap">{full}</div>',
+        "about": f'<section class="wrap about-game" id="about-project"><h2>About the project</h2>{"".join(f"<p>{e(a)}</p>" for a in pj["about"])}</section>',
+        "characters": f'<div class="wrap">{cast}</div>',
+        "credits": (f'<div class="wrap credits"><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span><b>Credits.</b> {e(ART_NOTES[pj["slug"]])}</span></p></div>' if pj["slug"] in ART_NOTES else ""),
+    }
+    order = [k for k in pj.get("page_order", []) if k in pb]
+    order += [k for k in pb if k not in order]
+    page_blocks = "\n".join(pb[k] for k in order)
     html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"])
     html += topbar(depth, "projects")
     acc = pj["theme"][2]
@@ -651,13 +681,7 @@ def build_project(i, pj):
       <div><dt>Context</dt><dd>{e(pj['context'])}</dd></div>
     </dl>
   </section>
-  <div class="wrap">{code_section(pj)}{''.join(sections)}{shots}{full}</div>
-  <section class="wrap about-game" id="about-project">
-    <h2>About the project</h2>
-    {''.join(f'<p>{e(a)}</p>' for a in pj['about'])}
-  </section>
-  <div class="wrap">{cast}</div>
-  {f'<div class="wrap credits"><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span><b>Credits.</b> {e(ART_NOTES[pj["slug"]])}</span></p></div>' if pj["slug"] in ART_NOTES else ''}
+  {page_blocks}
 </div>
 {next_band(nxt) if nxt else tbc_band('../index.html#projects', 'All projects')}
 """

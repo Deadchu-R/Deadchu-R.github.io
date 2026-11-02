@@ -43,8 +43,8 @@
   </section>
   <div class="wrap">
     <section class="mech-sec" id="flow"><h2>How it fits together</h2><div class="flow"><div class="flow-step"><b>Enemy army beaten</b><span>commander position</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Capture circle</b><span>trigger collider</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Countdown</b><span>stay inside</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Soldiers join you</b><span>army grows</span></div></div></section>
-    
-    <section class="mech-sec code-sec" id="the-code"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>ArmyCaptureManager.cs</span></figcaption><pre><code><span class="c">// ArmyCaptureManager.cs: stand inside a defeated army&#x27;s circle until the countdown</span>
+
+<section class="mech-sec code-sec" id="the-code"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>ArmyCaptureManager.cs</span></figcaption><pre><code><span class="c">// ArmyCaptureManager.cs: stand inside a defeated army&#x27;s circle until the countdown</span>
 <span class="c">// ends to take its soldiers; stepping out cancels the capture</span>
 <span class="k">public</span> <span class="k">void</span> <span class="t">SetCaptureCollider</span>(<span class="t">Vector2</span> position, <span class="k">float</span> radius = <span class="n">1</span>, <span class="k">bool</span> active = <span class="k">false</span>)
 {

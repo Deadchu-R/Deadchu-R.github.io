@@ -43,8 +43,8 @@
   </section>
   <div class="wrap">
     <section class="mech-sec" id="flow"><h2>How it fits together</h2><div class="flow"><div class="flow-step"><b>Quest</b><span>ScriptableObject</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>NextQuest</b><span>chained</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>QuestManager</b><span>strike out, show next</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>UI_Manager</b><span>panels by enum</span></div></div></section>
-    
-    <section class="mech-sec code-sec" id="the-code"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>UI_Manager.cs</span></figcaption><pre><code><span class="c">// UI_Manager.cs: one inspector slot per PanelEnum value, kept in sync automatically.</span>
+
+<section class="mech-sec code-sec" id="the-code"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>UI_Manager.cs</span></figcaption><pre><code><span class="c">// UI_Manager.cs: one inspector slot per PanelEnum value, kept in sync automatically.</span>
 <span class="c">// Add a value to the enum and its slot appears; panels are then opened by enum.</span>
 <span class="k">private</span> <span class="k">void</span> <span class="t">OnValidate</span>() =&gt; <span class="t">InitializePanelDictionary</span>();
 

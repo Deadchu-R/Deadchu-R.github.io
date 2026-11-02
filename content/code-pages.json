@@ -58,6 +58,11 @@
         "file_label": "Deck.cs",
         "code": "// Deck.cs: draw cards one by one into the hand; when the deck runs out,\n// shuffle and keep drawing the cards that are still owed\npublic IEnumerator DrawCards(int cardsToDraw)\n{\n    int currentCardsToDraw = Mathf.Min(cardsToDraw, cardsInDeck);\n    _remainingCardsToDraw = cardsToDraw;\n\n    for (int cardIndex = 0; cardIndex < currentCardsToDraw; cardIndex++)\n    {\n        float cardPosition = cardIndex * (cardSpacer + 1);\n        DrawCard(cardPosition, cardIndex);          // instantiate, then slide into the hand\n        _remainingCardsToDraw--;\n        yield return new WaitForSeconds(delayBetweenDraws);\n    }\n\n    if (cardsInDeck <= 0)\n    {\n        Shuffle();\n        if (_remainingCardsToDraw > 0)\n            StartCoroutine(DrawCards(_remainingCardsToDraw));\n    }\n}\n"
       }
+    ],
+    "page_order": [
+      "flow",
+      "clip",
+      "code"
     ]
   },
   {
@@ -110,6 +115,11 @@
         "file_label": "ArmyCaptureManager.cs",
         "code": "// ArmyCaptureManager.cs: stand inside a defeated army's circle until the countdown\n// ends to take its soldiers; stepping out cancels the capture\npublic void SetCaptureCollider(Vector2 position, float radius = 1, bool active = false)\n{\n    _canCapture = true;\n    _armyCommanderPosition = position;\n    _captureCollider.transform.position = position;\n    _captureCollider.radius = radius;\n    _captureCollider.enabled = active;\n}\n\nprivate void Update()\n{\n    if (_captureCountdownTimer == null || !_captureCountdownTimer.IsRunning) return;\n    _captureCountdownTimer.Tick(Time.deltaTime);   // timer ticked in Update, not a coroutine\n    if (_captureCountdownTimer.IsFinished) Capture();\n}\n\nprivate void OnTriggerEnter2D(Collider2D collision)\n{\n    if (collision.CompareTag(\"Player\")) StartCaptureTimer();\n}\n\nprivate void OnTriggerExit2D(Collider2D collision)\n{\n    if (collision.CompareTag(\"Player\")) ResetCaptureCountdown();\n}\n\nprivate void Capture()\n{\n    GameManager.instance.PlayerController.CaptureArmy(_defeatedArmy.Soldiers);\n    _defeatedArmy.Soldiers.Clear();\n    _captureCountdownTimer.Reset();\n}\n"
       }
+    ],
+    "page_order": [
+      "flow",
+      "clip",
+      "code"
     ]
   },
   {
@@ -165,6 +175,11 @@
         "file_label": "Quest.cs · QuestManager.cs",
         "code": "// Quest.cs + QuestManager.cs: quests are ScriptableObjects chained through NextQuest.\n// Finishing one strikes it out on screen and shows the next.\n[CreateAssetMenu(fileName = \"New Quest\", menuName = \"Quests/defaultQuest\")]\npublic class Quest : ScriptableObject\n{\n    public string questName;\n    public string QuestDescription;\n    public int QuestID;\n    public Quest NextQuest;\n    public bool IsCompleted = false;\n}\n\npublic void FinishedQuest(Quest quest)\n{\n    if (quest.NextQuest != null)\n    {\n        _previousQuest = quest;\n        _currentQuest = quest.NextQuest;\n        questText.text = _previousQuest.QuestDescription;\n        questText2.text = _currentQuest.QuestDescription;\n        questText.fontStyle = FontStyles.Strikethrough;   // the finished quest, struck out\n    }\n}\n"
       }
+    ],
+    "page_order": [
+      "flow",
+      "clip",
+      "code"
     ]
   },
   {
@@ -222,6 +237,11 @@
         "file_label": "Customer.cpp · PostOfficeLogic.cpp",
         "code": "// Customer.cpp: elderly customers get their own numbering (E1, E2...),\n// everyone else is numbered after them (Y1, Y2...)\nvoid Customer::setAppointmentNumber(int customersInQueue, int elderCustomersInQueue)\n{\n    if (customersInQueue == elderCustomersInQueue || customersInQueue == 0) customersInQueue++;\n    if (isElderly()) appointmentNumber = \"E\" + to_string(elderCustomersInQueue);\n    else             appointmentNumber = \"Y\" + to_string(customersInQueue - elderCustomersInQueue);\n}\n\n// PostOfficeLogic.cpp: office settings come from a text file (officerCount=, seniorAge=, maxAge=)\nif (line.find(\"officerCount\") != string::npos)\n{\n    officerCount = stoi(line.substr(line.find(\"=\") + 1));\n    for (int i = 0; i < officerCount; i++)\n    {\n        officers.push_back(Officer(i));\n        officers[i].maxActions = maxActions;\n    }\n}\n"
       }
+    ],
+    "page_order": [
+      "flow",
+      "clip",
+      "code"
     ]
   }
 ]

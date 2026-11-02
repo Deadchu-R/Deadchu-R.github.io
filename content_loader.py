@@ -183,6 +183,7 @@ for p in _load("projects.json"):
         sections=[(sec.get("title", ""), sec.get("intro", ""), [_clip_tuple(c) for c in sec.get("clips", [])])
                   for sec in p.get("sections", [])],
         full=full_key or None, shots=shots, cast=cast,
+        layouts=[sec.get("layout", "auto") for sec in p.get("sections", [])], page_order=p.get("page_order", []),
     ))
     TECH[s] = p.get("tech", [])
     CARD_TECH[s] = p.get("card_tech", "")
@@ -212,7 +213,7 @@ for cp in _load("code-pages.json"):
         hook=cp.get("hook", ""), did=cp.get("what_i_built", []), tech=cp.get("tech", []),
         flow=[(f.get("name", ""), f.get("note", "")) for f in cp.get("flow", [])],
         clip=_clip_tuple(cp["clip"]) if cp.get("clip") and cp["clip"].get("video") else None,
-        code=codes,
+        code=codes, page_order=cp.get("page_order", []),
     ))
 
 # ---------------------------------------------------------------- lab + early work

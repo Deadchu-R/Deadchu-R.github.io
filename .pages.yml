@@ -29,6 +29,11 @@ content:
           - { name: when, type: string }
           - { name: title, type: string }
           - { name: text, type: string }
+      - name: section_order
+        label: "Order of sections on the main page (drag to reorder)"
+        type: select
+        list: true
+        options: { values: [experience, projects, more_code, about, gallery_lab] }
       - { name: projects_intro, label: "Projects section intro", type: string }
       - { name: more_code_intro, label: "More code section intro", type: string }
       - { name: email, type: string }
@@ -65,6 +70,11 @@ content:
       - { name: what_i_built, label: "What I built", type: text, list: true }
       - { name: teammates_built, label: "What teammates built (optional)", type: text, list: true }
       - { name: tech, label: "Tech & principles", type: string, list: true }
+      - name: page_order
+        label: "Order of blocks on the project page (drag to reorder)"
+        type: select
+        list: true
+        options: { values: [code_sample, clips, screenshots, full_video, about, characters, credits] }
       - name: code_sample
         label: Code sample (optional)
         type: object
@@ -78,6 +88,7 @@ content:
         fields:
           - { name: title, type: string }
           - { name: intro, type: string }
+          - { name: layout, label: "Clip layout", type: select, options: { values: [auto, one-big, two, three] } }
           - name: clips
             type: object
             list: { collapsible: true, summary: "{label}" }
@@ -126,6 +137,11 @@ content:
       - { name: hook, label: "One-line hook", type: string }
       - { name: what_i_built, label: "What I built", type: text, list: true }
       - { name: tech, type: string, list: true }
+      - name: page_order
+        label: "Order of blocks on the page (drag to reorder)"
+        type: select
+        list: true
+        options: { values: [flow, clip, code] }
       - name: flow
         label: How it fits together (steps)
         type: object

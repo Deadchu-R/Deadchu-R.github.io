@@ -43,8 +43,8 @@
   </section>
   <div class="wrap">
     <section class="mech-sec" id="flow"><h2>How it fits together</h2><div class="flow"><div class="flow-step"><b>Settings file</b><span>officers, senior age</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Customer queue</b><span>linked list or std::list</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Officers</b><span>by service type</span></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><b>Records file</b><span>customers saved</span></div></div></section>
-    
-    <section class="mech-sec code-sec" id="the-code"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>CustomerList.cpp</span></figcaption><pre><code><span class="c">// CustomerList.cpp: a hand-written doubly linked list.</span>
+
+<section class="mech-sec code-sec" id="the-code"><h2>The code</h2><figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>CustomerList.cpp</span></figcaption><pre><code><span class="c">// CustomerList.cpp: a hand-written doubly linked list.</span>
 <span class="c">// Insert a customer so the queue stays sorted by the service they need.</span>
 <span class="t">Node</span>* customerList::insertSorted(<span class="t">Node</span>* sortedHead, <span class="t">Node</span>* newNode)
 {
