@@ -1150,15 +1150,23 @@ Rules:
 - Images/videos/GIFs/sounds: only files the owner attached, via use_attachment into a MEDIA or media FIELD path. You cannot create images.
 - Keep the site's English text in English unless he asks otherwise. Reply in the language he used, in 1-3 short sentences: what you changed, and remind him to check with 👁 Preview and press Publish.`;
   const AI_SYS=()=>AI_SYS_BASE+guideFull();
+  // the models this key can use right now, best first (asked from Google, so new ones like Gemini 4 are picked up by themselves)
+  let modelList=null;
+  async function rankModels(key){
+    if(modelList)return modelList;
+    const r=await fetchT(`${GAPI}/models?key=${encodeURIComponent(key)}&pageSize=200`,{},20000);const j=await r.json();
+    const ok=(j.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes("generateContent")&&/gemini/.test(x.name)&&!/(image|tts|audio|live|embedding|thinking|vision|robotics|computer|nano|gemma)/.test(x.name));
+    const ver=n=>parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/)||[,0])[1]);
+    const rank=n=>(/flash/.test(n)&&!/lite/.test(n)?0:/flash-lite/.test(n)?2:/pro/.test(n)?3:1)*10+(/preview|exp/.test(n)?1:0);   // Flash first: fast and the biggest free quota
+    ok.sort((a,b)=>(rank(a.name)-rank(b.name))||(ver(b.name)-ver(a.name)));
+    modelList=ok.map(x=>x.name.replace(/^models\//,""));
+    return modelList;
+  }
   async function pickModel(key){
-    let m=store.get(AI_MODEL);if(m)return m;
-    try{const r=await fetchT(`${GAPI}/models?key=${encodeURIComponent(key)}&pageSize=200`,{},20000);const j=await r.json();
-      const ok=(j.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes("generateContent")&&/flash/.test(x.name)&&!/(image|tts|audio|live|embedding|lite|thinking|vision)/.test(x.name));
-      const ver=n=>parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/)||[,0])[1]);
-      ok.sort((a,b)=>(ver(b.name)-ver(a.name))||((/preview|exp/.test(a.name)?1:0)-(/preview|exp/.test(b.name)?1:0)));
-      m=ok.length?ok[0].name.replace(/^models\//,""):"gemini-2.5-flash";
-    }catch(e){m="gemini-2.5-flash"}
-    store.set(AI_MODEL,m);return m;
+    let m=store.get(AI_MODEL);const t=+store.get(AI_MODEL+"-at")||0;
+    if(m&&Date.now()-t<3*864e5)return m;            // look again every few days for newer models
+    try{const l=await rankModels(key);m=l[0]||m||"gemini-flash-latest"}catch(e){m=m||"gemini-flash-latest"}
+    store.set(AI_MODEL,m);store.set(AI_MODEL+"-at",String(Date.now()));return m;
   }
   const fileToPart=f=>new Promise(ok=>{const r=new FileReader();r.onload=()=>ok({inlineData:{mimeType:f.type||"application/octet-stream",data:String(r.result).split(",")[1]}});r.readAsDataURL(f)});
   function aiSay(who,text){const el=h("div",{class:"rt-msg "+who},text);aiLog.append(el);aiLog.scrollTop=aiLog.scrollHeight;return el}
@@ -1375,7 +1383,8 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       while(aiHist.length>20){const i=aiHist.findIndex((m,k)=>k>0&&m.role==="user"&&m.parts[0]&&m.parts[0].text);if(i<1)break;aiHist=aiHist.slice(i)}
       aiHist.push({role:"user",parts});
       // Gemini is sometimes "busy" (503) or a model's free quota runs out (429): wait and retry, then try other Flash models
-      const models=[...new Set([model,"gemini-2.5-flash","gemini-2.5-flash-lite","gemini-2.0-flash"])];let mi=0;
+      let others=[];try{others=await rankModels(key)}catch(e){}
+      const models=[...new Set([model,...others.slice(0,5),"gemini-flash-latest"])];let mi=0;
       const busy=(st,msg)=>st===503||st===429||st===500||/demand|overload|unavailable|exhausted|quota|try again/i.test(msg);
       async function call(){
         for(let attempt=0;;attempt++){
@@ -1383,11 +1392,12 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
           const r=await fetchT(`${GAPI}/models/${m_}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({systemInstruction:{parts:[{text:AI_SYS()}]},contents:aiHist,tools:[{functionDeclarations:AI_DECL}]})},90000);
           const j=await r.json().catch(()=>({}));
-          if(r.ok)return j;
+          if(r.ok){if(!store.get(AI_MODEL)){store.set(AI_MODEL,m_);store.set(AI_MODEL+"-at",String(Date.now()))}return j}
           const msg=String((j.error&&j.error.message)||r.status);
-          if(r.status===404&&m_===model)store.set(AI_MODEL,"");
-          if(!(busy(r.status,msg)||r.status===404)||mi>=models.length-1&&attempt>=1)throw new Error(msg+(busy(r.status,msg)?" (Gemini is busy right now; try again in a minute, or use 📱 the app on your phone)":""));
-          if(attempt===0&&r.status!==404&&r.status!==429){thinking.textContent=`Gemini is busy, retrying… (${m_})`;await new Promise(ok=>setTimeout(ok,2500));continue}
+          const gone=r.status===404||/no longer available|not found|deprecated/i.test(msg);
+          if(gone&&m_===model)store.set(AI_MODEL,"");
+          if(!(busy(r.status,msg)||gone)||mi>=models.length-1&&attempt>=1)throw new Error(msg+(busy(r.status,msg)?" (Gemini is busy right now; try again in a minute, or use 📱 the app on your phone)":""));
+          if(attempt===0&&!gone&&r.status!==429){thinking.textContent=`Gemini is busy, retrying… (${m_})`;await new Promise(ok=>setTimeout(ok,2500));continue}
           if(mi<models.length-1){mi++;attempt=-1;thinking.textContent=`Gemini is busy, trying ${models[mi]}…`;await new Promise(ok=>setTimeout(ok,800))}
         }
       }
