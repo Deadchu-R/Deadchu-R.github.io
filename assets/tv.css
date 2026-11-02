@@ -54,3 +54,13 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0b10;color:#f4f1ea;
 .tv-otitle{position:fixed;z-index:21;left:4vw;top:4vh;font:800 1.6vw/1.2 system-ui;text-shadow:0 2px 8px #000;transition:opacity .4s}
 .tv-otitle.hide{opacity:0}
 .tv-hint{position:fixed;z-index:6;right:3vw;bottom:2.6vh;font:600 .95vw/1 system-ui;color:#8d8d99}
+
+/* pointer remotes (the TV moves an arrow on screen): big arrows at the ends of each row */
+.tv-trackwrap{position:relative}
+.tv-arr{position:absolute;top:0;bottom:0;width:5vw;border:0;font:300 4vw/1 system-ui;color:#fff;cursor:pointer;display:none;z-index:3}
+.tv-arr.l{left:-8vw;width:7vw;background:linear-gradient(90deg,rgba(11,11,16,.95),rgba(11,11,16,0))}
+.tv-arr.r{right:0;background:linear-gradient(270deg,rgba(11,11,16,.95),rgba(11,11,16,0))}
+.tv-pointer .tv-row.cur .tv-arr:not([hidden]){display:grid;place-items:center}
+.tv-arr:hover{color:#ffd23f}
+.tv-pointer .tv-card:hover{transform:scale(1.12);box-shadow:0 0 0 .25vw #fff,0 1.2vw 2.4vw rgba(0,0,0,.6);z-index:2}
+.tv-pointer .tv-hint{display:none}

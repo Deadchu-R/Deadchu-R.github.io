@@ -51,7 +51,7 @@
   }
 
   // ---------------- screen
-  let D,S={area:"bill",b:0,r:0,cols:[],rail:0},els={};
+  let D,S={area:"bill",b:0,r:0,cols:[],off:[],rail:0},els={};
   function card(it){
     const imgs=it.thumb||it.img;
     const c=h("button",{class:"tv-card"+(imgs?"":" text"),type:"button",style:`--c1:${it.c1||"#1f2b4d"};--c2:${it.c2||"#0b0b10"}`},
@@ -70,7 +70,12 @@
     const bill=h("section",{class:"tv-bill"},els.bg1,els.bg2,h("div",{class:"tv-brand"},D.avatar?h("img",{src:D.avatar,alt:""}):null,D.name.toUpperCase()),
       h("div",{class:"tv-info"},els.kick,els.title,els.meta,els.desc,h("div",{class:"tv-acts"},els.play,els.more)));
     els.rowsin=h("div",{class:"tv-rowsin"});
-    els.rows=D.rows.map((r,i)=>{const tr=h("div",{class:"tv-track"},...r.items.map(card));const row=h("div",{class:"tv-row"},h("h2",{class:"tv-rt"},r.title),tr);els.rowsin.append(row);return{row,tr}});
+    els.rows=D.rows.map((r,i)=>{const tr=h("div",{class:"tv-track"},...r.items.map(card));
+      const prev=h("button",{class:"tv-arr l",type:"button","aria-label":"Back"},"‹"),next=h("button",{class:"tv-arr r",type:"button","aria-label":"More"},"›");
+      const page_=d=>{S.area="rows";S.r=i;const fit=Math.max(1,Math.floor((innerWidth*.92)/((tr.firstChild||{}).offsetWidth+innerWidth*.01||1)));S.hover=true;
+        S.off[i]=Math.max(0,(S.off[i]||0)+d*fit);S.cols[i]=Math.min(r.items.length-1,S.off[i]);render()};
+      prev.addEventListener("click",()=>page_(-1));next.addEventListener("click",()=>page_(1));
+      const row=h("div",{class:"tv-row"},h("h2",{class:"tv-rt"},r.title),h("div",{class:"tv-trackwrap"},tr,prev,next));els.rowsin.append(row);return{row,tr,prev,next}});
     const RAIL=[["🏠","Home",()=>{S.area="bill";S.b=0}],["🎮","Projects",()=>go(0)],["▶","Videos",()=>go(1)],["</>","Code",()=>go(D.rows.findIndex(r=>r.title==="More code"))],
       ["🧪","Lab",()=>go(D.rows.findIndex(r=>r.title==="The lab"))],["📄","Résumé",()=>{location.href="cv.html"}],["✉️","Contact",()=>go(D.rows.length-1)],["🖥","Website",()=>{location.href="index.html?web=1"}]];
     els.railItems=RAIL.map(([i,l,f])=>{const b=h("button",{class:"tv-ri",type:"button"},h("i",{},i),h("span",{},l));b.addEventListener("click",()=>{f();closeRail();render()});return{b,f}});
@@ -78,7 +83,9 @@
     root.append(bill,h("section",{class:"tv-rows"},els.rowsin),els.rail,h("div",{class:"tv-hint"},"◀ ▶ ▲ ▼ move  ·  OK open  ·  CH ▲▼ rows  ·  Back"));
     S.cols=D.rows.map(()=>0);
     // a pointer remote (LG Magic Remote) or a mouse works too
-    $$(".tv-card",root).forEach((c,k)=>c.addEventListener("mouseenter",()=>{const r=els.rows.findIndex(x=>x.tr.contains(c));S.area="rows";S.r=r;S.cols[r]=[...els.rows[r].tr.children].indexOf(c);render()}));
+    addEventListener("mousemove",()=>{if(!document.documentElement.classList.contains("tv-pointer")){document.documentElement.classList.add("tv-pointer");render()}},{passive:true});
+    bill.addEventListener("mouseenter",()=>{if(S.area==="rows"){S.area="bill";S.billItem=D.show;render()}});
+    $$(".tv-card",root).forEach((c,k)=>c.addEventListener("mouseenter",()=>{const r=els.rows.findIndex(x=>x.tr.contains(c));S.area="rows";S.r=r;S.hover=true;S.cols[r]=[...els.rows[r].tr.children].indexOf(c);render()}));
   }
   function go(r){if(r<0)return;S.area="rows";S.r=r;S.cols[r]=S.cols[r]||0}
   function cur(){if(S.area==="rows")return D.rows[S.r].items[S.cols[S.r]];return S.billItem||D.show}
@@ -102,7 +109,11 @@
     els.rowsin.style.transform=`translateY(${-(inRows?S.r:0)*rowH}px)`;
     els.rows.forEach((x,i)=>{x.row.classList.toggle("cur",inRows?i===S.r:i===0);x.row.classList.toggle("gone",inRows&&i<S.r);
       const cards=[...x.tr.children];cards.forEach((c,k)=>c.classList.toggle("f",S.area==="rows"&&i===S.r&&k===S.cols[i]));
-      const w=cards[0]?cards[0].offsetWidth+innerWidth*.01:0,c=S.cols[i]||0;x.tr.style.transform=`translateX(${-Math.max(0,c-1)*w}px)`});
+      // the row only slides when the highlighted card would leave the screen (so a pointer can rest on a card without the row running away)
+      const w=cards[0]?cards[0].offsetWidth+innerWidth*.01:0,c=S.cols[i]||0,fit=Math.max(1,Math.floor((innerWidth*.92)/(w||1)));
+      let off=S.off[i]||0;if(!S.hover){if(c<off)off=c;if(c>off+fit-1)off=c-fit+1}off=Math.max(0,Math.min(off,Math.max(0,cards.length-fit)));S.off[i]=off;
+      x.tr.style.transform=`translateX(${-off*w}px)`;
+      if(x.prev){x.prev.hidden=off<=0;x.next.hidden=off>=cards.length-fit}});
     els.rail.classList.toggle("open",S.area==="rail");els.railItems.forEach((x,k)=>x.b.classList.toggle("f",S.area==="rail"&&k===S.rail));
   }
   function closeRail(){if(S.area==="rail")S.area=S.prev||"rows"}
@@ -127,6 +138,7 @@
   function picture(it){over=h("div",{class:"tv-over"},h("img",{src:it.full||it.img,alt:""}),h("div",{class:"tv-otitle"},it.title||""),h("div",{class:"tv-ohint"},"Back close"));document.body.append(over);hintFade(over)}
 
   function key(e){
+    S.hover=false;
     const k=e.key,back=k==="Escape"||k==="Backspace"||k==="GoBack"||k==="BrowserBack"||e.keyCode===10009||e.keyCode===461;
     const ch=k==="ChannelUp"||k==="PageUp"||e.keyCode===427||e.keyCode===166?-1:k==="ChannelDown"||k==="PageDown"||e.keyCode===428||e.keyCode===167?1:0;
     if(over){const v=$("video",over);
