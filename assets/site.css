@@ -884,3 +884,14 @@ html.tv *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.tv .hero-panel{background:rgba(8,16,44,.72)!important}
 html.tv .topbar nav a{padding:6px 4px}
 html.tv .sound-btn{display:none}
+/* TV: smooth on slow TV chips — nothing moves by itself, no scroll animation, no heavy shadows or filters */
+html.tv{scroll-behavior:auto!important}
+html.tv *,html.tv *::before,html.tv *::after{animation:none!important;transition:none!important}
+html.tv :is(.ptile,.repo,.mech,.btn,.jump-panel,.hero-panel,.ai-card){box-shadow:none!important}
+html.tv :not(.cvdoc *){filter:none!important}
+html.tv .band.now::before,html.tv .band.now::after,html.tv .mosaic-wash{display:none!important}
+html.tv .mtrack{transform:none!important}
+html.tv :focus{box-shadow:0 0 0 10px rgba(255,210,63,.35)!important}
+.tv-chip{position:fixed;z-index:2147480001;left:50%;bottom:28px;transform:translateX(-50%);background:rgba(10,12,30,.92);color:#fff;border:2px solid #ffd23f;border-radius:14px;padding:12px 20px;
+  font:700 18px/1.2 system-ui,sans-serif;opacity:0;pointer-events:none;white-space:nowrap}
+.tv-chip.on{opacity:1}

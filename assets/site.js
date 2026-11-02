@@ -381,6 +381,13 @@
   if(!isTV)return;
   try{if(/[?&]tv=1/.test(location.search))localStorage.setItem("rt-tv","1")}catch(e){}
   const html=document.documentElement;html.classList.add("tv");
+  const play0=HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play=function(){
+    if(html.classList.contains("tv")&&this.muted&&!this.closest("#viewer")&&!(document.activeElement&&document.activeElement!==document.body&&document.activeElement.contains(this)))return Promise.resolve();
+    return play0.call(this);
+  };
+  document.addEventListener("focusin",e=>{const v=e.target.querySelector&&e.target.querySelector("video");if(v&&v.muted)play0.call(v).catch(()=>{})});
+  document.addEventListener("focusout",e=>{const v=e.target.querySelector&&e.target.querySelector("video");if(v&&v.muted&&!v.closest("#viewer"))v.pause()});
   // a 1920-wide TV page is read from the couch: scale it like a 1280-wide screen
   // (done with the viewport, like a phone does, so the browser scales everything natively)
   const zoom=()=>{const m=document.querySelector('meta[name=viewport]');if(m&&screen.width>=1500&&!m.dataset.tv){m.dataset.tv="1";m.setAttribute("content","width=1280, viewport-fit=cover")}};
@@ -401,17 +408,38 @@
       const s=main+side*2.2;if(s<score){score=s;pick=el}}
     return pick;
   }
+  // TV menu: CH ▲ / CH ▼ (or Page Up / Down) jump a whole part of the page, like changing channels
+  const PARTS=".hero,.phero,.band,.custom-sec,.project .mech-sec,.project .intro,.about-game,.credits,.next-band,.tbc-band,.foot,.cv-stage,.gal-grid,.gallery-grid";
+  function parts(){const all=[...document.querySelectorAll(PARTS)].filter(el=>el.offsetHeight>60&&!el.parentElement.closest(PARTS.replace(/,\.foot/,"")));
+    return all.sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top)}
+  let chip=null,chipT=null;
+  function showChip(txt){if(!chip){chip=document.createElement("div");chip.className="tv-chip";document.body.append(chip)}chip.textContent=txt;chip.classList.add("on");clearTimeout(chipT);chipT=setTimeout(()=>chip.classList.remove("on"),1600)}
+  function page(dir){
+    const P=parts();if(!P.length)return;const top=(document.querySelector(".topbar")||{}).offsetHeight||0;
+    // i = the part we are in; go to the next / previous one
+    let cur=P.reduce((k,el,j)=>el.getBoundingClientRect().top<=innerHeight*.35?j:k,0);
+    if(page.last&&Math.abs(scrollY-page.last.y)<4&&page.last.n<P.length)cur=page.last.n;     // at the bottom of the page several parts fit on screen
+    const n=Math.max(0,Math.min(P.length-1,cur+dir));const el=P[n];
+    scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-(n?8:0)),behavior:"auto"});
+    const f=[...el.querySelectorAll(SEL)].find(x=>visible(x)&&x.getBoundingClientRect().top>=0&&x.getBoundingClientRect().bottom<=innerHeight);
+    if(f)f.focus({preventScroll:true});else if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+    page.last={n,y:scrollY};
+    const h=el.querySelector("h1,h2");showChip(`${n+1} / ${P.length}  ·  ${h?h.textContent.trim().slice(0,40):""}`);
+  }
   addEventListener("keydown",e=>{
-    const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!/^Arrow(Up|Down)$/.test(e.key)))return;
+    const t=e.target;
+    const ch=e.key==="ChannelUp"||e.key==="PageUp"||e.key==="MediaTrackPrevious"||e.keyCode===427||e.keyCode===166?-1:e.key==="ChannelDown"||e.key==="PageDown"||e.key==="MediaTrackNext"||e.keyCode===428||e.keyCode===167?1:0;
+    if(ch&&!(t&&t.isContentEditable)){e.preventDefault();page(ch);return}
+    if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!/^Arrow(Up|Down)$/.test(e.key)))return;
     const dir={ArrowRight:"r",ArrowLeft:"l",ArrowDown:"d",ArrowUp:"u"}[e.key];
     if(dir){
       const el=best(dir);e.preventDefault();
       // the next link is far below (or above): scroll through the text in between first, so nothing is skipped
       const cur=document.activeElement,cr=cur&&cur!==document.body?cur.getBoundingClientRect():null,er=el&&el.getBoundingClientRect();
       if(el&&cr&&((dir==="d"&&er.top-Math.max(cr.bottom,0)>innerHeight*.8)||(dir==="u"&&Math.min(cr.top,innerHeight)-er.bottom>innerHeight*.8))){
-        scrollBy({top:(dir==="d"?1:-1)*innerHeight*.6,behavior:"smooth"});return}
-      if(el){el.focus({preventScroll:true});el.scrollIntoView({block:"center",inline:"nearest",behavior:"smooth"})}
-      else if(dir==="d"||dir==="u")scrollBy({top:(dir==="d"?1:-1)*innerHeight*.45,behavior:"smooth"});   // long text with no links: just scroll
+        scrollBy({top:(dir==="d"?1:-1)*innerHeight*.6,behavior:"auto"});return}
+      if(el){el.focus({preventScroll:true});el.scrollIntoView({block:"center",inline:"nearest",behavior:"auto"})}
+      else if(dir==="d"||dir==="u")scrollBy({top:(dir==="d"?1:-1)*innerHeight*.45,behavior:"auto"});   // long text with no links: just scroll
       return;
     }
     const back=e.key==="Escape"||e.key==="GoBack"||e.key==="BrowserBack"||e.keyCode===10009||e.keyCode===461||(e.key==="Backspace"&&t===document.body);
@@ -423,6 +451,8 @@
     if((e.key==="Enter"||e.key===" ")&&t&&t.matches&&t.matches(".clip,.zoom,[data-src],[role=button]")&&!t.matches("a,button")){e.preventDefault();t.click()}
   },true);
   const ready=()=>{zoom();addEventListener("resize",zoom);
+    document.querySelectorAll("video").forEach(v=>{if(v.muted||v.hasAttribute("muted")){v.pause();v.removeAttribute("autoplay")}});
+    try{if(!localStorage.getItem("rt-tv-tip")){localStorage.setItem("rt-tv-tip","1");setTimeout(()=>showChip("CH ▲▼  parts of the page   ·   arrows move   ·   OK opens   ·   Back returns"),900);setTimeout(()=>chip&&chip.classList.add("on"),900);setTimeout(()=>chip&&chip.classList.remove("on"),5000)}}catch(e){}
     // things that open on click but aren't links or buttons become reachable with the remote
     document.querySelectorAll(".clip,.zoom,.mech [data-src],.ptile,.repo").forEach(el=>{if(!el.matches("a,button")&&!el.hasAttribute("tabindex"))el.setAttribute("tabindex","0")});
     const v=document.querySelector(".hero-video");if(v&&matchMedia("(prefers-reduced-motion: reduce)").matches)v.pause();
