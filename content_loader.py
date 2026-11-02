@@ -68,6 +68,34 @@ def image_key(path):
     return key
 
 
+def icon_file(path):
+    """Uploaded icon (image or GIF) -> web path of a small square-fit copy in assets/icons (GIFs stay animated)."""
+    path = str(path or "")
+    src = _src(path)
+    if src.parent == ROOT / "assets/icons":
+        return "/" + str(src.relative_to(ROOT))
+    if not src.exists():
+        return ""
+    from PIL import Image, ImageSequence
+    out_dir = ROOT / "assets/icons"; out_dir.mkdir(exist_ok=True)
+    im = Image.open(src)
+    if getattr(im, "is_animated", False):
+        out = out_dir / (_slug(path) + ".gif")
+        if not out.exists():
+            frames = []
+            for fr in ImageSequence.Iterator(im):
+                f = fr.convert("RGBA"); f.thumbnail((128, 128)); frames.append(f)
+            frames[0].save(out, save_all=True, append_images=frames[1:], loop=0, disposal=2,
+                           duration=im.info.get("duration", 100))
+            print("  + icon", out.name)
+    else:
+        out = out_dir / (_slug(path) + ".png")
+        if not out.exists():
+            f = im.convert("RGBA"); f.thumbnail((128, 128)); f.save(out, optimize=True)
+            print("  + icon", out.name)
+    return "/" + str(out.relative_to(ROOT))
+
+
 def art_key(path):
     """Character / card art -> assets/art/<key>.webp."""
     path = str(path or "")

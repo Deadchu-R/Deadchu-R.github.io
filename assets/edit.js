@@ -531,12 +531,14 @@
   const rand=()=>Math.random().toString(36).slice(2,6);
   const slugify=s=>(s||"file").toLowerCase().replace(/\.[^.]+$/,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"file";
   const pending=new Map();              // content path -> {url,type,name} of media chosen but not published yet
-  function previewBox(url,type,name){
+  function previewBox(url,type,name,extra,small){
     return new Promise(done=>{
       const media=type==="video"
         ?h("video",{src:url,controls:true,autoplay:true,muted:true,loop:true,playsinline:true,style:"width:100%;max-height:55vh;border-radius:10px;background:#000;display:block"})
+        :small?h("div",{style:"display:flex;gap:18px;align-items:center;justify-content:center;padding:18px;background:#0b0b0b;border-radius:10px"},
+            h("img",{src:url,alt:"",style:"width:96px;height:96px;object-fit:contain"}),h("img",{src:url,alt:"",style:"width:32px;height:32px;object-fit:contain"}),h("img",{src:url,alt:"",style:"width:18px;height:18px;object-fit:contain"}))
         :h("img",{src:url,alt:"",style:"width:100%;max-height:55vh;object-fit:contain;border-radius:10px;background:#0b0b0b;display:block"});
-      const note=h("p",{style:"color:#aaa;font-size:13px;margin:8px 0 0"},name);
+      const note=h("p",{style:"color:#aaa;font-size:13px;margin:8px 0 0"},name,extra?h("br"):null,extra||null);
       if(type==="video")media.addEventListener("error",()=>{note.textContent="This browser can't play "+name+" here, but it will be converted to a web video when you publish."});
       const close=v=>{m.remove();done(v)};
       const m=modal(h("h3",{},"Preview"),media,note,
@@ -553,10 +555,23 @@
   }
   function pickFile(kind){
     return new Promise(done=>{
-      const inp=h("input",{type:"file",accept:kind==="video"?"video/*,image/gif":"image/*",style:"display:none"});
+      const inp=h("input",{type:"file",accept:kind==="video"?"video/*,image/gif":"image/*",style:"display:none"});   // icons: any image, GIF included
       inp.addEventListener("change",()=>{done(inp.files[0]||null);inp.remove()});
       ui.append(inp);inp.click();
     });
+  }
+  async function prepIcon(file){
+    // icons show at 16–32 px; a square 128×128 keeps them sharp on any screen
+    const bmp=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error("This image can't be read in this browser."));i.src=URL.createObjectURL(file)});
+    const w=bmp.naturalWidth,hh=bmp.naturalHeight,sq=Math.abs(w-hh)<=Math.max(w,hh)*.1;
+    const tip=(sq?"":"Square images work best. ")+"Recommended: 128×128 px"+(file.type==="image/gif"?", under 300 KB.":".");
+    if(file.type==="image/gif")
+      return{blob:file,ext:"gif",note:`GIF ${w}×${hh}, ${Math.round(file.size/1024)} KB. It keeps its animation and is shrunk to 128 px when you publish. ${tip}`};
+    const sc=Math.min(1,128/Math.max(w,hh)),c=document.createElement("canvas");
+    c.width=Math.max(1,Math.round(w*sc));c.height=Math.max(1,Math.round(hh*sc));
+    c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+    const blob=await new Promise(ok=>c.toBlob(ok,"image/png"));
+    return{blob,ext:"png",note:`Resized from ${w}×${hh} to ${c.width}×${c.height} px. ${tip}`};
   }
   async function prepImage(file,kind){
     // phone photos (HEIC, huge JPEGs) are converted here so the build can read them
@@ -574,21 +589,23 @@
   }
   async function replaceMedia(path,kind,el){
     const file=await pickFile(kind);if(!file)return;
-    let blob=file,ext=(file.name.split(".").pop()||"").toLowerCase();
+    let blob=file,ext=(file.name.split(".").pop()||"").toLowerCase(),note="";
     try{
       if(kind==="video"){
         if(file.size>70e6){alertBox("That video is "+Math.round(file.size/1e6)+" MB. GitHub takes up to about 70 MB per file here; trim it or export it smaller first.");return}
         if(!/^(mp4|mov|webm|m4v|gif)$/.test(ext))ext="mp4";      // a GIF here becomes a looping video
-      }else({blob,ext}=await prepImage(file,kind));
+      }else if(kind==="icon")({blob,ext,note}=await prepIcon(file));
+      else({blob,ext}=await prepImage(file,kind));
     }catch(e){alertBox(e.message);return}
     const url=URL.createObjectURL(blob),isGif=blob.type==="image/gif"||ext==="gif";
-    const choice=await previewBox(url,kind==="video"&&!isGif?"video":"image",file.name);
+    const choice=await previewBox(url,kind==="video"&&!isGif?"video":"image",file.name,note,kind==="icon");
     if(choice==="again"){URL.revokeObjectURL(url);return replaceMedia(path,kind,el)}
     if(choice!=="use"){URL.revokeObjectURL(url);return}
     const repoPath=`assets/uploads/${slugify(file.name)}-${rand()}.${ext}`;
     const old=get(path);if(typeof old==="string"&&old.startsWith("/assets/uploads/"))uploads.delete(old.slice(1));
     uploads.set(repoPath,blob);set(path,"/"+repoPath);
     pending.set(path,{url,type:kind==="video"&&!isGif?"video":"image",name:file.name});
+    if(kind==="icon"){previewIcon(path,url);toast("New icon in place. It goes live when you publish.");renderPanel();return}
     const swapVideo=v=>{                     // a GIF can't play inside <video>: lay an image over it
       let im=v.nextElementSibling;if(!(im&&im.classList.contains("rt-gif"))){im=document.createElement("img");im.className=v.className+" rt-gif";im.alt="";v.after(im)}
       im.src=url;v.style.visibility="hidden";
@@ -637,7 +654,10 @@
       t.addEventListener("change",()=>{const v=t.value.trim();if(/^#[0-9a-f]{6}$/i.test(v)){c.value=v;set(path,v);previewColor(holder,path,v,opts)}else t.value=get(path)||""});
       wrap.append(h("div",{class:"rt-color"},c,t));
     }else if(type==="select"){
-      const s=h("select",{},...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));
+      const own=path.endsWith(".icon")&&/^\//.test(val);
+      const s=h("select",{},...(own?[h("option",{value:val,selected:true},"(your image)")]:[]),...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));
+      if(path.endsWith(".icon"))setTimeout(()=>wrap.append(h("div",{class:"rt-row",style:"margin-top:6px"},
+        h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,"icon",holder)}},"⬆ Upload your own icon (image / GIF)")),thumb(path)||h("p",{class:"rt-hint"},"Best: a square image, 128×128 px. Bigger ones are shrunk for you.")));
       s.addEventListener("change",()=>{set(path,s.value);if(path.endsWith(".layout"))previewLayout(holder,s.value);if(path.endsWith(".icon"))previewIcon(path,s.value);
         if(path.endsWith(".style")&&holder.classList.contains("btn"))holder.classList.toggle("ghost",s.value==="ghost");
         if(path.endsWith(".align"))holder.className=holder.className.replace(/\bal-\w+/,"al-"+s.value);
@@ -664,7 +684,8 @@
   fetch(new URL("icons.json",ME).href).then(r=>r.json()).then(j=>{ICONS=j}).catch(()=>{});
   function previewIcon(path,name){
     $$(`[data-ico="${CSS.escape(path)}"]`).forEach(c=>{
-      const old=$("svg",c),size=old?old.getAttribute("width"):"18";
+      const old=$("svg,img",c),size=old?old.getAttribute("width"):"18";
+      if(name&&/^(blob:|\/)/.test(name)){c.innerHTML=`<img class="ico-img" src="${name}" width="${size}" height="${size}" alt="">`;if(c.classList.contains("h-ico"))c.hidden=false;return}
       c.innerHTML=name&&ICONS[name]?`<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="${size>18?1.9:2}" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`:"";
       if(c.classList.contains("h-ico"))c.hidden=!name;
     });

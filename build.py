@@ -382,6 +382,11 @@ def btn_list(path, items, depth, cls_fn):
     return "".join(out)
 
 def _icon(name, size):
+    if name and str(name).startswith("/"):            # an icon the owner uploaded (image or GIF)
+        from content_loader import icon_file
+        src = icon_file(name)
+        if src:
+            return f'<img class="ico-img" src="{src}" width="{size}" height="{size}" alt="" loading="lazy">'
     body = ICONS_22.get(name) or ICONS_22["star"]
     return (f'<svg viewBox="0 0 24 24" width="{size}" height="{size}" aria-hidden="true" fill="none" stroke="currentColor" '
             f'stroke-width="{1.9 if size > 18 else 2}" stroke-linecap="round" stroke-linejoin="round">{body}</svg>')
@@ -389,8 +394,8 @@ def _icon(name, size):
 def about_html():
     SV = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
     ICN = list(ICONS_22)
-    cards = "".join(f'<li style="--c:{h["color"]}"{I(i)}{X(("Icon", f"about:hobbies.{i}.icon", "select", ICN), ("Color", f"about:hobbies.{i}.color", "color"))}><span class="hb-ico">{_icon(h["icon"], 22)}</span><span{E(f"about:hobbies.{i}.name")}>{e(h["name"])}</span></li>' for i, h in enumerate(ABOUT["hobbies"]))
-    favs = "".join(f'<span style="--c:{g["color"]}"{I(i)}{X(("Icon", f"about:games.{i}.icon", "select", ICN), ("Color", f"about:games.{i}.color", "color"))}><i>{_icon(g["icon"], 16)}</i><span{E(f"about:games.{i}.name")}>{e(g["name"])}</span></span>' for i, g in enumerate(ABOUT["games"]))
+    cards = "".join(f'<li style="--c:{h["color"]}"{I(i)}{X(("Icon", f"about:hobbies.{i}.icon", "select", ICN), ("Color", f"about:hobbies.{i}.color", "color"))}><span class="hb-ico"{ICO(f"about:hobbies.{i}.icon")}>{_icon(h["icon"], 22)}</span><span{E(f"about:hobbies.{i}.name")}>{e(h["name"])}</span></li>' for i, h in enumerate(ABOUT["hobbies"]))
+    favs = "".join(f'<span style="--c:{g["color"]}"{I(i)}{X(("Icon", f"about:games.{i}.icon", "select", ICN), ("Color", f"about:games.{i}.color", "color"))}><i{ICO(f"about:games.{i}.icon")}>{_icon(g["icon"], 16)}</i><span{E(f"about:games.{i}.name")}>{e(g["name"])}</span></span>' for i, g in enumerate(ABOUT["games"]))
     chips = "".join(f'<span{I(i)}{E(f"about:ai_tools.{i}")}>{e(t)}</span>' for i, t in enumerate(ABOUT["ai_tools"]))
     rig = "".join(f'<li{I(i)}><b{E(f"about:rig.{i}.part")}>{e(r["part"])}</b><span{E(f"about:rig.{i}.value")}>{e(r["value"])}</span></li>' for i, r in enumerate(ABOUT["rig"]))
     return f"""<section class="band about" id="about"{K("about", "site:section_order")}>
