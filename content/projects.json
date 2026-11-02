@@ -1,0 +1,627 @@
+[
+  {
+    "slug": "infiltration",
+    "title": "Infiltration",
+    "subtitle": "FPS level in Unreal Engine 5",
+    "engine": "Unreal 5 · C++ & Blueprints",
+    "role": "Solo developer",
+    "card_role": "Solo developer · all the code",
+    "card_tech": "C++ & Blueprints, raycast shooting, event-driven shot feedback, patrolling enemy AI, detection meter",
+    "when": "06/2024 – 08/2024",
+    "context": "Final project · Unreal C++ course",
+    "color_deep": "#14261f",
+    "color_main": "#2f5a45",
+    "color_accent": "#e8c36a",
+    "cover": "/assets/img/infiltration-cover.jpg",
+    "mascot": "",
+    "next_card_image": "/assets/art/next-infiltration.webp",
+    "hook": "Sneak into a dictator's compound, steal the chip, get out alive.",
+    "what_i_built": [
+      "Raycast-based shooting with recoil, plus weapon pickups",
+      "A shot event that other systems listen to, so sound and visual effects play after every shot without the weapon knowing about them",
+      "Enemies with health that patrol their routes searching for the player",
+      "A detection meter that fills while an enemy sees you: escape or shoot them before it is full, or you lose",
+      "Built the whole landscape and compound myself from Marketplace assets"
+    ],
+    "teammates_built": [],
+    "tech": [
+      "C++",
+      "Blueprints",
+      "Unreal Engine 5",
+      "Raycasts",
+      "Event-driven feedback",
+      "Enemy AI: patrol & sight",
+      "Detection meter",
+      "Health & damage",
+      "Level building"
+    ],
+    "about": [
+      "The final project for my Unreal Engine C++ course: the player infiltrates a military base to retrieve a valuable chip.",
+      "I designed an unconventional base with a dictatorship atmosphere using Unreal Marketplace assets, and built the mechanics in a mix of C++ and Blueprints."
+    ],
+    "sections": [
+      {
+        "title": "Gunplay",
+        "intro": "",
+        "clips": [
+          {
+            "label": "Aiming & shooting",
+            "caption": "Raycast shots with recoil feedback.",
+            "video": "/assets/clips/fps-shooting.mp4",
+            "drive_id": "1n41GdjA2EyP8mzpEkXMg3Bc8eSyndK3N"
+          },
+          {
+            "label": "Weapon pickup",
+            "caption": "Grab a new weapon on the fly.",
+            "video": "/assets/clips/fps-pickup.mp4",
+            "drive_id": "1DwSYEwlV_wUiXQb3PpXpJhq6zZMLcemI"
+          }
+        ]
+      },
+      {
+        "title": "Stealth & objective",
+        "intro": "",
+        "clips": [
+          {
+            "label": "Detected",
+            "caption": "A guard sees the player and the detection meter starts to fill.",
+            "video": "/assets/clips/fps-detected.mp4",
+            "drive_id": "1S2__pZSY-X0TT8gnz3JyDHFArXmIPWk0"
+          },
+          {
+            "label": "The chip",
+            "caption": "The interactable objective.",
+            "video": "/assets/clips/fps-chip.mp4",
+            "drive_id": "1woY9O2N8uW1xJGtTdQa_9ZSufwajvgii"
+          }
+        ]
+      }
+    ],
+    "screenshots": [
+      {
+        "image": "/assets/img/1XKdeZXwJXXcGLC-PLBU1AQnQTI0q1Jnl.jpg",
+        "caption": "Inside the watchtower."
+      },
+      {
+        "image": "/assets/img/1vxite6U0WSEwBSumniwODX1HcLkG5bws.jpg",
+        "caption": "The dictator's building, first floor."
+      },
+      {
+        "image": "/assets/img/1A6NvKk0XuyzGLglwsEt_koiogPNRFDMd.jpg",
+        "caption": "The dictator's building, second floor."
+      },
+      {
+        "image": "/assets/img/1RSsJOWmaaCGo-ITMmSw50PgxQcOyCOBd.jpg",
+        "caption": "Inside the hospital."
+      },
+      {
+        "image": "/assets/img/1VaeqPSLmbuIN1fWtjF4kB5d7_ZKoTFBH.jpg",
+        "caption": "The hospital from outside."
+      },
+      {
+        "image": "/assets/img/1Tjj_5cknQ_98sqItEYD7McOjM5rpw7Jk.jpg",
+        "caption": "The armoury."
+      },
+      {
+        "image": "/assets/img/1an1Bz7pWXvz1K8BBtg61GLg1WJUE7YDw.jpg",
+        "caption": "The soldiers' bedroom."
+      },
+      {
+        "image": "/assets/img/19JMa8TxKunQdd_Ga3ChQp8HwCUkE4sHc.jpg",
+        "caption": "A statue in front of one of the base's buildings."
+      },
+      {
+        "image": "/assets/img/1uGg_f72WbVOmD-jkJ_3K04-ggVF-CJGE.jpg",
+        "caption": "The military base in the desert."
+      }
+    ],
+    "full_video": "/assets/full/infiltration.mp4",
+    "full_video_drive_id": "1vL8FiPkjc6uhVvU76h9tpVB-diiNVmWc",
+    "characters": [],
+    "team_art": false,
+    "credits": "A solo project: I built everything myself, code, design and level setup. There was no art team, so the visuals use ready-made assets.",
+    "code_sample": {
+      "file_label": "",
+      "code": ""
+    }
+  },
+  {
+    "slug": "tile-map-engine",
+    "title": "Tile-Map Engine",
+    "subtitle": "A C# game engine built from scratch",
+    "engine": "C# · .NET 6 console",
+    "role": "Programmer · team of 3",
+    "card_role": "Programmer · team of 3",
+    "card_tech": "Engine from scratch in C#, component model, interfaces & events, operator overloading, chess on top",
+    "when": "12/2022 – 02/2023 · 2nd year, Tiltan",
+    "context": "Final project · Programming 2 course",
+    "color_deep": "#2b1608",
+    "color_main": "#8a4b12",
+    "color_accent": "#ffc36b",
+    "cover": "/assets/img/tilemap-cover.jpg",
+    "mascot": "",
+    "next_card_image": "/assets/art/next-tile-map-engine.webp",
+    "hook": "A small game engine in plain C#, and a two-player chess game running on it.",
+    "what_i_built": [
+      "MyVector2, the engine's vector struct: operator overloading, Magnitude, Normalize, Dot, Distance, MoveTowards and Lerp",
+      "The engine's console renderer (RenderingManager): draws the grid in color, turns it into a chess board and queues messages through an event",
+      "TileObject groundwork: IComparer for sorting, the step event and XML documentation",
+      "Placing objects on the tile map and drawing the grid (TileMap.AddGameObjectOnGrid, DrawGrid)"
+    ],
+    "teammates_built": [
+      "A Unity-style object model: GameObjects, Components and a Transform on every tile object",
+      "A shared movement-rule service (IMovementRule) that each piece queries for legal moves",
+      "Commands with a two-player turn system and an OnWin event for game-specific win logic",
+      "A generic Singleton base class for the managers",
+      "Chess built on the engine as the test game"
+    ],
+    "tech": [
+      "C#",
+      ".NET",
+      "OOP",
+      "Interfaces & abstract classes",
+      "Events & delegates",
+      "Operator overloading",
+      "Extension methods",
+      "Singleton pattern",
+      "Component model",
+      "XML docs"
+    ],
+    "about": [
+      "A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works. Built by a team of three programmers."
+    ],
+    "sections": [
+      {
+        "title": "The engine",
+        "intro": "",
+        "clips": [
+          {
+            "label": "Engine code",
+            "caption": "A walk through the engine's C# code.",
+            "video": "/assets/clips/lab-tilemap.mp4",
+            "drive_id": "1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL"
+          }
+        ]
+      },
+      {
+        "title": "Chess on the engine",
+        "intro": "",
+        "clips": [
+          {
+            "label": "Chess",
+            "caption": "Two players, colored pieces, turn by turn in the console.",
+            "video": "/assets/clips/lab-chess.mp4",
+            "drive_id": "1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi"
+          }
+        ]
+      }
+    ],
+    "screenshots": [],
+    "full_video": "",
+    "full_video_drive_id": "",
+    "characters": [],
+    "team_art": false,
+    "credits": "",
+    "code_sample": {
+      "file_label": "RenderingManager.cs",
+      "code": "// RenderingManager: draws the tile map to the console in color.\n// Messages for the player are queued on an event and printed after the grid.\npublic class RenderingManager : IRendering\n{\n    public event Action OnPrint;\n\n    public void DrawGrid()\n    {\n        Console.Clear();\n        for (int y = 0; y < TileMap.Instance.Grid.GetLength(1); y++)\n        {\n            for (int x = 0; x < TileMap.Instance.Grid.GetLength(0); x++)\n            {\n                for (int i = 0; i < 3; i++)       // each tile is drawn as \"[\", its content, \"]\"\n                {\n                    Tile tile = TileMap.Instance.Grid[x, y];\n                    Console.ForegroundColor = i == 1 && tile.gameObject != null\n                        ? tile.gameObject.Color   // the piece's color\n                        : tile.TileColor;         // the board's color\n                    Console.Write(tile.TileContainer[i]);\n                }\n            }\n            Console.WriteLine();\n        }\n        PrintToUser();\n    }\n\n    public void AddToPrint(string message) => OnPrint += () => Console.WriteLine(message);\n    public void PrintToUser() => OnPrint?.Invoke();\n    public void ClearPrint() => OnPrint = null;\n}\n"
+    }
+  },
+  {
+    "slug": "shards",
+    "title": "Shards",
+    "subtitle": "Isometric story-driven game",
+    "engine": "Unity · C#",
+    "role": "Programmer · some design",
+    "card_role": "Programmer",
+    "card_tech": "ScriptableObject dialogue system, letter / word / sentence events, talking sounds & mouth animation, branching notebook",
+    "when": "Nov 2023 · 3 weeks",
+    "context": "Hackathon team",
+    "color_deep": "#0b3b3a",
+    "color_main": "#17736b",
+    "color_accent": "#ffd36e",
+    "cover": "/assets/img/10P_bsBNsYOX6C94sR7FoAYuW_PC8ax71.jpg",
+    "mascot": "/assets/art/shards-protagonist.webp",
+    "next_card_image": "",
+    "hook": "A man goes back to his hometown to face what happened there.",
+    "what_i_built": [
+      "The whole dialogue system: a Sheet (the notebook) is a ScriptableObject holding Pages, each tied to a character's NPC_ID",
+      "Page types through inheritance: a dialogue page shows answers that branch to other pages, a level page moves the player on; each overrides PageAction",
+      "Typewriter text that raises events on every letter, every word and when the text is finished",
+      "Those events drive retro talking sounds and a two-sprite mouth animation (open / closed) for the speaker",
+      "The speech-bubble UI that runs the conversation, plus the map builder, GameManager and LevelManager"
+    ],
+    "teammates_built": [],
+    "tech": [
+      "C#",
+      "Unity",
+      "ScriptableObjects",
+      "Data-driven design",
+      "Inheritance & polymorphism",
+      "UnityEvents",
+      "Coroutines",
+      "TextMeshPro",
+      "Branching dialogue"
+    ],
+    "about": [
+      "Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma.",
+      "The team aimed for a colorful yet unsettling atmosphere, reflecting distorted memories and haunting experiences."
+    ],
+    "sections": [
+      {
+        "title": "The dialogue system",
+        "intro": "Conversations are data, not code.",
+        "clips": [
+          {
+            "label": "Dialogue in action",
+            "caption": "ScriptableObject-driven conversations with a typewriter effect.",
+            "video": "/assets/clips/shards-dialogue.mp4",
+            "drive_id": "1V9Hw7lS-zYJeBm6_fuOe69KBtvrrVjJk"
+          },
+          {
+            "label": "Gameplay",
+            "caption": "Exploring the hometown.",
+            "video": "/assets/clips/shards-gameplay.mp4",
+            "drive_id": "1tmPJS60ybrLUhAnFwKSwCj7VyI8NLrSG"
+          }
+        ]
+      }
+    ],
+    "screenshots": [
+      {
+        "image": "/assets/img/1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs.jpg",
+        "caption": "The hometown, in isometric view."
+      },
+      {
+        "image": "/assets/img/16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd.jpg",
+        "caption": "Top-down layout of the hometown map."
+      },
+      {
+        "image": "/assets/img/1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV.jpg",
+        "caption": "NPC data component: each NPC links its dialogue sheet, UI handler and speech bubble."
+      },
+      {
+        "image": "/assets/img/1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9.jpg",
+        "caption": "The typewriter method that types dialogue letter by letter."
+      },
+      {
+        "image": "/assets/img/1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS.jpg",
+        "caption": "A dialogue sheet: pages of conversation stored as data."
+      },
+      {
+        "image": "/assets/img/1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky.jpg",
+        "caption": "An NPC ID asset holding the guard's name and icons."
+      }
+    ],
+    "full_video": "",
+    "full_video_drive_id": "",
+    "characters": [
+      {
+        "image": "/assets/art/shards-protagonist.webp",
+        "name": "The protagonist",
+        "caption": "The man returning to his hometown."
+      },
+      {
+        "image": "/assets/art/shards-shadow.webp",
+        "name": "A shadow memory",
+        "caption": "A figure from his distorted memories."
+      },
+      {
+        "image": "/assets/art/shards-ghost.webp",
+        "name": "A ghost memory",
+        "caption": "Another figure from his memories."
+      },
+      {
+        "image": "/assets/art/shards-cityhall.webp",
+        "name": "City hall",
+        "caption": "A building from the hometown."
+      }
+    ],
+    "team_art": true,
+    "credits": "Art and animation by the team's artists. I'm not an artist: I was mainly the programmer, with some game design.",
+    "code_sample": {
+      "file_label": "SimpleTypeWriterEffect.cs · DialoguePage.cs",
+      "code": "// Types the page out letter by letter and raises events other systems hook into:\n// talking sounds and the speaker's mouth animation listen to onLetterTyped / onWordTyped.\nprivate IEnumerator TypeText()\n{\n    if (_isCoroutineRunning)\n    {\n        Debug.LogWarning(\"Coroutine is already running.\");\n        yield break;\n    }\n\n    _isCoroutineRunning = true;\n    _textBuilder.Length = 0;                  // reuse one StringBuilder, no per-letter strings\n    int characterCount = _fullText.Length;\n\n    for (int i = 0; i < characterCount; i++)\n    {\n        onLetterTyped?.Invoke();\n        if (_fullText[i] == ' ')\n            onWordTyped?.Invoke();\n\n        _textBuilder.Append(_fullText[i]);\n        textMeshProUGUI.text = _textBuilder.ToString();\n        if (IsFinishedText()) yield break;      // raises onFinishedText\n\n        for (int j = 0; j < (int)(typingSpeed * 60); j++)\n            yield return _waitForEndOfFrame;      // cached, no allocation per frame\n    }\n}\n\n// Each page type decides what happens when it is shown.\n[CreateAssetMenu(fileName = \"New Page\", menuName = \"Page/DialoguePage\")]\npublic class DialoguePage : Page\n{\n    public string[] Options;\n    public Page[] Pages;                          // where each answer leads\n\n    public override void PageAction(SpeechBubbleUI speechBubbleUI)\n    {\n        speechBubbleUI.SetDialogueOptions(this);\n        speechBubbleUI.SetButtonInteractable(speechBubbleUI.NextButton, false);\n    }\n}\n"
+    }
+  },
+  {
+    "slug": "boss-rush",
+    "title": "Boss Rush",
+    "subtitle": "Grid-based tactical combat",
+    "engine": "Unity · C#",
+    "role": "Producer & team lead · code oversight",
+    "card_role": "Producer & team lead",
+    "card_tech": "9-month team lead, code oversight, grid-based tactical combat in Unity",
+    "when": "12/2023 – 09/2024",
+    "context": "Final year · Game Production 2",
+    "color_deep": "#3a0b2a",
+    "color_main": "#8c1d55",
+    "color_accent": "#ff8fc0",
+    "cover": "/assets/img/1ds2k9OIavd8wmB638ZMaas-4uHDBN5dH.jpg",
+    "mascot": "/assets/art/bossrush-dracovid.webp",
+    "next_card_image": "",
+    "hook": "Three heroes, one giant boss, and a grid. Medicines against disease, inside a microscopic world.",
+    "what_i_built": [
+      "Led a cross-functional team of programmers and artists for nine months, through delivery",
+      "Oversaw the second programmer's code so it worked as intended and stayed maintainable",
+      "Resolved conflicts and blockers between team members to keep the workflow smooth",
+      "Wrote the narrative and lore, and came up with the microscopic-world concept"
+    ],
+    "teammates_built": [],
+    "tech": [
+      "Team leadership",
+      "Code oversight",
+      "C#",
+      "Unity",
+      "Grid-based combat"
+    ],
+    "about": [
+      "Developed in my final year for the Game Production 2 course: a grid-based strategy game where the player controls a party of three characters to defeat a powerful boss.",
+      "Set in a microscopic world, it pits bacteria and diseases against medicines, with a focus on strategic teamwork and coordination."
+    ],
+    "sections": [
+      {
+        "title": "Combat on the grid",
+        "intro": "Reading the board, moving, striking.",
+        "clips": [
+          {
+            "label": "Tactical view",
+            "caption": "A top-down read of the whole battlefield.",
+            "video": "/assets/clips/bossrush-tactical.mp4",
+            "drive_id": "1aDkpRLZy3QNMPEeAIcHc3f8_Cf9acxPM"
+          },
+          {
+            "label": "Movement arrow",
+            "caption": "Shows where a unit will move on the grid.",
+            "video": "/assets/clips/bossrush-arrow.mp4",
+            "drive_id": "1vcp3IeeehFJ_Ppq5JHC6mzsaFMiTb7Pc"
+          },
+          {
+            "label": "Attack sequence",
+            "caption": "How a party member's attack plays out.",
+            "video": "/assets/clips/bossrush-attack.mp4",
+            "drive_id": "12FAXoXFoiz_-gTPMpAHg0HDlMtjLlzJO"
+          }
+        ]
+      },
+      {
+        "title": "Effects",
+        "intro": "Feedback that makes each action land.",
+        "clips": [
+          {
+            "label": "Fireball",
+            "caption": "The fireball attack effect.",
+            "video": "/assets/clips/bossrush-fireball.mp4",
+            "drive_id": "1HNorCwv_7PXALP_TCjANvZW385rQE3BR"
+          },
+          {
+            "label": "Resource gather",
+            "caption": "The effect that plays when resources are gathered.",
+            "video": "/assets/clips/bossrush-gather.mp4",
+            "drive_id": "1OZmcyiAOi2JdeSAK5nQF3ZrqDwe8VoyK"
+          }
+        ]
+      }
+    ],
+    "screenshots": [],
+    "full_video": "/assets/full/bossrush.mp4",
+    "full_video_drive_id": "15gejO8JuCfXQFWnQmd209mHFPer7dyFD",
+    "characters": [
+      {
+        "image": "/assets/art/bossrush-axe.webp",
+        "name": "Axe fighter",
+        "caption": "One of the three party members."
+      },
+      {
+        "image": "/assets/art/bossrush-mage.webp",
+        "name": "Mage",
+        "caption": "One of the three party members."
+      },
+      {
+        "image": "/assets/art/bossrush-ranger.webp",
+        "name": "Ranger",
+        "caption": "One of the three party members."
+      },
+      {
+        "image": "/assets/art/bossrush-dracovid.webp",
+        "name": "Dracovid, the boss",
+        "caption": "The boss the party fights."
+      }
+    ],
+    "team_art": true,
+    "credits": "Art and animation by the team's artists. I'm not an artist: I was the producer and team lead, overseeing the code.",
+    "code_sample": {
+      "file_label": "",
+      "code": ""
+    }
+  },
+  {
+    "slug": "almond-bar",
+    "title": "Almond Bar",
+    "subtitle": "Unreal Engine quest game",
+    "engine": "Unreal · Blueprints",
+    "role": "Solo developer",
+    "card_role": "Solo developer · all the code",
+    "card_tech": "Blueprints, branching dialogue that decides your quest, quest system, level building",
+    "when": "Tiltan",
+    "context": "Final project · Unreal Blueprints course",
+    "color_deep": "#2c0830",
+    "color_main": "#7a1a73",
+    "color_accent": "#ff7ae0",
+    "cover": "/assets/img/1S38ITtBFY7fynF-MWLseHT9h5Q9K5cms.jpg",
+    "mascot": "",
+    "next_card_image": "/assets/art/next-almond-bar.webp",
+    "hook": "My hometown bar, rebuilt brighter. Find the key, talk to the regulars, finish the quest.",
+    "what_i_built": [
+      "A Blueprint dialogue system where the player's answers decide which quest they get",
+      "A quest system that tracks the active mission and completes it",
+      "Built and dressed the bar environment"
+    ],
+    "teammates_built": [],
+    "tech": [
+      "Blueprints",
+      "Unreal Engine",
+      "Branching dialogue",
+      "Quest system",
+      "Level building"
+    ],
+    "about": [
+      "The final project for my Unreal Engine Blueprints course: an adventure game set in a bar, where the player must retrieve a key and complete a quest.",
+      "Inspired by my hometown bar, CharlieBar, I blended its atmosphere with a modern, brightly lit design."
+    ],
+    "sections": [
+      {
+        "title": "Quest flow",
+        "intro": "",
+        "clips": [
+          {
+            "label": "Dialogue & quest taking",
+            "caption": "Talk to an NPC and pick up the quest.",
+            "video": "/assets/clips/almond-dialogue.mp4",
+            "drive_id": "1MLFl9JnF-W2McG5Oifk0kycXAbX6_3wq"
+          },
+          {
+            "label": "Mission complete",
+            "caption": "Finishing the quest.",
+            "video": "/assets/clips/almond-mission.mp4",
+            "drive_id": "1gJONPXImUmGUgLn0zeO4VT1worbnZSCu"
+          }
+        ]
+      }
+    ],
+    "screenshots": [
+      {
+        "image": "/assets/img/1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41.jpg",
+        "caption": "The bar, inspired by CharlieBar."
+      },
+      {
+        "image": "/assets/img/17zGlB0VBU26ZydIbjMk7YcrRy41PSAut.jpg",
+        "caption": "The bar seen from the entrance."
+      },
+      {
+        "image": "/assets/img/1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC.jpg",
+        "caption": "The lounge seating area."
+      },
+      {
+        "image": "/assets/img/1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh.jpg",
+        "caption": "The restroom, part of the quest."
+      }
+    ],
+    "full_video": "/assets/full/almond-bar.mp4",
+    "full_video_drive_id": "1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC",
+    "characters": [],
+    "team_art": false,
+    "credits": "A solo project: I built everything myself, code, design and level setup. There was no art team, so the visuals use ready-made assets.",
+    "code_sample": {
+      "file_label": "",
+      "code": ""
+    }
+  },
+  {
+    "slug": "musical-level",
+    "title": "A Musical Level",
+    "subtitle": "Inspired by Rayman Legends",
+    "engine": "Unity",
+    "role": "Producer · some programming & design",
+    "card_role": "Producer",
+    "card_tech": "Team production, C# gameplay scripting, beat-driven platforming mechanics",
+    "when": "2nd year, Tiltan",
+    "context": "Game Production course, team project",
+    "color_deep": "#1a0b3d",
+    "color_main": "#4a2398",
+    "color_accent": "#c9a7ff",
+    "cover": "/assets/img/1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP.jpg",
+    "mascot": "/assets/art/musical-cat.webp",
+    "next_card_image": "",
+    "hook": "A space cat runs, jumps and fights through a level that moves to the beat.",
+    "what_i_built": [
+      "Produced the team from pitch to a playable level",
+      "Made key design decisions on the beat-driven platforming",
+      "Scripted gameplay mechanics alongside the programmers"
+    ],
+    "teammates_built": [],
+    "tech": [
+      "C#",
+      "Unity",
+      "Gameplay scripting"
+    ],
+    "about": [
+      "Developed in my second year for the Game Production course, the goal was to replicate real-world game production. My team and I created a rhythm-based level inspired by Rayman Legends' beat-driven gameplay.",
+      "I served as the Producer, leading the team and making key design decisions. I also contributed to scripting gameplay mechanics, making sure they matched our creative vision and improved the player experience."
+    ],
+    "sections": [
+      {
+        "title": "Action indicators",
+        "intro": "Icons that tell the player what the beat wants next.",
+        "clips": [
+          {
+            "label": "Jump!",
+            "caption": "A bold arrow prompting timely jumps.",
+            "video": "/assets/clips/musical-indicator.mp4",
+            "drive_id": "1GmLecwlKi0yxsthTLXaq47NMBzhvEEPW"
+          },
+          {
+            "label": "Attack!",
+            "caption": "A fist icon signaling combat moments.",
+            "video": "/assets/clips/musical-attack.mp4",
+            "drive_id": "1Wlay5mvFlwNrT6sQCLVBJ7hxzUvdk-CF"
+          }
+        ]
+      },
+      {
+        "title": "Platforms",
+        "intro": "Movement pieces that keep the run tense and readable.",
+        "clips": [
+          {
+            "label": "Wall jump & hover",
+            "caption": "Jump walls and a hover to stretch a jump.",
+            "video": "/assets/clips/musical-walljump.mp4",
+            "drive_id": "1kPgVVUSQZxFdqd71GMiGisgOrqmwEi_3"
+          },
+          {
+            "label": "Trampolines",
+            "caption": "Launch pads that throw the player up to the next beat.",
+            "video": "/assets/clips/musical-trampoline.mp4",
+            "drive_id": "1pjC3tc_jsP7YIo4875abDV45rqQd-SCI"
+          },
+          {
+            "label": "Shaking platforms",
+            "caption": "Unstable platforms that add tension and immersion.",
+            "video": "/assets/clips/musical-shaking.mp4",
+            "drive_id": "1hjmNAM8uoKoC1Wm-hAwvpBgZ1a2dcQqT"
+          }
+        ]
+      }
+    ],
+    "screenshots": [
+      {
+        "image": "/assets/img/1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP.jpg",
+        "caption": "The space cat runs under a tree full of staring eyes."
+      },
+      {
+        "image": "/assets/img/1cuHuKj4H0HIaWXCJpQLxaxdFCUKOtDzX.jpg",
+        "caption": "Level design overview of the whole stage."
+      }
+    ],
+    "full_video": "/assets/full/musical-level.mp4",
+    "full_video_drive_id": "18ezKyaZ6x8iKwvC2Gpj-vhhxqdaGCitd",
+    "characters": [
+      {
+        "image": "/assets/art/musical-cat.webp",
+        "name": "The space cat, the playable hero",
+        "caption": "The playable hero."
+      },
+      {
+        "image": "/assets/art/musical-flower.webp",
+        "name": "A tentacle flower enemy",
+        "caption": "An enemy waiting in the level."
+      }
+    ],
+    "team_art": true,
+    "credits": "Art and animation by the team's artists. I'm not an artist: I was mainly the producer, with some programming and game design.",
+    "code_sample": {
+      "file_label": "",
+      "code": ""
+    }
+  }
+]

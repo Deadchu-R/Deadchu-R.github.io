@@ -1,0 +1,227 @@
+[
+  {
+    "slug": "deck-builder",
+    "title": "Deck-Builder Card System",
+    "subtitle": "Draw, discard and exhaust piles in Unity",
+    "language": "C# · Unity",
+    "role": "Programmer",
+    "when": "05/2024 – 07/2024",
+    "context": "",
+    "color_deep": "#0f1f2e",
+    "color_main": "#1f4f6e",
+    "color_accent": "#7fd1ff",
+    "hook": "The card plumbing behind a deck-builder: piles, shuffling, and drawing into a hand.",
+    "what_i_built": [
+      "Cards as ScriptableObject data (name, description, cost, art) turned into Card objects at runtime",
+      "One Pile class for the draw, discard and exhaust piles: draw from the top, add cards, shuffle",
+      "Reshuffling the draw pile together with the other piles when it runs out",
+      "A Deck that draws cards one by one into the hand with a slide animation, and keeps drawing after a reshuffle"
+    ],
+    "tech": [
+      "C#",
+      "Unity",
+      "ScriptableObjects",
+      "Coroutines",
+      "Inheritance",
+      "Lerp animation"
+    ],
+    "flow": [
+      {
+        "name": "CardData",
+        "note": "ScriptableObject"
+      },
+      {
+        "name": "Pile",
+        "note": "draw · discard · exhaust"
+      },
+      {
+        "name": "Deck",
+        "note": "draws & reshuffles"
+      },
+      {
+        "name": "Hand",
+        "note": "cards slide in"
+      }
+    ],
+    "clip": {
+      "label": "Card draw",
+      "caption": "Drawing cards into the hand.",
+      "video": "/assets/clips/lab-cards.mp4",
+      "drive_id": "1_WDc8rzjxa7d6zPILMB0E2DsOPjuMyQc"
+    },
+    "code": [
+      {
+        "file_label": "Pile.cs",
+        "code": "// Pile.cs: reshuffle the draw pile together with other piles (e.g. the discard pile)\npublic void Shuffle(Pile[] piles)\n{\n    List<CardData> combinedCards = new List<CardData>();\n\n    foreach (CardData card in cardsData)          // this pile\n        if (card != null) combinedCards.Add(card);\n\n    foreach (Pile pile in piles)                   // every other pile\n    {\n        if (pile == null || pile == this) continue;\n        foreach (var card in pile.GetPile())\n            if (card != null) combinedCards.Add(card);\n    }\n\n    cardsData = combinedCards.ToArray();\n    cardsInPile = cardsData.Length;\n    ShuffleCardData();                             // swap-shuffle, then rebuild the Card objects\n}\n"
+      },
+      {
+        "file_label": "Deck.cs",
+        "code": "// Deck.cs: draw cards one by one into the hand; when the deck runs out,\n// shuffle and keep drawing the cards that are still owed\npublic IEnumerator DrawCards(int cardsToDraw)\n{\n    int currentCardsToDraw = Mathf.Min(cardsToDraw, cardsInDeck);\n    _remainingCardsToDraw = cardsToDraw;\n\n    for (int cardIndex = 0; cardIndex < currentCardsToDraw; cardIndex++)\n    {\n        float cardPosition = cardIndex * (cardSpacer + 1);\n        DrawCard(cardPosition, cardIndex);          // instantiate, then slide into the hand\n        _remainingCardsToDraw--;\n        yield return new WaitForSeconds(delayBetweenDraws);\n    }\n\n    if (cardsInDeck <= 0)\n    {\n        Shuffle();\n        if (_remainingCardsToDraw > 0)\n            StartCoroutine(DrawCards(_remainingCardsToDraw));\n    }\n}\n"
+      }
+    ]
+  },
+  {
+    "slug": "army-capture",
+    "title": "Army Capture Mechanic",
+    "subtitle": "My part of a mobile army game in Unity",
+    "language": "C# · Unity 2D",
+    "role": "Programmer · team project",
+    "when": "12/2023 – 01/2024",
+    "context": "Mobile prototype",
+    "color_deep": "#2a1010",
+    "color_main": "#7a2a1f",
+    "color_accent": "#ffb07a",
+    "hook": "Beat an enemy army, stand in its circle, and its soldiers join yours.",
+    "what_i_built": [
+      "The capture system: a trigger circle placed on the defeated army's commander and sized to the army",
+      "A countdown that runs while the player stays inside the circle; stepping out resets it",
+      "On capture, the defeated army's soldiers move over to the player's army",
+      "A world-space UI indicator for the capture, enemy raycasts that catch the player, and soldier attacks timed to the animation"
+    ],
+    "tech": [
+      "C#",
+      "Unity 2D",
+      "Trigger colliders",
+      "Countdown timer",
+      "World-space UI",
+      "Gizmos"
+    ],
+    "flow": [
+      {
+        "name": "Enemy army beaten",
+        "note": "commander position"
+      },
+      {
+        "name": "Capture circle",
+        "note": "trigger collider"
+      },
+      {
+        "name": "Countdown",
+        "note": "stay inside"
+      },
+      {
+        "name": "Soldiers join you",
+        "note": "army grows"
+      }
+    ],
+    "clip": null,
+    "code": [
+      {
+        "file_label": "ArmyCaptureManager.cs",
+        "code": "// ArmyCaptureManager.cs: stand inside a defeated army's circle until the countdown\n// ends to take its soldiers; stepping out cancels the capture\npublic void SetCaptureCollider(Vector2 position, float radius = 1, bool active = false)\n{\n    _canCapture = true;\n    _armyCommanderPosition = position;\n    _captureCollider.transform.position = position;\n    _captureCollider.radius = radius;\n    _captureCollider.enabled = active;\n}\n\nprivate void Update()\n{\n    if (_captureCountdownTimer == null || !_captureCountdownTimer.IsRunning) return;\n    _captureCountdownTimer.Tick(Time.deltaTime);   // timer ticked in Update, not a coroutine\n    if (_captureCountdownTimer.IsFinished) Capture();\n}\n\nprivate void OnTriggerEnter2D(Collider2D collision)\n{\n    if (collision.CompareTag(\"Player\")) StartCaptureTimer();\n}\n\nprivate void OnTriggerExit2D(Collider2D collision)\n{\n    if (collision.CompareTag(\"Player\")) ResetCaptureCountdown();\n}\n\nprivate void Capture()\n{\n    GameManager.instance.PlayerController.CaptureArmy(_defeatedArmy.Soldiers);\n    _defeatedArmy.Soldiers.Clear();\n    _captureCountdownTimer.Reset();\n}\n"
+      }
+    ]
+  },
+  {
+    "slug": "unity-tools",
+    "title": "Reusable Unity Tools",
+    "subtitle": "Systems from Shards, packaged to reuse",
+    "language": "C# · Unity",
+    "role": "Solo developer",
+    "when": "12/2023",
+    "context": "Extracted from Shards",
+    "color_deep": "#10261a",
+    "color_main": "#2d6a4f",
+    "color_accent": "#9be15d",
+    "hook": "The dialogue system, a quest chain and a UI manager, pulled out of a game so the next one starts ahead.",
+    "what_i_built": [
+      "The Shards dialogue system as a standalone package: sheets, page types, typewriter events, speech bubble",
+      "A UI manager that keeps one inspector slot per PanelEnum value in sync while editing, then opens and closes panels by enum",
+      "A quest chain: quests are ScriptableObjects linked through NextQuest; finishing one strikes it out and shows the next"
+    ],
+    "tech": [
+      "C#",
+      "Unity",
+      "ScriptableObjects",
+      "OnValidate",
+      "Enums & dictionaries",
+      "TextMeshPro"
+    ],
+    "flow": [
+      {
+        "name": "Quest",
+        "note": "ScriptableObject"
+      },
+      {
+        "name": "NextQuest",
+        "note": "chained"
+      },
+      {
+        "name": "QuestManager",
+        "note": "strike out, show next"
+      },
+      {
+        "name": "UI_Manager",
+        "note": "panels by enum"
+      }
+    ],
+    "clip": null,
+    "code": [
+      {
+        "file_label": "UI_Manager.cs",
+        "code": "// UI_Manager.cs: one inspector slot per PanelEnum value, kept in sync automatically.\n// Add a value to the enum and its slot appears; panels are then opened by enum.\nprivate void OnValidate() => InitializePanelDictionary();\n\nprivate void AdjustPanelEntriesSize()\n{\n    int enumCount = Enum.GetValues(typeof(PanelEnum)).Length;\n    if (panelEntries.Count > enumCount)\n        panelEntries.RemoveRange(enumCount, panelEntries.Count - enumCount);\n    while (panelEntries.Count < enumCount)\n        panelEntries.Add(new PanelEntry());\n}\n\nprivate void AssignPanelEnums()\n{\n    for (int i = 0; i < panelEntries.Count; i++)\n        panelEntries[i].PanelEnum = (PanelEnum)Enum.ToObject(typeof(PanelEnum), i);\n}\n\npublic void OpenPanel(PanelEnum panelID)\n{\n    GameObject panel = panels[panelID];\n    if (panel != null && !panel.activeSelf) panel.SetActive(true);\n}\n"
+      },
+      {
+        "file_label": "Quest.cs · QuestManager.cs",
+        "code": "// Quest.cs + QuestManager.cs: quests are ScriptableObjects chained through NextQuest.\n// Finishing one strikes it out on screen and shows the next.\n[CreateAssetMenu(fileName = \"New Quest\", menuName = \"Quests/defaultQuest\")]\npublic class Quest : ScriptableObject\n{\n    public string questName;\n    public string QuestDescription;\n    public int QuestID;\n    public Quest NextQuest;\n    public bool IsCompleted = false;\n}\n\npublic void FinishedQuest(Quest quest)\n{\n    if (quest.NextQuest != null)\n    {\n        _previousQuest = quest;\n        _currentQuest = quest.NextQuest;\n        questText.text = _previousQuest.QuestDescription;\n        questText2.text = _currentQuest.QuestDescription;\n        questText.fontStyle = FontStyles.Strikethrough;   // the finished quest, struck out\n    }\n}\n"
+      }
+    ]
+  },
+  {
+    "slug": "post-office",
+    "title": "Post Office Queue in C++",
+    "subtitle": "A console queue simulation",
+    "language": "C++ · STL",
+    "role": "Solo developer",
+    "when": "04/2024 – 05/2024",
+    "context": "",
+    "color_deep": "#16162e",
+    "color_main": "#3a3a7a",
+    "color_accent": "#a5b4ff",
+    "hook": "Customers take a number, officers call them by the service they handle, and elderly customers come first.",
+    "what_i_built": [
+      "A hand-written doubly linked list of customers, kept sorted by the service each one needs",
+      "The same queue also built on std::list, chosen by a flag",
+      "Separate numbering for elderly customers (E1, E2…) and everyone else (Y1, Y2…)",
+      "Officers that look for the next customer of their service type, and move to the next type when nobody is waiting",
+      "Office settings and customer records read from and written to text files"
+    ],
+    "tech": [
+      "C++",
+      "Pointers",
+      "Doubly linked list",
+      "std::list",
+      "File I/O",
+      "OOP"
+    ],
+    "flow": [
+      {
+        "name": "Settings file",
+        "note": "officers, senior age"
+      },
+      {
+        "name": "Customer queue",
+        "note": "linked list or std::list"
+      },
+      {
+        "name": "Officers",
+        "note": "by service type"
+      },
+      {
+        "name": "Records file",
+        "note": "customers saved"
+      }
+    ],
+    "clip": null,
+    "code": [
+      {
+        "file_label": "CustomerList.cpp",
+        "code": "// CustomerList.cpp: a hand-written doubly linked list.\n// Insert a customer so the queue stays sorted by the service they need.\nNode* customerList::insertSorted(Node* sortedHead, Node* newNode)\n{\n    if (sortedHead == nullptr || newNode->data.actionType < sortedHead->data.actionType)\n    {\n        newNode->next = sortedHead;\n        if (sortedHead != nullptr) sortedHead->prev = newNode;\n        return newNode;                            // new head\n    }\n\n    Node* current = sortedHead;\n    while (current->next != nullptr && current->next->data.actionType <= newNode->data.actionType)\n        current = current->next;\n\n    newNode->next = current->next;\n    if (current->next != nullptr) current->next->prev = newNode;\n    current->next = newNode;\n    newNode->prev = current;\n    return sortedHead;\n}\n"
+      },
+      {
+        "file_label": "Customer.cpp · PostOfficeLogic.cpp",
+        "code": "// Customer.cpp: elderly customers get their own numbering (E1, E2...),\n// everyone else is numbered after them (Y1, Y2...)\nvoid Customer::setAppointmentNumber(int customersInQueue, int elderCustomersInQueue)\n{\n    if (customersInQueue == elderCustomersInQueue || customersInQueue == 0) customersInQueue++;\n    if (isElderly()) appointmentNumber = \"E\" + to_string(elderCustomersInQueue);\n    else             appointmentNumber = \"Y\" + to_string(customersInQueue - elderCustomersInQueue);\n}\n\n// PostOfficeLogic.cpp: office settings come from a text file (officerCount=, seniorAge=, maxAge=)\nif (line.find(\"officerCount\") != string::npos)\n{\n    officerCount = stoi(line.substr(line.find(\"=\") + 1));\n    for (int i = 0; i < officerCount; i++)\n    {\n        officers.push_back(Officer(i));\n        officers[i].maxActions = maxActions;\n    }\n}\n"
+      }
+    ]
+  }
+]

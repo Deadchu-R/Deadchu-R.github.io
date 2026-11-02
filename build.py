@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Builds the static site: index.html, lab.html and one page per project.
+"""Builds the static site from content/*.json (edited in Pages CMS, see .pages.yml).
 
-Edit the data below, then run:  python3 build.py
-Clips live in assets/clips/<file>.mp4 (posters in assets/posters/<file>.jpg).
-Until a clip file exists, pages fall back to the Google Drive copy (by id).
+Run:  python3 build.py   (the GitHub Action runs it on every push)
+New uploads in assets/uploads are converted by content_loader.py.
 """
 from html import escape as e
 from pathlib import Path
@@ -12,226 +11,10 @@ import re
 
 ROOT = Path(__file__).parent
 
-SITE = {
-    "name": "Roee Tal",
-    "email": "roeetal17@gmail.com",
-    "phone": "(+972) 053-337-4350",
-    "linkedin": "https://www.linkedin.com/in/roee-tal/",
-    "github": "https://github.com/Deadchu-R",
-    "showreel": "1rlhZHUS8bYwiMmg42SXIdjwMXsK0N5bz",
-}
-
-# theme: (deep, mid, accent) colors for the project's own page
-PROJECTS = [
-    dict(slug="musical-level", mascot="musical-cat", cast=[('musical-cat', 'The space cat, the playable hero'), ('musical-flower', 'A tentacle flower enemy')], title="A Musical Level", sub="Inspired by Rayman Legends",
-         engine="Unity", role="Producer · some programming & design", when="2nd year, Tiltan", context="Game Production course, team project",
-         theme=("#1a0b3d", "#4a2398", "#c9a7ff"), cover="1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP",
-         hook="A space cat runs, jumps and fights through a level that moves to the beat.",
-         about=["Developed in my second year for the Game Production course, the goal was to replicate real-world game production. My team and I created a rhythm-based level inspired by Rayman Legends' beat-driven gameplay.",
-                "I served as the Producer, leading the team and making key design decisions. I also contributed to scripting gameplay mechanics, making sure they matched our creative vision and improved the player experience."],
-         did=["Produced the team from pitch to a playable level", "Made key design decisions on the beat-driven platforming", "Scripted gameplay mechanics alongside the programmers"],
-         sections=[
-             ("Action indicators", "Icons that tell the player what the beat wants next.", [
-                 ("Jump!", "A bold arrow prompting timely jumps.", "musical-indicator.mp4", "1GmLecwlKi0yxsthTLXaq47NMBzhvEEPW"),
-                 ("Attack!", "A fist icon signaling combat moments.", "musical-attack.mp4", "1Wlay5mvFlwNrT6sQCLVBJ7hxzUvdk-CF"),
-             ]),
-             ("Platforms", "Movement pieces that keep the run tense and readable.", [
-                 ("Wall jump & hover", "Jump walls and a hover to stretch a jump.", "musical-walljump.mp4", "1kPgVVUSQZxFdqd71GMiGisgOrqmwEi_3"),
-                 ("Trampolines", "Launch pads that throw the player up to the next beat.", "musical-trampoline.mp4", "1pjC3tc_jsP7YIo4875abDV45rqQd-SCI"),
-                 ("Shaking platforms", "Unstable platforms that add tension and immersion.", "musical-shaking.mp4", "1hjmNAM8uoKoC1Wm-hAwvpBgZ1a2dcQqT"),
-             ]),
-         ],
-         full="18ezKyaZ6x8iKwvC2Gpj-vhhxqdaGCitd",
-         shots=["1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP", "1cuHuKj4H0HIaWXCJpQLxaxdFCUKOtDzX"]),
-    dict(slug="shards", mascot="shards-protagonist", cast=[('shards-protagonist', 'The protagonist'), ('shards-shadow', 'A shadow memory'), ('shards-ghost', 'A ghost memory'), ('shards-cityhall', 'City hall')], title="Shards", sub="Isometric story-driven game",
-         engine="Unity · C#", role="Programmer · some design", when="Nov 2023 · 3 weeks", context="Hackathon team",
-         theme=("#0b3b3a", "#17736b", "#ffd36e"), cover="10P_bsBNsYOX6C94sR7FoAYuW_PC8ax71",
-         hook="A man goes back to his hometown to face what happened there.",
-         about=["Developed during a three-week hackathon in November 2023 and inspired by the October 7th attack on Israel, this story-driven game follows an adult returning to his hometown to confront unresolved trauma.",
-                "The team aimed for a colorful yet unsettling atmosphere, reflecting distorted memories and haunting experiences."],
-         did=["The whole dialogue system: a Sheet (the notebook) is a ScriptableObject holding Pages, each tied to a character's NPC_ID",
-              "Page types through inheritance: a dialogue page shows answers that branch to other pages, a level page moves the player on; each overrides PageAction",
-              "Typewriter text that raises events on every letter, every word and when the text is finished",
-              "Those events drive retro talking sounds and a two-sprite mouth animation (open / closed) for the speaker",
-              "The speech-bubble UI that runs the conversation, plus the map builder, GameManager and LevelManager"],
-         sections=[
-             ("The dialogue system", "Conversations are data, not code.", [
-                 ("Dialogue in action", "ScriptableObject-driven conversations with a typewriter effect.", "shards-dialogue.mp4", "1V9Hw7lS-zYJeBm6_fuOe69KBtvrrVjJk"),
-                 ("Gameplay", "Exploring the hometown.", "shards-gameplay.mp4", "1tmPJS60ybrLUhAnFwKSwCj7VyI8NLrSG"),
-             ]),
-         ],
-         full=None,
-         shots=["1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs", "16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd", "1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV", "1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9", "1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS", "1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky"]),
-    dict(slug="boss-rush", mascot="bossrush-dracovid", cast=[('bossrush-axe', 'Axe fighter'), ('bossrush-mage', 'Mage'), ('bossrush-ranger', 'Ranger'), ('bossrush-dracovid', 'Dracovid, the boss')], title="Boss Rush", sub="Grid-based tactical combat",
-         engine="Unity · C#", role="Producer & team lead · code oversight", when="12/2023 – 09/2024", context="Final year · Game Production 2",
-         theme=("#3a0b2a", "#8c1d55", "#ff8fc0"), cover="1ds2k9OIavd8wmB638ZMaas-4uHDBN5dH",
-         hook="Three heroes, one giant boss, and a grid. Medicines against disease, inside a microscopic world.",
-         about=["Developed in my final year for the Game Production 2 course: a grid-based strategy game where the player controls a party of three characters to defeat a powerful boss.",
-                "Set in a microscopic world, it pits bacteria and diseases against medicines, with a focus on strategic teamwork and coordination."],
-         did=["Led a cross-functional team of programmers and artists for nine months, through delivery", "Oversaw the second programmer's code so it worked as intended and stayed maintainable", "Resolved conflicts and blockers between team members to keep the workflow smooth", "Wrote the narrative and lore, and came up with the microscopic-world concept"],
-         sections=[
-             ("Combat on the grid", "Reading the board, moving, striking.", [
-                 ("Tactical view", "A top-down read of the whole battlefield.", "bossrush-tactical.mp4", "1aDkpRLZy3QNMPEeAIcHc3f8_Cf9acxPM"),
-                 ("Movement arrow", "Shows where a unit will move on the grid.", "bossrush-arrow.mp4", "1vcp3IeeehFJ_Ppq5JHC6mzsaFMiTb7Pc"),
-                 ("Attack sequence", "How a party member's attack plays out.", "bossrush-attack.mp4", "12FAXoXFoiz_-gTPMpAHg0HDlMtjLlzJO"),
-             ]),
-             ("Effects", "Feedback that makes each action land.", [
-                 ("Fireball", "The fireball attack effect.", "bossrush-fireball.mp4", "1HNorCwv_7PXALP_TCjANvZW385rQE3BR"),
-                 ("Resource gather", "The effect that plays when resources are gathered.", "bossrush-gather.mp4", "1OZmcyiAOi2JdeSAK5nQF3ZrqDwe8VoyK"),
-             ]),
-         ],
-         full="15gejO8JuCfXQFWnQmd209mHFPer7dyFD",
-         shots=[]),
-    dict(slug="infiltration", title="Infiltration", sub="FPS level in Unreal Engine 5",
-         engine="Unreal 5 · C++ & Blueprints", role="Solo developer", when="06/2024 – 08/2024", context="Final project · Unreal C++ course",
-         theme=("#14261f", "#2f5a45", "#e8c36a"), cover="infiltration-cover",
-         hook="Sneak into a dictator's compound, steal the chip, get out alive.",
-         about=["The final project for my Unreal Engine C++ course: the player infiltrates a military base to retrieve a valuable chip.",
-                "I designed an unconventional base with a dictatorship atmosphere using Unreal Marketplace assets, and built the mechanics in a mix of C++ and Blueprints."],
-         did=["Raycast-based shooting with recoil, plus weapon pickups",
-              "A shot event that other systems listen to, so sound and visual effects play after every shot without the weapon knowing about them",
-              "Enemies with health that patrol their routes searching for the player",
-              "A detection meter that fills while an enemy sees you: escape or shoot them before it is full, or you lose",
-              "Built the whole landscape and compound myself from Marketplace assets"],
-         sections=[
-             ("Gunplay", "", [
-                 ("Aiming & shooting", "Raycast shots with recoil feedback.", "fps-shooting.mp4", "1n41GdjA2EyP8mzpEkXMg3Bc8eSyndK3N"),
-                 ("Weapon pickup", "Grab a new weapon on the fly.", "fps-pickup.mp4", "1DwSYEwlV_wUiXQb3PpXpJhq6zZMLcemI"),
-             ]),
-             ("Stealth & objective", "", [
-                 ("Detected", "A guard sees the player and the detection meter starts to fill.", "fps-detected.mp4", "1S2__pZSY-X0TT8gnz3JyDHFArXmIPWk0"),
-                 ("The chip", "The interactable objective.", "fps-chip.mp4", "1woY9O2N8uW1xJGtTdQa_9ZSufwajvgii"),
-             ]),
-         ],
-         full="1vL8FiPkjc6uhVvU76h9tpVB-diiNVmWc",
-         shots=["1XKdeZXwJXXcGLC-PLBU1AQnQTI0q1Jnl", "1vxite6U0WSEwBSumniwODX1HcLkG5bws", "1A6NvKk0XuyzGLglwsEt_koiogPNRFDMd", "1RSsJOWmaaCGo-ITMmSw50PgxQcOyCOBd", "1VaeqPSLmbuIN1fWtjF4kB5d7_ZKoTFBH", "1Tjj_5cknQ_98sqItEYD7McOjM5rpw7Jk", "1an1Bz7pWXvz1K8BBtg61GLg1WJUE7YDw", "19JMa8TxKunQdd_Ga3ChQp8HwCUkE4sHc", "1uGg_f72WbVOmD-jkJ_3K04-ggVF-CJGE"]),
-    dict(slug="almond-bar", title="Almond Bar", sub="Unreal Engine quest game",
-         engine="Unreal · Blueprints", role="Solo developer", when="Tiltan", context="Final project · Unreal Blueprints course",
-         theme=("#2c0830", "#7a1a73", "#ff7ae0"), cover="1S38ITtBFY7fynF-MWLseHT9h5Q9K5cms",
-         hook="My hometown bar, rebuilt brighter. Find the key, talk to the regulars, finish the quest.",
-         about=["The final project for my Unreal Engine Blueprints course: an adventure game set in a bar, where the player must retrieve a key and complete a quest.",
-                "Inspired by my hometown bar, CharlieBar, I blended its atmosphere with a modern, brightly lit design."],
-         did=["A Blueprint dialogue system where the player's answers decide which quest they get",
-              "A quest system that tracks the active mission and completes it",
-              "Built and dressed the bar environment"],
-         sections=[
-             ("Quest flow", "", [
-                 ("Dialogue & quest taking", "Talk to an NPC and pick up the quest.", "almond-dialogue.mp4", "1MLFl9JnF-W2McG5Oifk0kycXAbX6_3wq"),
-                 ("Mission complete", "Finishing the quest.", "almond-mission.mp4", "1gJONPXImUmGUgLn0zeO4VT1worbnZSCu"),
-             ]),
-         ],
-         full="1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC",
-         shots=["1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41", "17zGlB0VBU26ZydIbjMk7YcrRy41PSAut", "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC", "1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh"]),
-    dict(slug="tile-map-engine", title="Tile-Map Engine", sub="A C# game engine built from scratch",
-         engine="C# · .NET 6 console", role="Programmer · team of 3", when="12/2022 – 02/2023 · 2nd year, Tiltan", context="Final project · Programming 2 course",
-         theme=("#2b1608", "#8a4b12", "#ffc36b"), cover="tilemap-cover",
-         hook="A small game engine in plain C#, and a two-player chess game running on it.",
-         about=["A console game engine written in plain C#, without Unity, with chess built on top of it to prove the engine works. Built by a team of three programmers."],
-         did=["MyVector2, the engine's vector struct: operator overloading, Magnitude, Normalize, Dot, Distance, MoveTowards and Lerp",
-              "The engine's console renderer (RenderingManager): draws the grid in color, turns it into a chess board and queues messages through an event",
-              "TileObject groundwork: IComparer for sorting, the step event and XML documentation",
-              "Placing objects on the tile map and drawing the grid (TileMap.AddGameObjectOnGrid, DrawGrid)"],
-         did_team=["A Unity-style object model: GameObjects, Components and a Transform on every tile object",
-                   "A shared movement-rule service (IMovementRule) that each piece queries for legal moves",
-                   "Commands with a two-player turn system and an OnWin event for game-specific win logic",
-                   "A generic Singleton base class for the managers",
-                   "Chess built on the engine as the test game"],
-         sections=[
-             ("The engine", "", [
-                 ("Engine code", "A walk through the engine's C# code.", "lab-tilemap.mp4", "1sUZPRr_thhO3rtqT5IQf4YXVsv4wBNZL"),
-             ]),
-             ("Chess on the engine", "", [
-                 ("Chess", "Two players, colored pieces, turn by turn in the console.", "lab-chess.mp4", "1srlkDJalpOIqbZGvRddobo8xjGCLa_Qi"),
-             ]),
-         ],
-         full=None,
-         shots=[]),
-]
-# order on the site: the projects with the most of my own code come first
-ORDER = ["infiltration", "tile-map-engine", "shards", "boss-rush", "almond-bar", "musical-level"]
-PROJECTS = sorted(PROJECTS, key=lambda pj: ORDER.index(pj["slug"]))
-TEAM_BUILT = {"tile-map-engine"}
-TECH = {
-    "tile-map-engine": ["C#", ".NET", "OOP", "Interfaces & abstract classes", "Events & delegates", "Operator overloading", "Extension methods", "Singleton pattern", "Component model", "XML docs"],
-    "infiltration": ["C++", "Blueprints", "Unreal Engine 5", "Raycasts", "Event-driven feedback", "Enemy AI: patrol & sight", "Detection meter", "Health & damage", "Level building"],
-    "shards": ["C#", "Unity", "ScriptableObjects", "Data-driven design", "Inheritance & polymorphism", "UnityEvents", "Coroutines", "TextMeshPro", "Branching dialogue"],
-    "boss-rush": ["Team leadership", "Code oversight", "C#", "Unity", "Grid-based combat"],
-    "almond-bar": ["Blueprints", "Unreal Engine", "Branching dialogue", "Quest system", "Level building"],
-    "musical-level": ["C#", "Unity", "Gameplay scripting"],
-}
-CARD_TECH = {
-    "tile-map-engine": "Engine from scratch in C#, component model, interfaces & events, operator overloading, chess on top",
-    "infiltration": "C++ & Blueprints, raycast shooting, event-driven shot feedback, patrolling enemy AI, detection meter",
-    "shards": "ScriptableObject dialogue system, letter / word / sentence events, talking sounds & mouth animation, branching notebook",
-    "boss-rush": "9-month team lead, code oversight, grid-based tactical combat in Unity",
-    "almond-bar": "Blueprints, branching dialogue that decides your quest, quest system, level building",
-    "musical-level": "Team production, C# gameplay scripting, beat-driven platforming mechanics",
-}
-CARD_ROLE = {"tile-map-engine": "Programmer · team of 3", "infiltration": "Solo developer · all the code", "shards": "Programmer", "boss-rush": "Producer & team lead",
-             "almond-bar": "Solo developer · all the code", "musical-level": "Producer"}
-
-EARLY = [  # appendix: early and small projects
-    ("Upon the Dawn", "lab-uponthedawn.mp4", "1UnovVrXcBiB45WCwJmY82AQ0reyyepL5", "An environmental hackathon game: destroy the polluting factories and bring back sun and flowers. I was one of two programmers; there was no artist on the team."),
-    ("My first project: a boss fight", "lab-firstboss.mp4", "126SJ_eNvJFjB5OQVPowUp9PM7D6kmY9d", "My very first Unity game: a 2D platformer boss fight with a health heart, fireball attacks and a retry screen."),
-    ("Save & load", "lab-savestring.mp4", "1RSi5jGjKOFYIemlezvZHC3fScOSxsg0-", "An early exercise: type a string, save it, and load it back."),
-]
-
-LAB = [
-    ("World-bending shader", "lab-worldbend.mp4", "1w8G1TMj93LvZqCNxYdG46o4rOHp4_2i2", "A shader that bends the world as it moves away from the camera."),
-    ("Toon shader", "lab-toon.mp4", "17zl6JE6t6rm-GDynooXcIjXIdwDehpk6", "Cel-shaded lighting with hard color steps."),
-    ("Hatching in Shader Graph", "lab-hatching.mp4", "1Sne0ks3fKGrbedu_LFnLIw84JBKD-g9a", "Pencil-style hatching shading, built in Shader Graph."),
-    ("Plane-bending shader", "lab-planebend.mp4", "1lEnZM78NR3td-blCaTno0pfAXRFfc597", "A shader that curves a flat plane."),
-    ("Multiplayer login UI", "lab-mpui.mp4", "1Cy7YyN8rTMAOnD0nJ3wLVHLuxE2zXoeL", "Login and password screen for a multiplayer game."),
-    ("Escape-room camera", "lab-escapecam.mp4", "1t1hd1aLov8GhUp2G_fn2yfejbeJVwUdd", "Camera control for an escape-room game."),
-    ("AI training", "lab-aitraining.mp4", "1fDZRyrlEcJ4YKWOP8dyob5qL3pHyhs_M", "Training an AI agent."),
-    ("Portal × Angry Birds", "lab-portal.mp4", "1hr7Xf76Kqlwt1apXkOBeSaaSp1PVswgI", "Angry Birds-style launching, with portals."),
-    ("3-lane runner", "lab-runner.mp4", "1aEOUM2jy6SdJU2bQzpZQ59jWytxGDc66", "A hyper-casual three-lane runner."),
-    ("Space Invaders", "lab-invaders.mp4", "1kC6Ikjb6H7kVDjeW56lN_Uv9p8GIGsbq", "A Space Invaders remake."),
-    ("Snake", "lab-snake.mp4", "14TZn87SvelWovus4Zn1E_RqhUrwqV5jg", "A Snake remake."),
-    ("Snow shader", "lab-snow.mp4", "164BZh7NNCB082xrTOb3skcxzQ4GvIAGH", "A shader that covers objects in snow."),
-    ("Aquarium in Unreal 4", "lab-aquarium.mp4", "1n7Sllz8QFlxmMBKCmnPvlq9hYfAx8_-d", "An aquarium scene built in Unreal Engine 4."),
-]
-
+from content_loader import (SITE, SITE_TEXT, ABOUT, FULL, PROJECTS, TECH, CARD_TECH, CARD_ROLE, TEAM_BUILT,
+    SHOT_CAPS, CAST_CAPS, ART_CREDIT_SLUGS, ART_NOTES, NEXT_CARD, SNIPPETS, CODE_PAGES, LAB, EARLY)
 
 DEPTH = 0  # set per page so local asset paths resolve
-
-
-SHOT_CAPS = {  # one line shown under each enlarged screenshot
-    "1rCzhK2h7CgKMN0q1Rj8IwI3agBA1dbsP": "The space cat runs under a tree full of staring eyes.",
-    "1cuHuKj4H0HIaWXCJpQLxaxdFCUKOtDzX": "Level design overview of the whole stage.",
-    "1zjGW8_ae9tuE9bmyLUJHdzC5rAy_sTMs": "The hometown, in isometric view.",
-    "16zegm2GpKTfOOXm_tla1LzZwL_C9_Zdd": "Top-down layout of the hometown map.",
-    "1drQqWNwqwsZIWPUU4jKuJ3fDPl8tnlIV": "NPC data component: each NPC links its dialogue sheet, UI handler and speech bubble.",
-    "1C6MJmp797kMPTI44UvfzQVxYKh2cUtT9": "The typewriter method that types dialogue letter by letter.",
-    "1Dd3c_DEp92QUQXE3ARTjPviLE8tNLoOS": "A dialogue sheet: pages of conversation stored as data.",
-    "1RY1cYQJqStXInxQu8B4x_tkVJvZGFlky": "An NPC ID asset holding the guard's name and icons.",
-    "1XKdeZXwJXXcGLC-PLBU1AQnQTI0q1Jnl": "Inside the watchtower.",
-    "1vxite6U0WSEwBSumniwODX1HcLkG5bws": "The dictator's building, first floor.",
-    "1A6NvKk0XuyzGLglwsEt_koiogPNRFDMd": "The dictator's building, second floor.",
-    "1RSsJOWmaaCGo-ITMmSw50PgxQcOyCOBd": "Inside the hospital.",
-    "1VaeqPSLmbuIN1fWtjF4kB5d7_ZKoTFBH": "The hospital from outside.",
-    "1Tjj_5cknQ_98sqItEYD7McOjM5rpw7Jk": "The armoury.",
-    "1an1Bz7pWXvz1K8BBtg61GLg1WJUE7YDw": "The soldiers' bedroom.",
-    "19JMa8TxKunQdd_Ga3ChQp8HwCUkE4sHc": "A statue in front of one of the base's buildings.",
-    "1uGg_f72WbVOmD-jkJ_3K04-ggVF-CJGE": "The military base in the desert.",
-    "1I2lAcIWXNzTkPj7L3w5LZN8RkEbfi_41": "The bar, inspired by CharlieBar.",
-    "17zGlB0VBU26ZydIbjMk7YcrRy41PSAut": "The bar seen from the entrance.",
-    "1Gct_kp7cI4xI4Si6gcWkLweDXTAHItSC": "The lounge seating area.",
-    "1EOJa-7DdPolPhDGGo32evJwWnIpR6tfh": "The restroom, part of the quest.",
-}
-
-CAST_CAPS = {
-    "musical-cat": "The playable hero.",
-    "musical-flower": "An enemy waiting in the level.",
-    "shards-protagonist": "The man returning to his hometown.",
-    "shards-shadow": "A figure from his distorted memories.",
-    "shards-ghost": "Another figure from his memories.",
-    "shards-cityhall": "A building from the hometown.",
-    "bossrush-axe": "One of the three party members.",
-    "bossrush-mage": "One of the three party members.",
-    "bossrush-ranger": "One of the three party members.",
-    "bossrush-dracovid": "The boss the party fights.",
-}
 
 
 def thumb(i, w=1280):
@@ -242,23 +25,6 @@ def thumb(i, w=1280):
     return f"https://drive.google.com/thumbnail?id={i}&sz=w{w}"
 
 
-FULL = {  # Drive id of a full video -> local compressed file in assets/full
-    "15gejO8JuCfXQFWnQmd209mHFPer7dyFD": "bossrush",
-    "1vL8FiPkjc6uhVvU76h9tpVB-diiNVmWc": "infiltration",
-    "18ezKyaZ6x8iKwvC2Gpj-vhhxqdaGCitd": "musical-level",
-    "1v6g2kcwsTc-zuTUEQRORRMUeyW6SRdSC": "almond-bar",
-    "1rlhZHUS8bYwiMmg42SXIdjwMXsK0N5bz": "showreel",
-}
-
-
-ART_CREDIT_SLUGS = {"musical-level", "shards", "boss-rush"}
-ART_NOTES = {
-    "musical-level": "Art and animation by the team's artists. I'm not an artist: I was mainly the producer, with some programming and game design.",
-    "shards": "Art and animation by the team's artists. I'm not an artist: I was mainly the programmer, with some game design.",
-    "boss-rush": "Art and animation by the team's artists. I'm not an artist: I was the producer and team lead, overseeing the code.",
-    "infiltration": "A solo project: I built everything myself, code, design and level setup. There was no art team, so the visuals use ready-made assets.",
-    "almond-bar": "A solo project: I built everything myself, code, design and level setup. There was no art team, so the visuals use ready-made assets.",
-}
 ART_CREDIT = "Art and animation by the team's artists. I'm not an artist: my part was the code and game design."
 ART_CREDIT_SHORT = "Art by the team's artists, not by me."
 def credit_attr(slug):
@@ -496,7 +262,7 @@ def more_code_html():
         for cp in CODE_PAGES)
     return f"""<section class="band more-code" id="more-code">
   <div class="wrap">
-    <div class="sec-head"><h2><span class="h-ico" style="--c:#9be15d">{ICON_CODE}</span>More code</h2><p class="muted">Smaller systems I built, each with a short page and real code from it.</p></div>
+    <div class="sec-head"><h2><span class="h-ico" style="--c:#9be15d">{ICON_CODE}</span>More code</h2><p class="muted">{e(SITE_TEXT["more_code_intro"])}</p></div>
     <div class="repos">{cards}</div>
   </div>
 </section>
@@ -506,42 +272,73 @@ ICON_BRIEF = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"
 ICON_PAD = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10a5 5 0 0 1 4.8 6.4l-.9 3a2.5 2.5 0 0 1-4.3.8L15 16H9l-1.6 2.2a2.5 2.5 0 0 1-4.3-.8l-.9-3A5 5 0 0 1 7 8z"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg>'
 ICON_CODE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg>'
 
+def _ym(v):
+    y, m = v.split("-")[:2]
+    return f"{m}/{y}"
+
+def job_dates():
+    end = SITE_TEXT.get("job_end") or ""
+    return f"{_ym(SITE_TEXT['job_start'])} – {_ym(end) if end else 'Present'}"
+
+def job_live():
+    if SITE_TEXT.get("job_end"):
+        return ""
+    return f'<span class="live" title="Ongoing"><i></i>Ongoing · <span data-since="{SITE_TEXT["job_start"][:7]}">since {_ym(SITE_TEXT["job_start"])}</span></span>'
+
+def timeline_html():
+    items = SITE_TEXT.get("timeline", [])
+    out = []
+    for i, t in enumerate(items):
+        now = i == len(items) - 1 and not SITE_TEXT.get("job_end")
+        out.append(f'<li{" class=\"tl-now\"" if now else ""}><span class="when">{e(t["when"])}</span><b>{e(t["title"])}</b><span class="muted">{e(t["text"])}</span></li>')
+    return "".join(out)
+
+ICONS_22 = {  # icon choices for hobbies and games in the editor
+    "climbing": '<path d="M5 20 9 9l4 5 3-7 3 13z"/><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="4.5" r="1.2"/>',
+    "book": '<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/>',
+    "speech": '<path d="M4 5h16v10H10l-4 4v-4H4z"/><path d="M8 9h8M8 12h5"/>',
+    "language": '<path d="M4 6h9M8.5 4v2M6 6c.5 4 3.5 7 7 8M11 6c-.8 4-3.5 7-7 9"/><path d="m13 20 4-9 4 9M14.5 17h5"/>',
+    "puzzle": '<path d="M5 8h3a2 2 0 1 1 4 0h3v3a2 2 0 1 1 0 4v4h-4a2 2 0 1 0-4 0H5v-4a2 2 0 1 0 0-4z"/>',
+    "cube": '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+    "bolt": '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+    "cards": '<rect x="3" y="6" width="11" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/>',
+    "vortex": '<path d="M14.4 12.0 L14.7 12.4 L14.9 12.8 L15.0 13.3 L15.1 13.9 L15.0 14.5 L14.9 15.1 L14.6 15.7 L14.2 16.3 L13.7 16.8 L13.1 17.3 L12.4 17.7 L11.6 18.0 L10.8 18.2 L9.8 18.3 L8.9 18.2 L7.9 18.0 L6.9 17.6 L5.9 17.0 L5.1 16.3 L4.3 15.5 L3.6 14.5 L3.0 13.4 L2.6 12.1 L2.4 10.8 L2.3 9.4 M10.8 14.1 L10.3 14.1 L9.9 14.1 L9.3 14.0 L8.8 13.7 L8.3 13.4 L7.9 13.0 L7.5 12.4 L7.2 11.8 L6.9 11.1 L6.8 10.3 L6.8 9.5 L7.0 8.7 L7.2 7.8 L7.6 7.0 L8.2 6.2 L8.9 5.4 L9.7 4.8 L10.7 4.2 L11.7 3.8 L12.9 3.6 L14.1 3.5 L15.3 3.5 L16.6 3.8 L17.8 4.3 L19.0 4.9 M10.8 9.9 L11.0 9.5 L11.3 9.1 L11.6 8.7 L12.1 8.4 L12.6 8.1 L13.2 8.0 L13.9 7.9 L14.6 7.9 L15.3 8.1 L16.0 8.4 L16.7 8.8 L17.4 9.3 L18.0 10.0 L18.5 10.7 L18.9 11.6 L19.2 12.6 L19.4 13.6 L19.4 14.7 L19.2 15.8 L18.9 17.0 L18.4 18.1 L17.7 19.1 L16.8 20.1 L15.8 20.9 L14.6 21.7"/><circle cx="12" cy="12" r="2.6" fill="#0b0618" stroke="currentColor"/>',
+    "gamepad": '<path d="M7 8h10a5 5 0 0 1 4.8 6.4l-.9 3a2.5 2.5 0 0 1-4.3.8L15 16H9l-1.6 2.2a2.5 2.5 0 0 1-4.3-.8l-.9-3A5 5 0 0 1 7 8z"/><path d="M8 11v3M6.5 12.5h3"/>',
+    "sword": '<path d="M19 3 9.5 12.5M19 3h2v2l-9.5 9.5"/><path d="m6 12 6 6M8.5 15.5 4 20M4 18l2 2"/>',
+    "music": '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+    "camera": '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+    "star": '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/>',
+    "heart": '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+    "chip": '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+}
+
+def _icon(name, size):
+    body = ICONS_22.get(name) or ICONS_22["star"]
+    return (f'<svg viewBox="0 0 24 24" width="{size}" height="{size}" aria-hidden="true" fill="none" stroke="currentColor" '
+            f'stroke-width="{1.9 if size > 18 else 2}" stroke-linecap="round" stroke-linejoin="round">{body}</svg>')
+
 def about_html():
     I = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
-    hobbies = [
-        ("Bouldering", "#ff9f5a", I + '<path d="M5 20 9 9l4 5 3-7 3 13z"/><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="4.5" r="1.2"/></svg>'),
-        ("Anime & manga", "#ff7ae0", I + '<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>'),
-        ("Comics", "#7fd1ff", I + '<path d="M4 5h16v10H10l-4 4v-4H4z"/><path d="M8 9h8M8 12h5"/></svg>'),
-        ("Learning Japanese", "#ff6b6b", I + '<path d="M4 6h9M8.5 4v2M6 6c.5 4 3.5 7 7 8M11 6c-.8 4-3.5 7-7 9"/><path d="m13 20 4-9 4 9M14.5 17h5"/></svg>'),
-    ]
-    cards = "".join(f'<li style="--c:{c}"><span class="hb-ico">{svg}</span>{e(t)}</li>' for t, c, svg in hobbies)
-    G = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
-    games = [  # generic genre icons, not the games' logos
-        ("Portal 2", "#7fd1ff", G + '<path d="M5 8h3a2 2 0 1 1 4 0h3v3a2 2 0 1 1 0 4v4h-4a2 2 0 1 0-4 0H5v-4a2 2 0 1 0 0-4z"/></svg>'),
-        ("Minecraft", "#9be15d", G + '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>'),
-        ("Sonic Adventure DX", "#5aa0ff", G + '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>'),
-        ("Slay the Spire", "#ff7ae0", G + '<rect x="3" y="6" width="11" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/></svg>'),
-        ("Grime", "#c9a7ff", G + '<path d="M14.4 12.0 L14.7 12.4 L14.9 12.8 L15.0 13.3 L15.1 13.9 L15.0 14.5 L14.9 15.1 L14.6 15.7 L14.2 16.3 L13.7 16.8 L13.1 17.3 L12.4 17.7 L11.6 18.0 L10.8 18.2 L9.8 18.3 L8.9 18.2 L7.9 18.0 L6.9 17.6 L5.9 17.0 L5.1 16.3 L4.3 15.5 L3.6 14.5 L3.0 13.4 L2.6 12.1 L2.4 10.8 L2.3 9.4 M10.8 14.1 L10.3 14.1 L9.9 14.1 L9.3 14.0 L8.8 13.7 L8.3 13.4 L7.9 13.0 L7.5 12.4 L7.2 11.8 L6.9 11.1 L6.8 10.3 L6.8 9.5 L7.0 8.7 L7.2 7.8 L7.6 7.0 L8.2 6.2 L8.9 5.4 L9.7 4.8 L10.7 4.2 L11.7 3.8 L12.9 3.6 L14.1 3.5 L15.3 3.5 L16.6 3.8 L17.8 4.3 L19.0 4.9 M10.8 9.9 L11.0 9.5 L11.3 9.1 L11.6 8.7 L12.1 8.4 L12.6 8.1 L13.2 8.0 L13.9 7.9 L14.6 7.9 L15.3 8.1 L16.0 8.4 L16.7 8.8 L17.4 9.3 L18.0 10.0 L18.5 10.7 L18.9 11.6 L19.2 12.6 L19.4 13.6 L19.4 14.7 L19.2 15.8 L18.9 17.0 L18.4 18.1 L17.7 19.1 L16.8 20.1 L15.8 20.9 L14.6 21.7"/><circle cx="12" cy="12" r="2.6" fill="#0b0618" stroke="currentColor"/></svg>'),
-    ]
-    favs = "".join(f'<span style="--c:{c}"><i>{svg}</i>{e(g)}</span>' for g, c, svg in games)
-    tools = ["LM Studio", "Ollama", "ComfyUI", "Flux", "LobeHub", "OpenCode"]
-    chips = "".join(f'<span>{e(t)}</span>' for t in tools)
+    cards = "".join(f'<li style="--c:{h["color"]}"><span class="hb-ico">{_icon(h["icon"], 22)}</span>{e(h["name"])}</li>' for h in ABOUT["hobbies"])
+    favs = "".join(f'<span style="--c:{g["color"]}"><i>{_icon(g["icon"], 16)}</i>{e(g["name"])}</span>' for g in ABOUT["games"])
+    chips = "".join(f'<span>{e(t)}</span>' for t in ABOUT["ai_tools"])
+    rig = "".join(f'<li><b>{e(r["part"])}</b>{e(r["value"])}</li>' for r in ABOUT["rig"])
     return f"""<section class="band about" id="about">
   <div class="wrap about-grid">
     <div>
       <div class="sec-head"><h2><span class="h-ico" style="--c:#ff9f5a">{I}<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Get to know me</h2></div>
-      <p class="muted">Away from work I climb, play a lot of games, read anime, manga and comics, and I'm learning Japanese. I pick the parts for my own PCs and like digging into how new tech works.</p>
+      <p class="muted">{e(ABOUT["intro"])}</p>
       <ul class="hobbies">{cards}</ul>
       <p class="fav-h">Favorite games</p>
       <div class="favs">{favs}</div>
     </div>
     <div class="ai-card">
-      <p class="kicker">Side project · local AI</p>
-      <h3>Running AI models on my own PC</h3>
-      <p class="muted">I set up and run language and image models locally, no cloud: chat models, image generation pipelines and AI coding agents.</p>
+      <p class="kicker">{e(ABOUT["ai_kicker"])}</p>
+      <h3>{e(ABOUT["ai_title"])}</h3>
+      <p class="muted">{e(ABOUT["ai_text"])}</p>
       <div class="ai-tools">{chips}</div>
-      <details class="rig" data-open-wide><summary class="rig-h">On a PC I specced for it</summary>
-        <ul><li><b>CPU</b>Ryzen 9 9950X3D</li><li><b>RAM</b>96 GB DDR5</li><li><b>GPU</b>RTX 3090 · dual-GPU ready</li><li><b>PSU</b>1600 W</li></ul><p class="rig-note">I chose every part with local AI in mind, then set up Windows and the drivers myself.</p></details>
+      <details class="rig" data-open-wide><summary class="rig-h">{e(ABOUT["rig_title"])}</summary>
+        <ul>{rig}</ul><p class="rig-note">{e(ABOUT["rig_note"])}</p></details>
     </div>
   </div>
 </section>
@@ -618,9 +415,9 @@ def build_index():
     html += f"""<section class="hero" id="top">
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
-    <p class="kicker">Gameplay programmer · Unity C# &amp; Unreal C++ / Blueprints</p>
+    <p class="kicker">{e(SITE_TEXT["hero_kicker"])}</p>
     <h1>Roee Tal</h1>
-    <p class="lead">I build the systems players touch: combat, AI, dialogue and UI. Unreal developer at 3DVision, trained in game design and development at Tiltan.</p>
+    <p class="lead">{e(SITE_TEXT["hero_lead"])}</p>
     <div class="btns">
       <button class="btn" type="button" {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}>▶ Watch showreel</button>
     </div>
@@ -636,15 +433,11 @@ def build_index():
 <section class="band now" id="now">
   <div class="wrap now-grid">
     <div class="now-copy">
-      <p class="kicker exp-kicker"><span class="h-ico" style="--c:#38b6ff">{ICON_BRIEF}</span>Experience · 02/2025 – Present<span class="live" title="Ongoing"><i></i>Ongoing · <span data-since="2025-02">1 yr 9 mos</span></span></p>
-      <h2>Unreal Developer at 3DVision</h2>
-      <p class="muted">Tel Aviv · real-time interactive simulation apps for real-estate companies</p>
+      <p class="kicker exp-kicker"><span class="h-ico" style="--c:#38b6ff">{ICON_BRIEF}</span>Experience · {job_dates()}{job_live()}</p>
+      <h2>{e(SITE_TEXT["job_title"])}</h2>
+      <p class="muted">{e(SITE_TEXT["job_subtitle"])}</p>
       <div class="tools"><span class="tool ue"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 0a12 12 0 1012 12A12 12 0 0012 0zm0 23.52A11.52 11.52 0 1123.52 12 11.52 11.52 0 0112 23.52zm7.13-9.791c-.206.997-1.126 3.557-4.06 4.942l-1.179-1.325-1.988 2a7.338 7.338 0 01-5.804-2.978 2.859 2.859 0 00.65.123c.326.006.678-.114.678-.66v-5.394a.89.89 0 00-1.116-.89c-.92.212-1.656 2.509-1.656 2.509a7.304 7.304 0 012.528-5.597 7.408 7.408 0 013.73-1.721c-1.006.573-1.57 1.507-1.57 2.29 0 1.262.76 1.109.984.923v7.28a1.157 1.157 0 00.148.256 1.075 1.075 0 00.88.445c.76 0 1.747-.868 1.747-.868V9.172c0-.6-.452-1.324-.905-1.572 0 0 .838-.149 1.484.346a5.537 5.537 0 01.387-.425c1.508-1.48 2.929-1.902 4.112-2.112 0 0-2.151 1.69-2.151 3.96 0 1.687.043 5.801.043 5.801.799.771 1.986-.342 3.059-1.441Z"/></svg>Unreal Engine 5</span><span class="tool bpi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="3" width="8" height="6" rx="1.6" fill="currentColor"/><rect x="14.5" y="8.5" width="8" height="6" rx="1.6" fill="currentColor"/><rect x="1.5" y="15" width="8" height="6" rx="1.6" fill="currentColor" opacity=".75"/><path d="M9.5 6c3 0 2 5.5 5 5.5M9.5 18c3 0 2-6.5 5-6.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Blueprints</span><span class="tool cs"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.0283 10.216c-.3959 0-.7785.22-1.0792.6168l-3.7755 4.994c-.625.8275-1.5128 1.3012-2.4355 1.3012h-.0143c-.9236 0-1.8115-.4737-2.4355-1.3012l-3.7754-4.994c-.2998-.3969-.6823-.6168-1.0802-.6168-.3949 0-.7795.22-1.0781.6168l-3.7765 4.994c-.621.8204-1.4996 1.294-2.414 1.3012C3.088 21.186 7.2113 24 12.0004 24 18.6268 24 24 18.6276 24 12.001c0-.4705-.0338-.9308-.086-1.382-.2638-.2598-.5697-.403-.8857-.403m-7.019-2.5972c-.6936 0-1.2542-.5616-1.2542-1.2541s.5606-1.2541 1.2541-1.2541c.6925 0 1.254.5616 1.254 1.254s-.5615 1.2542-1.254 1.2542M12.0005 0C5.3732 0 0 5.3714 0 12.001c0 1.0536.1504 2.0704.406 3.0463.2272.175.4788.2762.7366.2762.3979 0 .7804-.2189 1.0812-.6138l3.7754-4.996c.623-.8285 1.5129-1.3021 2.4335-1.3021.9226 0 1.8095.4736 2.4355 1.3021l3.6323 4.8037.1565.1923c.2997.3939.6812.6107 1.074.6138.3918-.003.7743-.22 1.072-.6138l.1595-.1923 3.6323-4.8037c.624-.8285 1.5118-1.3021 2.4335-1.3021.1462 0 .2935.0163.4367.0388C21.9522 3.5557 17.3922 0 12.0005 0"/></svg>Cesium for Unreal</span></div>
-      <ul class="ticks">
-        <li>Develop and integrate interactive features based on client requests</li>
-        <li>Debug and optimize complex logic and Blueprints across multiple projects</li>
-        <li>Build custom UI elements and functionality for each client</li>
-      </ul>
+      <ul class="ticks">{''.join(f'<li>{e(b)}</li>' for b in SITE_TEXT["job_bullets"])}</ul>
     </div>
     <figure class="bp">
       <div class="win-bar"><span class="win-ico" aria-hidden="true"></span><span class="win-title">BP_ApartmentTour (illustration)</span><span class="win-ctl" aria-hidden="true"><i>&#x2212;</i><i>&#x25A1;</i><i class="x">&#x2715;</i></span></div>
@@ -656,8 +449,7 @@ def build_index():
   </div>
   <div class="wrap">
     <ol class="timeline">
-      <li><span class="when">2021–2024</span><b>Tiltan, Haifa</b><span class="muted">Game design &amp; development. Five games in Unity and Unreal.</span></li>
-      <li class="tl-now"><span class="when">02/2025 – Present</span><b>3DVision, Tel Aviv</b><span class="muted">Unreal developer on real-time simulation apps.</span></li>
+      {timeline_html()}
       <li class="tl-next"><span class="when">Next</span><b>Your team?</b><a class="muted" href="#contact">Open to Unity and Unreal roles →</a></li>
     </ol>
   </div>
@@ -665,7 +457,7 @@ def build_index():
 
 <section class="band blue palette-band" id="projects">
   <div class="wrap">
-    <div class="sec-head"><h2><span class="h-ico" style="--c:#ffd23f">{ICON_PAD}</span>Projects</h2><p class="muted">Six projects and the systems I coded for them. Each opens its own page with clips.</p></div>
+    <div class="sec-head"><h2><span class="h-ico" style="--c:#ffd23f">{ICON_PAD}</span>Projects</h2><p class="muted">{e(SITE_TEXT["projects_intro"])}</p></div>
     <div class="ptiles">{''.join(tiles)}</div>
   </div>
 </section>
@@ -683,8 +475,6 @@ def build_index():
     html += footer(0)
     (ROOT / "index.html").write_text(html)
 
-
-NEXT_CARD = {"tile-map-engine": "next-tile-map-engine", "infiltration": "next-infiltration", "almond-bar": "next-almond-bar"}
 
 def tbc_band(back_href, back_label):
     """End of the chain: no looping back to the first project."""
@@ -705,12 +495,6 @@ def next_band(nxt):
             f'<span class="next-title">{e(nxt["title"])} <span class="arr">→</span></span><span class="next-hook">{e(nxt["hook"])}</span></div>{art}</div></a>')
 
 
-SNIPPETS = {  # slug -> (file shown, link to the full file, local snippet)
-    "shards": ("SimpleTypeWriterEffect.cs · DialoguePage.cs", "",
-               "snippets/shards.cs"),
-    "tile-map-engine": ("RenderingManager.cs", "",
-                        "snippets/tile-map-engine.cs"),
-}
 CS_KW = set("""abstract as base bool break case catch class const continue default do double else enum event false float for foreach
 if in int interface internal is new null object out override private protected public readonly ref return sealed static string
 struct switch this throw true try typeof using var virtual void while yield nullptr auto const""".split())
@@ -744,57 +528,6 @@ def code_section(pj):
             f'<figure class="code"><figcaption><span class="dots"><i></i><i></i><i></i></span><span>{e(name)}</span>'
             f'</figcaption><pre><code>{highlight_cs(code)}</code></pre></figure>'
             f'<p class="muted small center">Trimmed and commented for this page.</p></section>')
-
-CODE_PAGES = [
-    dict(slug="deck-builder", title="Deck-Builder Card System", sub="Draw, discard and exhaust piles in Unity",
-         lang="C# · Unity", role="Programmer", when="05/2024 – 07/2024", context="",
-         theme=("#0f1f2e", "#1f4f6e", "#7fd1ff"),
-         hook="The card plumbing behind a deck-builder: piles, shuffling, and drawing into a hand.",
-         did=["Cards as ScriptableObject data (name, description, cost, art) turned into Card objects at runtime",
-              "One Pile class for the draw, discard and exhaust piles: draw from the top, add cards, shuffle",
-              "Reshuffling the draw pile together with the other piles when it runs out",
-              "A Deck that draws cards one by one into the hand with a slide animation, and keeps drawing after a reshuffle"],
-         tech=["C#", "Unity", "ScriptableObjects", "Coroutines", "Inheritance", "Lerp animation"],
-         flow=[("CardData", "ScriptableObject"), ("Pile", "draw · discard · exhaust"), ("Deck", "draws & reshuffles"), ("Hand", "cards slide in")],
-         clip=("Card draw", "Drawing cards into the hand.", "lab-cards.mp4", "1_WDc8rzjxa7d6zPILMB0E2DsOPjuMyQc"),
-         code=[("Pile.cs", "snippets/cards-1.cs"), ("Deck.cs", "snippets/cards-2.cs")]),
-    dict(slug="army-capture", title="Army Capture Mechanic", sub="My part of a mobile army game in Unity",
-         lang="C# · Unity 2D", role="Programmer · team project", when="12/2023 – 01/2024", context="Mobile prototype",
-         theme=("#2a1010", "#7a2a1f", "#ffb07a"),
-         hook="Beat an enemy army, stand in its circle, and its soldiers join yours.",
-         did=["The capture system: a trigger circle placed on the defeated army's commander and sized to the army",
-              "A countdown that runs while the player stays inside the circle; stepping out resets it",
-              "On capture, the defeated army's soldiers move over to the player's army",
-              "A world-space UI indicator for the capture, enemy raycasts that catch the player, and soldier attacks timed to the animation"],
-         tech=["C#", "Unity 2D", "Trigger colliders", "Countdown timer", "World-space UI", "Gizmos"],
-         flow=[("Enemy army beaten", "commander position"), ("Capture circle", "trigger collider"), ("Countdown", "stay inside"), ("Soldiers join you", "army grows")],
-         clip=None,
-         code=[("ArmyCaptureManager.cs", "snippets/capture.cs")]),
-    dict(slug="unity-tools", title="Reusable Unity Tools", sub="Systems from Shards, packaged to reuse",
-         lang="C# · Unity", role="Solo developer", when="12/2023", context="Extracted from Shards",
-         theme=("#10261a", "#2d6a4f", "#9be15d"),
-         hook="The dialogue system, a quest chain and a UI manager, pulled out of a game so the next one starts ahead.",
-         did=["The Shards dialogue system as a standalone package: sheets, page types, typewriter events, speech bubble",
-              "A UI manager that keeps one inspector slot per PanelEnum value in sync while editing, then opens and closes panels by enum",
-              "A quest chain: quests are ScriptableObjects linked through NextQuest; finishing one strikes it out and shows the next"],
-         tech=["C#", "Unity", "ScriptableObjects", "OnValidate", "Enums & dictionaries", "TextMeshPro"],
-         flow=[("Quest", "ScriptableObject"), ("NextQuest", "chained"), ("QuestManager", "strike out, show next"), ("UI_Manager", "panels by enum")],
-         clip=None,
-         code=[("UI_Manager.cs", "snippets/tools-1.cs"), ("Quest.cs · QuestManager.cs", "snippets/tools-2.cs")]),
-    dict(slug="post-office", title="Post Office Queue in C++", sub="A console queue simulation",
-         lang="C++ · STL", role="Solo developer", when="04/2024 – 05/2024", context="",
-         theme=("#16162e", "#3a3a7a", "#a5b4ff"),
-         hook="Customers take a number, officers call them by the service they handle, and elderly customers come first.",
-         did=["A hand-written doubly linked list of customers, kept sorted by the service each one needs",
-              "The same queue also built on std::list, chosen by a flag",
-              "Separate numbering for elderly customers (E1, E2…) and everyone else (Y1, Y2…)",
-              "Officers that look for the next customer of their service type, and move to the next type when nobody is waiting",
-              "Office settings and customer records read from and written to text files"],
-         tech=["C++", "Pointers", "Doubly linked list", "std::list", "File I/O", "OOP"],
-         flow=[("Settings file", "officers, senior age"), ("Customer queue", "linked list or std::list"), ("Officers", "by service type"), ("Records file", "customers saved")],
-         clip=None,
-         code=[("CustomerList.cpp", "snippets/postoffice-1.cpp"), ("Customer.cpp · PostOfficeLogic.cpp", "snippets/postoffice-2.cpp")]),
-]
 
 def code_figure(name, path):
     code = (ROOT / path).read_text().rstrip()

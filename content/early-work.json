@@ -1,0 +1,20 @@
+[
+  {
+    "label": "Upon the Dawn",
+    "caption": "An environmental hackathon game: destroy the polluting factories and bring back sun and flowers. I was one of two programmers; there was no artist on the team.",
+    "video": "/assets/clips/lab-uponthedawn.mp4",
+    "drive_id": "1UnovVrXcBiB45WCwJmY82AQ0reyyepL5"
+  },
+  {
+    "label": "My first project: a boss fight",
+    "caption": "My very first Unity game: a 2D platformer boss fight with a health heart, fireball attacks and a retry screen.",
+    "video": "/assets/clips/lab-firstboss.mp4",
+    "drive_id": "126SJ_eNvJFjB5OQVPowUp9PM7D6kmY9d"
+  },
+  {
+    "label": "Save & load",
+    "caption": "An early exercise: type a string, save it, and load it back.",
+    "video": "/assets/clips/lab-savestring.mp4",
+    "drive_id": "1RSi5jGjKOFYIemlezvZHC3fScOSxsg0-"
+  }
+]

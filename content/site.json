@@ -1,0 +1,33 @@
+{
+  "name": "Roee Tal",
+  "email": "roeetal17@gmail.com",
+  "phone": "(+972) 053-337-4350",
+  "linkedin": "https://www.linkedin.com/in/roee-tal/",
+  "showreel_video": "/assets/full/showreel.mp4",
+  "showreel_drive_id": "1rlhZHUS8bYwiMmg42SXIdjwMXsK0N5bz",
+  "hero_kicker": "Gameplay programmer · Unity C# & Unreal C++ / Blueprints",
+  "hero_lead": "I build the systems players touch: combat, AI, dialogue and UI. Unreal developer at 3DVision, trained in game design and development at Tiltan.",
+  "job_title": "Unreal Developer at 3DVision",
+  "job_subtitle": "Tel Aviv · real-time interactive simulation apps for real-estate companies",
+  "job_start": "2025-02",
+  "job_end": "",
+  "job_bullets": [
+    "Develop and integrate interactive features based on client requests",
+    "Debug and optimize complex logic and Blueprints across multiple projects",
+    "Build custom UI elements and functionality for each client"
+  ],
+  "timeline": [
+    {
+      "when": "2021–2024",
+      "title": "Tiltan, Haifa",
+      "text": "Game design & development. Five games in Unity and Unreal."
+    },
+    {
+      "when": "02/2025 – Present",
+      "title": "3DVision, Tel Aviv",
+      "text": "Unreal developer on real-time simulation apps."
+    }
+  ],
+  "projects_intro": "Six projects and the systems I coded for them. Each opens its own page with clips.",
+  "more_code_intro": "Smaller systems I built, each with a short page and real code from it."
+}

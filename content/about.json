@@ -1,0 +1,83 @@
+{
+  "intro": "Away from work I climb, play a lot of games, read anime, manga and comics, and I'm learning Japanese. I pick the parts for my own PCs and like digging into how new tech works.",
+  "hobbies": [
+    {
+      "name": "Bouldering",
+      "icon": "climbing",
+      "color": "#ff9f5a"
+    },
+    {
+      "name": "Anime & manga",
+      "icon": "book",
+      "color": "#ff7ae0"
+    },
+    {
+      "name": "Comics",
+      "icon": "speech",
+      "color": "#7fd1ff"
+    },
+    {
+      "name": "Learning Japanese",
+      "icon": "language",
+      "color": "#ff6b6b"
+    }
+  ],
+  "games": [
+    {
+      "name": "Portal 2",
+      "icon": "puzzle",
+      "color": "#7fd1ff"
+    },
+    {
+      "name": "Minecraft",
+      "icon": "cube",
+      "color": "#9be15d"
+    },
+    {
+      "name": "Sonic Adventure DX",
+      "icon": "bolt",
+      "color": "#5aa0ff"
+    },
+    {
+      "name": "Slay the Spire",
+      "icon": "cards",
+      "color": "#ff7ae0"
+    },
+    {
+      "name": "Grime",
+      "icon": "vortex",
+      "color": "#c9a7ff"
+    }
+  ],
+  "ai_kicker": "Side project · local AI",
+  "ai_title": "Running AI models on my own PC",
+  "ai_text": "I set up and run language and image models locally, no cloud: chat models, image generation pipelines and AI coding agents.",
+  "ai_tools": [
+    "LM Studio",
+    "Ollama",
+    "ComfyUI",
+    "Flux",
+    "LobeHub",
+    "OpenCode"
+  ],
+  "rig_title": "On a PC I specced for it",
+  "rig": [
+    {
+      "part": "CPU",
+      "value": "Ryzen 9 9950X3D"
+    },
+    {
+      "part": "RAM",
+      "value": "96 GB DDR5"
+    },
+    {
+      "part": "GPU",
+      "value": "RTX 3090 · dual-GPU ready"
+    },
+    {
+      "part": "PSU",
+      "value": "1600 W"
+    }
+  ],
+  "rig_note": "I chose every part with local AI in mind, then set up Windows and the drivers myself."
+}

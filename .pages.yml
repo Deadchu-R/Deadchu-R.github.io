@@ -1,0 +1,210 @@
+# Pages CMS editor for roeetal.com  (open https://app.pagescms.org and sign in with GitHub)
+# Every Save commits to GitHub; a GitHub Action then rebuilds the site (about 1-2 minutes).
+
+media:
+  input: assets
+  output: /assets
+  extensions: [jpg, jpeg, png, webp, gif, mp4, mov, webm, pdf]
+
+content:
+  # ------------------------------------------------------------------ main page
+  - name: site
+    label: Main page
+    type: file
+    path: content/site.json
+    format: json
+    fields:
+      - { name: hero_kicker, label: "Top line (small yellow text)", type: string }
+      - { name: hero_lead, label: "Intro paragraph", type: text }
+      - { name: job_title, label: "Current job title", type: string }
+      - { name: job_subtitle, label: "Job subtitle", type: string }
+      - { name: job_start, label: "Job start (YYYY-MM)", type: string }
+      - { name: job_end, label: "Job end (YYYY-MM, leave empty while you still work there)", type: string }
+      - { name: job_bullets, label: "What you do at the job", type: string, list: true }
+      - name: timeline
+        label: Timeline
+        type: object
+        list: { collapsible: true, summary: "{when} · {title}" }
+        fields:
+          - { name: when, type: string }
+          - { name: title, type: string }
+          - { name: text, type: string }
+      - { name: projects_intro, label: "Projects section intro", type: string }
+      - { name: more_code_intro, label: "More code section intro", type: string }
+      - { name: email, type: string }
+      - { name: phone, type: string }
+      - { name: linkedin, label: "LinkedIn URL", type: string }
+      - { name: showreel_video, label: "Showreel video", type: file, options: { path: assets/uploads } }
+      - { name: name, type: string, hidden: true }
+      - { name: showreel_drive_id, type: string, hidden: true }
+
+  # ------------------------------------------------------------------ projects
+  - name: projects
+    label: Projects
+    type: file
+    path: content/projects.json
+    format: json
+    list: true
+    fields:
+      - { name: title, type: string, required: true }
+      - { name: slug, label: "Page address (lowercase-with-dashes, unique)", type: string, required: true }
+      - { name: subtitle, type: string }
+      - { name: engine, label: "Engine / language line", type: string }
+      - { name: card_role, label: "Role tag on the card", type: string }
+      - { name: card_tech, label: "Tech list on the card (comma separated)", type: text }
+      - { name: role, label: "Role (project page)", type: string }
+      - { name: when, type: string }
+      - { name: context, type: string }
+      - { name: color_main, label: "Main color (#hex)", type: string }
+      - { name: color_deep, label: "Dark color (#hex)", type: string }
+      - { name: color_accent, label: "Accent color (#hex)", type: string }
+      - { name: cover, label: "Cover image", type: image, options: { path: assets/uploads } }
+      - { name: mascot, label: "Character cut-out on the card (optional, transparent PNG)", type: image, options: { path: assets/uploads } }
+      - { name: next_card_image, label: "Square image for 'Next project' (if no character)", type: image, options: { path: assets/uploads } }
+      - { name: hook, label: "One-line hook", type: string }
+      - { name: what_i_built, label: "What I built", type: text, list: true }
+      - { name: teammates_built, label: "What teammates built (optional)", type: text, list: true }
+      - { name: tech, label: "Tech & principles", type: string, list: true }
+      - name: code_sample
+        label: Code sample (optional)
+        type: object
+        fields:
+          - { name: file_label, label: "File name shown", type: string }
+          - { name: code, type: code, options: { format: javascript } }
+      - name: sections
+        label: Clip sections
+        type: object
+        list: { collapsible: true, summary: "{title}" }
+        fields:
+          - { name: title, type: string }
+          - { name: intro, type: string }
+          - name: clips
+            type: object
+            list: { collapsible: true, summary: "{label}" }
+            fields:
+              - { name: label, type: string }
+              - { name: caption, type: string }
+              - { name: video, label: "Video (short clip)", type: file, options: { path: assets/uploads } }
+              - { name: drive_id, type: string, hidden: true }
+      - name: screenshots
+        type: object
+        list: { collapsible: true, summary: "{caption}" }
+        fields:
+          - { name: image, type: image, options: { path: assets/uploads } }
+          - { name: caption, type: string }
+      - { name: full_video, label: "Full video (optional)", type: file, options: { path: assets/uploads } }
+      - { name: full_video_drive_id, type: string, hidden: true }
+      - { name: about, label: "About the project (paragraphs)", type: text, list: true }
+      - name: characters
+        type: object
+        list: { collapsible: true, summary: "{name}" }
+        fields:
+          - { name: image, type: image, options: { path: assets/uploads } }
+          - { name: name, type: string }
+          - { name: caption, type: string }
+      - { name: team_art, label: "Art was made by teammates", type: boolean }
+      - { name: credits, label: "Credits line", type: text }
+
+  # ------------------------------------------------------------------ more code
+  - name: code-pages
+    label: More code
+    type: file
+    path: content/code-pages.json
+    format: json
+    list: true
+    fields:
+      - { name: title, type: string, required: true }
+      - { name: slug, label: "Page address (lowercase-with-dashes, unique)", type: string, required: true }
+      - { name: subtitle, type: string }
+      - { name: language, type: string }
+      - { name: role, type: string }
+      - { name: when, type: string }
+      - { name: context, type: string }
+      - { name: color_main, label: "Main color (#hex)", type: string }
+      - { name: color_deep, label: "Dark color (#hex)", type: string }
+      - { name: color_accent, label: "Accent color (#hex)", type: string }
+      - { name: hook, label: "One-line hook", type: string }
+      - { name: what_i_built, label: "What I built", type: text, list: true }
+      - { name: tech, type: string, list: true }
+      - name: flow
+        label: How it fits together (steps)
+        type: object
+        list: true
+        fields:
+          - { name: name, type: string }
+          - { name: note, type: string }
+      - name: clip
+        label: Clip (optional)
+        type: object
+        fields:
+          - { name: label, type: string }
+          - { name: caption, type: string }
+          - { name: video, type: file, options: { path: assets/uploads } }
+          - { name: drive_id, type: string, hidden: true }
+      - name: code
+        label: Code blocks
+        type: object
+        list: { collapsible: true, summary: "{file_label}" }
+        fields:
+          - { name: file_label, label: "File name shown", type: string }
+          - { name: code, type: code, options: { format: javascript } }
+
+  # ------------------------------------------------------------------ lab, early work, about
+  - name: lab
+    label: Lab
+    type: file
+    path: content/lab.json
+    format: json
+    list: true
+    fields:
+      - { name: label, type: string }
+      - { name: caption, type: string }
+      - { name: video, type: file, options: { path: assets/uploads } }
+      - { name: drive_id, type: string, hidden: true }
+
+  - name: early-work
+    label: Early work (lab appendix)
+    type: file
+    path: content/early-work.json
+    format: json
+    list: true
+    fields:
+      - { name: label, type: string }
+      - { name: caption, type: string }
+      - { name: video, type: file, options: { path: assets/uploads } }
+      - { name: drive_id, type: string, hidden: true }
+
+  - name: about
+    label: Get to know me
+    type: file
+    path: content/about.json
+    format: json
+    fields:
+      - { name: intro, type: text }
+      - name: hobbies
+        type: object
+        list: { collapsible: true, summary: "{name}" }
+        fields:
+          - { name: name, type: string }
+          - { name: icon, type: select, options: { values: [climbing, book, speech, language, puzzle, cube, bolt, cards, vortex, gamepad, sword, music, camera, star, heart, chip] } }
+          - { name: color, label: "Color (#hex)", type: string }
+      - name: games
+        label: Favorite games
+        type: object
+        list: { collapsible: true, summary: "{name}" }
+        fields:
+          - { name: name, type: string }
+          - { name: icon, type: select, options: { values: [puzzle, cube, bolt, cards, vortex, gamepad, sword, music, camera, star, heart, chip, climbing, book, speech, language] } }
+          - { name: color, label: "Color (#hex)", type: string }
+      - { name: ai_kicker, type: string }
+      - { name: ai_title, type: string }
+      - { name: ai_text, type: text }
+      - { name: ai_tools, type: string, list: true }
+      - { name: rig_title, type: string }
+      - name: rig
+        type: object
+        list: true
+        fields:
+          - { name: part, type: string }
+          - { name: value, type: string }
+      - { name: rig_note, type: text }

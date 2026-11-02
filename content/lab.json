@@ -1,0 +1,80 @@
+[
+  {
+    "label": "World-bending shader",
+    "caption": "A shader that bends the world as it moves away from the camera.",
+    "video": "/assets/clips/lab-worldbend.mp4",
+    "drive_id": "1w8G1TMj93LvZqCNxYdG46o4rOHp4_2i2"
+  },
+  {
+    "label": "Toon shader",
+    "caption": "Cel-shaded lighting with hard color steps.",
+    "video": "/assets/clips/lab-toon.mp4",
+    "drive_id": "17zl6JE6t6rm-GDynooXcIjXIdwDehpk6"
+  },
+  {
+    "label": "Hatching in Shader Graph",
+    "caption": "Pencil-style hatching shading, built in Shader Graph.",
+    "video": "/assets/clips/lab-hatching.mp4",
+    "drive_id": "1Sne0ks3fKGrbedu_LFnLIw84JBKD-g9a"
+  },
+  {
+    "label": "Plane-bending shader",
+    "caption": "A shader that curves a flat plane.",
+    "video": "/assets/clips/lab-planebend.mp4",
+    "drive_id": "1lEnZM78NR3td-blCaTno0pfAXRFfc597"
+  },
+  {
+    "label": "Multiplayer login UI",
+    "caption": "Login and password screen for a multiplayer game.",
+    "video": "/assets/clips/lab-mpui.mp4",
+    "drive_id": "1Cy7YyN8rTMAOnD0nJ3wLVHLuxE2zXoeL"
+  },
+  {
+    "label": "Escape-room camera",
+    "caption": "Camera control for an escape-room game.",
+    "video": "/assets/clips/lab-escapecam.mp4",
+    "drive_id": "1t1hd1aLov8GhUp2G_fn2yfejbeJVwUdd"
+  },
+  {
+    "label": "AI training",
+    "caption": "Training an AI agent.",
+    "video": "/assets/clips/lab-aitraining.mp4",
+    "drive_id": "1fDZRyrlEcJ4YKWOP8dyob5qL3pHyhs_M"
+  },
+  {
+    "label": "Portal × Angry Birds",
+    "caption": "Angry Birds-style launching, with portals.",
+    "video": "/assets/clips/lab-portal.mp4",
+    "drive_id": "1hr7Xf76Kqlwt1apXkOBeSaaSp1PVswgI"
+  },
+  {
+    "label": "3-lane runner",
+    "caption": "A hyper-casual three-lane runner.",
+    "video": "/assets/clips/lab-runner.mp4",
+    "drive_id": "1aEOUM2jy6SdJU2bQzpZQ59jWytxGDc66"
+  },
+  {
+    "label": "Space Invaders",
+    "caption": "A Space Invaders remake.",
+    "video": "/assets/clips/lab-invaders.mp4",
+    "drive_id": "1kC6Ikjb6H7kVDjeW56lN_Uv9p8GIGsbq"
+  },
+  {
+    "label": "Snake",
+    "caption": "A Snake remake.",
+    "video": "/assets/clips/lab-snake.mp4",
+    "drive_id": "14TZn87SvelWovus4Zn1E_RqhUrwqV5jg"
+  },
+  {
+    "label": "Snow shader",
+    "caption": "A shader that covers objects in snow.",
+    "video": "/assets/clips/lab-snow.mp4",
+    "drive_id": "164BZh7NNCB082xrTOb3skcxzQ4GvIAGH"
+  },
+  {
+    "label": "Aquarium in Unreal 4",
+    "caption": "An aquarium scene built in Unreal Engine 4.",
+    "video": "/assets/clips/lab-aquarium.mp4",
+    "drive_id": "1n7Sllz8QFlxmMBKCmnPvlq9hYfAx8_-d"
+  }
+]
