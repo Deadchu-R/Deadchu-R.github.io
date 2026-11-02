@@ -159,8 +159,13 @@ def full_video(path):
     return name
 
 
+POSTERS = {}  # clip file -> image key of a thumbnail the owner picked
+
+
 def _clip_tuple(c):
     f = clip_file(c.get("video"))
+    if c.get("poster") and f:
+        POSTERS[f] = image_key(c["poster"])
     return (c.get("label", ""), c.get("caption", ""), f, c.get("drive_id", "") or "")
 
 
@@ -333,9 +338,25 @@ for cp in _load("code-pages.json"):
         hook=cp.get("hook", ""), did=cp.get("what_i_built", []), tech=cp.get("tech", []),
         flow=[(f.get("name", ""), f.get("note", "")) for f in cp.get("flow", [])],
         clip=_clip_tuple(cp["clip"]) if cp.get("clip") and cp["clip"].get("video") else None,
-        code=codes, code_idx=[i for i, _ in _cs], page_order=cp.get("page_order", []), buttons=cp.get("buttons") or {},
+        code=codes, code_idx=[i for i, _ in _cs], cover=image_key(cp.get("cover")) if cp.get("cover") else "", page_order=cp.get("page_order", []), buttons=cp.get("buttons") or {},
     ))
 
 # ---------------------------------------------------------------- lab + early work
-LAB = [(c.get("label", ""), clip_file(c.get("video")), c.get("drive_id", "") or "", c.get("caption", "")) for c in _load("lab.json")]
-EARLY = [(c.get("label", ""), clip_file(c.get("video")), c.get("drive_id", "") or "", c.get("caption", "")) for c in _load("early-work.json")]
+def _lab(c):
+    lbl, cap, f, d = _clip_tuple(c)
+    return (lbl, f, d, cap)
+LAB = [_lab(c) for c in _load("lab.json")]
+EARLY = [_lab(c) for c in _load("early-work.json")]
+
+# media the owner can swap: the Blueprint illustration, the lab header
+def _media(path):
+    """Image -> ('img', key); video or GIF -> ('video', web path); nothing -> ('', '')."""
+    path = str(path or "")
+    if not path:
+        return ("", "")
+    if path.lower().rsplit(".", 1)[-1] in ("mp4", "mov", "webm", "m4v", "gif"):
+        v = bg_video(path)
+        return ("video", v) if v else ("", "")
+    return ("img", image_key(path))
+SITE_TEXT["_bp"] = _media(_site.get("bp_media"))
+SITE_TEXT["_lab_cover"] = image_key(_site.get("lab_cover")) if _site.get("lab_cover") else ""

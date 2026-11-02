@@ -53,12 +53,30 @@
   "ai_title": "Running AI models on my own PC",
   "ai_text": "I set up and run language and image models locally, no cloud: chat models, image generation pipelines and AI coding agents.",
   "ai_tools": [
-    "LM Studio",
-    "Ollama",
-    "ComfyUI",
-    "Flux",
-    "LobeHub",
-    "OpenCode"
+    {
+      "label": "LM Studio",
+      "icon": ""
+    },
+    {
+      "label": "Ollama",
+      "icon": ""
+    },
+    {
+      "label": "ComfyUI",
+      "icon": ""
+    },
+    {
+      "label": "Flux",
+      "icon": ""
+    },
+    {
+      "label": "LobeHub",
+      "icon": ""
+    },
+    {
+      "label": "OpenCode",
+      "icon": ""
+    }
   ],
   "rig_title": "On a PC I specced for it",
   "rig": [

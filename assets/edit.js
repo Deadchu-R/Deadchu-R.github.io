@@ -148,6 +148,8 @@
   #rt-bar .rt-eye{font-size:17px}
   .rt-gif{object-fit:cover}
   .clip .rt-gif{position:absolute;inset:0;width:100%;height:100%;border-radius:inherit}
+  .rt-on .peekcat{pointer-events:auto}
+  .rt-on .peekcat img{transform:translateY(8%) rotate(-4deg)!important;cursor:pointer}
   .rt-hist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;margin:10px 0}
   .rt-hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid #2c2c2c;border-radius:10px;background:#1b1b1b}
   .rt-hrow div{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -373,6 +375,10 @@
   function unitName(u){
     if(u.hasAttribute("data-i")){const lp=listPath(u)||"";const last=lp.split(/[:.]/).pop();return LIST_NAMES[last]||LIST_NAMES[lp]||"Item"}
     if(u.hasAttribute("data-k"))return "Section · "+(KEY_NAMES[u.dataset.k]||u.dataset.k);
+    if(u.classList.contains("bp"))return "Illustration window";
+    if(/showreel/.test(u.dataset.m||""))return "Showreel button";
+    if(u.classList.contains("repo"))return "Code card";
+    if(/peek/.test(u.dataset.m||""))return "Peeking character";
     if(u.hasAttribute("data-m"))return u.dataset.mk==="video"?"Video":"Image";
     if(u.classList.contains("phero"))return "Page header";
     if(u.classList.contains("hero"))return "Top of the page";
@@ -414,7 +420,7 @@
     show(T.edit,!!clickedText);show(T.media,!!clickedMedia);
     show(T.dup,current.hasAttribute("data-i"));show(T.del,current.hasAttribute("data-i"));
     show(T.gear,hasSettings(current));
-    show(T.bg,fieldsOf(current).some(f=>/^(video|image|art)$/.test(f[2])&&/background|cover/i.test(f[0])));
+    show(T.bg,fieldsOf(current).some(f=>/^(video|image|art|media)$/.test(f[2])&&/background|cover|picture|thumbnail/i.test(f[0])));
     show(T.add,current.hasAttribute("data-add"));T.gear.classList.toggle("on",panelOpen);
     show(T.parent,!!chain[chain.indexOf(current)+1]);
     tb.style.display="flex";
@@ -556,7 +562,7 @@
   }
   function pickFile(kind){
     return new Promise(done=>{
-      const inp=h("input",{type:"file",accept:kind==="video"?"video/*,image/gif":"image/*",style:"display:none"});   // icons: any image, GIF included
+      const inp=h("input",{type:"file",accept:kind==="video"?"video/*,image/gif":kind==="media"?"image/*,video/*":"image/*",style:"display:none"});   // icons: any image, GIF included
       inp.addEventListener("change",()=>{done(inp.files[0]||null);inp.remove()});
       ui.append(inp);inp.click();
     });
@@ -588,8 +594,9 @@
     const blob=await new Promise(ok=>c.toBlob(ok,alpha?"image/png":"image/jpeg",.88));
     return{blob,ext:alpha?"png":"jpg"};
   }
-  async function replaceMedia(path,kind,el){
-    const file=await pickFile(kind);if(!file)return;
+  async function replaceMedia(path,kind0,el){
+    const file=await pickFile(kind0);if(!file)return;
+    let kind=kind0;if(kind==="media")kind=file.type.startsWith("video/")||file.type==="image/gif"?"video":"image";   // either works here
     let blob=file,ext=(file.name.split(".").pop()||"").toLowerCase(),note="";
     try{
       if(kind==="video"){
@@ -600,7 +607,7 @@
     }catch(e){alertBox(e.message);return}
     const url=URL.createObjectURL(blob),isGif=blob.type==="image/gif"||ext==="gif";
     const choice=await previewBox(url,kind==="video"&&!isGif?"video":"image",file.name,note,kind==="icon");
-    if(choice==="again"){URL.revokeObjectURL(url);return replaceMedia(path,kind,el)}
+    if(choice==="again"){URL.revokeObjectURL(url);return replaceMedia(path,kind0,el)}
     if(choice!=="use"){URL.revokeObjectURL(url);return}
     const repoPath=`assets/uploads/${slugify(file.name)}-${rand()}.${ext}`;
     const old=get(path);if(typeof old==="string"&&old.startsWith("/assets/uploads/"))uploads.delete(old.slice(1));
@@ -621,7 +628,12 @@
     if(heroMain){set("site:hero_video_mobile","/"+repoPath);pending.set("site:hero_video_mobile",pending.get(path))}   // same video on phones unless a phone version is picked
     $$("[data-bg]").filter(b=>b.dataset.bg.split(" ").includes(path)).forEach(b=>{
       if(b.tagName==="VIDEO"){if(heroPhone&&!tall)return;isGif?swapVideo(b):setVideo(b);b.scrollIntoView&&scrollTo({top:0,behavior:"smooth"})}
-      else b.src=url});
+      else{b.src=url;b.hidden=false;if(b.parentElement&&b.parentElement.hidden)b.parentElement.hidden=false}});
+    if(path==="site:bp_media"){                 // the Blueprint window: swap the drawing for the new picture
+      const body=$(".bp-body");if(body){$$(":scope>svg,:scope>.bp-media",body).forEach(x=>x.remove());
+        const m=kind==="video"&&!isGif?h("video",{class:"bp-media",src:url,autoplay:true,muted:true,loop:true,playsinline:true}):h("img",{class:"bp-media",src:url,alt:""});
+        body.append(m);if(m.play)m.play().catch(()=>{})}}
+    if(path.endsWith(".poster")){const v=el&&$("video",el);if(v){v.poster=url;v.removeAttribute("src");v.load()}}
     panelOpen=false;renderPanel();                       // close settings so the new media is in view
     if(/(showreel_video|full_video)$/.test(path)){toast("Saved. This video opens when someone taps its play button; tap it in 👁 Preview to watch it.");renderPanel();return}
     if(heroPhone&&!tall){toast("Saved as the phone version: it shows on phones (tap 👁 Preview on your phone to see it).");renderPanel();return}
@@ -655,17 +667,17 @@
       t.addEventListener("change",()=>{const v=t.value.trim();if(/^#[0-9a-f]{6}$/i.test(v)){c.value=v;set(path,v);previewColor(holder,path,v,opts)}else t.value=get(path)||""});
       wrap.append(h("div",{class:"rt-color"},c,t));
     }else if(type==="select"){
-      const own=path.endsWith(".icon")&&/^\//.test(val);
+      const own=/icon$/.test(path)&&/^\//.test(val);
       const s=h("select",{},...(own?[h("option",{value:val,selected:true},"(your image)")]:[]),...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));
-      if(path.endsWith(".icon"))setTimeout(()=>wrap.append(h("div",{class:"rt-row",style:"margin-top:6px"},
+      if(/icon$/.test(path))setTimeout(()=>wrap.append(h("div",{class:"rt-row",style:"margin-top:6px"},
         h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,"icon",holder)}},"⬆ Upload your own icon (image / GIF)")),thumb(path)||h("p",{class:"rt-hint"},"Best: a square image, 128×128 px. Bigger ones are shrunk for you.")));
-      s.addEventListener("change",()=>{set(path,s.value);if(path.endsWith(".layout"))previewLayout(holder,s.value);if(path.endsWith(".icon"))previewIcon(path,s.value);
+      s.addEventListener("change",()=>{set(path,s.value);if(path.endsWith(".layout"))previewLayout(holder,s.value);if(/icon$/.test(path))previewIcon(path,s.value);
         if(path.endsWith(".style")&&holder.classList.contains("btn"))holder.classList.toggle("ghost",s.value==="ghost");
         if(path.endsWith(".align"))holder.className=holder.className.replace(/\bal-\w+/,"al-"+s.value);
         if(path.endsWith(".position")){const sec=holder.closest("[data-k]"),w=holder.parentElement,bar=$(":scope>.rt-secbar",sec);
           holder.classList.toggle("top",s.value==="top");if(s.value==="top")(bar?bar.after(w):sec.prepend(w));else sec.append(w);place()}});
       wrap.append(s);
-    }else if(type==="image"||type==="art"||type==="video"){
+    }else if(type==="image"||type==="art"||type==="video"||type==="media"){
       wrap.append(h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,type,holder)}},val?"Replace…":"Add…"),
         val&&!/^(cover)$/.test(path.split(".").pop())?h("button",{class:"rt-btn sm dan",type:"button",on:{click:()=>{set(path,"");renderPanel();toast("Removed. The site updates after you publish.")}}},"Remove"):null),
         thumb(path)||h("div",{class:"rt-file"},val?String(val).split("/").pop():"none"));
@@ -699,7 +711,7 @@
     if(!current||!panelOpen){panel.style.display="none";place();return}
     const u=current;
     panel.append(h("div",{class:"rt-head"},h("span",{},unitName(u)),h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{panelOpen=false;renderPanel()}}},"✕")));
-    const mseen=new Set(),fl=fieldsOf(u),isMediaF=f=>/^(video|image|art)$/.test(f[2]);
+    const mseen=new Set(),fl=fieldsOf(u),isMediaF=f=>/^(video|image|art|media)$/.test(f[2]);
     fl.filter(isMediaF).forEach(f=>{mseen.add(f[1]);panel.append(field(u,f))});   // backgrounds / covers first
     mediaOf(u).forEach(m=>{const p=m.dataset.m;if(mseen.has(p))return;mseen.add(p);
       const kind=m.dataset.mk,last=p.split(/[.:]/).pop(),lab={showreel_video:"Video that opens from the \u201cWatch showreel\u201d button",full_video:"Full video",mascot:"Character cut-out",cover:"Cover image",video:"Clip video"}[last]||(kind==="video"?"Video":"Image");
