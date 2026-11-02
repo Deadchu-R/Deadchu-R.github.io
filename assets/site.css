@@ -875,3 +875,12 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .hero-panel .lead{margin-bottom:16px}
 .hero-panel h1,.hero-panel .kicker,.hero-panel .lead{text-shadow:0 2px 14px rgba(0,0,0,.35)}
 @media (max-width:600px){.hero-panel{margin-left:-10px;margin-right:-10px;max-width:none;width:auto;border-radius:18px}}
+/* TV: a big, obvious highlight on whatever the remote is on; no heavy glass effects */
+html.tv :focus{outline:4px solid #ffd23f!important;outline-offset:5px!important;box-shadow:0 0 0 9px rgba(255,210,63,.28)!important;border-radius:14px;position:relative;z-index:5}
+html.tv :is(.ptile,.repo,.mech,.clip,.cs-card):focus{transform:scale(1.035)!important}
+html.tv :is(.btn,.hero-links a,.topbar nav a):focus{transform:scale(1.08)}
+html.tv .reveal{opacity:1!important;transform:none!important}
+html.tv *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.tv .hero-panel{background:rgba(8,16,44,.72)!important}
+html.tv .topbar nav a{padding:6px 4px}
+html.tv .sound-btn{display:none}

@@ -369,3 +369,64 @@
     if(e.target.closest("a,button,.clip,.zoom,summary")&&!e.target.closest(".sound-btn"))window.rtSound.click(cfg.click,cfg.cv);
   },true);
 })();
+
+/* ---------- TVs (TCL / Google TV / Android TV, Samsung, LG…): bigger, remote-friendly.
+   The arrows move a clear highlight to the nearest button or link in that direction, OK opens it, Back closes / goes back. */
+(function(){
+  const ua=navigator.userAgent||"";
+  const isTV=/smart-?tv|smarttv|google ?tv|android tv|\bAFT[A-Z]|bravia|tizen|web0s|webos|netcast|hbbtv|viera|philipstv|\bTCL\b|roku|crkey|appletv|largescreen|\bTV\b/i.test(ua)
+    ||/[?&]tv=1/.test(location.search)||(()=>{try{return localStorage.getItem("rt-tv")==="1"}catch(e){return false}})()
+    ||(matchMedia("(any-pointer: none)").matches&&matchMedia("(min-width: 900px)").matches);
+  if(/[?&]tv=0/.test(location.search)){try{localStorage.removeItem("rt-tv")}catch(e){}return}
+  if(!isTV)return;
+  try{if(/[?&]tv=1/.test(location.search))localStorage.setItem("rt-tv","1")}catch(e){}
+  const html=document.documentElement;html.classList.add("tv");
+  // a 1920-wide TV page is read from the couch: scale it like a 1280-wide screen
+  // (done with the viewport, like a phone does, so the browser scales everything natively)
+  const zoom=()=>{const m=document.querySelector('meta[name=viewport]');if(m&&screen.width>=1500&&!m.dataset.tv){m.dataset.tv="1";m.setAttribute("content","width=1280, viewport-fit=cover")}};
+  const SEL='a[href],button:not([disabled]),summary,input,select,textarea,[tabindex]:not([tabindex="-1"]),video[controls]';
+  const visible=el=>{if(el.closest("[hidden],.rt-ui")&&!el.closest(".jump"))return false;const r=el.getBoundingClientRect();if(r.width<4||r.height<4)return false;const cs=getComputedStyle(el);return cs.visibility!=="hidden"&&cs.display!=="none"&&+cs.opacity>.05};
+  const center=r=>({x:r.left+r.width/2,y:r.top+r.height/2});
+  function best(dir){
+    const cur=document.activeElement&&document.activeElement!==document.body?document.activeElement:null;
+    const viewer=document.querySelector("#viewer:not([hidden])"),scope=viewer||document;
+    const all=[...scope.querySelectorAll(SEL)].filter(visible);
+    if(!cur||!all.includes(cur)){                                        // nothing highlighted yet: start with the first thing on screen
+      return all.find(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight})||all[0]}
+    const a=cur.getBoundingClientRect(),c=center(a);let pick=null,score=1e9;
+    for(const el of all){if(el===cur||cur.contains(el)||el.contains(cur))continue;const r=el.getBoundingClientRect(),p=center(r);
+      const dx=p.x-c.x,dy=p.y-c.y;
+      const ok=dir==="r"?r.left>=a.right-4:dir==="l"?r.right<=a.left+4:dir==="d"?r.top>=a.bottom-4:r.bottom<=a.top+4;if(!ok)continue;
+      const main=dir==="r"||dir==="l"?Math.abs(dx):Math.abs(dy),side=dir==="r"||dir==="l"?Math.abs(dy):Math.abs(dx);
+      const s=main+side*2.2;if(s<score){score=s;pick=el}}
+    return pick;
+  }
+  addEventListener("keydown",e=>{
+    const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!/^Arrow(Up|Down)$/.test(e.key)))return;
+    const dir={ArrowRight:"r",ArrowLeft:"l",ArrowDown:"d",ArrowUp:"u"}[e.key];
+    if(dir){
+      const el=best(dir);e.preventDefault();
+      // the next link is far below (or above): scroll through the text in between first, so nothing is skipped
+      const cur=document.activeElement,cr=cur&&cur!==document.body?cur.getBoundingClientRect():null,er=el&&el.getBoundingClientRect();
+      if(el&&cr&&((dir==="d"&&er.top-Math.max(cr.bottom,0)>innerHeight*.8)||(dir==="u"&&Math.min(cr.top,innerHeight)-er.bottom>innerHeight*.8))){
+        scrollBy({top:(dir==="d"?1:-1)*innerHeight*.6,behavior:"smooth"});return}
+      if(el){el.focus({preventScroll:true});el.scrollIntoView({block:"center",inline:"nearest",behavior:"smooth"})}
+      else if(dir==="d"||dir==="u")scrollBy({top:(dir==="d"?1:-1)*innerHeight*.45,behavior:"smooth"});   // long text with no links: just scroll
+      return;
+    }
+    const back=e.key==="Escape"||e.key==="GoBack"||e.key==="BrowserBack"||e.keyCode===10009||e.keyCode===461||(e.key==="Backspace"&&t===document.body);
+    if(back){
+      const v=document.querySelector("#viewer:not([hidden])");if(v){e.preventDefault();const c=document.getElementById("viewerClose");if(c)c.click();return}
+      const j=document.querySelector(".jump.open,.jump [aria-expanded=true]");if(j){e.preventDefault();const b=document.querySelector(".jump-btn");if(b)b.click();return}
+      if(e.key==="Backspace"){e.preventDefault();history.back()}
+    }
+    if((e.key==="Enter"||e.key===" ")&&t&&t.matches&&t.matches(".clip,.zoom,[data-src],[role=button]")&&!t.matches("a,button")){e.preventDefault();t.click()}
+  },true);
+  const ready=()=>{zoom();addEventListener("resize",zoom);
+    // things that open on click but aren't links or buttons become reachable with the remote
+    document.querySelectorAll(".clip,.zoom,.mech [data-src],.ptile,.repo").forEach(el=>{if(!el.matches("a,button")&&!el.hasAttribute("tabindex"))el.setAttribute("tabindex","0")});
+    const v=document.querySelector(".hero-video");if(v&&matchMedia("(prefers-reduced-motion: reduce)").matches)v.pause();
+    setTimeout(()=>{const f=best("d");if(f)f.focus({preventScroll:true})},600);
+  };
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ready);else ready();
+})();

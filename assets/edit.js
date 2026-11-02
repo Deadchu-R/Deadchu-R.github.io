@@ -1791,6 +1791,9 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     else{if(!l){l=document.createElement("link");l.rel="stylesheet";l.id="skin-css";document.head.append(l)}l.href=new URL("skins/"+k+".css",ME).href}
     const start=()=>{try{window.RTSkins&&RTSkins[k]&&RTSkins[k].on()}catch(e){}};
     if(k!=="classic"&&!(window.RTSkins&&RTSkins[k])){const sc=document.createElement("script");sc.src=new URL("skins/"+k+".js",ME).href;sc.onload=start;sc.onerror=()=>sc.remove();document.head.append(sc)}else start();
+    const guard=()=>{if(window.RTGuard){RTGuard.soon(700);setTimeout(()=>RTGuard.fix(),1800)}};
+    if(!window.RTGuard){const g=document.createElement("script");g.src=new URL("skins/guard.js",ME).href;g.onload=guard;document.head.append(g)}else guard();
+    if(l&&k!=="classic")l.onload=guard;
     setTimeout(()=>{place();secBars()},300);
     toast(`Style: ${SKIN_NAMES[k]}. Look around (👁 Preview to try it like a visitor), then Publish to make it live.`);
   }

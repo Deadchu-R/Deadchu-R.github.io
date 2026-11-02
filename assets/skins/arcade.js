@@ -21,7 +21,8 @@
     snd.addEventListener("click",()=>{st.sound=!st.sound;snd.textContent=st.sound?"SOUND ON":"SOUND OFF";beep(660,.1)});
     const press=(k,v)=>{st.keys[k]=v;if(k==="j"&&v)jump()};
     pad.querySelectorAll("button").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();press(b.dataset.k,true)});["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,()=>press(b.dataset.k,false)))});
-    st.kd=e=>{if((document.documentElement.classList.contains("rt-on")&&!document.documentElement.classList.contains("rt-preview"))||/INPUT|TEXTAREA/.test((e.target||{}).tagName||"")||e.target.isContentEditable)return;
+    st.kd=e=>{if(document.documentElement.classList.contains("tv"))return;   // TV remote: the arrows move between links instead
+      if((document.documentElement.classList.contains("rt-on")&&!document.documentElement.classList.contains("rt-preview"))||/INPUT|TEXTAREA/.test((e.target||{}).tagName||"")||e.target.isContentEditable)return;
       const r=hero.getBoundingClientRect();if(r.bottom<80)return;
       const k={ArrowLeft:"l",a:"l",A:"l",ArrowRight:"r",d:"r",D:"r",ArrowUp:"j",w:"j",W:"j"," ":"j"}[e.key];if(!k)return;
       if(e.type==="keydown"){if(k==="j"&&!st.keys.j)jump();st.keys[k]=true;e.preventDefault()}else st.keys[k]=false};

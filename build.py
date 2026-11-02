@@ -103,7 +103,10 @@ def skin_css(p):
     return f'\n<link rel="stylesheet" href="{p}assets/skins/{SKIN}.css?v={ver("assets/skins/" + SKIN + ".css")}" id="skin-css">' if SKIN != "classic" else ""
 def skin_js(p):
     f = ROOT / "assets/skins" / (SKIN + ".js")
-    return f'<script src="{p}assets/skins/{SKIN}.js?v={ver("assets/skins/" + SKIN + ".js")}" defer></script>\n' if SKIN != "classic" and f.exists() else ""
+    if SKIN == "classic":
+        return ""
+    g = f'<script src="{p}assets/skins/guard.js?v={ver("assets/skins/guard.js")}" defer></script>\n'
+    return g + (f'<script src="{p}assets/skins/{SKIN}.js?v={ver("assets/skins/" + SKIN + ".js")}" defer></script>\n' if f.exists() else "")
 
 def head(title, desc, depth, theme=None):
     p = "../" * depth
