@@ -605,6 +605,7 @@
       if(b.tagName==="VIDEO"){if(heroPhone&&!tall)return;isGif?swapVideo(b):setVideo(b);b.scrollIntoView&&scrollTo({top:0,behavior:"smooth"})}
       else b.src=url});
     panelOpen=false;renderPanel();                       // close settings so the new media is in view
+    if(/(showreel_video|full_video)$/.test(path)){toast("Saved. This video opens when someone taps its play button; tap it in 👁 Preview to watch it.");renderPanel();return}
     if(heroPhone&&!tall){toast("Saved as the phone version: it shows on phones (tap 👁 Preview on your phone to see it).");renderPanel();return}
     toast(kind==="video"?"Swapped in. Tap 👁 Preview to see the page as visitors will, then Publish.":"Swapped in. Tap 👁 Preview to see the page as visitors will, then Publish.");
     renderPanel();
@@ -674,11 +675,12 @@
     if(!current||!panelOpen){panel.style.display="none";place();return}
     const u=current;
     panel.append(h("div",{class:"rt-head"},h("span",{},unitName(u)),h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{panelOpen=false;renderPanel()}}},"✕")));
-    const mseen=new Set();
+    const mseen=new Set(),fl=fieldsOf(u),isMediaF=f=>/^(video|image|art)$/.test(f[2]);
+    fl.filter(isMediaF).forEach(f=>{mseen.add(f[1]);panel.append(field(u,f))});   // backgrounds / covers first
     mediaOf(u).forEach(m=>{const p=m.dataset.m;if(mseen.has(p))return;mseen.add(p);
-      const kind=m.dataset.mk,last=p.split(/[.:]/).pop(),lab={showreel_video:"Showreel video",full_video:"Full video",mascot:"Character cut-out",cover:"Cover image",video:"Clip video"}[last]||(kind==="video"?"Video":"Image");
+      const kind=m.dataset.mk,last=p.split(/[.:]/).pop(),lab={showreel_video:"Video that opens from the \u201cWatch showreel\u201d button",full_video:"Full video",mascot:"Character cut-out",cover:"Cover image",video:"Clip video"}[last]||(kind==="video"?"Video":"Image");
       panel.append(h("label",{},lab),h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(p,kind,m)}},"Replace…")),thumb(p)||h("div",{class:"rt-file"},String(get(p)||"").split("/").pop()))});
-    fieldsOf(u).filter(f=>!mseen.has(f[1])).forEach(f=>panel.append(field(u,f)));
+    fl.filter(f=>!isMediaF(f)&&!mseen.has(f[1])).forEach(f=>panel.append(field(u,f)));
     if(u.tagName==="A"&&u.getAttribute("href"))panel.append(h("div",{class:"rt-row",style:"margin-top:12px"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{if(!changes||confirm("Leave without publishing? Changes on this page will be lost.")){changes=0;location.href=u.href}}}},"↗ Open this link")));
     panel.style.display="block";
     place();

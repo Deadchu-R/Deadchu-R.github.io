@@ -500,7 +500,7 @@ def build_index():
     mosaic = mosaic_html(mosaic_pool())
     PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
     html += jump_menu(INDEX_JUMP(), 0)
-    html += f"""<section class="hero" id="top"{ADD("site:hero_buttons", "hero")}{X(("Background video", "site:hero_video", "video"), ("Phone version of the background (optional)", "site:hero_video_mobile", "video"))}>
+    html += f"""<section class="hero" id="top"{ADD("site:hero_buttons", "hero")}{X(("Background video · plays behind your name", "site:hero_video", "video"), ("Phone-only background (optional)", "site:hero_video_mobile", "video"))}>
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
     <p class="kicker"{E("site:hero_kicker")}>{e(SITE_TEXT["hero_kicker"])}</p>
