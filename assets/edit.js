@@ -182,6 +182,21 @@
   #rt-panel input[type=text],#rt-panel select{width:100%;background:#0e0e0e;color:#fff;border:1px solid #3a3a3a;border-radius:8px;padding:8px;font:14px system-ui,sans-serif}
   #rt-panel .rt-color{display:flex;gap:6px;align-items:center}
   #rt-panel input[type=color]{width:44px;height:36px;padding:0;border:1px solid #3a3a3a;border-radius:8px;background:none;cursor:pointer;flex:none}
+  #rt-panel .rt-sw{width:44px;height:36px;flex:none;border:1px solid #555;border-radius:8px;cursor:pointer;background-image:none;box-shadow:inset 0 0 0 2px #151515}
+  #rt-panel .rt-color input[type=text]{font-family:ui-monospace,Consolas,monospace;letter-spacing:.04em}
+  #rt-panel .rt-wheel{margin-top:10px;padding:12px;border:1px solid #2c2c2c;border-radius:12px;background:#101010}
+  #rt-panel .rt-wheel[hidden]{display:none}
+  #rt-panel .rt-disc{position:relative;width:210px;height:210px;margin:0 auto;touch-action:none;cursor:crosshair}
+  #rt-panel .rt-disc canvas{display:block;border-radius:50%}
+  #rt-panel .rt-shade{position:absolute;inset:0;border-radius:50%;background:#000;pointer-events:none}
+  #rt-panel .rt-wdot{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.5);pointer-events:none;z-index:1}
+  #rt-panel .rt-vrow{display:flex;align-items:center;gap:10px;margin-top:12px;color:#aaa}
+  #rt-panel .rt-val{flex:1;-webkit-appearance:none;appearance:none;height:14px;border-radius:7px;outline:none}
+  #rt-panel .rt-val::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #111;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+  #rt-panel .rt-val::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #111}
+  #rt-panel .rt-prev{width:28px;height:28px;border-radius:50%;border:2px solid #333;flex:none}
+  #rt-panel .rt-sws{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;justify-content:center}
+  #rt-panel .rt-sws button{width:24px;height:24px;border-radius:50%;border:2px solid #2a2a2a;cursor:pointer;padding:0}
   #rt-panel .rt-file{font-size:12px;color:#888;word-break:break-all;margin-top:4px}
   #rt-panel .rt-head{display:flex;justify-content:space-between;align-items:center;color:#ffd23f;font:700 12px/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em}
   #rt-panel .rt-x{background:none;border:0;color:#aaa;font-size:18px;cursor:pointer;padding:2px 6px}
@@ -195,7 +210,7 @@
   .rt-card .rt-row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
   .rt-banner{position:fixed;z-index:2147483098;left:50%;top:70px;transform:translateX(-50%);background:#3b2a00;color:#ffe9a8;border:1px solid #ffd23f;border-radius:10px;padding:10px 14px;font:14px/1.4 system-ui,sans-serif;max-width:min(560px,calc(100vw - 24px));box-shadow:0 10px 30px rgba(0,0,0,.4)}
   @media (max-width:640px){
-    #rt-panel{left:8px!important;right:8px;width:auto;top:auto!important;bottom:62px;max-height:40vh}
+    #rt-panel{left:8px!important;right:8px;width:auto;top:auto!important;bottom:62px;max-height:52vh}
     #rt-menu{left:8px}
     #rt-toast{left:8px;right:8px;max-width:none;bottom:auto;top:8px}
     .rt-secbar .rt-sl{display:none}
@@ -662,6 +677,52 @@
     if(holder.dataset.mid!==undefined&&k==="color_main")holder.dataset.mid=v;
     if(holder.dataset.deep!==undefined&&k==="color_deep")holder.dataset.deep=v;
   }
+  /* ---- color wheel: hue around the circle, saturation toward the edge, brightness slider, exact HEX */
+  const hexOk=v=>/^#[0-9a-f]{6}$/i.test(v);
+  const toRgb=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));
+  const toHex=(r,g,b)=>"#"+[r,g,b].map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,"0")).join("");
+  function hsv2rgb(hh,ss,vv){const f=n=>{const k=(n+hh/60)%6;return vv-vv*ss*Math.max(0,Math.min(k,4-k,1))};return[f(5)*255,f(3)*255,f(1)*255]}
+  function rgb2hsv(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let hh=0;
+    if(d){hh=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;hh*=60;if(hh<0)hh+=360}return[hh,mx?d/mx:0,mx]}
+  const SWATCHES=["#ffd23f","#ff8fc0","#38b6ff","#9be15d","#ff9f5a","#6fd3c2","#b07cff","#ff5a5a","#ffffff","#0c2f6e"];
+  function colorField(val,apply){
+    let [H,S,V]=hexOk(val)?rgb2hsv(...toRgb(val)):[45,.75,1];
+    const sw=h("button",{type:"button",class:"rt-sw",title:"Open the color wheel",style:`background:${val||"transparent"}`});
+    const hexIn=h("input",{type:"text",value:val,placeholder:"#rrggbb",spellcheck:"false",maxlength:"7"});
+    const size=210,cv=h("canvas",{width:size*2,height:size*2,style:`width:${size}px;height:${size}px`}),dot=h("span",{class:"rt-wdot"});
+    const val_=h("input",{type:"range",min:"0",max:"100",value:String(Math.round(V*100)),class:"rt-val"});
+    const prev=h("span",{class:"rt-prev"});
+    const sws=h("div",{class:"rt-sws"},...SWATCHES.map(c=>h("button",{type:"button",title:c,style:`background:${c}`,on:{click:()=>{[H,S,V]=rgb2hsv(...toRgb(c));sync(true)}}})));
+    const wheel=h("div",{class:"rt-wheel",hidden:true},h("div",{class:"rt-disc"},cv,dot),h("div",{class:"rt-vrow"},h("span",{},"☀"),val_,prev),sws);
+    // the disc is drawn once at full brightness; the slider darkens it with an overlay
+    const ctx=cv.getContext("2d"),img=ctx.createImageData(size*2,size*2),R0=size;
+    for(let y=0;y<size*2;y++)for(let x=0;x<size*2;x++){const dx=x-R0,dy=y-R0,r=Math.hypot(dx,dy),i=(y*size*2+x)*4;
+      if(r>R0){img.data[i+3]=0;continue}
+      const [rr,gg,bb]=hsv2rgb((Math.atan2(dy,dx)*180/Math.PI+360)%360,r/R0,1);img.data[i]=rr;img.data[i+1]=gg;img.data[i+2]=bb;img.data[i+3]=r>R0-1.5?Math.round((R0-r)/1.5*255):255}
+    ctx.putImageData(img,0,0);
+    const shade=h("span",{class:"rt-shade"});
+    function sync(commit){
+      const hex=toHex(...hsv2rgb(H,S,V));
+      const a=H*Math.PI/180;dot.style.left=(size/2+Math.cos(a)*S*size/2)+"px";dot.style.top=(size/2+Math.sin(a)*S*size/2)+"px";
+      dot.style.background=hex;shade.style.opacity=String(1-V);
+      val_.style.background=`linear-gradient(90deg,#000,${toHex(...hsv2rgb(H,S,1))})`;val_.value=String(Math.round(V*100));
+      prev.style.background=hex;sw.style.background=hex;
+      if(document.activeElement!==hexIn)hexIn.value=hex;
+      if(commit)apply(hex);
+    }
+    $(".rt-disc",wheel).append(shade);
+    const pick=e=>{const r=cv.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2;
+      H=(Math.atan2(dy,dx)*180/Math.PI+360)%360;S=Math.min(1,Math.hypot(dx,dy)/(r.width/2));if(V<.08)V=1;sync(true)};
+    const disc=$(".rt-disc",wheel);
+    disc.addEventListener("pointerdown",e=>{e.preventDefault();disc.setPointerCapture(e.pointerId);pick(e)});
+    disc.addEventListener("pointermove",e=>{if(e.buttons||e.pressure)pick(e)});
+    val_.addEventListener("input",()=>{V=val_.value/100;sync(true)});
+    hexIn.addEventListener("input",()=>{let v=hexIn.value.trim();if(v&&v[0]!=="#")v="#"+v;if(hexOk(v)){[H,S,V]=rgb2hsv(...toRgb(v));sync(true)}});
+    hexIn.addEventListener("blur",()=>{hexIn.value=hexOk(hexIn.value)?hexIn.value.toLowerCase():toHex(...hsv2rgb(H,S,V))});
+    sw.addEventListener("click",()=>{wheel.hidden=!wheel.hidden;if(!wheel.hidden)sync(false);place()});
+    sync(false);if(!val){sw.style.background="transparent";hexIn.value=""}
+    return h("div",{},h("div",{class:"rt-color"},sw,hexIn),wheel);
+  }
   function previewLayout(holder,v){
     const g=$(".mech-grid",holder);if(!g)return;
     const n=$$(":scope>[data-i]",g).length,cols={"one-big":1,two:2,three:3}[v]||Math.min(Math.max(n,1),3);
@@ -671,11 +732,8 @@
     const val=get(path)??"";
     const wrap=h("div",{},h("label",{},label));
     if(type==="color"){
-      const hex=/^#[0-9a-f]{6}$/i.test(val)?val:"#000000";
-      const t=h("input",{type:"text",value:val,spellcheck:"false"}),c=h("input",{type:"color",value:hex});
-      c.addEventListener("input",()=>{t.value=c.value;set(path,c.value);previewColor(holder,path,c.value,opts)});
-      t.addEventListener("change",()=>{const v=t.value.trim();if(/^#[0-9a-f]{6}$/i.test(v)){c.value=v;set(path,v);previewColor(holder,path,v,opts)}else t.value=get(path)||""});
-      wrap.append(h("div",{class:"rt-color"},c,t));
+      const apply=v=>{set(path,v);previewColor(holder,path,v,opts)};
+      wrap.append(colorField(/^#[0-9a-f]{6}$/i.test(val)?val:"",apply));
     }else if(type==="select"){
       const own=/icon$/.test(path)&&/^\//.test(val);
       const s=h("select",{},...(own?[h("option",{value:val,selected:true},"(your image)")]:[]),...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));
