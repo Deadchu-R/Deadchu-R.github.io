@@ -250,6 +250,16 @@
   .rt-pm-opt{appearance:none;display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;border:0;background:none;color:#f2f2f2;
     font:500 15px/1.2 system-ui,sans-serif;padding:11px 10px;border-radius:9px;cursor:pointer;text-align:left}
   .rt-pm-opt{user-select:none;-webkit-user-select:none}
+  .rt-pm-opt.dan{color:#ff8a8a}.rt-pm-opt.off{opacity:.55;cursor:default}
+  .rt-pm-ico{display:inline-grid;place-items:center;width:22px;flex:none;color:#ffd23f}.rt-pm-opt.hi .rt-pm-ico{color:#111}
+  .rt-pm-opt>span{flex:1;min-width:0}
+  .rt-pm-out{animation:rtPmOut .16s ease-out}
+  @keyframes rtPmOut{from{opacity:.3;transform:translateX(-14px)}to{opacity:1;transform:none}}
+  .rt-selbtn{appearance:none;width:100%;display:flex;align-items:center;gap:8px;background:#0e0e0e;color:#eee;border:1px solid #3a3a3a;border-radius:8px;padding:9px 10px;
+    font:500 14px/1.2 system-ui,sans-serif;cursor:pointer;text-align:left;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+  .rt-selbtn span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rt-selbtn i{font-style:normal;color:#ffd23f}
+  .rt-selbtn:hover{border-color:#ffd23f}
+  .rt-hold{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:none}
   .rt-pm-back-row{color:#ffd23f;font-weight:700}
   .rt-pm-in{animation:rtPmIn .16s ease-out}
   @keyframes rtPmIn{from{opacity:.3;transform:translateX(14px)}to{opacity:1;transform:none}}
@@ -290,7 +300,11 @@
     else status("Back to editing.");
   }
   const aiBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"AI assistant",on:{click:e=>{e.stopPropagation();openAI()}}},"✨");
-  const bar=h("div",{id:"rt-bar"},pubBtn,prevBtn,aiBtn,h("button",{class:"rt-more",type:"button",title:"More",on:{click:e=>{e.stopPropagation();menu.style.display=menu.style.display==="block"?"none":"block"}}},"⋯"));
+  const bar=h("div",{id:"rt-bar"},pubBtn,prevBtn,aiBtn,(()=>{const mb=h("button",{class:"rt-more",type:"button",title:"More (hold and slide to pick)"},"⋯");setTimeout(()=>wireHold(mb,{menu:()=>({title:"Editor",items:[
+    {label:"＋  New section…",sub:()=>sectionItems(current&&current.closest('[data-ok="site:section_order"]'))},
+    {label:"✨  AI assistant",fn:()=>openAI()},{label:"⚙  Site settings",hint:"sound, AI, CSS",fn:()=>siteSettings()},
+    {label:"↺  Versions / undo",fn:()=>historyBox()},{label:"?  How it works",fn:()=>help()},{label:"🔑  GitHub token",fn:()=>askToken()},
+    {label:"✕  Exit editing",dan:true,fn:()=>exitEdit()}]})}),0);return mb})());
   const toastEl=h("div",{id:"rt-toast"});
   const panel=h("div",{id:"rt-panel"});
   const sel=h("div",{id:"rt-sel"});
@@ -642,78 +656,126 @@
     const d=defaultOpt(u,opts);btn.replaceChildren("＋",h("small",{},d.short||""));
     btn.title=`Tap: add ${d.label.replace(/^(A|An|Another) /,"a ").toLowerCase()} · Hold: more choices`;btn.setAttribute("aria-label",btn.title);return true;
   }
-  let pm=null;                      // the open hold menu (slide to a choice and let go; rows with › open a sub-menu in place)
+  /* ---- Apple-style menus (every menu in the editor): press, slide to a choice, let go. Rows with › open a sub-menu:
+     rest on it, tap it, or flick right on it. Flick left (or ‹) goes back. */
+  let pm=null;
   function closePm(){if(pm){clearTimeout(pm.dwell);pm.el.remove();pm.back.remove();pm=null}}
   function pmRender(items,title,sub){
     pm.items=items;pm.title=title;pm.hi=-1;clearTimeout(pm.dwell);
     pm.el.replaceChildren(sub?h("div",{class:"rt-pm-opt rt-pm-back-row","data-n":"-2"},h("span",{},"‹ "+title)):title?h("div",{class:"rt-pm-t"},title):null,
-      ...items.map((it,k)=>h("div",{class:"rt-pm-opt"+(it.def?" def":""),"data-n":String(k),role:"menuitem"},
-        h("span",{},it.label),it.sub?h("i",{},"›"):it.def?h("i",{},"✓"):it.hint?h("em",{},it.hint):null)));
-    pm.el.classList.remove("rt-pm-in");void pm.el.offsetWidth;if(sub!==undefined)pm.el.classList.add("rt-pm-in");
-    pmPlace();
+      ...items.map((it,k)=>{const row=h("div",{class:"rt-pm-opt"+(it.def?" def":"")+(it.dan?" dan":"")+(it.off?" off":""),"data-n":String(k),role:"menuitem"},
+        it.ico?h("b",{class:"rt-pm-ico"}):null,h("span",{},it.label),it.sub?h("i",{},"›"):it.def?h("i",{},"✓"):it.hint?h("em",{},it.hint):null);
+        if(it.ico)row.firstChild.innerHTML=it.ico;return row}));
+    pm.el.classList.remove("rt-pm-in","rt-pm-out");void pm.el.offsetWidth;if(sub!==undefined)pm.el.classList.add(sub?"rt-pm-in":"rt-pm-out");
+    pm.el.scrollTop=0;pmPlace();
   }
   function pmPlace(){
     const el=pm.el,a=pm.anchor,r=a&&document.contains(a)?a.getBoundingClientRect():{right:innerWidth/2+120,top:innerHeight-80,bottom:innerHeight-80};
     const w=el.offsetWidth,hh=el.offsetHeight;
-    let top=r.bottom+8;if(top+hh>innerHeight-8)top=Math.max(8,r.top-hh-8);
+    let top=r.bottom+8;if(top+hh>innerHeight-8)top=Math.max(8,r.top-hh-8);if(top+hh>innerHeight-8)top=Math.max(8,innerHeight-hh-8);
     el.style.left=Math.max(8,Math.min(innerWidth-w-8,r.right-w))+"px";el.style.top=top+"px";
     el.style.transformOrigin=(top<r.top?"bottom ":"top ")+(r.right-w>8?"right":"left");
   }
-  function pmEnter(it){pm.stack.push([pm.items,pm.title]);pmRender(it.sub(),it.label.replace(/…$/,""),true);try{navigator.vibrate&&navigator.vibrate(10)}catch(e){}}
-  function pmBack(){const p_=pm.stack.pop();if(p_)pmRender(p_[0],p_[1],pm.stack.length?true:false)}
+  async function pmEnter(it){
+    pm.stack.push([pm.items,pm.title]);const title=it.label.replace(/…$/,"");
+    let items=it.sub();
+    if(items&&items.then){pmRender([{label:"Loading…",off:true,fn:()=>{}}],title,true);const p0=pm;try{items=await items}catch(e){items=[{label:"⚠ "+errText(e),off:true,fn:()=>{}}]}if(pm!==p0)return}
+    pmRender(items,title,true);try{navigator.vibrate&&navigator.vibrate(10)}catch(e){}
+  }
+  function pmBack(){const p_=pm.stack.pop();if(p_){pmRender(p_[0],p_[1],pm.stack.length?true:false);try{navigator.vibrate&&navigator.vibrate(8)}catch(e){}}}
   function holdMenu(anchor,items,title){
     closePm();
     const back=h("div",{class:"rt-pm-back rt-ui",on:{pointerdown:e=>{e.preventDefault();closePm()}}});
     const el=h("div",{class:"rt-pm rt-ui",role:"menu"});
     document.body.append(back,el);
-    pm={el,back,anchor,stack:[],items:[],hi:-1,drag:false,dwell:null};
+    pm={el,back,anchor,stack:[],items:[],hi:-1,drag:false,dwell:null,trail:[]};
     pmRender(items,title);
-    // inside the menu too: press, slide, let go
-    el.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();try{el.setPointerCapture(e.pointerId)}catch(_){}if(pm)pm.drag=true;pmHover(e.clientX,e.clientY)});
-    el.addEventListener("pointermove",e=>{if(pm&&pm.drag)pmHover(e.clientX,e.clientY)});
-    el.addEventListener("pointerup",e=>{e.stopPropagation();pmRelease()});
-    el.addEventListener("pointercancel",()=>{if(pm)pm.drag=false});
+    // inside the menu: press-slide-let go when it fits; when it scrolls, swipe up/down scrolls and a tap picks
+    let d0=null;
+    el.addEventListener("pointerdown",e=>{if(!pm)return;e.stopPropagation();const scroll=el.scrollHeight>el.clientHeight+2;
+      d0={x:e.clientX,y:e.clientY,scroll,moved:false};pm.trail=[];pmGestureStart(e.clientX,e.clientY);
+      if(!scroll){e.preventDefault();try{el.setPointerCapture(e.pointerId)}catch(_){}pm.drag=true;pmHover(e.clientX,e.clientY)}});
+    el.addEventListener("pointermove",e=>{if(!pm||!d0)return;if(Math.hypot(e.clientX-d0.x,e.clientY-d0.y)>9)d0.moved=true;
+      if(pm.drag)pmMove(e.clientX,e.clientY);else pmSwipe(e.clientX,e.clientY)});
+    el.addEventListener("pointerup",e=>{e.stopPropagation();if(!pm||!d0)return;const t=d0;d0=null;
+      if(t.scroll){if(!t.moved){pmHover(e.clientX,e.clientY);pmRelease()}return}pmRelease()});
+    el.addEventListener("pointercancel",()=>{d0=null;if(pm)pm.drag=false});
     el.addEventListener("click",e=>e.stopPropagation());
     try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}
     return pm;
   }
+  function pmGestureStart(x,y){if(!pm)return;pm.trail=[{x,y,t:Date.now()}];const b=document.elementFromPoint(x,y),o=b&&b.closest(".rt-pm-opt");pm.gRow=o&&pm.el.contains(o)?+o.dataset.n:-1}
+  // a quick sideways flick: left = back, right on a › row = open it
+  function pmSwipe(x,y){
+    if(!pm)return false;const now=Date.now();pm.trail.push({x,y,t:now});while(pm.trail.length>1&&now-pm.trail[0].t>140)pm.trail.shift();
+    const a=pm.trail[0],dx=x-a.x,dy=y-a.y;if(Math.abs(dx)<42||Math.abs(dy)>Math.abs(dx)*.7)return false;
+    if(dx<0&&pm.stack.length){pmBack();pmGestureStart(x,y);return true}
+    if(dx>0){const it=pm.items[pm.gRow>=0?pm.gRow:pm.hi];if(it&&it.sub){pmEnter(it);pmGestureStart(x,y);return true}}
+    return false;
+  }
+  function pmMove(x,y){
+    if(!pm)return;if(pmSwipe(x,y))return;
+    const r=pm.el.getBoundingClientRect();                                        // long menus scroll when you slide to their edge
+    if(pm.el.scrollHeight>pm.el.clientHeight){if(y>r.bottom-28)pm.el.scrollTop+=14;else if(y<r.top+28)pm.el.scrollTop-=14}
+    pmHover(x,y);
+  }
   function pmHover(x,y){
-    if(!pm)return;const b=document.elementFromPoint(x,y),o=b&&b.closest(".rt-pm-opt");const k=o&&pm.el.contains(o)?+o.dataset.n:-1;
+    if(!pm)return;const b=document.elementFromPoint(x,y),o=b&&b.closest(".rt-pm-opt");let k=o&&pm.el.contains(o)?+o.dataset.n:-1;
+    if(k>=0&&pm.items[k]&&pm.items[k].off)k=-1;
     if(k===pm.hi)return;
     $$(".rt-pm-opt",pm.el).forEach(x=>x.classList.toggle("hi",+x.dataset.n===k));pm.hi=k;clearTimeout(pm.dwell);
     if(k!==-1)try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}
     const it=pm.items[k];
-    if(k===-2||(it&&it.sub))pm.dwell=setTimeout(()=>{if(!pm||pm.hi!==k)return;k===-2?pmBack():pmEnter(it)},420);   // rest on › to open it, on ‹ to go back
+    if(pm.drag&&(k===-2||(it&&it.sub)))pm.dwell=setTimeout(()=>{if(!pm||pm.hi!==k)return;k===-2?pmBack():pmEnter(it)},450);   // rest on › to open it, on ‹ to go back
   }
   function pmRelease(){
     if(!pm)return;pm.drag=false;clearTimeout(pm.dwell);const k=pm.hi;
     if(k===-2)return pmBack();
-    const it=pm.items[k];if(!it)return;                     // let go outside the rows: the menu stays open
+    const it=pm.items[k];if(!it||it.off)return;               // let go outside the rows: the menu stays open
     if(it.sub)return pmEnter(it);
     closePm();it.fn();
   }
-  function wirePlus(btn,getU,onTap){
+  // a button that opens a menu: tap = onTap (or open the menu), hold = open it and slide to a choice
+  function wireHold(btn,{onTap,menu,beforeOpen}){
     let timer=null,held=false,sx=0,sy=0,moved=false;
     const reset=()=>{clearTimeout(timer);timer=null;btn.classList.remove("rt-holding")};
+    const open=(drag,x,y)=>{if(beforeOpen&&beforeOpen()===false)return;const m=menu();if(!m||!m.items.length)return;holdMenu(btn,m.items,m.title);if(pm){pm.drag=drag;if(drag)pmGestureStart(x,y)}};
+    btn.classList.add("rt-hold");
     btn.addEventListener("contextmenu",e=>e.preventDefault());
     btn.addEventListener("click",e=>{e.stopPropagation();e.preventDefault()},true);
     btn.addEventListener("pointerdown",e=>{
       if(e.button>0)return;e.preventDefault();e.stopPropagation();held=false;moved=false;sx=e.clientX;sy=e.clientY;
-      btn.classList.add("rt-holding");
-      timer=setTimeout(()=>{timer=null;held=true;btn.classList.remove("rt-holding");
-        const u=getU();if(!u)return;if(u!==current)select(u);
-        const opts=addOptions(u);if(!opts.length)return;const d=defaultOpt(u,opts);
-        holdMenu(btn,opts.map(o=>({label:o.label,hint:o.hint,def:o===d,fn:()=>runOpt(u,o,btn),sub:o.sub&&(()=>o.sub().map(x=>Object.assign({},x,{fn:()=>{remember(u,o.key);x.fn();secBars();place()}})))})),"Add here");
-      },380);
-      const mv=ev=>{if(pm&&held)pmHover(ev.clientX,ev.clientY);else if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>12){moved=true;reset()}};
+      if(onTap)btn.classList.add("rt-holding");
+      timer=setTimeout(()=>{timer=null;held=true;btn.classList.remove("rt-holding");open(true,sx,sy)},onTap?380:300);
+      const mv=ev=>{if(pm&&held&&pm.drag)pmMove(ev.clientX,ev.clientY);else if(!held&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>12){moved=true;reset()}};
       const up=ev=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",up,true);removeEventListener("pointercancel",up,true);
-        if(timer){reset();if(!moved&&ev.type==="pointerup")onTap();return}
-        if(held){const eat=e2=>{if(e2.target.closest&&e2.target.closest(".rt-pm"))return;e2.stopPropagation();e2.preventDefault()};addEventListener("click",eat,true);setTimeout(()=>removeEventListener("click",eat,true),450)}   // the click that follows letting go
-        if(pm&&held)pmRelease();      // let go on a choice = pick it; let go elsewhere = menu stays open
+        if(timer){reset();if(!moved&&ev.type==="pointerup"){if(onTap)onTap();else open(false)}return}
+        if(held){const eat=e2=>{if(e2.target.closest&&e2.target.closest(".rt-pm"))return;e2.stopPropagation();e2.preventDefault()};addEventListener("click",eat,true);setTimeout(()=>removeEventListener("click",eat,true),450)}
+        if(pm&&held&&pm.drag)pmRelease();      // let go on a choice = pick it; let go elsewhere = menu stays open
       };
       addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true);addEventListener("pointercancel",up,true);
     });
   }
+  function wirePlus(btn,getU,onTap){
+    wireHold(btn,{onTap,beforeOpen:()=>{const u=getU();if(!u)return false;if(u!==current)select(u)},menu:()=>{
+      const u=getU();if(!u)return null;const opts=addOptions(u);const d=opts.length&&defaultOpt(u,opts);
+      return {title:"Add here",items:opts.map(o=>({label:o.label,hint:o.hint,def:o===d,fn:()=>runOpt(u,o,btn),sub:o.sub&&(()=>o.sub().map(x=>Object.assign({},x,{fn:()=>{remember(u,o.key);x.fn();secBars();place()}})))}))}}});
+  }
+  // every <select> in the editor becomes a button with an Apple menu (the select stays, hidden, so nothing else changes)
+  function appleSelect(sel){
+    if(sel.dataset.apple)return;sel.dataset.apple="1";
+    const isIcon=sel.dataset.icons==="1";
+    const btn=h("button",{type:"button",class:"rt-selbtn"});
+    const label=()=>{const o=sel.selectedOptions[0];btn.replaceChildren();if(isIcon&&o&&o.value&&ICONS[o.value]){const b_=h("b",{class:"rt-pm-ico"});b_.innerHTML=iconSvg(o.value);btn.append(b_)}
+      btn.append(h("span",{},o?o.textContent:"—"),h("i",{},"▾"))};
+    label();sel.addEventListener("change",label);new MutationObserver(label).observe(sel,{childList:true});
+    sel.hidden=true;sel.after(btn);
+    wireHold(btn,{menu:()=>({title:sel.dataset.title||"",items:[...sel.options].map(o=>({label:o.textContent,def:o.selected,ico:isIcon&&o.value&&ICONS[o.value]?iconSvg(o.value):"",
+      fn:()=>{sel.value=o.value;sel.dispatchEvent(new Event("change",{bubbles:true}));label()}}))})});
+  }
+  const iconSvg=n=>{const v=ICONS[n]||"";return v.startsWith("<svg")?v.replace("<svg ",'<svg width="18" height="18" '):`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${v}</svg>`};
+  new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.nodeType!==1)continue;
+    (n.tagName==="SELECT"?[n]:[...n.querySelectorAll("select")]).forEach(sl=>{if(sl.closest(".rt-ui,#rt-panel,.rt-modal,#rt-ai"))appleSelect(sl)})}}).observe(document.body,{childList:true,subtree:true});
   function plusTap(u,btn){
     if(!u)return;if(u!==current)select(u);
     const opts=addOptions(u);if(!opts.length)return;const d=defaultOpt(u,opts);
@@ -1016,7 +1078,7 @@
       wrap.append(lab);
     }else if(type==="select"){
       const own=/icon$/.test(path)&&/^\//.test(val);
-      const s=h("select",{},...(own?[h("option",{value:val,selected:true},"(your image)")]:[]),...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));
+      const s=h("select",{"data-icons":/icon$/.test(path)?"1":null,"data-title":label},...(own?[h("option",{value:val,selected:true},"(your image)")]:[]),...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));
       if(/icon$/.test(path))setTimeout(()=>wrap.append(h("div",{class:"rt-row",style:"margin-top:6px"},
         h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,"icon",holder)}},"⬆ Upload your own icon (image / GIF)")),thumb(path)||h("p",{class:"rt-hint"},"Best: a square image, 128×128 px. Bigger ones are shrunk for you.")));
       s.addEventListener("change",()=>{set(path,s.value);if(path.endsWith(".layout"))(holder.classList.contains("custom-sec")?holder.className=holder.className.replace(/\blay-\S+/,"lay-"+s.value):previewLayout(holder,s.value));if(/icon$/.test(path))previewIcon(path,s.value);
@@ -1327,6 +1389,7 @@ Rules:
     return modelList;
   }
   async function pickModel(key){
+    const pin=store.get(AI_MODEL+"-pin");if(pin)return pin;
     let m=store.get(AI_MODEL);const t=+store.get(AI_MODEL+"-at")||0;
     if(m&&Date.now()-t<3*864e5)return m;            // look again every few days for newer models
     try{const l=await rankModels(key);m=l[0]||m||"gemini-flash-latest"}catch(e){m=m||"gemini-flash-latest"}
@@ -1595,6 +1658,28 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
         h("button",{class:"rt-btn pri",type:"button",on:{click:()=>{const v=inp.value.trim();if(!v)return;store.set(AI_KEY,v);store.set(AI_MODEL,"");m.remove();saveTokenForLogin(true);openAI()}}},"Save")));
     setTimeout(()=>inp.focus(),50);
   }
+  function setProvider(v){store.set(AI_PROV,v);if(provBtn)provBtn.textContent=PROV_ICON[v];
+    aiSay("ai",{local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[v]);warmApp()}
+  function aiMenu(){
+    const pv=provider();
+    const models=()=>{
+      if(pv==="gemini"){const k=store.get(AI_KEY);if(!k)return [{label:"Add a Gemini key first",fn:aiKeyBox}];
+        return rankModels(k).then(l=>[{label:"Automatic (newest Flash)",def:!store.get(AI_MODEL+"-pin"),fn:()=>{store.set(AI_MODEL+"-pin","");store.set(AI_MODEL,"");toast("Gemini: picks the best model by itself.")}}]
+          .concat(l.slice(0,12).map(m=>({label:m,def:store.get(AI_MODEL+"-pin")===m,fn:()=>{store.set(AI_MODEL,m);store.set(AI_MODEL+"-pin",m);store.set(AI_MODEL+"-at",String(Date.now()+864e7));toast("Gemini model: "+m)}}))))}
+      if(pv==="app")return appModels().then(l=>l.map(m=>({label:m,def:store.get(APP_MODEL)===m,fn:()=>{store.set(APP_MODEL,m);toast("AI app model: "+m);warmApp()}})));
+      return LOCAL_MODELS.map(([v,l])=>({label:l,def:(store.get(AI_LOCAL)||"auto")===v,fn:()=>{store.set(AI_LOCAL,v);toast("In-browser model: "+l)}}));
+    };
+    return {title:"AI assistant",items:[
+      {label:"AI source",hint:{app:"🔌 app",local:"📱 browser",gemini:"G Gemini"}[pv],sub:()=>[
+        {label:"🔌 AI app on this device",hint:"Ollama / LM Studio",def:pv==="app",fn:()=>setProvider("app")},
+        {label:"📱 Inside the browser",hint:"downloads a model",def:pv==="local",fn:()=>setProvider("local")},
+        {label:"G  Gemini",hint:"free key",def:pv==="gemini",fn:()=>setProvider("gemini")}]},
+      {label:"Model",sub:models},
+      {label:"Voice language",hint:aiLang==="he-IL"?"עברית":"English",sub:()=>[["he-IL","עברית"],["en-US","English"]].map(([v,l])=>({label:l,def:aiLang===v,fn:()=>{aiLang=v;const lb=$("#rt-ai .rt-aibtn.sm");if(lb)lb.textContent=v==="he-IL"?"עב":"EN"}}))},
+      {label:"🔑  Gemini key",fn:aiKeyBox},
+      {label:"⚙  All AI settings",hint:"app address…",fn:()=>siteSettings()},
+      {label:"↺  Undo unpublished changes",dan:true,fn:()=>{if(changes&&confirm("Throw away every change that isn't published yet (yours and the AI's)?")){changes=0;location.reload()}}}]};
+  }
   function openAI(){
     if(provider()==="gemini"&&!store.get(AI_KEY)){aiKeyBox();return}
     if(aiBox){aiBox.hidden=!aiBox.hidden;if(!aiBox.hidden)warmApp();return}
@@ -1616,8 +1701,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     aiBox=h("div",{id:"rt-ai",class:"rt-ui"},
       h("div",{class:"rt-head"},h("span",{},"✨ AI assistant"),h("span",{},
         h("button",{class:"rt-x",type:"button",title:"Undo everything not published yet",on:{click:()=>{if(changes&&confirm("Throw away every change that isn't published yet (yours and the AI's)?")){changes=0;location.reload()}}}},"↺"),
-        provBtn=h("button",{class:"rt-x",type:"button",title:"Switch AI: in the browser 📱 / AI app 🔌 / Gemini G",on:{click:()=>{const order=["app","local","gemini"];store.set(AI_PROV,order[(order.indexOf(provider())+1)%3]);provBtn.textContent=PROV_ICON[provider()];
-          aiSay("ai",{local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[provider()]);warmApp()}}},PROV_ICON[provider()]),
+        provBtn=(()=>{const b_=h("button",{class:"rt-x",type:"button",title:"AI settings (tap, or hold and slide)"},PROV_ICON[provider()]);setTimeout(()=>wireHold(b_,{menu:aiMenu}),0);return b_})(),
         h("button",{class:"rt-x",type:"button",title:"Gemini key",on:{click:aiKeyBox}},"🔑"),
         h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{aiBox.hidden=true}}},"✕"))),
       aiLog,filesRow,
