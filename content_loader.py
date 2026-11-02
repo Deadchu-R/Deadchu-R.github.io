@@ -37,6 +37,14 @@ def _ffmpeg(*args):
     return True
 
 
+def _poster(video, out, at, scale="scale=960:-2"):
+    """First frame worth showing; short clips and GIFs fall back to the very first frame."""
+    for t in (at, 0):
+        _ffmpeg("-ss", str(t), "-i", video, "-frames:v", "1", "-vf", scale, "-q:v", "4", out)
+        if out.exists():
+            return
+
+
 def image_key(path):
     """Cover or screenshot -> key used by thumb(): assets/img/<key>.jpg and <key>-s.jpg."""
     path = str(path or "")
@@ -97,7 +105,7 @@ def clip_file(path):
     poster = ROOT / "assets/posters" / name.replace(".mp4", ".jpg")
     clip = ROOT / "assets/clips" / name
     if not poster.exists() and clip.exists():
-        _ffmpeg("-ss", "1", "-i", clip, "-frames:v", "1", "-vf", "scale=960:-2", "-q:v", "4", poster)
+        _poster(clip, poster, 1)
     return name
 
 
@@ -119,7 +127,7 @@ def full_video(path):
     poster = ROOT / f"assets/posters/full-{name}.jpg"
     vid = ROOT / f"assets/full/{name}.mp4"
     if not poster.exists() and vid.exists():
-        _ffmpeg("-ss", "3", "-i", vid, "-frames:v", "1", "-vf", "scale=960:-2", "-q:v", "4", poster)
+        _poster(vid, poster, 3)
     return name
 
 
@@ -175,6 +183,8 @@ SITE_DEFAULTS = {
         {"label": "CV", "link": "Roee-Tal-CV.pdf", "style": "ghost"},
     ],
     "footer_peek": "/assets/art/musical-cat.webp",
+    "hero_title": _site.get("name", "Roee Tal"),
+    "section_buttons": {k: {"position": "bottom", "align": "left", "items": []} for k in ("experience", "projects", "more_code", "about")},
     "hero_video": "/assets/hero.mp4",
     "hero_video_mobile": "/assets/hero-m.mp4",
 }
@@ -207,7 +217,7 @@ def bg_video(path, tall=False):
             print("  + background video", out.name)
     poster = out.with_suffix(".jpg")
     if out.exists() and not poster.exists():
-        _ffmpeg("-ss", "1", "-i", out, "-frames:v", "1", "-vf", "scale='min(1280,iw)':-2", "-q:v", "4", poster)
+        _poster(out, poster, 1, "scale='min(1280,iw)':-2")
     return str(out.relative_to(ROOT)) if out.exists() else ""
 
 
@@ -251,6 +261,7 @@ for p in _load("projects.json"):
                   for sec in p.get("sections", [])],
         full=full_key or None, shots=shots, cast=cast, shot_idx=shot_idx, cast_idx=cast_idx,
         layouts=[sec.get("layout", "auto") for sec in p.get("sections", [])], page_order=p.get("page_order", []),
+        buttons=p.get("buttons") or {},
     ))
     TECH[s] = p.get("tech", [])
     CARD_TECH[s] = p.get("card_tech", "")
@@ -280,7 +291,7 @@ for cp in _load("code-pages.json"):
         hook=cp.get("hook", ""), did=cp.get("what_i_built", []), tech=cp.get("tech", []),
         flow=[(f.get("name", ""), f.get("note", "")) for f in cp.get("flow", [])],
         clip=_clip_tuple(cp["clip"]) if cp.get("clip") and cp["clip"].get("video") else None,
-        code=codes, code_idx=[i for i, _ in _cs], page_order=cp.get("page_order", []),
+        code=codes, code_idx=[i for i, _ in _cs], page_order=cp.get("page_order", []), buttons=cp.get("buttons") or {},
     ))
 
 # ---------------------------------------------------------------- lab + early work

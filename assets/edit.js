@@ -127,6 +127,8 @@
   .rt-secbar button{appearance:none;width:32px;height:30px;border-radius:7px;border:0;background:#222;color:#fff;font:800 17px/1 system-ui,sans-serif;cursor:pointer}
   .rt-secbar button:hover:not(:disabled){color:#ffd23f}
   .rt-secbar button:disabled{opacity:.25;cursor:default}
+  .rt-on .xrow-block{min-height:52px;border:1px dashed rgba(255,210,63,.45);border-radius:12px;padding:6px}
+  .rt-on .xrow-block:has(.xrow:empty)::after{content:"Button row · tap + to add buttons";display:block;color:rgba(255,210,63,.75);font:600 13px/40px system-ui,sans-serif;padding-left:8px}
   .rt-hist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;margin:10px 0}
   .rt-hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid #2c2c2c;border-radius:10px;background:#1b1b1b}
   .rt-hrow div{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -201,9 +203,11 @@
     dup:B("⧉","Duplicate",()=>current&&duplicate(current)),
     del:B("🗑","Delete",()=>current&&remove(current)),
     gear:B("⚙","Settings",()=>{panelOpen=!panelOpen;renderPanel()}),
+    bg:B("🎬","Background / cover: change the video or image",()=>{panelOpen=true;renderPanel()}),
+    add:B("＋","Add a button here",()=>current&&addItem(current)),
     parent:B("⤴","Select what's around it",()=>{const k=chain.indexOf(current);if(chain[k+1]){current=chain[k+1];clickedText=clickedMedia=null;panelOpen=false;renderPanel();place()}}),
   };
-  tb.append(T.name,T.grip,T.up,T.down,T.edit,T.media,T.dup,T.del,T.gear,T.parent);
+  tb.append(T.name,T.grip,T.up,T.down,T.edit,T.media,T.bg,T.add,T.dup,T.del,T.gear,T.parent);
   const drop=h("div",{id:"rt-drop"}),ghost=h("div",{id:"rt-ghost"});
   const isIndex=!!$("#projects .ptiles");
   const linkOpts=(isIndex?["#now","#projects","#more-code","#about","#gallery-lab","#contact"]:["index.html","index.html#projects","index.html#more-code","index.html#contact"])
@@ -288,7 +292,8 @@
         h("li",{},h("b",{},"Tap"),", anything to select it. A small toolbar appears next to it."),
         h("li",{},h("b",{},"Double-tap text"),", to change it (or tap ✎). Tap outside when you're done."),
         h("li",{},h("b",{},"↑ ↓"),", move it. Whole sections have their own ↑ ↓ in the corner. You can also drag ⠿."),
-        h("li",{},h("b",{},"🖼"),", replace the image or video. ",h("b",{},"⧉")," duplicate (that's how you add a new one). ",h("b",{},"🗑")," delete."),
+        h("li",{},h("b",{},"🖼"),", replace the image or video (photos, GIFs and MP4s all work). ",h("b",{},"🎬")," changes a background video or cover. ",h("b",{},"⧉")," duplicate. ",h("b",{},"🗑")," delete."),
+        h("li",{},h("b",{},"＋"),", adds a button. Every section has + in its corner; the hero and footer get it in their toolbar. Then ⚙ sets its link, icon and style, and ⤴ › ⚙ sets where the row sits."),
         h("li",{},h("b",{},"⚙"),", more options: links, icons, colors, layouts, background videos. ",h("b",{},"⤴")," selects what's around it."),
         h("li",{},h("b",{},"Publish"),", saves to the site; it rebuilds in about 2 minutes. ⋯ › Versions brings back any earlier version.")),
       h("p",{style:"color:#aaa;font-size:13px"},"Publish before moving to another page. Links and videos don't open while editing; use the top menu or the jump menu to change pages."),
@@ -328,7 +333,7 @@
   }
 
   /* ------------------------------------------------------------ units: anything you can select */
-  const UNIT="[data-i],[data-k],[data-x],[data-m]";
+  const UNIT="[data-i],[data-k],[data-x],[data-m],[data-add]";
   const LIST_NAMES={projects:"Project card","code-pages":"Code card",lab:"Lab clip","early-work":"Early-work clip",job_bullets:"Bullet",timeline:"Timeline entry",
     what_i_built:"Bullet",teammates_built:"Bullet",tech:"Tag",ai_tools:"Tag",hobbies:"Hobby",games:"Game",rig:"Rig part",sections:"Clip section",clips:"Clip",
     screenshots:"Screenshot",characters:"Character",about:"Paragraph",flow:"Step",code:"Code block",
@@ -362,7 +367,7 @@
     if(current&&chain[1]&&current.matches("[data-m]")&&!current.matches("[data-i],[data-k],[data-x]"))current=chain[1];
     clickedText=target&&target.closest("[data-e]");if(clickedText&&current&&!current.contains(clickedText))clickedText=null;
     clickedMedia=target&&target.closest("[data-m]");
-    if(!clickedMedia&&current){const m=mediaOf(current);if(m.length===1&&m[0].tagName==="IMG")clickedMedia=m[0]}
+    if(!clickedMedia&&current){const m=mediaOf(current);if(m.length===1&&(m[0].tagName==="IMG"||current.hasAttribute("data-i")))clickedMedia=m[0]}
     panelOpen=false;
     renderPanel();place();
   }
@@ -379,7 +384,9 @@
     T.up.textContent=horiz?"←":"↑";T.down.textContent=horiz?"→":"↓";T.up.disabled=k<=0;T.down.disabled=k===sib.length-1;
     show(T.edit,!!clickedText);show(T.media,!!clickedMedia);
     show(T.dup,current.hasAttribute("data-i"));show(T.del,current.hasAttribute("data-i"));
-    show(T.gear,hasSettings(current));T.gear.classList.toggle("on",panelOpen);
+    show(T.gear,hasSettings(current));
+    show(T.bg,fieldsOf(current).some(f=>/^(video|image|art)$/.test(f[2])&&/background|cover/i.test(f[0])));
+    show(T.add,current.hasAttribute("data-add"));T.gear.classList.toggle("on",panelOpen);
     show(T.parent,!!chain[chain.indexOf(current)+1]);
     tb.style.display="flex";
     const tw=tb.offsetWidth,th=tb.offsetHeight;
@@ -438,11 +445,12 @@
         if(getComputedStyle(sec).position==="static")sec.style.position="relative";
         b=h("div",{class:"rt-secbar rt-ui"},h("span",{class:"rt-sl"},KEY_NAMES[sec.dataset.k]||sec.dataset.k),
           h("button",{type:"button",title:"Move this whole section up",on:{click:()=>step(sec,-1)}},"↑"),
-          h("button",{type:"button",title:"Move this whole section down",on:{click:()=>step(sec,1)}},"↓"));
+          h("button",{type:"button",title:"Move this whole section down",on:{click:()=>step(sec,1)}},"↓"),
+          sec.hasAttribute("data-add")?h("button",{type:"button",title:"Add a button to this section",on:{click:()=>addItem(sec)}},"+"):null);
         sec.prepend(b);
       }
       const sib=siblingsOf(sec),k=sib.indexOf(sec),[up,down]=$$("button",b);
-      up.disabled=k<=0;down.disabled=k===sib.length-1;b.hidden=sib.length<2;
+      up.disabled=k<=0;down.disabled=k===sib.length-1;b.hidden=sib.length<2&&!sec.hasAttribute("data-add");
     });
   }
   function step(u,dir){
@@ -462,6 +470,27 @@
     if(clone.tagName==="A")clone.draggable=false;
     flash(clone);select(clone);
   }
+  function addItem(holder){
+    const lp=holder.dataset.add,tpl=holder.dataset.tpl||"btn";
+    const box=$(`[data-l="${CSS.escape(lp)}"]`);
+    if(!box){toast("This spot gets its buttons after the next publish.");return}
+    let arr=get(lp);if(!Array.isArray(arr)){set(lp,[]);arr=get(lp)}
+    const i=arr.length,it=tpl==="hero"?{label:"New button",link:"#projects",icon:"star",color:"#ffd23f"}:{label:"New button",link:"#contact",style:"ghost",icon:""};
+    arr.push(it);set(lp,arr);
+    const bp=`${lp}.${i}`,ICN=[""].concat(Object.keys(ICONS));
+    const x=tpl==="hero"?[["Link",bp+".link","link"],["Icon",bp+".icon","select",ICN],["Color",bp+".color","color",["","--c"]]]
+                       :[["Link",bp+".link","link"],["Style",bp+".style","select",["solid","ghost"]],["Icon",bp+".icon","select",ICN]];
+    const cls=tpl==="hero"?"":box.classList.contains("xrow")?"btn small ghost":"btn ghost";
+    const ico=h("span",{class:"ic","data-ico":bp+".icon"});
+    const lab=h("span",{"data-e":bp+".label"},it.label);
+    const a=h("a",{class:cls,href:it.link,"data-i":String(i),"data-x":JSON.stringify(x),draggable:"false",style:tpl==="hero"?"--c:"+it.color:null},ico,lab);
+    box.append(a);
+    if(tpl==="hero")previewIcon(bp+".icon","star");
+    for(let n=box;n&&n!==document.body;n=n.parentElement)if(n.hidden)n.hidden=false;
+    initText(lab);flash(a);select(lab);startEdit(lab);
+    try{getSelection().selectAllChildren(lab)}catch(e){}
+    secBars();
+  }
   function remove(item){
     if(!confirm(`Delete this ${unitName(item).toLowerCase()}?`))return;
     listOp(item,(arr,perm,pos)=>{arr.splice(pos,1);perm.splice(pos,1)});
@@ -475,14 +504,15 @@
   const slugify=s=>(s||"file").toLowerCase().replace(/\.[^.]+$/,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"file";
   function pickFile(kind){
     return new Promise(done=>{
-      const inp=h("input",{type:"file",accept:kind==="video"?"video/*":"image/*",style:"display:none"});
+      const inp=h("input",{type:"file",accept:kind==="video"?"video/*,image/gif":"image/*",style:"display:none"});
       inp.addEventListener("change",()=>{done(inp.files[0]||null);inp.remove()});
       ui.append(inp);inp.click();
     });
   }
   async function prepImage(file,kind){
     // phone photos (HEIC, huge JPEGs) are converted here so the build can read them
-    const okType=/^image\/(jpeg|png|webp|gif)$/.test(file.type);
+    if(file.type==="image/gif")return{blob:file,ext:"gif"};      // keep GIFs as they are
+    const okType=/^image\/(jpeg|png|webp)$/.test(file.type);
     const bmp=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error("This image format can't be read in this browser."));i.src=URL.createObjectURL(file)});
     const max=kind==="art"?1400:2400,big=Math.max(bmp.naturalWidth,bmp.naturalHeight);
     if(okType&&big<=max&&file.size<8e6)return{blob:file,ext:file.type==="image/jpeg"?"jpg":file.type.split("/")[1]};
@@ -499,7 +529,7 @@
     try{
       if(kind==="video"){
         if(file.size>70e6){alertBox("That video is "+Math.round(file.size/1e6)+" MB. GitHub takes up to about 70 MB per file here; trim it or export it smaller first.");return}
-        if(!/^(mp4|mov|webm|m4v)$/.test(ext))ext="mp4";
+        if(!/^(mp4|mov|webm|m4v|gif)$/.test(ext))ext="mp4";      // a GIF here becomes a looping video
       }else({blob,ext}=await prepImage(file,kind));
     }catch(e){alertBox(e.message);return}
     const repoPath=`assets/uploads/${slugify(file.name)}-${rand()}.${ext}`;
@@ -544,7 +574,10 @@
     }else if(type==="select"){
       const s=h("select",{},...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));
       s.addEventListener("change",()=>{set(path,s.value);if(path.endsWith(".layout"))previewLayout(holder,s.value);if(path.endsWith(".icon"))previewIcon(path,s.value);
-        if(path.endsWith(".style")&&holder.classList.contains("btn"))holder.classList.toggle("ghost",s.value==="ghost")});
+        if(path.endsWith(".style")&&holder.classList.contains("btn"))holder.classList.toggle("ghost",s.value==="ghost");
+        if(path.endsWith(".align"))holder.className=holder.className.replace(/\bal-\w+/,"al-"+s.value);
+        if(path.endsWith(".position")){const sec=holder.closest("[data-k]"),w=holder.parentElement,bar=$(":scope>.rt-secbar",sec);
+          holder.classList.toggle("top",s.value==="top");if(s.value==="top")(bar?bar.after(w):sec.prepend(w));else sec.append(w);place()}});
       wrap.append(s);
     }else if(type==="image"||type==="art"||type==="video"){
       wrap.append(h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,type,holder)}},val?"Replace…":"Add…"),

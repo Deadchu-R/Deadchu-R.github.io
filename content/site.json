@@ -119,5 +119,28 @@
   ],
   "footer_peek": "/assets/art/musical-cat.webp",
   "hero_video": "/assets/hero.mp4",
-  "hero_video_mobile": "/assets/hero-m.mp4"
+  "hero_video_mobile": "/assets/hero-m.mp4",
+  "hero_title": "Roee Tal",
+  "section_buttons": {
+    "experience": {
+      "position": "bottom",
+      "align": "left",
+      "items": []
+    },
+    "projects": {
+      "position": "bottom",
+      "align": "left",
+      "items": []
+    },
+    "more_code": {
+      "position": "bottom",
+      "align": "left",
+      "items": []
+    },
+    "about": {
+      "position": "bottom",
+      "align": "left",
+      "items": []
+    }
+  }
 }

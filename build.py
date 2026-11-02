@@ -48,6 +48,16 @@ def href(link, depth):
     return "../" * depth + link.lstrip("/")
 def ext(link):
     return ' target="_blank" rel="noopener"' if re.match(r"^https?:", link or "") or (link or "").endswith(".pdf") else ""
+def ADD(path, tpl="btn"):
+    """Lets the editor's + add a new item to this list."""
+    return f' data-add="{path}" data-tpl="{tpl}"'
+def xrow(base, cfg, depth, extra_cls=""):
+    """A row of small buttons the owner can add anywhere with + in the editor."""
+    items = cfg.get("items") or []
+    align = cfg.get("align") or "left"
+    x = X(("Where", base + ".position", "select", ["top", "bottom"]), ("Align", base + ".align", "select", ["left", "center", "right"])) if extra_cls != "blk" else X(("Align", base + ".align", "select", ["left", "center", "right"]))
+    return (f'<div class="xrow al-{align}{" " + extra_cls if extra_cls else ""}"{L(base + ".items")}{x}>'
+            + btn_list(base + ".items", items, depth, lambda b: "btn small" + (" ghost" if b.get("style", "ghost") == "ghost" else "")) + '</div>')
 def colors(base):
     return (("Main color", f"{base}.color_main", "color"), ("Dark color", f"{base}.color_deep", "color"), ("Accent color", f"{base}.color_accent", "color"))
 
@@ -124,7 +134,7 @@ def topbar(depth, current=""):
 
 def footer(depth, peek=True):
     p = "../" * depth
-    return f"""<footer class="foot" id="contact"{X(("Peeking character (transparent PNG)", "site:footer_peek", "art")) if peek else ""}>
+    return f"""<footer class="foot" id="contact"{ADD("site:footer_buttons")}{X(("Peeking character (transparent PNG)", "site:footer_peek", "art")) if peek else ""}>
 <svg class="foot-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 260 80 520 0 760 30 S 1220 70 1440 22 V70 H0Z"/></svg>
 {f'<div class="peekcat" aria-hidden="true"><img src="{p}assets/art/{SITE_TEXT["_peek"]}.webp"{BG("site:footer_peek")} alt="" loading="lazy"></div>' if peek and SITE_TEXT["_peek"] else ''}
 <div class="wrap foot-grid">
@@ -367,8 +377,8 @@ def btn_list(path, items, depth, cls_fn):
     for i, b in enumerate(items):
         bp = f"{path}.{i}"
         out.append(f'<a class="{cls_fn(b)}" href="{href(b["link"], depth)}"{ext(b["link"])}{I(i)}'
-                   f'{X(("Link", bp + ".link", "link"), ("Style", bp + ".style", "select", ["solid", "ghost"]))}>'
-                   f'<span{E(bp + ".label")}>{e(b["label"])}</span></a>')
+                   f'{X(("Link", bp + ".link", "link"), ("Style", bp + ".style", "select", ["solid", "ghost"]), ("Icon", bp + ".icon", "select", [""] + list(ICONS_22)))}>'
+                   f'<span class="ic"{ICO(bp + ".icon")}>{_icon(b["icon"], 18) if b.get("icon") else ""}</span><span{E(bp + ".label")}>{e(b["label"])}</span></a>')
     return "".join(out)
 
 def _icon(name, size):
@@ -490,11 +500,11 @@ def build_index():
     mosaic = mosaic_html(mosaic_pool())
     PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
     html += jump_menu(INDEX_JUMP(), 0)
-    html += f"""<section class="hero" id="top"{X(("Background video · wide screens", "site:hero_video", "video"), ("Background video · phones (tall)", "site:hero_video_mobile", "video"))}>
+    html += f"""<section class="hero" id="top"{ADD("site:hero_buttons", "hero")}{X(("Background video · wide screens", "site:hero_video", "video"), ("Background video · phones (tall)", "site:hero_video_mobile", "video"))}>
   <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}</div>
   <div class="wrap hero-copy">
     <p class="kicker"{E("site:hero_kicker")}>{e(SITE_TEXT["hero_kicker"])}</p>
-    <h1>Roee Tal</h1>
+    <h1{E("site:hero_title")}>{e(SITE_TEXT["hero_title"])}</h1>
     <p class="lead"{E("site:hero_lead")}>{e(SITE_TEXT["hero_lead"])}</p>
     <div class="btns">
       <button class="btn" type="button"{M("site:showreel_video", "video")} {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}><span{E("site:showreel_label")}>{e(SITE_TEXT["showreel_label"])}</span></button>
@@ -539,7 +549,7 @@ def build_index():
 """
     blocks["more_code"] = more_code_html()
     blocks["about"] = about_html()
-    blocks["gallery_lab"] = f"""<section class="band lab-teaser" id="gallery-lab"{K("gallery_lab", "site:section_order")}>
+    blocks["gallery_lab"] = f"""<section class="band lab-teaser" id="gallery-lab"{K("gallery_lab", "site:section_order")}{ADD("site:gallery_lab_buttons")}>
   {mosaic}
   <div class="wrap lab-row">
     <div>{heading("gallery_lab")}<p class="muted"{E("site:gallery_lab_text")}>{e(SITE_TEXT["gallery_lab_text"])}</p></div>
@@ -547,6 +557,13 @@ def build_index():
   </div>
 </section>
 """
+    for k, cfg in SITE_TEXT.get("section_buttons", {}).items():
+        if k not in blocks:
+            continue
+        row = f'<div class="wrap">{xrow(f"site:section_buttons.{k}", cfg, 0, "top" if cfg.get("position") == "top" else "")}</div>'
+        b = blocks[k].replace("<section", "<section" + ADD(f"site:section_buttons.{k}.items"), 1)
+        i = b.index(">", b.index("<section")) + 1
+        blocks[k] = b[:i] + row + b[i:] if cfg.get("position") == "top" else b[:b.rindex("</section>")] + row + b[b.rindex("</section>"):]
     order = [k for k in SITE_TEXT.get("section_order", []) if k in blocks]
     order += [k for k in blocks if k not in order]          # anything not listed keeps its default place at the end
     html += "\n".join(blocks[k] for k in order)
@@ -624,8 +641,10 @@ def build_code_page(i, cp):
         lbl, cap, f, d = cp["clip"]
         media = f'<section class="mech-sec" id="action"{K("clip", B + ".page_order")}><h2>In action</h2><div class="mech-grid n1"><figure class="mech">{clip_tile(lbl, f, d, depth, big=True, cap=cap, mpath=B + ".clip.video")}<figcaption><b{E(B + ".clip.label")}>{e(lbl)}</b> <span{E(B + ".clip.caption")}>{e(cap)}</span></figcaption></figure></div></section>'
     codes = "".join(code_figure(n, pth, B, ix) for (n, pth), ix in zip(cp["code"], cp["code_idx"]))
+    cb_btn = f'<div class="xrow-block"{K("buttons", B + ".page_order")}{ADD(B + ".buttons.items")}{"" if cp["buttons"].get("items") else " hidden data-edit-show"}>{xrow(B + ".buttons", cp["buttons"], 1, "blk")}</div>'
     cb = {"flow": f'<section class="mech-sec" id="flow"{K("flow", B + ".page_order")}><h2>How it fits together</h2>{flow}</section>', "clip": media,
           "code": f'<section class="mech-sec code-sec" id="the-code"{K("code", B + ".page_order")}{L(B + ".code")}><h2>The code</h2>{codes}<p class="muted small center">Trimmed and commented for this page.</p></section>'}
+    cb["buttons"] = cb_btn
     corder = [k for k in cp.get("page_order", []) if k in cb]
     corder += [k for k in cb if k not in corder]
     code_blocks = "\n".join(cb[k] for k in corder)
@@ -710,6 +729,7 @@ def build_project(i, pj):
         "full_video": blk("full_video", full),
         "about": f'<section class="wrap about-game" id="about-project"{K("about", PO)}{L(B + ".about")}><h2>About the project</h2>{"".join(f"<p{I(j)}{E(f'{B}.about.{j}')}>{e(a)}</p>" for j, a in enumerate(pj["about"]))}</section>',
         "characters": blk("characters", cast),
+        "buttons": f'<div class="wrap xrow-block"{K("buttons", PO)}{ADD(B + ".buttons.items")}{"" if pj["buttons"].get("items") else " hidden data-edit-show"}>{xrow(B + ".buttons", pj["buttons"], 1, "blk")}</div>',
         "credits": (f'<div class="wrap credits"{K("credits", PO)}><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span><b>Credits.</b> <span{E(B + ".credits")}>{e(ART_NOTES[pj["slug"]])}</span></span></p></div>' if pj["slug"] in ART_NOTES else ""),
     }
     order = [k for k in pj.get("page_order", []) if k in pb]
