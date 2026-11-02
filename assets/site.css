@@ -723,3 +723,14 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 @media (max-width:480px){.edit-in.top{margin-left:-12px;padding:6px 4px}}
 .ico-img{object-fit:contain;display:block;flex:none}
 .h-ico .ico-img{width:72%;height:72%}
+.ui-ic{display:inline-flex;align-items:center;vertical-align:-.14em;margin-right:.4em;color:var(--c,currentColor)}
+.ui-ic[hidden]{display:none}
+.ui-ic svg,.ui-ic img{width:1.05em;height:1.05em}
+.topbar nav a,.tool{display:inline-flex;align-items:center}
+.topbar nav a{gap:6px}
+.topbar nav a .ic,.tool .ic{display:contents}
+.topbar nav a svg,.topbar nav a img{width:15px;height:15px}
+.topbar nav{min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.topbar nav::-webkit-scrollbar{display:none}
+.topbar nav a{flex:none}
+@media (max-width:480px){.topbar nav a{gap:4px}.topbar nav a svg,.topbar nav a img{width:13px;height:13px}}

@@ -212,6 +212,19 @@ SITE_DEFAULTS = {
     ],
     "footer_peek": "/assets/art/musical-cat.webp",
     "hero_title": _site.get("name", "Roee Tal"),
+    "nav": [
+        {"label": "Projects", "link": "index.html#projects", "icon": ""},
+        {"label": "Gallery", "link": "gallery.html", "icon": ""},
+        {"label": "Lab", "link": "lab.html", "icon": ""},
+        {"label": "CV", "link": "Roee-Tal-CV.pdf", "icon": ""},
+        {"label": "Contact", "link": "index.html#contact", "icon": ""},
+    ],
+    "job_tools": [
+        {"label": "Unreal Engine 5", "icon": "unreal"},
+        {"label": "Blueprints", "icon": "blueprints"},
+        {"label": "Cesium for Unreal", "icon": "cesium"},
+    ],
+    "ui": {},
     "section_buttons": {k: {"position": "bottom", "align": "left", "items": []} for k in ("experience", "projects", "more_code", "about")},
     "hero_video": "/assets/hero.mp4",
     "hero_video_mobile": "/assets/hero-m.mp4",
@@ -289,6 +302,7 @@ for p in _load("projects.json"):
                   for sec in p.get("sections", [])],
         full=full_key or None, shots=shots, cast=cast, shot_idx=shot_idx, cast_idx=cast_idx,
         layouts=[sec.get("layout", "auto") for sec in p.get("sections", [])], page_order=p.get("page_order", []),
+        sec_icons=[sec.get("icon", "") for sec in p.get("sections", [])],
         buttons=p.get("buttons") or {},
     ))
     TECH[s] = p.get("tech", [])

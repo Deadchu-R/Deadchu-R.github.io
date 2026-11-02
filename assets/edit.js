@@ -365,7 +365,7 @@
   const LIST_NAMES={projects:"Project card","code-pages":"Code card",lab:"Lab clip","early-work":"Early-work clip",job_bullets:"Bullet",timeline:"Timeline entry",
     what_i_built:"Bullet",teammates_built:"Bullet",tech:"Tag",ai_tools:"Tag",hobbies:"Hobby",games:"Game",rig:"Rig part",sections:"Clip section",clips:"Clip",
     screenshots:"Screenshot",characters:"Character",about:"Paragraph",flow:"Step",code:"Code block",
-    hero_buttons:"Button",gallery_lab_buttons:"Button",footer_buttons:"Button"};
+    hero_buttons:"Button",gallery_lab_buttons:"Button",footer_buttons:"Button",nav:"Menu link",job_tools:"Tool",items:"Button"};
   const KEY_NAMES={experience:"Experience",projects:"Projects",more_code:"More code",about:"Get to know me",gallery_lab:"Gallery & lab",code_sample:"Code sample",
     clips:"Clip sections",screenshots:"Screenshots",full_video:"Full video",characters:"Characters",credits:"Credits",flow:"How it fits together",clip:"In action",code:"The code"};
   const listOf=item=>item.parentElement&&item.parentElement.closest("[data-l]");
@@ -378,6 +378,7 @@
     if(u.classList.contains("hero"))return "Top of the page";
     if(u.tagName==="FOOTER")return "Footer";
     if(/^H\d$/.test(u.tagName)||u.classList.contains("exp-kicker"))return "Heading";
+    if((u.dataset.x||"").includes("site:ui."))return /^H\d$/.test(u.tagName)?"Heading":u.closest("a,button")?"Button text":"Text";
     return "Settings";
   }
   const siblingsOf=u=>u.hasAttribute("data-i")?[...u.parentElement.children].filter(c=>c.hasAttribute("data-i")):[...u.parentElement.children].filter(c=>c.dataset.ok===u.dataset.ok);
@@ -686,6 +687,8 @@
     $$(`[data-ico="${CSS.escape(path)}"]`).forEach(c=>{
       const old=$("svg,img",c),size=old?old.getAttribute("width"):"18";
       if(name&&/^(blob:|\/)/.test(name)){c.innerHTML=`<img class="ico-img" src="${name}" width="${size}" height="${size}" alt="">`;if(c.classList.contains("h-ico"))c.hidden=false;return}
+      if(name&&ICONS[name]&&ICONS[name].startsWith("<svg")){c.innerHTML=ICONS[name].replace("<svg ",`<svg width="${size}" height="${size}" `);if(c.hidden)c.hidden=false;return}
+      if(c.matches(".ui-ic"))c.hidden=!name;
       c.innerHTML=name&&ICONS[name]?`<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="${size>18?1.9:2}" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`:"";
       if(c.classList.contains("h-ico"))c.hidden=!name;
     });
@@ -752,7 +755,7 @@
       if(a&&hr&&!hr.startsWith("#")){e.preventDefault();e.stopImmediatePropagation();toast("Links stay off until you publish, so your changes aren't lost.")}
       return;
     }
-    if(t.closest(".topbar,.jump,.viewer"))return;            // site navigation still works
+    if(t.closest(".jump,.viewer,.edit-in"))return;           // the jump menu still moves between pages (top-bar links are editable now)
     const act=t.closest("a,button,summary,label,.clip,.zoom");
     const te=t.closest("[data-e]");
     if(act){e.preventDefault();e.stopImmediatePropagation()}

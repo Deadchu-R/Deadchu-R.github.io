@@ -142,5 +142,47 @@
       "align": "left",
       "items": []
     }
-  }
+  },
+  "nav": [
+    {
+      "label": "Projects",
+      "link": "index.html#projects",
+      "icon": ""
+    },
+    {
+      "label": "Gallery",
+      "link": "gallery.html",
+      "icon": ""
+    },
+    {
+      "label": "Lab",
+      "link": "lab.html",
+      "icon": ""
+    },
+    {
+      "label": "CV",
+      "link": "Roee-Tal-CV.pdf",
+      "icon": ""
+    },
+    {
+      "label": "Contact",
+      "link": "index.html#contact",
+      "icon": ""
+    }
+  ],
+  "job_tools": [
+    {
+      "label": "Unreal Engine 5",
+      "icon": "unreal"
+    },
+    {
+      "label": "Blueprints",
+      "icon": "blueprints"
+    },
+    {
+      "label": "Cesium for Unreal",
+      "icon": "cesium"
+    }
+  ],
+  "ui": {}
 }
