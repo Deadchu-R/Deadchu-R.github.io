@@ -1,7 +1,7 @@
 /* Résumé sheet (A4). Shared by the CV page, the PDF/PNG files and the editor. */
 .cvdoc{--a:var(--cv-accent,#2a8a8f);--ink:#1d2329;--mute:#5b6570;--line:#d9dee3;--fs:10pt;--gap:1;
   box-sizing:border-box;width:210mm;min-height:297mm;margin:0 auto;padding:13mm 14mm;background:#fff;color:var(--ink);
-  font:400 var(--fs)/1.42 var(--cv-font),"Inter","Open Sans",Arial,sans-serif;text-align:start;position:relative;
+  font:400 var(--fs)/1.42 var(--cv-font),"Inter","Open Sans",Arial,"Helvetica Neue","DejaVu Sans",sans-serif;text-align:start;position:relative;
   -webkit-print-color-adjust:exact;print-color-adjust:exact;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .cvdoc *{box-sizing:border-box}
 .cvdoc.d-compact{--fs:9.3pt;--gap:.72}

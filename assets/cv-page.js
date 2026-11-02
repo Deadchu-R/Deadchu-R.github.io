@@ -22,17 +22,25 @@
   const q=new URLSearchParams(location.search).get("v");
   if(q&&q!==data.default&&(data.variants||{})[q])show(q);
   addEventListener("resize",fit);if(document.fonts)document.fonts.ready.then(fit);fit();
-  const share=$("#cvShare");
-  if(share)share.addEventListener("click",async()=>{
+  // share: the PDF itself (WhatsApp, mail…) through the phone's share menu; the file is fetched ahead so the menu opens right away
+  const share=$("#cvShare"),cache={};
+  const fileOf=id=>(data.files||{})[id];
+  async function blobFor(id){const f=fileOf(id);if(!f)return null;if(!cache[id])cache[id]=fetch(f).then(r=>r.ok?r.blob():null).catch(()=>null);return cache[id]}
+  setTimeout(()=>blobFor(cur),1200);
+  const note=(el,t)=>{if(el._h==null)el._h=el.innerHTML;el.textContent=t;clearTimeout(el._t);el._t=setTimeout(()=>{el.innerHTML=el._h},2600)};
+  if(share)share.addEventListener("click",async e=>{
+    e.preventDefault();
     const url=new URL("cv.html"+(cur!==data.default?"?v="+encodeURIComponent(cur):""),location.href).href;
-    const title=((data.variants||{})[cur]||{}).person?.name+" — Résumé";
+    const name=(((data.variants||{})[cur]||{}).person||{}).name||"Résumé";
+    const b=cache[cur]?await cache[cur]:null;
     try{
-      const f=(data.files||{})[cur];
-      if(f&&navigator.canShare){const b=await (await fetch(f)).blob(),file=new File([b],((data.names||{})[cur]||"CV")+".pdf",{type:"application/pdf"});
-        if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title});return}}
-      if(navigator.share){await navigator.share({title,url});return}
-      await navigator.clipboard.writeText(url);share.textContent="Link copied ✓";setTimeout(()=>share.textContent="Share",1800);
-    }catch(e){if(e&&e.name!=="AbortError"){try{await navigator.clipboard.writeText(url);share.textContent="Link copied ✓"}catch(_){}}}
+      if(b&&navigator.canShare){const file=new File([b],((data.names||{})[cur]||"CV")+".pdf",{type:"application/pdf"});
+        if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name+" — Résumé",text:url});return}}
+      if(navigator.share){await navigator.share({title:name+" — Résumé",text:name+" — Résumé",url});return}
+      await navigator.clipboard.writeText(url);note(share,"Link copied ✓");
+    }catch(err){if(err&&err.name==="AbortError")return;try{await navigator.clipboard.writeText(url);note(share,"Link copied ✓")}catch(_){note(share,"Couldn't share")}}
   });
+  share&&share.addEventListener("pointerenter",()=>blobFor(cur));
+  ["#cvPdf","#cvPng"].forEach(s_=>{const a=$(s_);if(a)a.addEventListener("click",()=>setTimeout(()=>note(a,"Saved to Downloads ✓"),300))});
   window.RTCVPage={data,show,fit,get current(){return cur},stage};
 })();

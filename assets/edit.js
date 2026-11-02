@@ -350,6 +350,7 @@
   const aiBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"AI assistant",on:{click:e=>{e.stopPropagation();openAI()}}},"✨");
   const bar=h("div",{id:"rt-bar"},pubBtn,prevBtn,aiBtn,(()=>{const mb=h("button",{class:"rt-more",type:"button",title:"More (hold and slide to pick)"},"⋯");setTimeout(()=>wireHold(mb,{menu:()=>({title:"Editor",items:[
     {label:"＋  New section…",sub:()=>sectionItems(current&&current.closest('[data-ok="site:section_order"]'))},
+    {label:"🎨  Site style",hint:SKIN_NAMES[document.documentElement.dataset.skin||"classic"],sub:()=>Object.entries(SKIN_NAMES).map(([k,l])=>({label:l,hint:SKIN_HINT[k],def:(document.documentElement.dataset.skin||"classic")===k,fn:()=>applySkin(k)}))},
     {label:"✨  AI assistant",fn:()=>openAI()},{label:"⚙  Site settings",hint:"sound, AI, CSS",fn:()=>siteSettings()},
     {label:"↺  Versions / undo",fn:()=>historyBox()},{label:"?  How it works",fn:()=>help()},{label:"🔑  GitHub token",fn:()=>askToken()},
     {label:"✕  Exit editing",dan:true,fn:()=>exitEdit()}]})}),0);return mb})());
@@ -1355,7 +1356,7 @@
       if(a&&hr&&!hr.startsWith("#")){e.preventDefault();e.stopImmediatePropagation();toast("Links stay off until you publish, so your changes aren't lost.")}
       return;
     }
-    if(t.closest(".jump,.viewer,.edit-in"))return;           // the jump menu still moves between pages (top-bar links are editable now)
+    if(t.closest(".jump,.viewer,.edit-in,#cvBar"))return;      // the résumé's Download / Share buttons work while editing too           // the jump menu still moves between pages (top-bar links are editable now)
     const act=t.closest("a,button,summary,label,.clip,.zoom");
     const te=t.closest("[data-e]");
     if(act){e.preventDefault();e.stopImmediatePropagation()}
@@ -1778,6 +1779,21 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
         h("button",{class:"rt-btn pri",type:"button",on:{click:()=>{const v=inp.value.trim();if(!v)return;store.set(AI_KEY,v);store.set(AI_MODEL,"");m.remove();saveTokenForLogin(true);openAI()}}},"Save")));
     setTimeout(()=>inp.focus(),50);
   }
+  /* ---- site styles: same content, different look (assets/skins/<name>.css + optional .js) */
+  const SKIN_NAMES={classic:"Classic",arcade:"Arcade",sketchbook:"Sketchbook",hobbies:"Hobbies",plain:"Plain"};
+  const SKIN_HINT={classic:"the current look",arcade:"game menu + mini-game",sketchbook:"hand-made notebook",hobbies:"climbing wall + manga",plain:"super boring"};
+  function applySkin(k){
+    const html=document.documentElement,prev=html.dataset.skin||"classic";if(prev===k)return;
+    try{window.RTSkins&&RTSkins[prev]&&RTSkins[prev].off()}catch(e){}
+    html.dataset.skin=k;set("site:skin",k);
+    let l=document.getElementById("skin-css");
+    if(k==="classic"){if(l)l.remove()}
+    else{if(!l){l=document.createElement("link");l.rel="stylesheet";l.id="skin-css";document.head.append(l)}l.href=new URL("skins/"+k+".css",ME).href}
+    const start=()=>{try{window.RTSkins&&RTSkins[k]&&RTSkins[k].on()}catch(e){}};
+    if(k!=="classic"&&!(window.RTSkins&&RTSkins[k])){const sc=document.createElement("script");sc.src=new URL("skins/"+k+".js",ME).href;sc.onload=start;sc.onerror=()=>sc.remove();document.head.append(sc)}else start();
+    setTimeout(()=>{place();secBars()},300);
+    toast(`Style: ${SKIN_NAMES[k]}. Look around (👁 Preview to try it like a visitor), then Publish to make it live.`);
+  }
   function setProvider(v){store.set(AI_PROV,v);if(provBtn)provBtn.textContent=PROV_ICON[v];
     aiSay("ai",{local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[v]);warmApp()}
   function aiMenu(){
@@ -1957,12 +1973,30 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     if(d==="cv"&&get("cv:default")===id)set("cv:default",Object.keys(docs.cv.variants)[0]||"");
     cvShow((cvAll()[0]||{}).id);
   }
+  // ⬇ PDF while editing: no unpublished changes → the real file straight to Downloads; with changes → choose
+  function cvSaved(){try{const o=JSON.parse(orig.cv||"{}");return JSON.stringify((o.variants||{})[cvCur])===JSON.stringify(cvVar(cvCur))&&cvDocOf(cvCur)==="cv"}catch(e){return false}}
+  async function cvDownload(url,name){
+    try{const b=await (await fetchT(url+"?t="+Date.now(),{},30000)).blob();const u=URL.createObjectURL(b);const a=h("a",{href:u,download:name});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+      toast("Saved: "+name+" · it's in your Downloads folder (phone: Files › Downloads).")}catch(e){toast("Couldn't download: "+errText(e))}
+  }
+  function cvPdfMenu(){
+    const d=(window.RTCVPage&&RTCVPage.data)||{},f=(d.files||{})[cvCur],nm=((d.names||{})[cvCur]||"CV")+".pdf";
+    if(f&&cvSaved())return cvDownload(f,nm);
+    const m=modal(h("h3",{},"Download the PDF"),
+      h("p",{},f?"This résumé has changes that aren't published yet. The ready PDF file is made when you publish (about a minute).":"This résumé isn't published yet, so there's no ready PDF file for it."),
+      h("div",{class:"rt-addlist"},
+        h("button",{type:"button",class:"rt-addopt",on:{click:async()=>{m.remove();await publish();toast("Publishing… the PDF is ready in about a minute; then tap ⬇ PDF again.")}}},h("b",{},"Publish, then download"),h("span",{},"best quality, real text for ATS")),
+        f?h("button",{type:"button",class:"rt-addopt",on:{click:()=>{m.remove();cvDownload(f,nm)}}},h("b",{},"Download the last published version"),h("span",{},"without the new changes")):null,
+        h("button",{type:"button",class:"rt-addopt",on:{click:()=>{m.remove();cvPrint()}}},h("b",{},"Save with my changes now"),h("span",{},"opens the print window: choose \"Save as PDF\" → it goes to Downloads"))),
+      h("div",{class:"rt-row",style:"justify-content:flex-end;margin-top:10px"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel")));
+  }
   async function cvPrint(){
     const v=cvVar(cvCur);if(!v)return;const st=$("#cvStage");
     const pr=h("div",{class:"cv-print-root rt-cvprint"});pr.innerHTML=RTCV.render(v,cvCur,{photo:cvEnv(cvCur).photo});document.body.append(pr);
     st.classList.remove("cv-print-root");const old=document.title;document.title=(v.person&&v.person.name||"CV").replace(/\s+/g,"-")+"-CV";
     try{await document.fonts.ready}catch(e){}
     const done=()=>{pr.remove();st.classList.add("cv-print-root");document.title=old;removeEventListener("afterprint",done)};addEventListener("afterprint",done);
+    toast("In the print window choose \"Save as PDF\" (not a printer), then Save: it goes to Downloads.");
     setTimeout(()=>window.print(),80);
   }
   async function cvImage(){
@@ -1972,7 +2006,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       const v=cvVar(cvCur),box=h("div",{style:"position:fixed;left:-10000px;top:0;background:#fff"});box.innerHTML=RTCV.render(v,cvCur,{photo:cvEnv(cvCur).photo});document.body.append(box);
       try{await document.fonts.ready}catch(e){}
       const url=await htmlToImage.toPng(box.firstElementChild,{pixelRatio:2,backgroundColor:"#fff"});box.remove();
-      const a=h("a",{href:url,download:(v.person&&v.person.name||"CV").replace(/\s+/g,"-")+"-CV.png"});document.body.append(a);a.click();a.remove();toast("Image saved.");
+      const nm=(v.person&&v.person.name||"CV").replace(/\s+/g,"-")+"-CV.png";const a=h("a",{href:url,download:nm});document.body.append(a);a.click();a.remove();toast("Saved: "+nm+" · it's in your Downloads folder (phone: Files › Downloads, or Gallery).");
     }catch(e){toast("Couldn't make the image here ("+errText(e)+"). After you publish, the Image button gives the ready file.")}
   }
   function cvFit(){
@@ -1993,7 +2027,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
         h("span",{class:"rt-cvwhere"+(doc==="cvlocal"?" local":"")},doc==="cvlocal"?"🔒 this device":isMain?"★ main":(V.public===false?"site · hidden":"site")),
         addB,design,h("button",{type:"button",class:"rt-cvtips",title:"Tips to improve this résumé",on:{click:cvTipList}},"!"),
         h("button",{type:"button",class:"rt-cvbtn",title:"Check it like an applicant-tracking system, and against a job ad",on:{click:cvAtsPage}},"🤖 ATS check"),h("span",{class:"rt-cvpages"},"…"),
-        h("button",{type:"button",class:"rt-cvbtn",title:"Make the PDF now (includes unpublished changes)",on:{click:cvPrint}},"⬇ PDF"),
+        h("button",{type:"button",class:"rt-cvbtn",title:"Download the PDF to this device",on:{click:cvPdfMenu}},"⬇ PDF"),
         h("button",{type:"button",class:"rt-cvbtn",title:"Save as an image now",on:{click:cvImage}},"🖼 PNG")));
     wireHold(pick,{menu:()=>({title:"Résumés",items:cvAll().map(x=>({label:(x.v.label||x.id),hint:x.doc==="cvlocal"?"🔒 device":(get("cv:default")===x.id?"★ main":""),def:x.id===cvCur,fn:()=>cvShow(x.id)})).concat([
       {label:"＋ New résumé…",sub:()=>[{label:"Copy of this one",hint:"then change it",fn:()=>cvNew("copy")},{label:"Blank",fn:()=>cvNew("blank")},{label:"For a friend",hint:"🔒 only this device",fn:()=>cvNew("friend")},{label:"✨ From an old résumé",hint:"paste or PDF",fn:cvImport}]},

@@ -97,13 +97,21 @@ def ver(path):
     return hashlib.md5((ROOT / path).read_bytes()).hexdigest()[:8]
 
 
+SKINS = ["classic", "arcade", "sketchbook", "hobbies", "plain"]   # site styles, picked in the editor (⋯ › Site style)
+SKIN = SITE_TEXT.get("skin") if SITE_TEXT.get("skin") in SKINS else "classic"
+def skin_css(p):
+    return f'\n<link rel="stylesheet" href="{p}assets/skins/{SKIN}.css?v={ver("assets/skins/" + SKIN + ".css")}" id="skin-css">' if SKIN != "classic" else ""
+def skin_js(p):
+    f = ROOT / "assets/skins" / (SKIN + ".js")
+    return f'<script src="{p}assets/skins/{SKIN}.js?v={ver("assets/skins/" + SKIN + ".js")}" defer></script>\n' if SKIN != "classic" and f.exists() else ""
+
 def head(title, desc, depth, theme=None):
     p = "../" * depth
     style = ""
     if theme:
         style = f'<style>:root{{--deep:{theme[0]};--mid:{theme[1]};--accent:{theme[2]}}}</style>'
     return f"""<!doctype html>
-<html lang="en">
+<html lang="en" data-skin="{SKIN}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -113,7 +121,7 @@ def head(title, desc, depth, theme=None):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800;900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="{p}assets/site.css?v={ver('assets/site.css')}">{('<style id="custom-css">' + SITE_TEXT["custom_css"].replace("</", "<\\/") + '</style>') if SITE_TEXT.get("custom_css") else ""}
+<link rel="stylesheet" href="{p}assets/site.css?v={ver('assets/site.css')}">{skin_css(p)}{('<style id="custom-css">' + SITE_TEXT["custom_css"].replace("</", "<\\/") + '</style>') if SITE_TEXT.get("custom_css") else ""}
 {style}
 </head>
 <body>
@@ -168,7 +176,7 @@ def footer(depth, peek=True):
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
 </div>
 {f'<script id="site-sound" type="application/json">{_json.dumps(SITE_TEXT["_sound"])}</script>' if SITE_TEXT.get("_sound") else ""}
-<script src="{p}assets/site.js?v={ver('assets/site.js')}" data-edit="{p}assets/edit.js?v={ver('assets/edit.js')}" defer></script>
+{skin_js(p)}<script src="{p}assets/site.js?v={ver('assets/site.js')}" data-edit="{p}assets/edit.js?v={ver('assets/edit.js')}" defer></script>
 </body>
 </html>
 """
