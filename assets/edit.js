@@ -835,13 +835,20 @@
   let settingsOpen=false;
   function aiSettingsBlock(){
     // saved on this device only (not on the site)
-    const pv=h("select",{},h("option",{value:"local",selected:provider()==="local"},"📱 On this device (free, private)"),h("option",{value:"gemini",selected:provider()==="gemini"},"Gemini (free key, backup)"));
-    pv.addEventListener("change",()=>{store.set(AI_PROV,pv.value);if(provBtn)provBtn.textContent=pv.value==="local"?"📱":"G"});
+    const pv=h("select",{},h("option",{value:"app",selected:provider()==="app"},"🔌 AI app on this device (Ollama / LM Studio)"),h("option",{value:"local",selected:provider()==="local"},"📱 Inside the browser (free, private)"),h("option",{value:"gemini",selected:provider()==="gemini"},"Gemini (free key, backup)"));
+    pv.addEventListener("change",()=>{store.set(AI_PROV,pv.value);if(provBtn)provBtn.textContent=PROV_ICON[pv.value]});
+    const au=h("input",{type:"text",value:appUrl(),spellcheck:"false"});au.addEventListener("change",()=>{store.set(APP_URL,au.value.trim());store.set(APP_MODEL,"")});
+    const am=h("select",{},h("option",{value:store.get(APP_MODEL)||""},store.get(APP_MODEL)||"(first model the app offers)"));
+    am.addEventListener("change",()=>store.set(APP_MODEL,am.value));
+    const ast=h("p",{class:"rt-hint"},"");
+    const chk=h("button",{class:"rt-btn sm",type:"button",on:{click:async()=>{ast.textContent="Connecting…";try{const ms=await appModels();am.replaceChildren(...ms.map(m=>h("option",{value:m,selected:m===store.get(APP_MODEL)},m)));if(!store.get(APP_MODEL)&&ms[0])store.set(APP_MODEL,ms[0]);ast.textContent="Connected ✓ "+ms.length+" model(s)"}catch(e){ast.textContent="Can't reach it: "+errText(e)}}}},"🔌 Check connection");
     const md=h("select",{},...LOCAL_MODELS.map(([v,l])=>h("option",{value:v,selected:(store.get(AI_LOCAL)||"auto")===v},l)));
     md.addEventListener("change",()=>{store.set(AI_LOCAL,md.value)});
     const st=h("p",{class:"rt-hint"},"gpu" in navigator?"This browser can run it.":"This browser can't run on-device AI (no WebGPU); Gemini will be used.");
     const dl=h("button",{class:"rt-btn sm",type:"button",on:{click:async()=>{dl.disabled=true;try{await ensureEngine(r=>{st.textContent=`Downloading… ${Math.round((r.progress||0)*100)}%`});st.textContent="Ready on this device ✓"}catch(e){st.textContent="Couldn't load: "+e.message}dl.disabled=false}}},"⬇ Download the model now (Wi-Fi)");
-    return h("div",{},h("label",{},"✨ AI assistant on this device"),pv,h("label",{},"On-device model"),md,h("div",{class:"rt-row",style:"margin-top:8px"},dl,
+    return h("div",{},h("label",{},"✨ AI assistant on this device"),pv,
+      h("label",{},"AI app address"),au,h("label",{},"AI app model"),am,h("div",{class:"rt-row",style:"margin-top:8px"},chk),ast,
+      h("label",{},"In-browser model"),md,h("div",{class:"rt-row",style:"margin-top:8px"},dl,
       h("button",{class:"rt-btn sm",type:"button",on:{click:aiKeyBox}},"🔑 Gemini key")),st);
   }
   function siteSettings(){
@@ -965,6 +972,7 @@
   /* ------------------------------------------------------------ ✨ AI assistant (Gemini, free key from Google AI Studio)
      It reads what this page can change, then calls the same tools you use by hand. Nothing is published until you press Publish. */
   const AI_KEY="rt-gemini-key",AI_MODEL="rt-gemini-model",GAPI="https://generativelanguage.googleapis.com/v1beta";
+  const PROV_ICON={local:"📱",app:"🔌",gemini:"G"};
   let provBtn=null,aiBox=null,aiLog=null,aiHist=[],aiFiles=[],aiBusy=false,rec=null,aiLang="he-IL";
   function applyCustomCss(css){let st=document.getElementById("custom-css");if(!st){st=document.createElement("style");st.id="custom-css";document.head.append(st)}st.textContent=css||""}
   function fieldDef(path){
@@ -1110,6 +1118,40 @@ Actions (use paths exactly as listed):
 {"do":"css","css":"<full custom CSS: keep the old rules and add yours>"}
 {"do":"attach","path":"<MEDIA or image/video FIELD path>","attachment":0}
 "this"/"זה" means the SELECTED item. Keep the site's text in English unless asked. reply = one short sentence in the owner's language.`;
+  async function applyJsonAnswer(content,thinking){
+    const raw=String(content||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/^```(?:json)?|```$/gm,"").trim();let out;
+    try{out=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);try{out=m?JSON.parse(m[0]):null}catch(e2){out=null}if(!out)out={actions:[],reply:raw}}
+    const MAP={set:a=>AI_TOOLS.set_value(a),move_section:a=>AI_TOOLS.move_section(a),move_item:a=>AI_TOOLS.move_item(a),add:a=>AI_TOOLS.add_item(a),remove:a=>AI_TOOLS.remove_item(a),css:a=>AI_TOOLS.set_custom_css(a),attach:a=>AI_TOOLS.use_attachment(a)};
+    for(const a of (out.actions||[]).slice(0,20)){let r_;try{r_=MAP[a.do]?await MAP[a.do](a):"unknown action "+a.do}catch(e){r_="error: "+e.message}
+      aiSay("act",(r_==="ok"||/^(now|added|removed|order|placed)/.test(r_)?"✓ ":"⚠ ")+a.do+" "+(a.path||a.list_path||a.key||"")+(r_==="ok"?"":" · "+r_))}
+    if(thinking)thinking.remove();
+    aiSay("ai",out.reply||((out.actions||[]).length?"Done. Check with 👁 Preview, then Publish.":"I didn't find what to change. Tap the thing first, then ask again."));
+    aiFiles=[];renderFiles();place();secBars();
+  }
+  /* ---- AI app on this phone / PC: any app with an OpenAI-style local server (Ollama in Termux, LM Studio, Ollama on the PC) */
+  const APP_URL="rt-ai-app-url",APP_MODEL="rt-ai-app-model";
+  const appUrl=()=>(store.get(APP_URL)||(isPhone()?"http://127.0.0.1:11434/v1":"http://localhost:1234/v1")).replace(/\/+$/,"");
+  async function appModels(){
+    const r=await fetchT(appUrl()+"/models",{},8000);if(!r.ok)throw new Error("the app answered "+r.status);
+    const j=await r.json();return (j.data||j.models||[]).map(m=>m.id||m.name).filter(Boolean);
+  }
+  async function appSend(text){
+    const thinking=aiSay("sys","Asking the AI app…");
+    try{
+      let model=store.get(APP_MODEL);
+      if(!model){const ms=await appModels();model=ms.find(m=>!/embed/i.test(m))||ms[0];if(!model)throw new Error("the app has no model loaded");store.set(APP_MODEL,model)}
+      const big=!isPhone();
+      const r=await fetchT(appUrl()+"/chat/completions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,temperature:.2,max_tokens:900,stream:false,
+        messages:[{role:"system",content:LOCAL_SYS+"\n/no_think"},{role:"user",content:`PAGE ${location.pathname}\n${big?catalog().slice(0,24000):smallCatalog(6000)}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`}]})},180000);
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error((j.error&&(j.error.message||j.error))||("the app answered "+r.status));
+      await applyJsonAnswer(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content,thinking);
+    }catch(e){thinking.remove();
+      const m=errText(e);
+      aiSay("err",/fetch|network|load failed|no answer/i.test(m)
+        ?`Can't reach the AI app at ${appUrl()}. Phone: is Termux open with "ollama serve" running? PC: is the LM Studio server on (with CORS) or Ollama running? (${m})`
+        :"AI app: "+m)}
+  }
   async function localSend(text){
     const thinking=aiSay("sys","Loading the on-device model…");
     try{
@@ -1136,18 +1178,12 @@ Actions (use paths exactly as listed):
         }
       }
       if(!res)throw new Error(last);
-      let raw=(res.choices[0].message.content||"").replace(/<think>[\s\S]*?<\/think>/g,"").trim(),out;
-      try{out=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);out=m?JSON.parse(m[0]):{actions:[],reply:raw}}
-      const MAP={set:a=>AI_TOOLS.set_value(a),move_section:a=>AI_TOOLS.move_section(a),move_item:a=>AI_TOOLS.move_item(a),add:a=>AI_TOOLS.add_item(a),remove:a=>AI_TOOLS.remove_item(a),css:a=>AI_TOOLS.set_custom_css(a),attach:a=>AI_TOOLS.use_attachment(a)};
-      for(const a of (out.actions||[]).slice(0,20)){let r_;try{r_=MAP[a.do]?await MAP[a.do](a):"unknown action "+a.do}catch(e){r_="error: "+e.message}
-        aiSay("act",(r_==="ok"||/^(now|added|removed|order|placed)/.test(r_)?"✓ ":"⚠ ")+a.do+" "+(a.path||a.list_path||a.key||"")+(r_==="ok"?"":" · "+r_))}
-      thinking.remove();aiSay("ai",out.reply||((out.actions||[]).length?"Done. Check with 👁 Preview, then Publish.":"I didn't find what to change. Tap the thing first, then ask again."));
-      aiFiles=[];renderFiles();place();secBars();
+      await applyJsonAnswer(res.choices[0].message.content,thinking);
     }catch(e){thinking.remove();aiSay("err","On-device AI: "+errText(e)+". You can switch to Gemini with the 📱/G button above.");if(/load|fetch|network|device/i.test(errText(e))){engine=null;engineId=""}}
   }
   async function aiSend(text){
     if(aiBusy||!text.trim()&&!aiFiles.length)return;
-    if(provider()==="local"){aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));await localSend(text);aiBusy=false;return}
+    if(provider()==="local"||provider()==="app"){aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));await (provider()==="app"?appSend(text):localSend(text));aiBusy=false;return}
     const key=store.get(AI_KEY);if(!key){aiKeyBox();return}
     aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
     const thinking=aiSay("sys","…");
@@ -1212,13 +1248,14 @@ Actions (use paths exactly as listed):
     aiBox=h("div",{id:"rt-ai",class:"rt-ui"},
       h("div",{class:"rt-head"},h("span",{},"✨ AI assistant"),h("span",{},
         h("button",{class:"rt-x",type:"button",title:"Undo everything not published yet",on:{click:()=>{if(changes&&confirm("Throw away every change that isn't published yet (yours and the AI's)?")){changes=0;location.reload()}}}},"↺"),
-        provBtn=h("button",{class:"rt-x",type:"button",title:"Switch between the on-device AI and Gemini",on:{click:()=>{store.set(AI_PROV,provider()==="local"?"gemini":"local");provBtn.textContent=provider()==="local"?"📱":"G";
-          aiSay("ai",provider()==="local"?"Using the AI on this device.":"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key."))}}},provider()==="local"?"📱":"G"),
+        provBtn=h("button",{class:"rt-x",type:"button",title:"Switch AI: in the browser 📱 / AI app 🔌 / Gemini G",on:{click:()=>{const order=["app","local","gemini"];store.set(AI_PROV,order[(order.indexOf(provider())+1)%3]);provBtn.textContent=PROV_ICON[provider()];
+          aiSay("ai",{local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[provider()])}}},PROV_ICON[provider()]),
         h("button",{class:"rt-x",type:"button",title:"Gemini key",on:{click:aiKeyBox}},"🔑"),
         h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{aiBox.hidden=true}}},"✕"))),
       aiLog,filesRow,
       h("div",{class:"rt-airow"},h("button",{type:"button",class:"rt-aibtn",title:"Attach image, video or sound",on:{click:()=>ui.append(att)||att.click()}},"📎"),ta,lang,mic,h("button",{type:"button",class:"rt-aibtn pri",title:"Send",on:{click:send}},"➤")));
     document.body.append(aiBox);
+    if(provider()==="app")aiSay("ai","🔌 Using the AI app at "+appUrl()+". Tip: tap the thing you mean first, then ask.");
     if(provider()==="local")aiSay("ai","📱 Running on this device. The first message downloads the model once (use Wi-Fi). Tip: tap the thing you mean first, then ask, e.g. \"make this purple\" or \"תעביר את הסקשן הזה למעלה\".");
     aiSay("ai","Hi! Tell me what to change on this page: text, colors, icons, layout, button styles, order, or attach a picture/video to put somewhere. Changes show up right away; Publish when you like them.");
     setTimeout(()=>ta.focus(),50);
