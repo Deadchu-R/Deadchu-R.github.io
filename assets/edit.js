@@ -1076,12 +1076,13 @@ Rules:
       wl=wl||await import(WEBLLM);
       const src=`import {WebWorkerMLCEngineHandler} from "${WEBLLM}";const h=new WebWorkerMLCEngineHandler();self.onmessage=m=>h.onmessage(m);`;
       const worker=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})),{type:"module"});
-      engine=await wl.CreateWebWorkerMLCEngine(worker,id,{initProgressCallback:r=>onProgress&&onProgress(r)});
+      engine=await wl.CreateWebWorkerMLCEngine(worker,id,{initProgressCallback:r=>onProgress&&onProgress(r)},{context_window_size:8192});
       engineId=id;return engine;
     })();
     try{return await loadingP}finally{loadingP=null}
   }
-  function smallCatalog(){
+  const errText=e=>String((e&&(e.message||e.content))||e||"unknown error").replace(/^Error:\s*/,"").slice(0,300);
+  function smallCatalog(limit=6000){
     // the device model reads ~4k tokens: send the selected thing and its section, or a compact list of the page
     const L=[],seen=new Set(),cut=(v,n)=>{v=v==null?"":typeof v==="string"?v:JSON.stringify(v);return v.length>n?v.slice(0,n)+"…":v};
     const scope=current?(current.closest("[data-k]")||chain[chain.length-1]||current):document.body;
@@ -1097,7 +1098,7 @@ Rules:
     $$("[data-x]",pool).forEach(el=>{try{JSON.parse(el.dataset.x).forEach(([lab,p,t])=>{if(seen.has(p))return;seen.add(p);L.push(`FIELD ${p} [${t}] ${lab}`)})}catch(e){}});
     L.push("ICONS: "+Object.keys(ICONS).join(","));
     if(get("site:custom_css"))L.push("CUSTOM_CSS now: "+cut(get("site:custom_css"),600));
-    return L.join("\n").slice(0,7500);
+    return L.join("\n").slice(0,limit);
   }
   const LOCAL_SYS=`You edit Roee Tal's portfolio page. Answer ONLY with JSON: {"actions":[...],"reply":"short text"}.
 Actions (use paths exactly as listed):
@@ -1114,9 +1115,16 @@ Actions (use paths exactly as listed):
     try{
       const eng=await ensureEngine(r=>{const pct=Math.round((r.progress||0)*100);thinking.textContent=engine?"…":`Downloading the AI model to this device (first time only)… ${pct}%`});
       thinking.textContent="Thinking on this device…";
-      const user=`PAGE ${location.pathname}\n${smallCatalog()}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`;
-      const res=await eng.chat.completions.create({messages:[{role:"system",content:LOCAL_SYS},{role:"user",content:user}],
-        response_format:{type:"json_object"},temperature:.2,max_tokens:700,extra_body:{enable_thinking:false}});
+      const ask=(limit,strict)=>eng.chat.completions.create({messages:[{role:"system",content:LOCAL_SYS},
+          {role:"user",content:`PAGE ${location.pathname}\n${smallCatalog(limit)}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`}],
+        temperature:.2,max_tokens:700,extra_body:{enable_thinking:false},...(strict?{response_format:{type:"json_object"}}:{})});
+      // if one way fails, try simpler ones: shorter page list, then without forced JSON
+      let res,last;
+      for(const [limit,strict] of [[6000,true],[2500,true],[2500,false]]){
+        try{res=await ask(limit,strict);break}catch(e){last=errText(e);thinking.textContent="Retrying… ("+last.slice(0,80)+")";
+          if(/device|lost|memory|out of/i.test(last)){engine=null;engineId="";break}}
+      }
+      if(!res)throw new Error(last+(/device|lost|memory|out of/i.test(last||"")?" · try the Light model in ⋯ › Site settings":""));
       let raw=(res.choices[0].message.content||"").replace(/<think>[\s\S]*?<\/think>/g,"").trim(),out;
       try{out=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);out=m?JSON.parse(m[0]):{actions:[],reply:raw}}
       const MAP={set:a=>AI_TOOLS.set_value(a),move_section:a=>AI_TOOLS.move_section(a),move_item:a=>AI_TOOLS.move_item(a),add:a=>AI_TOOLS.add_item(a),remove:a=>AI_TOOLS.remove_item(a),css:a=>AI_TOOLS.set_custom_css(a),attach:a=>AI_TOOLS.use_attachment(a)};
@@ -1124,7 +1132,7 @@ Actions (use paths exactly as listed):
         aiSay("act",(r_==="ok"||/^(now|added|removed|order|placed)/.test(r_)?"✓ ":"⚠ ")+a.do+" "+(a.path||a.list_path||a.key||"")+(r_==="ok"?"":" · "+r_))}
       thinking.remove();aiSay("ai",out.reply||((out.actions||[]).length?"Done. Check with 👁 Preview, then Publish.":"I didn't find what to change. Tap the thing first, then ask again."));
       aiFiles=[];renderFiles();place();secBars();
-    }catch(e){thinking.remove();aiSay("err","On-device AI: "+e.message+". You can switch to Gemini in ⋯ › Site settings.")}
+    }catch(e){thinking.remove();aiSay("err","On-device AI: "+errText(e)+". You can switch to Gemini with the 📱/G button above.");if(/load|fetch|network|device/i.test(errText(e))){engine=null;engineId=""}}
   }
   async function aiSend(text){
     if(aiBusy||!text.trim()&&!aiFiles.length)return;
