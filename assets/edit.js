@@ -234,6 +234,10 @@
   #rt-panel .rt-hint{color:#999;font-size:12px;margin:6px 0 0;line-height:1.4}
   .rt-modal{position:fixed;inset:0;z-index:2147483200;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
   .rt-card{background:#151515;color:#eee;border:1px solid #333;border-radius:16px;max-width:520px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.6);font-size:15px;line-height:1.5;max-height:90vh;overflow:auto}
+  .rt-addlist{display:grid;gap:6px}.rt-addlist.grid{grid-template-columns:1fr 1fr}
+  .rt-addopt{appearance:none;text-align:left;border:1px solid #333;background:#1e1e1e;color:#eee;border-radius:10px;padding:11px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font:600 14.5px/1.25 system-ui,sans-serif}
+  .rt-addopt:hover{border-color:#ffd23f;background:#262626}.rt-addopt span{font-weight:400;font-size:12.5px;color:#aaa}
+  @media (max-width:420px){.rt-addlist.grid{grid-template-columns:1fr}}
   .rt-card h3{margin:0 0 10px;font:800 20px/1.2 system-ui,sans-serif;color:#fff}
   .rt-card ol{padding-left:20px;margin:8px 0}
   .rt-card a{color:#ffd23f}
@@ -253,7 +257,7 @@
   const pubBtn=h("button",{class:"rt-pub",type:"button",disabled:true,on:{click:publish}},h("i"),"Publish");
   const menu=h("div",{id:"rt-menu"});
   const item=(label,fn,cls)=>h("button",{type:"button",class:cls||"",on:{click:()=>{menu.style.display="none";fn()}}},label);
-  menu.append(item("＋  New section (main page)",()=>{const r_=addSection(current&&current.closest('[data-ok="site:section_order"]'));if(r_)startEdit($(`[data-e="${r_.base}.title"]`))}),item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
+  menu.append(item("＋  New section (main page)",()=>sectionPicker(current&&current.closest('[data-ok="site:section_order"]'))),item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
   const prevBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"Preview the page as visitors will see it",on:{click:e=>{e.stopPropagation();togglePreview()}}},"👁");
   function togglePreview(){
     const on=document.documentElement.classList.toggle("rt-preview");
@@ -280,7 +284,7 @@
     del:B("🗑","Delete",()=>current&&remove(current)),
     gear:B("⚙","Settings",()=>{panelOpen=!panelOpen;renderPanel()}),
     bg:B("🎬","Background / cover: change the video or image",()=>{panelOpen=true;renderPanel()}),
-    add:B("＋","Add a button here",()=>current&&addItem(current)),
+    add:B("＋","Add something here",()=>current&&addMenu(current)),
     plus:B("＋","Add a new one after this",()=>current&&addNew(current)),
     parent:B("⤴","Select what's around it",()=>{const k=chain.indexOf(current);if(chain[k+1]){current=chain[k+1];clickedText=clickedMedia=null;panelOpen=false;renderPanel();place()}}),
   };
@@ -421,7 +425,8 @@
   const listOf=item=>item.parentElement&&item.parentElement.closest("[data-l]");
   const listPath=item=>{const l=listOf(item);return l&&l.dataset.l};
   function unitName(u){
-    if(u.hasAttribute("data-i")){const lp=listPath(u)||"";const last=lp.split(/[:.]/).pop();return LIST_NAMES[last]||LIST_NAMES[lp]||"Item"}
+    if(u.hasAttribute("data-i")){const lp=listPath(u)||"";
+      const cm=lp.match(/^site:custom_sections\.(\w+)\.items$/);if(cm)return {cards:"Card",stats:"Number",gallery:"Picture",list:"Point",faq:"Question",steps:"Step"}[get(`site:custom_sections.${cm[1]}.type`)]||"Item";const last=lp.split(/[:.]/).pop();return LIST_NAMES[last]||LIST_NAMES[lp]||"Item"}
     if(u.hasAttribute("data-k"))return "Section · "+(KEY_NAMES[u.dataset.k]||(u.dataset.k.startsWith("cs_")?(get(`site:custom_sections.${u.dataset.k.slice(3)}.title`)||"yours"):u.dataset.k));
     if(u.classList.contains("bp"))return "Illustration window";
     if(/showreel/.test(u.dataset.m||""))return "Showreel button";
@@ -469,8 +474,7 @@
     show(T.dup,current.hasAttribute("data-i"));show(T.del,current.hasAttribute("data-i")||(current.dataset.k||"").startsWith("cs_"));
     show(T.gear,hasSettings(current));
     show(T.bg,fieldsOf(current).some(f=>/^(video|image|art|media)$/.test(f[2])&&/background|cover|picture|thumbnail/i.test(f[0])));
-    show(T.add,current.hasAttribute("data-add"));
-    show(T.plus,current.hasAttribute("data-i")&&(()=>{const lp=listPath(current)||"";return typeof get(lp+(lp.includes(":")?".":":")+current.dataset.i)==="string"})());T.gear.classList.toggle("on",panelOpen);
+    show(T.add,addOptions(current).length>0);show(T.plus,false);T.gear.classList.toggle("on",panelOpen);
     show(T.parent,!!chain[chain.indexOf(current)+1]);
     tb.style.display="flex";
     const tw=tb.offsetWidth,th=tb.offsetHeight;
@@ -530,14 +534,14 @@
         if(getComputedStyle(sec).position==="static")sec.style.position="relative";
         const mainPage=sec.dataset.ok==="site:section_order";
         b=h("div",{class:"rt-secbar rt-ui"},h("span",{class:"rt-sl"},KEY_NAMES[sec.dataset.k]||(sec.dataset.k.startsWith("cs_")?"Your section":sec.dataset.k)),
-          mainPage?h("button",{type:"button",title:"Add a new section below this one",on:{click:()=>{const r_=addSection(sec);if(r_)startEdit($(`[data-e="site:custom_sections.${r_.id}.title"]`))}}},"⊞"):null,
-          h("button",{type:"button",title:"Move this whole section up",on:{click:()=>step(sec,-1)}},"↑"),
-          h("button",{type:"button",title:"Move this whole section down",on:{click:()=>step(sec,1)}},"↓"),
-          sec.hasAttribute("data-add")?h("button",{type:"button",title:"Add a button to this section",on:{click:()=>addItem(sec)}},"+"):null);
+          mainPage?h("button",{type:"button",title:"Add a new section below this one",on:{click:()=>sectionPicker(sec)}},"⊞"):null,
+          h("button",{type:"button",class:"rt-up",title:"Move this whole section up",on:{click:()=>step(sec,-1)}},"↑"),
+          h("button",{type:"button",class:"rt-down",title:"Move this whole section down",on:{click:()=>step(sec,1)}},"↓"),
+          h("button",{type:"button",class:"rt-addm",title:"Add something to this section",on:{click:()=>addMenu(sec)}},"+"));
         sec.prepend(b);
       }
-      const sib=siblingsOf(sec),k=sib.indexOf(sec),[up,down]=$$("button",b);
-      up.disabled=k<=0;down.disabled=k===sib.length-1;b.hidden=sib.length<2&&!sec.hasAttribute("data-add");
+      const sib=siblingsOf(sec),k=sib.indexOf(sec),up=$(".rt-up",b),down=$(".rt-down",b),am=$(".rt-addm",b);
+      up.disabled=k<=0;down.disabled=k===sib.length-1;const can=addOptions(sec).length>0;am.hidden=!can;b.hidden=sib.length<2&&!can;
     });
   }
   function step(u,dir){
@@ -577,6 +581,52 @@
     initText(lab);flash(a);select(lab);startEdit(lab);
     try{getSelection().selectAllChildren(lab)}catch(e){}
     secBars();
+  }
+  /* ---- the ＋ menu: what can be added depends on where you are */
+  const listsIn=el=>$$("[data-l]",el).filter(l=>[...l.children].some(c=>c.hasAttribute("data-i"))&&!l.closest(".rt-ui"));
+  function addOptions(u){
+    if(!u||!document.contains(u))return [];
+    const out=[],seen=new Set(),sec=u.closest("[data-k]")||u;
+    const push=(key,label,fn,hint)=>{if(seen.has(key))return;seen.add(key);out.push({label,fn,hint})};
+    // 1. another one of the thing you tapped, right after it
+    for(const it of chain.length&&chain[0]===u?chain:[u])if(it.hasAttribute&&it.hasAttribute("data-i")&&listOf(it)){const n=unitName(it);push("L"+listPath(it),"Another "+n.toLowerCase()+" (after this one)",()=>addLike(it),"same look, new text");break}
+    // 2. the other lists in this section
+    listsIn(sec).forEach(l=>{const items=[...l.children].filter(c=>c.hasAttribute("data-i"));const last=items[items.length-1];if(!last)return;
+      const n=unitName(last);if(l.dataset.l===((sec.dataset.add||u.dataset.add)||"")&&last.tagName==="A")return;
+      push("L"+l.dataset.l,"A "+n.toLowerCase(),()=>addLike(last),"at the end of the list")});
+    // 3. a button
+    const holder=u.hasAttribute("data-add")?u:sec.hasAttribute("data-add")?sec:null;
+    if(holder)push("B","A button",()=>addItem(holder),"label, icon and link");
+    // 4. a whole new section (main page)
+    const main=u.closest('[data-ok="site:section_order"]');
+    if(main||$("#projects .ptiles"))push("S","A new section below…",()=>sectionPicker(main),"cards, numbers, gallery, FAQ, banner…");
+    // 5. anything else: describe it to the AI (it gets this spot as context)
+    push("AI","✨ Something else: describe it",()=>{select(u);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף כאן ";ta.focus()}},150)},"the AI sees what you selected");
+    return out.length>1?out:[];
+  }
+  function addMenu(u){
+    if(u!==current)select(u);
+    const opts=addOptions(u);if(!opts.length)return;
+    const m=modal(h("h3",{},"Add here"),h("p",{class:"rt-hint",style:"margin:-4px 0 10px"},unitName(u)),
+      h("div",{class:"rt-addlist"},...opts.map(o=>h("button",{type:"button",class:"rt-addopt",on:{click:()=>{m.remove();o.fn()}}},h("b",{},o.label),o.hint?h("span",{},o.hint):null))),
+      h("div",{class:"rt-row",style:"justify-content:flex-end;margin-top:10px"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel")));
+  }
+  function addLike(item){
+    // a copy of this item after it, with fresh text ready to type
+    duplicate(item);
+    const c=item.nextElementSibling;if(!c||c.dataset.i===item.dataset.i)return;
+    const texts=c.matches("[data-e]")?[c]:$$("[data-e]",c);
+    texts.forEach((te,k)=>{const v=k?"Write something here.":"New "+unitName(c).toLowerCase();set(te.dataset.e,v);te.textContent=v});
+    const t0=texts[0];if(t0){select(t0);startEdit(t0);try{getSelection().selectAllChildren(t0)}catch(e){}}
+  }
+  function sectionPicker(after){
+    if(!SEC){toast("One moment, still loading…");return}
+    const pick=type=>{m.remove();const r_=addSection(after&&after.dataset.ok==="site:section_order"?after:null,{type});if(r_)startEdit($(`[data-e="${r_.base}.title"]`))};
+    const m=modal(h("h3",{},"New section"),h("p",{class:"rt-hint",style:"margin:-4px 0 10px"},"Pick a type. You can change it later in ⚙, and all of it is editable."),
+      h("div",{class:"rt-addlist grid"},...Object.entries(SEC.TYPES).map(([k,t])=>h("button",{type:"button",class:"rt-addopt",on:{click:()=>pick(k)}},h("b",{},t.label),h("span",{},t.about.split(". ")[0])))),
+      h("div",{class:"rt-row",style:"justify-content:space-between;margin-top:10px"},
+        h("button",{class:"rt-btn",type:"button",on:{click:()=>{m.remove();if(after)select(after);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף סקשן ";ta.focus()}},150)}}},"✨ Let the AI build it"),
+        h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel")));
   }
   /* ---- sections you add yourself (main page) */
   function delPath(p){const[f,ks]=parse(p);let o=docs[f];for(let i=0;i<ks.length-1;i++){if(o==null)return;o=o[ks[i]]}if(o)delete o[ks[ks.length-1]];dirty.add(f);changes++;updateBar()}
