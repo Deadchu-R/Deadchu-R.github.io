@@ -1374,11 +1374,25 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       // keep the chat short: drop whole old turns (a turn starts with a typed request), never half of one
       while(aiHist.length>20){const i=aiHist.findIndex((m,k)=>k>0&&m.role==="user"&&m.parts[0]&&m.parts[0].text);if(i<1)break;aiHist=aiHist.slice(i)}
       aiHist.push({role:"user",parts});
+      // Gemini is sometimes "busy" (503) or a model's free quota runs out (429): wait and retry, then try other Flash models
+      const models=[...new Set([model,"gemini-2.5-flash","gemini-2.5-flash-lite","gemini-2.0-flash"])];let mi=0;
+      const busy=(st,msg)=>st===503||st===429||st===500||/demand|overload|unavailable|exhausted|quota|try again/i.test(msg);
+      async function call(){
+        for(let attempt=0;;attempt++){
+          const m_=models[mi];
+          const r=await fetchT(`${GAPI}/models/${m_}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({systemInstruction:{parts:[{text:AI_SYS()}]},contents:aiHist,tools:[{functionDeclarations:AI_DECL}]})},90000);
+          const j=await r.json().catch(()=>({}));
+          if(r.ok)return j;
+          const msg=String((j.error&&j.error.message)||r.status);
+          if(r.status===404&&m_===model)store.set(AI_MODEL,"");
+          if(!(busy(r.status,msg)||r.status===404)||mi>=models.length-1&&attempt>=1)throw new Error(msg+(busy(r.status,msg)?" (Gemini is busy right now; try again in a minute, or use 📱 the app on your phone)":""));
+          if(attempt===0&&r.status!==404&&r.status!==429){thinking.textContent=`Gemini is busy, retrying… (${m_})`;await new Promise(ok=>setTimeout(ok,2500));continue}
+          if(mi<models.length-1){mi++;attempt=-1;thinking.textContent=`Gemini is busy, trying ${models[mi]}…`;await new Promise(ok=>setTimeout(ok,800))}
+        }
+      }
       for(let round=0;round<8;round++){
-        const r=await fetchT(`${GAPI}/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({systemInstruction:{parts:[{text:AI_SYS()}]},contents:aiHist,tools:[{functionDeclarations:AI_DECL}]})},90000);
-        const j=await r.json();
-        if(!r.ok){const msg=(j.error&&j.error.message)||r.status;if(r.status===404)store.set(AI_MODEL,"");throw new Error(msg)}
+        const j=await call();
         const c=(j.candidates||[])[0],ps=(c&&c.content&&c.content.parts)||[];
         aiHist.push({role:"model",parts:ps.length?ps:[{text:"(no answer)"}]});
         const calls=ps.filter(p=>p.functionCall);
