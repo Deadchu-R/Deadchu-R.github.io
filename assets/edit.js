@@ -230,7 +230,7 @@
   const pubBtn=h("button",{class:"rt-pub",type:"button",disabled:true,on:{click:publish}},h("i"),"Publish");
   const menu=h("div",{id:"rt-menu"});
   const item=(label,fn,cls)=>h("button",{type:"button",class:cls||"",on:{click:()=>{menu.style.display="none";fn()}}},label);
-  menu.append(item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
+  menu.append(item("⚙  Site settings · sound",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
   const prevBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"Preview the page as visitors will see it",on:{click:e=>{e.stopPropagation();togglePreview()}}},"👁");
   function togglePreview(){
     const on=document.documentElement.classList.toggle("rt-preview");
@@ -432,7 +432,7 @@
   }
   const show=(el,on)=>{el.style.display=on?"":"none"};
   function place(){
-    if(!current||!document.contains(current)){sel.style.display=tb.style.display="none";panel.style.display="none";return}
+    if(!current||!document.contains(current)){sel.style.display=tb.style.display="none";if(!settingsOpen)panel.style.display="none";return}
     const r=current.getBoundingClientRect();
     if(!r.width&&!r.height){sel.style.display=tb.style.display="none";return}
     Object.assign(sel.style,{display:"block",left:r.left-4+"px",top:r.top-4+"px",width:r.width+8+"px",height:r.height+8+"px"});
@@ -573,7 +573,7 @@
   const pending=new Map();              // content path -> {url,type,name} of media chosen but not published yet
   function previewBox(url,type,name,extra,small){
     return new Promise(done=>{
-      const media=type==="video"
+      const media=type==="audio"?h("audio",{src:url,controls:true,autoplay:true,style:"width:100%;display:block"}):type==="video"
         ?h("video",{src:url,controls:true,autoplay:true,muted:true,loop:true,playsinline:true,style:"width:100%;max-height:55vh;border-radius:10px;background:#000;display:block"})
         :small?h("div",{style:"display:flex;gap:18px;align-items:center;justify-content:center;padding:18px;background:#0b0b0b;border-radius:10px"},
             h("img",{src:url,alt:"",style:"width:96px;height:96px;object-fit:contain"}),h("img",{src:url,alt:"",style:"width:32px;height:32px;object-fit:contain"}),h("img",{src:url,alt:"",style:"width:18px;height:18px;object-fit:contain"}))
@@ -595,7 +595,7 @@
   }
   function pickFile(kind){
     return new Promise(done=>{
-      const inp=h("input",{type:"file",accept:kind==="video"?"video/*,image/gif":kind==="media"?"image/*,video/*":"image/*",style:"display:none"});   // icons: any image, GIF included
+      const inp=h("input",{type:"file",accept:kind==="video"?"video/*,image/gif":kind==="media"?"image/*,video/*":kind==="audio"?"audio/*":"image/*",style:"display:none"});   // icons: any image, GIF included
       inp.addEventListener("change",()=>{done(inp.files[0]||null);inp.remove()});
       ui.append(inp);inp.click();
     });
@@ -632,20 +632,24 @@
     let kind=kind0;if(kind==="media")kind=file.type.startsWith("video/")||file.type==="image/gif"?"video":"image";   // either works here
     let blob=file,ext=(file.name.split(".").pop()||"").toLowerCase(),note="";
     try{
-      if(kind==="video"){
+      if(kind==="audio"){
+        if(file.size>25e6){alertBox("That sound is "+Math.round(file.size/1e6)+" MB. Keep it under about 25 MB (a few minutes of music).");return}
+        if(!/^(mp3|m4a|aac|wav|ogg|oga|flac|webm)$/.test(ext))ext="mp3";
+      }else if(kind==="video"){
         if(file.size>70e6){alertBox("That video is "+Math.round(file.size/1e6)+" MB. GitHub takes up to about 70 MB per file here; trim it or export it smaller first.");return}
         if(!/^(mp4|mov|webm|m4v|gif)$/.test(ext))ext="mp4";      // a GIF here becomes a looping video
       }else if(kind==="icon")({blob,ext,note}=await prepIcon(file));
       else({blob,ext}=await prepImage(file,kind));
     }catch(e){alertBox(e.message);return}
     const url=URL.createObjectURL(blob),isGif=blob.type==="image/gif"||ext==="gif";
-    const choice=await previewBox(url,kind==="video"&&!isGif?"video":"image",file.name,note,kind==="icon");
+    const choice=await previewBox(url,kind==="audio"?"audio":kind==="video"&&!isGif?"video":"image",file.name,note,kind==="icon");
     if(choice==="again"){URL.revokeObjectURL(url);return replaceMedia(path,kind0,el)}
     if(choice!=="use"){URL.revokeObjectURL(url);return}
     const repoPath=`assets/uploads/${slugify(file.name)}-${rand()}.${ext}`;
     const old=get(path);if(typeof old==="string"&&old.startsWith("/assets/uploads/"))uploads.delete(old.slice(1));
     uploads.set(repoPath,blob);set(path,"/"+repoPath);
     pending.set(path,{url,type:kind==="video"&&!isGif?"video":"image",name:file.name});
+    if(kind==="audio"){toast("Sound ready. It goes live when you publish.");if(settingsOpen)siteSettings();return}
     if(kind==="icon"){previewIcon(path,url);toast("New icon in place. It goes live when you publish.");renderPanel();return}
     const swapVideo=v=>{                     // a GIF can't play inside <video>: lay an image over it
       let im=v.nextElementSibling;if(!(im&&im.classList.contains("rt-gif"))){im=document.createElement("img");im.className=v.className+" rt-gif";im.alt="";v.after(im)}
@@ -748,13 +752,13 @@
       const [mn,mx,st,unit,cssVar,sel]=opts,tg=()=>tgtOf(holder,sel);
       const num=h("span",{class:"rt-num"}),r=h("input",{type:"range",min:String(mn),max:String(mx),step:String(st),value:String(val===""?mn:val)});
       const show_=()=>{num.textContent=val===""&&r.dataset.touched!=="1"?"default":r.value+unit};
-      r.addEventListener("input",()=>{r.dataset.touched="1";set(path,Number(r.value));const t=tg();if(t)t.style.setProperty(cssVar,r.value+unit);show_()});
-      const reset=h("button",{class:"rt-btn sm",type:"button",title:"Back to the default",on:{click:()=>{set(path,"");r.dataset.touched="";r.value=String(mn);const t=tg();if(t)t.style.removeProperty(cssVar);val="";show_()}}},"↺");
+      r.addEventListener("input",()=>{r.dataset.touched="1";set(path,Number(r.value));const t=cssVar&&tg();if(t)t.style.setProperty(cssVar,r.value+unit);show_()});
+      const reset=h("button",{class:"rt-btn sm",type:"button",title:"Back to the default",on:{click:()=>{set(path,"");r.dataset.touched="";r.value=String(mn);const t=cssVar&&tg();if(t)t.style.removeProperty(cssVar);val="";show_()}}},"↺");
       show_();wrap.append(h("div",{class:"rt-color"},r,num,reset));
     }else if(type==="toggle"){
       const [cls,sel]=opts;
       const cb=h("input",{type:"checkbox",checked:!!val}),lab=h("label",{class:"rt-switch"},cb,h("span",{}),h("b",{},val?"On":"Off"));
-      cb.addEventListener("change",()=>{set(path,cb.checked);const t=tgtOf(holder,sel);if(t)t.classList.toggle(cls,cb.checked);$("b",lab).textContent=cb.checked?"On":"Off"});
+      cb.addEventListener("change",()=>{set(path,cb.checked);const t=cls&&tgtOf(holder,sel);if(t)t.classList.toggle(cls,cb.checked);$("b",lab).textContent=cb.checked?"On":"Off"});
       wrap.append(lab);
     }else if(type==="select"){
       const own=/icon$/.test(path)&&/^\//.test(val);
@@ -767,6 +771,11 @@
         if(path.endsWith(".position")){const sec=holder.closest("[data-k]"),w=holder.parentElement,bar=$(":scope>.rt-secbar",sec);
           holder.classList.toggle("top",s.value==="top");if(s.value==="top")(bar?bar.after(w):sec.prepend(w));else sec.append(w);place()}});
       wrap.append(s);
+    }else if(type==="audio"){
+      const p_=pending.get(path);
+      wrap.append(h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,"audio",holder)}},val?"Replace…":"Upload a sound…"),
+        val?h("button",{class:"rt-btn sm dan",type:"button",on:{click:()=>{set(path,"");pending.delete(path);siteSettings()}}},"Remove"):null),
+        h("div",{class:"rt-file"},p_?"New, not published yet · "+p_.name:val?String(val).split("/").pop():"none"));
     }else if(type==="image"||type==="art"||type==="video"||type==="media"){
       wrap.append(h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,type,holder)}},val?"Replace…":"Add…"),
         val&&!/^(cover)$/.test(path.split(".").pop())?h("button",{class:"rt-btn sm dan",type:"button",on:{click:()=>{set(path,"");renderPanel();toast("Removed. The site updates after you publish.")}}},"Remove"):null),
@@ -796,7 +805,37 @@
     });
   }
   function hasSettings(u){return mediaOf(u).some(m=>m!==clickedMedia)||fieldsOf(u).length>0||(u.tagName==="A"&&!!u.getAttribute("href"))}
+  let settingsOpen=false;
+  function siteSettings(){
+    // sound for the whole site; off until switched on here
+    settingsOpen=true;current=null;chain=[];panelOpen=false;place();
+    const sp="site:sound",snd=get(sp)||{},F=(f)=>field(document.body,f);
+    const audioUrl=pth=>{const pn=pending.get(pth);if(pn)return pn.url;const v=get(pth);return v?new URL(String(v).replace(/^\//,""),new URL("../",ME)).href:""};
+    let playing=null;
+    const own=/^\//.test(snd.click||"");
+    panel.replaceChildren(
+      h("div",{class:"rt-head"},h("span",{},"Site settings · sound"),h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{settingsOpen=false;if(playing)playing.pause();panel.style.display="none"}}},"✕")),
+      F(["Sound on the site (visitors get a small speaker button)",sp+".enabled","toggle",["",null]]),
+      F(["Start with sound on (otherwise visitors turn it on themselves)",sp+".start","toggle",["",null]]),
+      F(["Background music",sp+".music","audio"]),
+      F(["Music volume",sp+".mv","range",[0,100,5,"%",null]]),
+      h("div",{class:"rt-row",style:"margin-top:8px"},h("button",{class:"rt-btn sm",type:"button",on:{click:e=>{
+        if(playing){playing.pause();playing=null;e.target.textContent="▶ Play music";return}
+        const u=audioUrl(sp+".music");if(!u){toast("Upload background music first.");return}
+        playing=window.rtSound&&window.rtSound.music(u,(get(sp+".mv")??40)/100);e.target.textContent="■ Stop music"}}},"▶ Play music")),
+      F(["Click sound on buttons and links",sp+".click","select",(own?[snd.click]:[]).concat(["none","soft","pop","blip","tick","wood"])]),
+      h("div",{class:"rt-row",style:"margin-top:6px"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(sp+".click","audio",document.body)}},"⬆ Use my own click sound")),
+      F(["Click volume",sp+".cv","range",[0,100,5,"%",null]]),
+      h("div",{class:"rt-row",style:"margin-top:8px"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{
+        const k=get(sp+".click")||"soft",u=/^\//.test(k)?audioUrl(sp+".click"):k;window.rtSound&&window.rtSound.click(u,(get(sp+".cv")??50)/100)}}},"▶ Test click")),
+      h("p",{class:"rt-hint"},"Everything is off until you switch on the first option. Browsers only let music start after the visitor touches the page; music pauses while a video plays."));
+    const sel_=$$("select",panel).pop();if(own&&sel_&&sel_.options[0])sel_.options[0].textContent="(your sound)";
+    panel.style.display="block";
+    if(innerWidth>640){panel.style.top="72px";panel.style.left="";panel.style.right="12px"}
+  }
   function renderPanel(){
+    if(settingsOpen&&!current)return;
+    settingsOpen=false;panel.style.right="";
     panel.replaceChildren();
     if(!current||!panelOpen){panel.style.display="none";place();return}
     const u=current;

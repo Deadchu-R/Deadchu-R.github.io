@@ -329,3 +329,43 @@
   }
   if(grid){const first=$('[data-filter="all"]');first&&filter(first)}
 })();
+
+/* ---------- sound (off unless turned on in the editor's Site settings) ---------- */
+(function(){
+  let ctx=null;const ac=()=>ctx||(ctx=new (window.AudioContext||window.webkitAudioContext)());
+  // built-in clicks, made on the fly (no files to load)
+  const SYN={soft:[1700,.03,"sine"],pop:[520,.07,"triangle"],blip:[1150,.05,"square"],tick:[3200,.012,"square"],wood:[900,.04,"triangle"]};
+  function tone(kind,vol){try{const c=ac(),[f,d,type]=SYN[kind]||SYN.soft,o=c.createOscillator(),g=c.createGain(),t=c.currentTime;
+    o.type=type;o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*.55,t+d);
+    g.gain.setValueAtTime(Math.max(.0001,vol*.35),t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+  const cache={};
+  function file(url,vol){let a=cache[url];if(!a){a=cache[url]=new Audio(url);a.preload="auto"}const b=a.cloneNode();b.volume=Math.min(1,vol);b.play().catch(()=>{})}
+  let music=null;
+  window.rtSound={
+    click(kind,vol){if(!kind||kind==="none")return;/^[a-z]+$/.test(kind)?tone(kind,vol):file(kind,vol)},
+    music(url,vol){if(music){music.pause();music=null}if(url){music=new Audio(url);music.loop=true;music.volume=Math.min(1,vol);music.play().catch(()=>{})}return music},
+  };
+  const el=document.getElementById("site-sound");if(!el)return;
+  let cfg;try{cfg=JSON.parse(el.textContent)}catch(e){return}
+  if(!cfg)return;
+  let on;try{on=localStorage.getItem("rt-sound")}catch(e){}
+  on=on==null?!!cfg.start:on==="1";
+  const ICON_ON='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>';
+  const ICON_OFF='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="m17 9 5 6M22 9l-5 6"/></svg>';
+  const btn=document.createElement("button");btn.type="button";btn.className="sound-btn";
+  let bg=null,started=false;
+  function render(){btn.innerHTML=on?ICON_ON:ICON_OFF;btn.classList.toggle("on",on);btn.setAttribute("aria-pressed",String(on));btn.setAttribute("aria-label",on?"Turn sound off":"Turn sound on");btn.title=btn.getAttribute("aria-label")}
+  function playMusic(){if(!cfg.music)return;if(!bg){bg=new Audio(cfg.music);bg.loop=true;bg.volume=Math.min(1,cfg.mv)}bg.play().then(()=>{started=true}).catch(()=>{})}
+  function set(v){on=v;try{localStorage.setItem("rt-sound",v?"1":"0")}catch(e){}render();if(v)playMusic();else if(bg)bg.pause()}
+  btn.addEventListener("click",e=>{e.stopPropagation();set(!on)});
+  render();document.body.appendChild(btn);
+  // browsers only allow music after the visitor touches the page
+  if(on&&cfg.music){const go=()=>{if(on&&!started)playMusic();if(started)document.removeEventListener("pointerdown",go,true)};document.addEventListener("pointerdown",go,true)}
+  // quiet the music while a video plays in the viewer
+  const viewer=document.getElementById("viewer");
+  if(viewer)new MutationObserver(()=>{if(!bg||!on)return;viewer.hidden?bg.play().catch(()=>{}):bg.pause()}).observe(viewer,{attributes:true,attributeFilter:["hidden"]});
+  document.addEventListener("click",e=>{
+    if(!on||(window.__rtEdit&&!document.documentElement.classList.contains("rt-preview")))return;
+    if(e.target.closest("a,button,.clip,.zoom,summary")&&!e.target.closest(".sound-btn"))window.rtSound.click(cfg.click,cfg.cv);
+  },true);
+})();

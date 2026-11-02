@@ -762,3 +762,9 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .btn[style*="--bb"],.hero-links a[style*="--bb"]{border-color:var(--bb)}
 .btn[style*="--bw"],.hero-links a[style*="--bw"]{border-width:var(--bw);border-style:solid}
 .btn.glow,.hero-links a.glow{box-shadow:0 0 18px 2px color-mix(in srgb,var(--bb,var(--bf,var(--c,var(--accent)))) 65%,transparent),0 0 4px color-mix(in srgb,var(--bb,var(--bf,var(--c,var(--accent)))) 80%,transparent)}
+/* sound toggle (only when sound is turned on in Site settings) */
+.sound-btn{position:fixed;left:16px;bottom:16px;z-index:40;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+  background:rgba(8,10,28,.7);color:#fff;border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:.75;transition:opacity .2s,transform .15s}
+.sound-btn:hover{opacity:1;transform:translateY(-2px)}
+.sound-btn.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 60%,transparent);opacity:1}
+.rt-on .sound-btn{bottom:72px}

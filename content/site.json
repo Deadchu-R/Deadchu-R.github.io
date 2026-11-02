@@ -192,5 +192,13 @@
       "text": "Play full video",
       "icon": "play-solid"
     }
+  },
+  "sound": {
+    "enabled": false,
+    "start": false,
+    "music": "",
+    "mv": 40,
+    "click": "soft",
+    "cv": 50
   }
 }

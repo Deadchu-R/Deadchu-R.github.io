@@ -160,6 +160,7 @@ def footer(depth, peek=True):
   <button class="nav nav-prev" type="button" id="viewerPrev" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z" fill="currentColor"/></svg></button>
   <button class="nav nav-next" type="button" id="viewerNext" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8.6 18.6 10 20l8-8-8-8-1.4 1.4 6.6 6.6z" fill="currentColor"/></svg></button>
 </div>
+{f'<script id="site-sound" type="application/json">{_json.dumps(SITE_TEXT["_sound"])}</script>' if SITE_TEXT.get("_sound") else ""}
 <script src="{p}assets/site.js?v={ver('assets/site.js')}" data-edit="{p}assets/edit.js?v={ver('assets/edit.js')}" defer></script>
 </body>
 </html>

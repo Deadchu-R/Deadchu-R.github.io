@@ -217,6 +217,7 @@ SITE_DEFAULTS = {
     ],
     "footer_peek": "/assets/art/musical-cat.webp",
     "hero_title": _site.get("name", "Roee Tal"),
+    "sound": {"enabled": False, "start": False, "music": "", "mv": 40, "click": "soft", "cv": 50},
     "nav": [
         {"label": "Projects", "link": "index.html#projects", "icon": ""},
         {"label": "Gallery", "link": "gallery.html", "icon": ""},
@@ -271,6 +272,33 @@ SITE_TEXT = _site
 SITE_TEXT["_hero_wide"] = bg_video(_site.get("hero_video"))
 SITE_TEXT["_hero_tall"] = bg_video(_site.get("hero_video_mobile"), tall=True) or SITE_TEXT["_hero_wide"]
 SITE_TEXT["_peek"] = art_key(_site.get("footer_peek"))
+
+
+def audio_file(path):
+    """Uploaded sound -> /assets/audio/<name>.mp3 (compressed), or '' if missing."""
+    path = str(path or "")
+    if not path.startswith("/"):
+        return ""
+    src = _src(path)
+    if src.parent == ROOT / "assets/audio":
+        return "/" + str(src.relative_to(ROOT))
+    out = ROOT / "assets/audio" / (_slug(path) + ".mp3")
+    out.parent.mkdir(exist_ok=True)
+    if not out.exists() and src.exists():
+        _ffmpeg("-i", src, "-vn", "-c:a", "libmp3lame", "-b:a", "128k", out)
+        print("  + sound", out.name)
+    return "/" + str(out.relative_to(ROOT)) if out.exists() else ""
+
+
+_snd = _site.get("sound") or {}
+SITE_TEXT["_sound"] = None
+if _snd.get("enabled"):
+    _click = _snd.get("click") or "none"
+    SITE_TEXT["_sound"] = {
+        "music": audio_file(_snd.get("music")), "mv": round(float(_snd.get("mv", 40) or 0) / 100, 2),
+        "click": audio_file(_click) if str(_click).startswith("/") else _click, "cv": round(float(_snd.get("cv", 50) or 0) / 100, 2),
+        "start": bool(_snd.get("start")),
+    }
 ABOUT = _load("about.json")
 
 # ---------------------------------------------------------------- projects (list order = site order)
