@@ -249,6 +249,10 @@
   .rt-pm-t{font:700 11px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#999;padding:8px 10px 6px}
   .rt-pm-opt{appearance:none;display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;border:0;background:none;color:#f2f2f2;
     font:500 15px/1.2 system-ui,sans-serif;padding:11px 10px;border-radius:9px;cursor:pointer;text-align:left}
+  .rt-pm-opt{user-select:none;-webkit-user-select:none}
+  .rt-pm-back-row{color:#ffd23f;font-weight:700}
+  .rt-pm-in{animation:rtPmIn .16s ease-out}
+  @keyframes rtPmIn{from{opacity:.3;transform:translateX(14px)}to{opacity:1;transform:none}}
   .rt-pm-opt+.rt-pm-opt{box-shadow:0 -1px 0 rgba(255,255,255,.07)}
   .rt-pm-opt em{font-style:normal;font-size:12px;color:#8d8d8d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%}
   .rt-pm-opt i{font-style:normal;color:#ffd23f;font-weight:800}
@@ -618,7 +622,9 @@
     if(holder)push("B","A button",()=>addItem(holder),"label, icon and link","Button");
     // 4. a whole new section (main page)
     const main=u.closest('[data-ok="site:section_order"]');
-    if(main||$("#projects .ptiles"))push("S","A new section below…",()=>sectionPicker(main,lastAnchor),"cards, numbers, FAQ, banner…","Section");
+    if(main||$("#projects .ptiles")){const lt=store.get("rt-last-section"),T_=SEC&&SEC.TYPES[lt];
+      push("S","A new section…",()=>T_?addSectionOf(main,lt):sectionPicker(main,lastAnchor),"",T_?"New "+T_.label.split(/[ -]/)[0].toLowerCase():"Section");
+      out[out.length-1].sub=()=>sectionItems(main)}
     // 5. anything else: describe it to the AI (it gets this spot as context)
     push("AI","✨ Something else…",()=>{select(u);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף כאן ";ta.focus()}},150)},"tell the AI; it sees this spot","AI");
     return out.length>1?out:[];
@@ -636,27 +642,55 @@
     const d=defaultOpt(u,opts);btn.replaceChildren("＋",h("small",{},d.short||""));
     btn.title=`Tap: add ${d.label.replace(/^(A|An|Another) /,"a ").toLowerCase()} · Hold: more choices`;btn.setAttribute("aria-label",btn.title);return true;
   }
-  let pm=null;                      // the open hold menu
-  function closePm(){if(pm){pm.el.remove();pm.back.remove();pm=null}}
-  function holdMenu(anchor,items,title){
-    closePm();
-    const back=h("div",{class:"rt-pm-back rt-ui",on:{pointerdown:e=>{e.preventDefault();closePm()}}});
-    const el=h("div",{class:"rt-pm rt-ui",role:"menu"},title?h("div",{class:"rt-pm-t"},title):null,
-      ...items.map((it,k)=>h("button",{type:"button",class:"rt-pm-opt"+(it.def?" def":""),"data-n":String(k),on:{click:e=>{e.stopPropagation();const f=it.fn;closePm();f()}}},
-        h("span",{},it.label),it.def?h("i",{},"✓"):it.hint?h("em",{},it.hint):null)));
-    document.body.append(back,el);
-    const r=anchor?anchor.getBoundingClientRect():{left:innerWidth/2-120,right:innerWidth/2+120,top:innerHeight-80,bottom:innerHeight-80};
+  let pm=null;                      // the open hold menu (slide to a choice and let go; rows with › open a sub-menu in place)
+  function closePm(){if(pm){clearTimeout(pm.dwell);pm.el.remove();pm.back.remove();pm=null}}
+  function pmRender(items,title,sub){
+    pm.items=items;pm.title=title;pm.hi=-1;clearTimeout(pm.dwell);
+    pm.el.replaceChildren(sub?h("div",{class:"rt-pm-opt rt-pm-back-row","data-n":"-2"},h("span",{},"‹ "+title)):title?h("div",{class:"rt-pm-t"},title):null,
+      ...items.map((it,k)=>h("div",{class:"rt-pm-opt"+(it.def?" def":""),"data-n":String(k),role:"menuitem"},
+        h("span",{},it.label),it.sub?h("i",{},"›"):it.def?h("i",{},"✓"):it.hint?h("em",{},it.hint):null)));
+    pm.el.classList.remove("rt-pm-in");void pm.el.offsetWidth;if(sub!==undefined)pm.el.classList.add("rt-pm-in");
+    pmPlace();
+  }
+  function pmPlace(){
+    const el=pm.el,a=pm.anchor,r=a&&document.contains(a)?a.getBoundingClientRect():{right:innerWidth/2+120,top:innerHeight-80,bottom:innerHeight-80};
     const w=el.offsetWidth,hh=el.offsetHeight;
     let top=r.bottom+8;if(top+hh>innerHeight-8)top=Math.max(8,r.top-hh-8);
     el.style.left=Math.max(8,Math.min(innerWidth-w-8,r.right-w))+"px";el.style.top=top+"px";
     el.style.transformOrigin=(top<r.top?"bottom ":"top ")+(r.right-w>8?"right":"left");
-    pm={el,back,items,hi:-1};
+  }
+  function pmEnter(it){pm.stack.push([pm.items,pm.title]);pmRender(it.sub(),it.label.replace(/…$/,""),true);try{navigator.vibrate&&navigator.vibrate(10)}catch(e){}}
+  function pmBack(){const p_=pm.stack.pop();if(p_)pmRender(p_[0],p_[1],pm.stack.length?true:false)}
+  function holdMenu(anchor,items,title){
+    closePm();
+    const back=h("div",{class:"rt-pm-back rt-ui",on:{pointerdown:e=>{e.preventDefault();closePm()}}});
+    const el=h("div",{class:"rt-pm rt-ui",role:"menu"});
+    document.body.append(back,el);
+    pm={el,back,anchor,stack:[],items:[],hi:-1,drag:false,dwell:null};
+    pmRender(items,title);
+    // inside the menu too: press, slide, let go
+    el.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();try{el.setPointerCapture(e.pointerId)}catch(_){}if(pm)pm.drag=true;pmHover(e.clientX,e.clientY)});
+    el.addEventListener("pointermove",e=>{if(pm&&pm.drag)pmHover(e.clientX,e.clientY)});
+    el.addEventListener("pointerup",e=>{e.stopPropagation();pmRelease()});
+    el.addEventListener("pointercancel",()=>{if(pm)pm.drag=false});
+    el.addEventListener("click",e=>e.stopPropagation());
     try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}
     return pm;
   }
   function pmHover(x,y){
-    if(!pm)return;const b=document.elementFromPoint(x,y),o=b&&b.closest(".rt-pm-opt");const k=o?+o.dataset.n:-1;
-    if(k!==pm.hi){$$(".rt-pm-opt",pm.el).forEach(x=>x.classList.toggle("hi",+x.dataset.n===k));pm.hi=k;if(k>=0)try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}}
+    if(!pm)return;const b=document.elementFromPoint(x,y),o=b&&b.closest(".rt-pm-opt");const k=o&&pm.el.contains(o)?+o.dataset.n:-1;
+    if(k===pm.hi)return;
+    $$(".rt-pm-opt",pm.el).forEach(x=>x.classList.toggle("hi",+x.dataset.n===k));pm.hi=k;clearTimeout(pm.dwell);
+    if(k!==-1)try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}
+    const it=pm.items[k];
+    if(k===-2||(it&&it.sub))pm.dwell=setTimeout(()=>{if(!pm||pm.hi!==k)return;k===-2?pmBack():pmEnter(it)},420);   // rest on › to open it, on ‹ to go back
+  }
+  function pmRelease(){
+    if(!pm)return;pm.drag=false;clearTimeout(pm.dwell);const k=pm.hi;
+    if(k===-2)return pmBack();
+    const it=pm.items[k];if(!it)return;                     // let go outside the rows: the menu stays open
+    if(it.sub)return pmEnter(it);
+    closePm();it.fn();
   }
   function wirePlus(btn,getU,onTap){
     let timer=null,held=false,sx=0,sy=0,moved=false;
@@ -669,13 +703,13 @@
       timer=setTimeout(()=>{timer=null;held=true;btn.classList.remove("rt-holding");
         const u=getU();if(!u)return;if(u!==current)select(u);
         const opts=addOptions(u);if(!opts.length)return;const d=defaultOpt(u,opts);
-        holdMenu(btn,opts.map(o=>({label:o.label,hint:o.hint,def:o===d,fn:()=>runOpt(u,o,btn)})),"Add here");
+        holdMenu(btn,opts.map(o=>({label:o.label,hint:o.hint,def:o===d,fn:()=>runOpt(u,o,btn),sub:o.sub&&(()=>o.sub().map(x=>Object.assign({},x,{fn:()=>{remember(u,o.key);x.fn();secBars();place()}})))})),"Add here");
       },380);
       const mv=ev=>{if(pm&&held)pmHover(ev.clientX,ev.clientY);else if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>12){moved=true;reset()}};
       const up=ev=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",up,true);removeEventListener("pointercancel",up,true);
         if(timer){reset();if(!moved&&ev.type==="pointerup")onTap();return}
         if(held){const eat=e2=>{if(e2.target.closest&&e2.target.closest(".rt-pm"))return;e2.stopPropagation();e2.preventDefault()};addEventListener("click",eat,true);setTimeout(()=>removeEventListener("click",eat,true),450)}   // the click that follows letting go
-        if(pm&&held&&pm.hi>=0){const it=pm.items[pm.hi];closePm();it.fn()}      // let go on a choice = pick it; let go elsewhere = menu stays open
+        if(pm&&held)pmRelease();      // let go on a choice = pick it; let go elsewhere = menu stays open
       };
       addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true);addEventListener("pointercancel",up,true);
     });
@@ -694,13 +728,19 @@
     texts.forEach((te,k)=>{const v=k?"Write something here.":"New "+unitName(c).toLowerCase();set(te.dataset.e,v);te.textContent=v});
     const t0=texts[0];if(t0){select(t0);startEdit(t0);try{getSelection().selectAllChildren(t0)}catch(e){}}
   }
+  function addSectionOf(after,type){
+    const ref=after&&after.dataset.ok==="site:section_order"?after:null;
+    store.set("rt-last-section",type);const r_=addSection(ref,{type});if(r_)startEdit($(`[data-e="${r_.base}.title"]`));
+  }
+  const SEC_HINT={"text-media":"title, text, picture","cards":"grid of boxes","stats":"big numbers","gallery":"pictures","quote":"testimonial","cta":"message + button","list":"short points","faq":"opens on tap","steps":"numbered","banner":"picture/video behind"};
+  function sectionItems(after){
+    const last=store.get("rt-last-section");
+    return Object.entries(SEC.TYPES).map(([k,t])=>({label:t.label,hint:SEC_HINT[k]||"",def:k===last,fn:()=>addSectionOf(after,k)}))
+      .concat([{label:"✨ Let the AI build it",fn:()=>{const ref=after&&after.dataset.ok==="site:section_order"?after:null;if(ref)select(ref);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף סקשן ";ta.focus()}},150)}}]);
+  }
   function sectionPicker(after,anchor){
     if(!SEC){toast("One moment, still loading…");return}
-    const ref=after&&after.dataset.ok==="site:section_order"?after:null;
-    const pick=type=>{store.set("rt-last-section",type);const r_=addSection(ref,{type});if(r_)startEdit($(`[data-e="${r_.base}.title"]`))};
-    const last=store.get("rt-last-section");
-    holdMenu(anchor||null,Object.entries(SEC.TYPES).map(([k,t])=>({label:t.label,hint:t.about.split(/[.,(]/)[0].slice(0,34),def:k===last,fn:()=>pick(k)}))
-      .concat([{label:"✨ Let the AI build it",fn:()=>{if(ref)select(ref);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף סקשן ";ta.focus()}},150)}}]),"New section");
+    holdMenu(anchor||null,sectionItems(after),"New section");
   }
   /* ---- sections you add yourself (main page) */
   function delPath(p){const[f,ks]=parse(p);let o=docs[f];for(let i=0;i<ks.length-1;i++){if(o==null)return;o=o[ks[i]]}if(o)delete o[ks[ks.length-1]];dirty.add(f);changes++;updateBar()}
