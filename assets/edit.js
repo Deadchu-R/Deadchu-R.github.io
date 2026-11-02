@@ -195,6 +195,14 @@
   #rt-panel .rt-val::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #111;box-shadow:0 1px 4px rgba(0,0,0,.6)}
   #rt-panel .rt-val::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #111}
   #rt-panel .rt-prev{width:28px;height:28px;border-radius:50%;border:2px solid #333;flex:none}
+  #rt-panel .rt-color input[type=range]{flex:1;accent-color:#ffd23f}
+  #rt-panel .rt-num{min-width:52px;color:#ddd;font:600 13px ui-monospace,monospace;text-align:right}
+  #rt-panel .rt-switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;margin:0;color:#ddd}
+  #rt-panel .rt-switch input{display:none}
+  #rt-panel .rt-switch span{width:44px;height:26px;border-radius:13px;background:#333;position:relative;transition:background .2s}
+  #rt-panel .rt-switch span::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+  #rt-panel .rt-switch input:checked+span{background:#ffd23f}
+  #rt-panel .rt-switch input:checked+span::after{transform:translateX(18px)}
   #rt-panel .rt-sws{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;justify-content:center}
   #rt-panel .rt-sws button{width:24px;height:24px;border-radius:50%;border:2px solid #2a2a2a;cursor:pointer;padding:0}
   #rt-panel .rt-file{font-size:12px;color:#888;word-break:break-all;margin-top:4px}
@@ -668,9 +676,10 @@
 
   /* ------------------------------------------------------------ settings panel */
   const COLOR_VAR={color_main:"--mid",color_deep:"--deep",color_accent:"--accent"};
+  const tgtOf=(holder,sel)=>!sel?holder:sel[0]==="^"?holder.closest(sel.slice(1)):$(sel,holder);
   function previewColor(holder,path,v,opts){
     const k=path.split(".").pop();
-    if(opts&&opts.length){const t=!opts[0]?holder:opts[0][0]==="^"?holder.closest(opts[0].slice(1)):$(opts[0],holder);if(t)t.style.setProperty(opts[1],v);return}
+    if(opts&&opts.length){const t=tgtOf(holder,opts[0]);if(t){if(v)t.style.setProperty(opts[1],v);else t.style.removeProperty(opts[1])}return}
     const cv=COLOR_VAR[k];if(!cv){holder.style.setProperty("--c",v);return}
     const tgt=holder.classList.contains("phero")?document.documentElement:holder;
     tgt.style.setProperty(cv,v);
@@ -721,7 +730,8 @@
     hexIn.addEventListener("blur",()=>{hexIn.value=hexOk(hexIn.value)?hexIn.value.toLowerCase():toHex(...hsv2rgb(H,S,V))});
     sw.addEventListener("click",()=>{wheel.hidden=!wheel.hidden;if(!wheel.hidden)sync(false);place()});
     sync(false);if(!val){sw.style.background="transparent";hexIn.value=""}
-    return h("div",{},h("div",{class:"rt-color"},sw,hexIn),wheel);
+    const reset=h("button",{class:"rt-btn sm",type:"button",title:"Back to the default color",on:{click:()=>{apply("");hexIn.value="";sw.style.background="transparent";wheel.hidden=true}}},"↺");
+    return h("div",{},h("div",{class:"rt-color"},sw,hexIn,reset),wheel);
   }
   function previewLayout(holder,v){
     const g=$(".mech-grid",holder);if(!g)return;
@@ -729,11 +739,23 @@
     g.className=g.className.replace(/\bn\d\b/,"n"+cols);
   }
   function field(holder,[label,path,type,opts]){
-    const val=get(path)??"";
+    let val=get(path)??"";
     const wrap=h("div",{},h("label",{},label));
     if(type==="color"){
       const apply=v=>{set(path,v);previewColor(holder,path,v,opts)};
       wrap.append(colorField(/^#[0-9a-f]{6}$/i.test(val)?val:"",apply));
+    }else if(type==="range"){
+      const [mn,mx,st,unit,cssVar,sel]=opts,tg=()=>tgtOf(holder,sel);
+      const num=h("span",{class:"rt-num"}),r=h("input",{type:"range",min:String(mn),max:String(mx),step:String(st),value:String(val===""?mn:val)});
+      const show_=()=>{num.textContent=val===""&&r.dataset.touched!=="1"?"default":r.value+unit};
+      r.addEventListener("input",()=>{r.dataset.touched="1";set(path,Number(r.value));const t=tg();if(t)t.style.setProperty(cssVar,r.value+unit);show_()});
+      const reset=h("button",{class:"rt-btn sm",type:"button",title:"Back to the default",on:{click:()=>{set(path,"");r.dataset.touched="";r.value=String(mn);const t=tg();if(t)t.style.removeProperty(cssVar);val="";show_()}}},"↺");
+      show_();wrap.append(h("div",{class:"rt-color"},r,num,reset));
+    }else if(type==="toggle"){
+      const [cls,sel]=opts;
+      const cb=h("input",{type:"checkbox",checked:!!val}),lab=h("label",{class:"rt-switch"},cb,h("span",{}),h("b",{},val?"On":"Off"));
+      cb.addEventListener("change",()=>{set(path,cb.checked);const t=tgtOf(holder,sel);if(t)t.classList.toggle(cls,cb.checked);$("b",lab).textContent=cb.checked?"On":"Off"});
+      wrap.append(lab);
     }else if(type==="select"){
       const own=/icon$/.test(path)&&/^\//.test(val);
       const s=h("select",{},...(own?[h("option",{value:val,selected:true},"(your image)")]:[]),...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));

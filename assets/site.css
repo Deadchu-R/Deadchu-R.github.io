@@ -756,3 +756,9 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .tl-ic{position:absolute;left:0;top:0;width:20px;height:20px;margin:0;display:grid;place-items:center;color:#0b1530;z-index:1}
 .tl-ic svg,.tl-ic img{width:13px;height:13px}
 @media (max-width:820px){.tl-ic{left:-34px}}
+/* per-button look chosen in the editor: fill, text, outline color/width, glow */
+.btn[style*="--bf"],.hero-links a[style*="--bf"]{background:var(--bf)}
+.btn[style*="--bt"],.hero-links a[style*="--bt"]{color:var(--bt)}
+.btn[style*="--bb"],.hero-links a[style*="--bb"]{border-color:var(--bb)}
+.btn[style*="--bw"],.hero-links a[style*="--bw"]{border-width:var(--bw);border-style:solid}
+.btn.glow,.hero-links a.glow{box-shadow:0 0 18px 2px color-mix(in srgb,var(--bb,var(--bf,var(--c,var(--accent)))) 65%,transparent),0 0 4px color-mix(in srgb,var(--bb,var(--bf,var(--c,var(--accent)))) 80%,transparent)}

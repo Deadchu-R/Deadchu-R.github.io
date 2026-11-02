@@ -147,7 +147,7 @@ def footer(depth, peek=True):
     <p class="muted"{E("site:footer_text")}>{e(SITE_TEXT["footer_text"])}</p>
   </div>
   <div class="contact-lines">
-    <div class="copyrow"><span class="email" id="email"{E("site:email")}>{SITE['email']}</span><button class="btn ghost" type="button" data-copy="#email">{ui("copy", "Copy")}</button></div>
+    <div class="copyrow"><span class="email" id="email"{E("site:email")}>{SITE['email']}</span><button class="btn ghost{bcls("copy")}" type="button" data-copy="#email"{bs_attr("copy")}>{ui("copy", "Copy", btn="button")}</button></div>
     <span class="muted"{E("site:phone")}>{e(SITE['phone'])}</span>
     <div class="btns"{L("site:footer_buttons")}>{btn_list("site:footer_buttons", SITE_TEXT["footer_buttons"], depth, lambda b: "btn" + (" ghost" if b.get("style") == "ghost" else ""))}</div>
   </div>
@@ -393,12 +393,27 @@ def heading(key, tag="h2"):
     x = X(("Icon", hp + ".icon", "select", icon_choices()), ("Color", hp + ".color", "color", [".h-ico", "--c"]))
     return f'<{tag}{x}>{ico}<span{E(hp + ".title")}>{e(hd["title"])}</span></{tag}>'
 
+def btn_fields(base, sel=""):
+    """Look of a button: fill, text, outline color + width, glow. sel '^button' targets the button around a label."""
+    return (("Button color", base + ".fill", "color", [sel, "--bf"]), ("Text color", base + ".text_color", "color", [sel, "--bt"]),
+            ("Outline color", base + ".border", "color", [sel, "--bb"]), ("Outline width", base + ".bw", "range", [0, 8, 0.5, "px", "--bw", sel]),
+            ("Glow", base + ".glow", "toggle", ["glow", sel]))
+
+def bstyle(d):
+    """(css vars, extra class) for a button's saved look."""
+    d = d or {}
+    v = "".join(f"{var}:{d[k]};" for k, var in (("fill", "--bf"), ("text_color", "--bt"), ("border", "--bb")) if d.get(k))
+    if d.get("bw") not in (None, ""):
+        v += f"--bw:{d['bw']}px;"
+    return v, (" glow" if d.get("glow") else "")
+
 def btn_list(path, items, depth, cls_fn):
     out = []
     for i, b in enumerate(items):
         bp = f"{path}.{i}"
-        out.append(f'<a class="{cls_fn(b)}" href="{href(b["link"], depth)}"{ext(b["link"])}{I(i)}'
-                   f'{X(("Link", bp + ".link", "link"), ("Style", bp + ".style", "select", ["solid", "ghost"]), ("Icon", bp + ".icon", "select", icon_choices()))}>'
+        sv, gc = bstyle(b)
+        out.append(f'<a class="{cls_fn(b)}{gc}" href="{href(b["link"], depth)}"{ext(b["link"])}{I(i)}{f" style=\"{sv}\"" if sv else ""}'
+                   f'{X(("Link", bp + ".link", "link"), ("Style", bp + ".style", "select", ["solid", "ghost"]), ("Icon", bp + ".icon", "select", icon_choices()), *btn_fields(bp))}>'
                    f'<span class="ic"{ICO(bp + ".icon")}>{_icon(b["icon"], 18) if b.get("icon") else ""}</span><span{E(bp + ".label")}>{e(b["label"])}</span></a>')
     return "".join(out)
 
@@ -421,7 +436,13 @@ def ui_icon(key, size=18):
     return (f'<span class="ui-ic"{f" style=\"--c:{col}\"" if col else ""}{ICO(f"site:ui.{key}.icon")}{"" if ic else " hidden"}>'
             f'{_icon(ic, size) if ic else ""}</span>')
 
-def ui(key, default, tag="span", cls="", attrs="", icon="", big=False, size=18):
+def bs_attr(key):
+    sv = bstyle(UI.get(key))[0]
+    return f' style="{sv}"' if sv else ""
+def bcls(key):
+    return bstyle(UI.get(key))[1]
+
+def ui(key, default, tag="span", cls="", attrs="", icon="", big=False, size=18, btn=""):
     """Fixed wording made editable: text, an optional icon (built-in or uploaded) and its color."""
     d = UI.get(key) or {}
     text, ic, col = d.get("text", default), d.get("icon", icon), d.get("color", "")
@@ -429,7 +450,7 @@ def ui(key, default, tag="span", cls="", attrs="", icon="", big=False, size=18):
     icls = "h-ico" if big else "ui-ic"
     style = f' style="--c:{col or "var(--accent)"}"' if (col or big) else ""
     ico = f'<span class="{icls}"{style}{ICO(p + ".icon")}{"" if ic else " hidden"}>{_icon(ic, size) if ic else ""}</span>'
-    x = X(("Icon", p + ".icon", "select", icon_choices()), ("Icon color", p + ".color", "color", ["." + icls, "--c"]))
+    x = X(("Icon", p + ".icon", "select", icon_choices()), ("Icon color", p + ".color", "color", ["." + icls, "--c"]), *(btn_fields(p, "^" + btn) if btn else ()))
     c = f' class="{cls}"' if cls else ""
     return f'<{tag}{c}{attrs}{x}>{ico}<span{E(p + ".text")}>{e(text)}</span></{tag}>'
 
@@ -534,8 +555,9 @@ def hero_buttons():
     out = []
     for i, b in enumerate(SITE_TEXT["hero_buttons"]):
         bp = f"site:hero_buttons.{i}"
-        x = X(("Link", bp + ".link", "link"), ("Icon", bp + ".icon", "select", icon_choices()), ("Color", bp + ".color", "color", ["", "--c"]))
-        out.append(f'<a href="{href(b["link"], 0)}"{ext(b["link"])}{I(i)}{x} style="--c:{b["color"]}"><span class="ic"{ICO(bp + ".icon")}>{_icon(b["icon"], 18) if b.get("icon") else ""}</span>'
+        x = X(("Link", bp + ".link", "link"), ("Icon", bp + ".icon", "select", icon_choices()), ("Icon & accent color", bp + ".color", "color", ["", "--c"]), *btn_fields(bp))
+        sv, gc = bstyle(b)
+        out.append(f'<a href="{href(b["link"], 0)}"{ext(b["link"])}{I(i)}{x}{f" class=\"{gc.strip()}\"" if gc else ""} style="--c:{b["color"]};{sv}"><span class="ic"{ICO(bp + ".icon")}>{_icon(b["icon"], 18) if b.get("icon") else ""}</span>'
                    f'<span{E(bp + ".label")}>{e(b["label"])}</span></a>')
     return "".join(out)
 
@@ -580,7 +602,7 @@ def build_index():
     <h1{E("site:hero_title")}>{e(SITE_TEXT["hero_title"])}</h1>
     <p class="lead"{E("site:hero_lead")}>{e(SITE_TEXT["hero_lead"])}</p>
     <div class="btns">
-      <button class="btn" type="button"{M("site:showreel_video", "video")} {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}{X(("Icon", "site:ui.showreel_btn.icon", "select", icon_choices()), ("Icon color", "site:ui.showreel_btn.color", "color", [".ui-ic", "--c"]))}>{ui_icon("showreel_btn")}<span{E("site:showreel_label")}>{e(SITE_TEXT["showreel_label"])}</span></button>
+      <button class="btn{bstyle(UI.get("showreel_btn"))[1]}" type="button"{M("site:showreel_video", "video")} {play_attrs(SITE['showreel'], 'Showreel', 'Projects from my three years of game development at Tiltan.')}{X(("Icon", "site:ui.showreel_btn.icon", "select", icon_choices()), ("Icon color", "site:ui.showreel_btn.color", "color", [".ui-ic", "--c"]), *btn_fields("site:ui.showreel_btn"))}{bs_attr("showreel_btn")}>{ui_icon("showreel_btn")}<span{E("site:showreel_label")}>{e(SITE_TEXT["showreel_label"])}</span></button>
     </div>
     <nav class="hero-links" aria-label="Jump to"{L("site:hero_buttons")}>{hero_buttons()}</nav>
   </div>
@@ -752,7 +774,7 @@ def build_code_page(i, cp):
   <div class="wrap">
     {code_blocks}
   </div>
-  <div class="wrap code-next" id="next"><a class="btn ghost" href="../index.html#more-code">{ui("all_more_code", "← All of More code")}</a>{f'<a class="btn" href="{nxt["slug"]}.html">{ui("next_code", "Next:")} {e(nxt["title"])} →</a>' if nxt else f'<span class="tbc-chip">{ui("next_code_tbc", "Next: to be continued…")} <em>{ui("tbc_sub_code", "saved for future projects")}</em></span>'}</div>
+  <div class="wrap code-next" id="next"><a class="btn ghost{bcls("all_more_code")}" href="../index.html#more-code"{bs_attr("all_more_code")}>{ui("all_more_code", "← All of More code", btn="a")}</a>{f'<a class="btn{bcls("next_code")}" href="{nxt["slug"]}.html"{bs_attr("next_code")}>{ui("next_code", "Next:", btn="a")} {e(nxt["title"])} →</a>' if nxt else f'<span class="tbc-chip">{ui("next_code_tbc", "Next: to be continued…")} <em>{ui("tbc_sub_code", "saved for future projects")}</em></span>'}</div>
 </div>
 """
     html += footer(depth, peek=False)
@@ -788,7 +810,7 @@ def build_project(i, pj):
             f'<button class="zoom" type="button"{I(si)}{X(("Caption", f"{B}.screenshots.{si}.caption", "text"))} data-full="{thumb(s, 2000)}" data-group="shots" data-title="Screenshot" data-cap="{e(SHOT_CAPS.get(s, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge screenshot"><img loading="lazy"{M(f"{B}.screenshots.{si}.image")} onerror="this.style.visibility=\'hidden\'" src="{thumb(s, 900)}" alt="{e(pj["title"])} screenshot">{FS_ICON}</button>' for s, si in zip(pj["shots"], pj["shot_idx"])) + "</div></section>"
     full = ""
     if pj["full"]:
-        full = f'<section class="mech-sec center" id="full">{ui("h_full", "Full video showcase", tag="h2", big=True)}<button class="btn" type="button"{M(B + ".full_video", "video")} {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}{credit_attr(pj['slug'])}>{ui("play_full", "Play full video", icon="play-solid")}</button></section>'
+        full = f'<section class="mech-sec center" id="full">{ui("h_full", "Full video showcase", tag="h2", big=True)}<button class="btn{bcls("play_full")}" type="button"{bs_attr("play_full")}{M(B + ".full_video", "video")} {play_attrs(pj["full"], pj["title"] + " · full video")}{more_attrs(more_text(pj))}{credit_attr(pj['slug'])}>{ui("play_full", "Play full video", icon="play-solid", btn="button")}</button></section>'
     cast = ""
     if pj.get("cast"):
         cast = f'<section class="mech-sec" id="characters">{ui("h_chars", "Characters", tag="h2", big=True)}<div class="cast"{L(B + ".characters")}>' + "".join(
