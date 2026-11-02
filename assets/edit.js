@@ -1076,7 +1076,7 @@ Rules:
       wl=wl||await import(WEBLLM);
       const src=`import {WebWorkerMLCEngineHandler} from "${WEBLLM}";const h=new WebWorkerMLCEngineHandler();self.onmessage=m=>h.onmessage(m);`;
       const worker=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})),{type:"module"});
-      engine=await wl.CreateWebWorkerMLCEngine(worker,id,{initProgressCallback:r=>onProgress&&onProgress(r)},{context_window_size:8192});
+      engine=await wl.CreateWebWorkerMLCEngine(worker,id,{initProgressCallback:r=>onProgress&&onProgress(r)},{context_window_size:isPhone()?4096:8192});   // phones: less GPU memory
       engineId=id;return engine;
     })();
     try{return await loadingP}finally{loadingP=null}
@@ -1115,16 +1115,27 @@ Actions (use paths exactly as listed):
     try{
       const eng=await ensureEngine(r=>{const pct=Math.round((r.progress||0)*100);thinking.textContent=engine?"…":`Downloading the AI model to this device (first time only)… ${pct}%`});
       thinking.textContent="Thinking on this device…";
-      const ask=(limit,strict)=>eng.chat.completions.create({messages:[{role:"system",content:LOCAL_SYS},
+      let cur=eng;
+      const ask=(limit,strict,maxTok=700)=>cur.chat.completions.create({messages:[{role:"system",content:LOCAL_SYS},
           {role:"user",content:`PAGE ${location.pathname}\n${smallCatalog(limit)}\n`+(aiFiles.length?`ATTACHMENTS: ${aiFiles.map((f,i)=>i+"="+f.name).join(", ")}\n`:"")+`REQUEST: ${text}`}],
-        temperature:.2,max_tokens:700,extra_body:{enable_thinking:false},...(strict?{response_format:{type:"json_object"}}:{})});
-      // if one way fails, try simpler ones: shorter page list, then without forced JSON
-      let res,last;
-      for(const [limit,strict] of [[6000,true],[2500,true],[2500,false]]){
-        try{res=await ask(limit,strict);break}catch(e){last=errText(e);thinking.textContent="Retrying… ("+last.slice(0,80)+")";
-          if(/device|lost|memory|out of/i.test(last)){engine=null;engineId="";break}}
+        temperature:.2,max_tokens:maxTok,extra_body:{enable_thinking:false},...(strict?{response_format:{type:"json_object"}}:{})});
+      const gpuLost=m=>/dispos|device|lost|memory|out of/i.test(m||"");
+      // if one way fails, try simpler ones: shorter page list, then without forced JSON; if the GPU dropped the model, reload it once
+      let res,last,reloaded=false;
+      for(const [limit,strict] of [[isPhone()?4000:6000,true],[2500,true],[2000,false]]){
+        try{res=await ask(limit,strict);break}
+        catch(e){last=errText(e);
+          if(gpuLost(last)){
+            engine=null;engineId="";
+            if(reloaded){if((store.get(AI_LOCAL)||"auto")!=="Qwen3.5-2B"){store.set(AI_LOCAL,"Qwen3.5-2B");
+                throw new Error("this phone's browser ran out of graphics memory with the bigger model. I switched to the Light model (about 1.5 GB). Send your message again to download it")}
+              break}
+            reloaded=true;thinking.textContent="The graphics chip reset; reloading the model…";
+            try{cur=await ensureEngine()}catch(e2){last=errText(e2);break}
+          }else thinking.textContent="Retrying… ("+last.slice(0,80)+")";
+        }
       }
-      if(!res)throw new Error(last+(/device|lost|memory|out of/i.test(last||"")?" · try the Light model in ⋯ › Site settings":""));
+      if(!res)throw new Error(last);
       let raw=(res.choices[0].message.content||"").replace(/<think>[\s\S]*?<\/think>/g,"").trim(),out;
       try{out=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);out=m?JSON.parse(m[0]):{actions:[],reply:raw}}
       const MAP={set:a=>AI_TOOLS.set_value(a),move_section:a=>AI_TOOLS.move_section(a),move_item:a=>AI_TOOLS.move_item(a),add:a=>AI_TOOLS.add_item(a),remove:a=>AI_TOOLS.remove_item(a),css:a=>AI_TOOLS.set_custom_css(a),attach:a=>AI_TOOLS.use_attachment(a)};
