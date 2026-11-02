@@ -524,6 +524,8 @@ def INDEX_JUMP():
                      + [(f"#c-{cp['slug']}", e(cp['title']), cp['theme'][2], "sub", "") for cp in CODE_PAGES],
         "about": [("#about", *hj("about", "user")[:2], "", hj("about", "user")[2])],
         "gallery_lab": [("#gallery-lab", *hj("gallery_lab", "image")[:2], "", hj("gallery_lab", "image")[2])],
+        **{"cs_" + cid: [(f"#cs-{cid}", e(c.get("title") or "Section"), c.get("accent") or "#ffd23f", "", _icon(c.get("icon") or "star", 16))]
+           for cid, c in SITE_TEXT.get("_custom", {}).items()},
     }
     order = [k for k in SITE_TEXT.get("section_order", []) if k in parts]
     order += [k for k in parts if k not in order]
@@ -569,6 +571,31 @@ def bp_media_html():
     if kind == "img":
         return f'<img class="bp-media" src="{thumb(v, 1600)}" alt=""{BG("site:bp_media")}>'
     return bp_svg()
+
+CS_LAYOUTS = ["text", "image-right", "image-left", "image-top"]
+def custom_section_html(cid, c):
+    """A section added in the editor: kicker, heading with icon, text, picture/video, buttons."""
+    b = f"site:custom_sections.{cid}"
+    kind, v = c.get("_media") or ("", "")
+    if kind == "video":
+        media = f'<video src="{v}" autoplay muted loop playsinline preload="metadata"></video>'
+    elif kind == "img":
+        media = f'<img src="{thumb(v, 1600)}" alt="" loading="lazy">'
+    else:
+        media = ""
+    lay = c.get("layout") or "text"
+    style = "".join(f"{var}:{c[k]};" for k, var in (("bg", "--sec-bg"), ("accent", "--accent"), ("text_color", "--sec-ink")) if c.get(k))
+    ic = c.get("icon") or ""
+    x = X(("Layout", b + ".layout", "select", CS_LAYOUTS), ("Picture, GIF or video", b + ".media", "media"),
+          ("Background color", b + ".bg", "color", ["", "--sec-bg"]), ("Accent color", b + ".accent", "color", ["", "--accent"]),
+          ("Text color", b + ".text_color", "color", ["", "--sec-ink"]), ("Heading icon", b + ".icon", "select", icon_choices()))
+    return (f'<section class="band custom-sec lay-{lay}" id="cs-{cid}"{K("cs_" + cid, "site:section_order")}{ADD(b + ".buttons.items")}{x}{f" style=\"{style}\"" if style else ""}>'
+            f'<div class="wrap cs-grid"><div class="cs-copy">'
+            f'<p class="kicker"{E(b + ".kicker", "small line above the title")}{"" if c.get("kicker") else " hidden data-edit-show"}>{e(c.get("kicker", ""))}</p>'
+            f'<h2><span class="h-ico" style="--c:var(--accent)"{ICO(b + ".icon")}{"" if ic else " hidden"}>{_icon(ic, 18) if ic else ""}</span><span{E(b + ".title")}>{e(c.get("title", ""))}</span></h2>'
+            f'<p class="muted cs-text"{E(b + ".text", "text")}>{e(c.get("text", ""))}</p>'
+            f'{xrow(b + ".buttons", c.get("buttons") or {}, 0, "blk")}</div>'
+            f'<div class="cs-media"{"" if media else " hidden"}>{media}</div></div></section>')
 
 def build_index():
     global DEPTH
@@ -653,6 +680,8 @@ def build_index():
   </div>
 </section>
 """
+    for cid, c in SITE_TEXT.get("_custom", {}).items():
+        blocks["cs_" + cid] = custom_section_html(cid, c)
     for k, cfg in SITE_TEXT.get("section_buttons", {}).items():
         if k not in blocks:
             continue

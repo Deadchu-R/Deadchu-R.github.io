@@ -200,5 +200,6 @@
     "mv": 40,
     "click": "soft",
     "cv": 50
-  }
+  },
+  "custom_sections": {}
 }

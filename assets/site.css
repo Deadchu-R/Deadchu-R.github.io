@@ -768,3 +768,17 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .sound-btn:hover{opacity:1;transform:translateY(-2px)}
 .sound-btn.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 60%,transparent);opacity:1}
 .rt-on .sound-btn{bottom:72px}
+/* sections added in the editor */
+.custom-sec{background:var(--sec-bg,color-mix(in srgb,var(--deep) 88%,#000));color:var(--sec-ink,var(--paper))}
+.custom-sec .muted{color:color-mix(in srgb,var(--sec-ink,var(--paper)) 78%,transparent)}
+.cs-grid{display:grid;gap:clamp(24px,4vw,48px);align-items:center}
+.cs-text{font-size:18px;line-height:1.7;max-width:62ch;white-space:pre-line}
+.cs-media[hidden]{display:none}
+.cs-media img,.cs-media video{width:100%;display:block;border-radius:16px;box-shadow:0 30px 60px -30px rgba(0,0,0,.7)}
+@media (min-width:861px){
+  .lay-image-right .cs-grid{grid-template-columns:1.05fr 1fr}
+  .lay-image-left .cs-grid{grid-template-columns:1fr 1.05fr}
+  .lay-image-left .cs-media{order:-1}
+}
+.lay-image-top .cs-media{order:-1}
+.lay-text .cs-media{max-width:820px}

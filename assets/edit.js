@@ -252,7 +252,7 @@
   const pubBtn=h("button",{class:"rt-pub",type:"button",disabled:true,on:{click:publish}},h("i"),"Publish");
   const menu=h("div",{id:"rt-menu"});
   const item=(label,fn,cls)=>h("button",{type:"button",class:cls||"",on:{click:()=>{menu.style.display="none";fn()}}},label);
-  menu.append(item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
+  menu.append(item("＋  New section (main page)",()=>{const r_=addSection(current&&current.closest('[data-ok="site:section_order"]'));if(r_)startEdit($(`[data-e="${r_.base}.title"]`))}),item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
   const prevBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"Preview the page as visitors will see it",on:{click:e=>{e.stopPropagation();togglePreview()}}},"👁");
   function togglePreview(){
     const on=document.documentElement.classList.toggle("rt-preview");
@@ -421,7 +421,7 @@
   const listPath=item=>{const l=listOf(item);return l&&l.dataset.l};
   function unitName(u){
     if(u.hasAttribute("data-i")){const lp=listPath(u)||"";const last=lp.split(/[:.]/).pop();return LIST_NAMES[last]||LIST_NAMES[lp]||"Item"}
-    if(u.hasAttribute("data-k"))return "Section · "+(KEY_NAMES[u.dataset.k]||u.dataset.k);
+    if(u.hasAttribute("data-k"))return "Section · "+(KEY_NAMES[u.dataset.k]||(u.dataset.k.startsWith("cs_")?(get(`site:custom_sections.${u.dataset.k.slice(3)}.title`)||"yours"):u.dataset.k));
     if(u.classList.contains("bp"))return "Illustration window";
     if(/showreel/.test(u.dataset.m||""))return "Showreel button";
     if(u.classList.contains("repo"))return "Code card";
@@ -465,7 +465,7 @@
     show(T.grip,mv&&sib.length>1);show(T.up,mv&&sib.length>1);show(T.down,mv&&sib.length>1);
     T.up.textContent=horiz?"←":"↑";T.down.textContent=horiz?"→":"↓";T.up.disabled=k<=0;T.down.disabled=k===sib.length-1;
     show(T.edit,!!clickedText);show(T.media,!!clickedMedia);
-    show(T.dup,current.hasAttribute("data-i"));show(T.del,current.hasAttribute("data-i"));
+    show(T.dup,current.hasAttribute("data-i"));show(T.del,current.hasAttribute("data-i")||(current.dataset.k||"").startsWith("cs_"));
     show(T.gear,hasSettings(current));
     show(T.bg,fieldsOf(current).some(f=>/^(video|image|art|media)$/.test(f[2])&&/background|cover|picture|thumbnail/i.test(f[0])));
     show(T.add,current.hasAttribute("data-add"));
@@ -526,7 +526,9 @@
       let b=$(":scope>.rt-secbar",sec);
       if(!b){
         if(getComputedStyle(sec).position==="static")sec.style.position="relative";
-        b=h("div",{class:"rt-secbar rt-ui"},h("span",{class:"rt-sl"},KEY_NAMES[sec.dataset.k]||sec.dataset.k),
+        const mainPage=sec.dataset.ok==="site:section_order";
+        b=h("div",{class:"rt-secbar rt-ui"},h("span",{class:"rt-sl"},KEY_NAMES[sec.dataset.k]||(sec.dataset.k.startsWith("cs_")?"Your section":sec.dataset.k)),
+          mainPage?h("button",{type:"button",title:"Add a new section below this one",on:{click:()=>{const r_=addSection(sec);if(r_)startEdit($(`[data-e="site:custom_sections.${r_.id}.title"]`))}}},"⊞"):null,
           h("button",{type:"button",title:"Move this whole section up",on:{click:()=>step(sec,-1)}},"↑"),
           h("button",{type:"button",title:"Move this whole section down",on:{click:()=>step(sec,1)}},"↓"),
           sec.hasAttribute("data-add")?h("button",{type:"button",title:"Add a button to this section",on:{click:()=>addItem(sec)}},"+"):null);
@@ -574,6 +576,43 @@
     try{getSelection().selectAllChildren(lab)}catch(e){}
     secBars();
   }
+  /* ---- sections you add yourself (main page) */
+  function delPath(p){const[f,ks]=parse(p);let o=docs[f];for(let i=0;i<ks.length-1;i++){if(o==null)return;o=o[ks[i]]}if(o)delete o[ks[ks.length-1]];dirty.add(f);changes++;updateBar()}
+  function csElement(id,c){
+    const b=`site:custom_sections.${id}`,ICN=[""].concat(Object.keys(ICONS));
+    const x=[["Layout",b+".layout","select",["text","image-right","image-left","image-top"]],["Picture, GIF or video",b+".media","media"],
+      ["Background color",b+".bg","color",["","--sec-bg"]],["Accent color",b+".accent","color",["","--accent"]],["Text color",b+".text_color","color",["","--sec-ink"]],["Heading icon",b+".icon","select",ICN]];
+    const sec=h("section",{class:`band custom-sec lay-${c.layout||"text"}`,id:"cs-"+id,"data-k":"cs_"+id,"data-ok":"site:section_order","data-add":b+".buttons.items","data-tpl":"btn","data-x":JSON.stringify(x)},
+      h("div",{class:"wrap cs-grid"},
+        h("div",{class:"cs-copy"},
+          h("p",{class:"kicker","data-e":b+".kicker","data-ph":"small line above the title"},c.kicker||""),
+          h("h2",{},h("span",{class:"h-ico",style:"--c:var(--accent)","data-ico":b+".icon",hidden:true}),h("span",{"data-e":b+".title"},c.title||"")),
+          h("p",{class:"muted cs-text","data-e":b+".text","data-ph":"text"},c.text||""),
+          h("div",{class:"xrow al-left blk","data-l":b+".buttons.items","data-x":JSON.stringify([["Align",b+".buttons.align","select",["left","center","right"]]])})),
+        h("div",{class:"cs-media",hidden:true})));
+    return sec;
+  }
+  function addSection(after,data){
+    if(!$("#projects .ptiles")){toast("New sections go on the main page.");return null}
+    const id="s"+Math.random().toString(36).slice(2,7),c=Object.assign({title:"New section",text:"Write something here.",kicker:"",layout:"text"},data||{});
+    if(!get("site:custom_sections"))set("site:custom_sections",{});
+    set(`site:custom_sections.${id}`,c);
+    const sec=csElement(id,c);
+    const ref=after&&after.dataset.ok==="site:section_order"?after:null;
+    const all=$$('[data-ok="site:section_order"]');
+    if(ref)ref.after(sec);else if(all.length)all[all.length-1].after(sec);else $("footer").before(sec);
+    const keys=siblingsOf(sec).map(x=>x.dataset.k),old=get("site:section_order")||[];
+    set("site:section_order",keys.concat(old.filter(k=>!keys.includes(k))));
+    $$("[data-e]",sec).forEach(initText);secBars();
+    sec.scrollIntoView({block:"start"});flash(sec);select($(".cs-copy h2",sec));
+    return {id,key:"cs_"+id,base:`site:custom_sections.${id}`};
+  }
+  function deleteSection(sec,quiet){
+    if(!quiet&&!confirm("Delete this whole section?"))return "cancelled";
+    const id=sec.dataset.k.slice(3);delPath(`site:custom_sections.${id}`);
+    set("site:section_order",(get("site:section_order")||[]).filter(k=>k!==sec.dataset.k));
+    sec.remove();current=null;chain=[];panelOpen=false;renderPanel();place();secBars();return "removed";
+  }
   function addNew(item){
     // a fresh item right after this one: same look, text ready to type
     duplicate(item);
@@ -582,8 +621,9 @@
     if(te){set(te.dataset.e,"New");te.textContent="New";select(te);startEdit(te);try{getSelection().selectAllChildren(te)}catch(e){}}
     if(c.parentElement&&c.parentElement.classList.contains("repo-tech"))status("The card shows the first 4 skills, the code page shows all of them. Move one with the arrows to choose which 4.");
   }
-  function remove(item){
-    if(!confirm(`Delete this ${unitName(item).toLowerCase()}?`))return;
+  function remove(item,quiet){
+    if((item.dataset.k||"").startsWith("cs_"))return deleteSection(item,quiet);
+    if(!quiet&&!confirm(`Delete this ${unitName(item).toLowerCase()}?`))return;
     listOp(item,(arr,perm,pos)=>{arr.splice(pos,1);perm.splice(pos,1)});
     item.remove();
     current=null;chain=[];panelOpen=false;renderPanel();place();
@@ -689,6 +729,9 @@
     $$("[data-bg]").filter(b=>b.dataset.bg.split(" ").includes(path)).forEach(b=>{
       if(b.tagName==="VIDEO"){if(heroPhone&&!tall)return;isGif?swapVideo(b):setVideo(b);b.scrollIntoView&&scrollTo({top:0,behavior:"smooth"})}
       else{b.src=url;b.hidden=false;if(b.parentElement&&b.parentElement.hidden)b.parentElement.hidden=false}});
+    const csm=path.match(/^site:custom_sections\.(\w+)\.media$/);
+    if(csm){const box=$(`#cs-${csm[1]} .cs-media`);if(box){box.replaceChildren(kind==="video"&&!isGif?h("video",{src:url,autoplay:true,muted:true,loop:true,playsinline:true}):h("img",{src:url,alt:""}));box.hidden=false;
+      const sec=$(`#cs-${csm[1]}`);if(sec.classList.contains("lay-text")){sec.className=sec.className.replace(/\blay-\S+/,"lay-image-right");set(`site:custom_sections.${csm[1]}.layout`,"image-right")}}}
     if(path==="site:bp_media"){                 // the Blueprint window: swap the drawing for the new picture
       const body=$(".bp-body");if(body){$$(":scope>svg,:scope>.bp-media",body).forEach(x=>x.remove());
         const m=kind==="video"&&!isGif?h("video",{class:"bp-media",src:url,autoplay:true,muted:true,loop:true,playsinline:true}):h("img",{class:"bp-media",src:url,alt:""});
@@ -792,7 +835,7 @@
       const s=h("select",{},...(own?[h("option",{value:val,selected:true},"(your image)")]:[]),...opts.map(o=>h("option",{value:o,selected:o===val},o||"(none)")));
       if(/icon$/.test(path))setTimeout(()=>wrap.append(h("div",{class:"rt-row",style:"margin-top:6px"},
         h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(path,"icon",holder)}},"⬆ Upload your own icon (image / GIF)")),thumb(path)||h("p",{class:"rt-hint"},"Best: a square image, 128×128 px. Bigger ones are shrunk for you.")));
-      s.addEventListener("change",()=>{set(path,s.value);if(path.endsWith(".layout"))previewLayout(holder,s.value);if(/icon$/.test(path))previewIcon(path,s.value);
+      s.addEventListener("change",()=>{set(path,s.value);if(path.endsWith(".layout"))(holder.classList.contains("custom-sec")?holder.className=holder.className.replace(/\blay-\S+/,"lay-"+s.value):previewLayout(holder,s.value));if(/icon$/.test(path))previewIcon(path,s.value);
         if(path.endsWith(".style")&&holder.classList.contains("btn"))holder.classList.toggle("ghost",s.value==="ghost");
         if(path.endsWith(".align"))holder.className=holder.className.replace(/\bal-\w+/,"al-"+s.value);
         if(path.endsWith(".position")){const sec=holder.closest("[data-k]"),w=holder.parentElement,bar=$(":scope>.rt-secbar",sec);
@@ -992,7 +1035,7 @@
     if(path==="site:custom_css")applyCustomCss(v);
     if(fd){
       if(type==="color")previewColor(holder,path,v,opts);
-      else if(type==="select"){if(/icon$/.test(path))previewIcon(path,v);if(path.endsWith(".layout"))previewLayout(holder,v);
+      else if(type==="select"){if(/icon$/.test(path))previewIcon(path,v);if(path.endsWith(".layout"))(holder.classList.contains("custom-sec")?holder.className=holder.className.replace(/\blay-\S+/,"lay-"+v):previewLayout(holder,v));
         if(path.endsWith(".style")&&holder.classList.contains("btn"))holder.classList.toggle("ghost",v==="ghost");
         if(path.endsWith(".align"))holder.className=holder.className.replace(/\bal-\w+/,"al-"+v)}
       else if(type==="range"){const [, , , unit,cssVar,sel]=opts;const t=cssVar&&tgtOf(holder,sel);if(t)t.style.setProperty(cssVar,v+unit)}
@@ -1003,6 +1046,10 @@
   }
   const itemEl=(lp,i)=>{const c=$(`[data-l="${CSS.escape(lp)}"]`);return c&&[...c.children].find(x=>x.dataset.i===String(i))};
   const AI_TOOLS={
+    add_section:({title,text,kicker,after,layout})=>{const ref=after?$$('[data-ok="site:section_order"]').find(x=>x.dataset.k===after):null;
+      const r_=addSection(ref,{title:title||"New section",text:text||"",kicker:kicker||"",layout:layout||"text"});
+      return r_?`added section ${r_.key}; its paths start with ${r_.base} (.title .text .kicker .layout .bg .accent .text_color .icon .media; buttons list ${r_.base}.buttons.items)`:"sections can only be added on the main page"},
+    remove_section:({key})=>{const s_=$$('[data-ok="site:section_order"]').find(x=>x.dataset.k===key);if(!s_||!key.startsWith("cs_"))return "only sections added in the editor (cs_…) can be removed";return deleteSection(s_,true)},
     set_value:({path,value})=>applyValue(path,value),
     move_item:({list_path,index,to_index})=>{let it=itemEl(list_path,index);if(!it)return "no item "+index+" in "+list_path;
       for(let n=0;n<60&&it.dataset.i!==String(to_index);n++){const sib=siblingsOf(it),k=sib.indexOf(it);const d=+to_index>+it.dataset.i?1:-1;if(!sib[k+d])break;step(it,d)}return "now at "+it.dataset.i},
@@ -1023,6 +1070,8 @@
     {name:"add_item",description:"Add an item to a LIST by copying the item at after_index and giving it new text.",parameters:{type:"OBJECT",properties:{list_path:{type:"STRING"},after_index:{type:"INTEGER"},text:{type:"STRING"}},required:["list_path","after_index"]}},
     {name:"remove_item",description:"Delete an item from a LIST.",parameters:{type:"OBJECT",properties:{list_path:{type:"STRING"},index:{type:"INTEGER"}},required:["list_path","index"]}},
     {name:"set_custom_css",description:"Replace the site's custom CSS (applies to every page). Use for layout, spacing, sizes, fonts, backgrounds, animations and anything without a setting. Send the full stylesheet: it replaces the old one.",parameters:{type:"OBJECT",properties:{css:{type:"STRING"}},required:["css"]}},
+    {name:"add_section",description:"Add a brand-new section to the main page (title, text, optional kicker, layout text|image-right|image-left|image-top), after the section key given. Then set its colors/icon/media with set_value on the returned paths.",parameters:{type:"OBJECT",properties:{title:{type:"STRING"},text:{type:"STRING"},kicker:{type:"STRING"},layout:{type:"STRING"},after:{type:"STRING"}},required:["title","text"]}},
+    {name:"remove_section",description:"Delete a section that was added in the editor (key starts with cs_).",parameters:{type:"OBJECT",properties:{key:{type:"STRING"}},required:["key"]}},
     {name:"use_attachment",description:"Put a file the owner attached (0 = first) into an image/video/media/icon/audio slot.",parameters:{type:"OBJECT",properties:{path:{type:"STRING"},attachment:{type:"INTEGER"}},required:["path"]}},
   ];
   function catalog(){
@@ -1049,6 +1098,7 @@ The owner talks to you (often in Hebrew, sometimes by voice) and you change the 
 Rules:
 - Only use paths that appear in the catalog. Text: set_value on TEXT paths. Settings: FIELD paths (respect their type). Colors are #rrggbb.
 - Reorder with move_item / move_section; add/remove list items with add_item / remove_item.
+- A new section on the main page ("add a section about…"): add_section with a good English title and a short text, then style it with set_value on the paths it returns.
 - Layout and visual design without a FIELD (sizes, spacing, columns, fonts, backgrounds, effects, animations): write CSS with set_custom_css. Keep the existing custom CSS and add to it; scope rules to selectors from PAGE STRUCTURE; keep it mobile-friendly; never hide the editor (classes starting with rt-).
 - Images/videos/GIFs/sounds: only files the owner attached, via use_attachment into a MEDIA or media FIELD path. You cannot create images.
 - Keep the site's English text in English unless he asks otherwise. Reply in the language he used, in 1-3 short sentences: what you changed, and remind him to check with 👁 Preview and press Publish.`;
@@ -1116,12 +1166,14 @@ Actions (use paths exactly as listed):
 {"do":"add","list_path":"<LIST path>","after_index":0,"text":"..."}
 {"do":"remove","list_path":"<LIST path>","index":0}
 {"do":"css","css":"<full custom CSS: keep the old rules and add yours>"}
+{"do":"add_section","title":"...","text":"...","after":"<section key from ORDER>","layout":"text|image-right|image-left|image-top"}
+{"do":"remove_section","key":"cs_…"}
 {"do":"attach","path":"<MEDIA or image/video FIELD path>","attachment":0}
 "this"/"זה" means the SELECTED item. Keep the site's text in English unless asked. reply = one short sentence in the owner's language.`;
   async function applyJsonAnswer(content,thinking){
     const raw=String(content||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/^```(?:json)?|```$/gm,"").trim();let out;
     try{out=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);try{out=m?JSON.parse(m[0]):null}catch(e2){out=null}if(!out)out={actions:[],reply:raw}}
-    const MAP={set:a=>AI_TOOLS.set_value(a),move_section:a=>AI_TOOLS.move_section(a),move_item:a=>AI_TOOLS.move_item(a),add:a=>AI_TOOLS.add_item(a),remove:a=>AI_TOOLS.remove_item(a),css:a=>AI_TOOLS.set_custom_css(a),attach:a=>AI_TOOLS.use_attachment(a)};
+    const MAP={add_section:a=>AI_TOOLS.add_section(a),remove_section:a=>AI_TOOLS.remove_section(a),set:a=>AI_TOOLS.set_value(a),move_section:a=>AI_TOOLS.move_section(a),move_item:a=>AI_TOOLS.move_item(a),add:a=>AI_TOOLS.add_item(a),remove:a=>AI_TOOLS.remove_item(a),css:a=>AI_TOOLS.set_custom_css(a),attach:a=>AI_TOOLS.use_attachment(a)};
     for(const a of (out.actions||[]).slice(0,20)){let r_;try{r_=MAP[a.do]?await MAP[a.do](a):"unknown action "+a.do}catch(e){r_="error: "+e.message}
       aiSay("act",(r_==="ok"||/^(now|added|removed|order|placed)/.test(r_)?"✓ ":"⚠ ")+a.do+" "+(a.path||a.list_path||a.key||"")+(r_==="ok"?"":" · "+r_))}
     if(thinking)thinking.remove();
@@ -1234,7 +1286,7 @@ Actions (use paths exactly as listed):
         const out=[];
         for(const p of calls){const {name,args}=p.functionCall;let res;
           try{res=AI_TOOLS[name]?await AI_TOOLS[name](args||{}):"unknown tool"}catch(e){res="error: "+e.message}
-          aiSay("act",(res==="ok"||/^(now|added|removed|order|placed)/.test(res)?"✓ ":"⚠ ")+name.replace("_"," ")+" "+(args.path||args.list_path||args.key||"")+(res==="ok"?"":" · "+res));
+          aiSay("act",(res==="ok"||/^(now|added|removed|order|placed)/.test(res)?"✓ ":"⚠ ")+name.replace("_"," ")+" "+(args.path||args.list_path||args.key||"")+(res==="ok"?"":" · "+String(res).slice(0,70)));
           out.push({functionResponse:{name,response:{result:res}}})}
         aiHist.push({role:"user",parts:out});
         if(round===7){thinking.remove();aiSay("ai","Done. Check with 👁 Preview, then Publish.")}

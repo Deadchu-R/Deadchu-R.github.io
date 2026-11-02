@@ -388,3 +388,5 @@ def _media(path):
     return ("img", image_key(path))
 SITE_TEXT["_bp"] = _media(_site.get("bp_media"))
 SITE_TEXT["_lab_cover"] = image_key(_site.get("lab_cover")) if _site.get("lab_cover") else ""
+# sections the owner adds himself (keyed by id so deleting one never shifts the others)
+SITE_TEXT["_custom"] = {cid: dict(c, _media=_media(c.get("media"))) for cid, c in (_site.get("custom_sections") or {}).items() if isinstance(c, dict)}
