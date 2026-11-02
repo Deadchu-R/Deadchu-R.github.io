@@ -5,7 +5,11 @@
   const me=document.currentScript;
   try{
     if(/[?&]edit\b/.test(location.search)||location.hash==="#edit")sessionStorage.setItem("rt-edit","1");
-    if(sessionStorage.getItem("rt-edit")&&me&&me.dataset.edit)document.head.appendChild(Object.assign(document.createElement("script"),{src:me.dataset.edit}));
+    const load=()=>document.head.appendChild(Object.assign(document.createElement("script"),{src:me.dataset.edit}));
+    if(sessionStorage.getItem("rt-edit")&&me&&me.dataset.edit)load();
+    // the small pencil in the footer: sign in to edit
+    document.addEventListener("click",e=>{const b=e.target.closest(".edit-in");if(!b||!me||!me.dataset.edit||window.__rtEdit)return;
+      sessionStorage.setItem("rt-edit","1");sessionStorage.setItem("rt-login","1");load()});
   }catch(e){}
 })();
 (function(){

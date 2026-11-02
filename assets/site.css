@@ -716,3 +716,6 @@ body:has(.viewer:not([hidden])) .jump{display:none}
 .xrow-block{margin-top:28px}
 .xrow-block .xrow{margin:0}
 .xrow-block[hidden]{display:none}
+.foot-meta{display:flex;align-items:center;gap:10px}
+.edit-in{appearance:none;background:none;border:0;padding:6px;margin:-6px 0;color:inherit;opacity:.35;cursor:pointer;border-radius:6px;line-height:0}
+.edit-in:hover,.edit-in:focus-visible{opacity:.9}

@@ -256,7 +256,7 @@
       const save=async()=>{
         const v=inp.value.trim();if(!v){err.textContent="Paste the token first.";return}
         store.set(TOKEN_KEY,v);err.style.color="#aaa";err.textContent="Checking…";
-        try{await loadDocs();m.remove();done(true)}catch(e){err.style.color="#ff8a8a";err.textContent="That token doesn't open the site's repo ("+e.message+").";}
+        try{await loadDocs();m.remove();saveTokenForLogin(true);done(true)}catch(e){err.style.color="#ff8a8a";err.textContent="That token doesn't open the site's repo ("+e.message+").";}
       };
       const m=modal(
         h("h3",{},first===true?"One-time setup":"GitHub token"),
@@ -588,11 +588,13 @@
       else{const v=$("video",m);if(v)isGif?swapVideo(v):setVideo(v);if(!isGif)m.dataset.src=url;m.classList.add("rt-new")}
     });
     if(path.endsWith(".cover")&&$(".phero-bg"))$(".phero-bg").src=url;
+    const heroMain=path==="site:hero_video",heroPhone=path==="site:hero_video_mobile",tall=matchMedia("(max-aspect-ratio: 1/1)").matches;
+    if(heroMain){set("site:hero_video_mobile","/"+repoPath);pending.set("site:hero_video_mobile",pending.get(path))}   // same video on phones unless a phone version is picked
     $$("[data-bg]").filter(b=>b.dataset.bg.split(" ").includes(path)).forEach(b=>{
-      if(b.tagName==="VIDEO"){const tall=matchMedia("(max-aspect-ratio: 1/1)").matches;
-        if(path.endsWith("_mobile")!==tall&&$$("[data-bg]").length)toast(tall?"That's the wide-screen video: it shows on computers. Tap Preview on a computer to see it.":"That's the phone video: it shows on phones.");
-        else isGif?swapVideo(b):setVideo(b)}
+      if(b.tagName==="VIDEO"){if(heroPhone&&!tall)return;isGif?swapVideo(b):setVideo(b);b.scrollIntoView&&scrollTo({top:0,behavior:"smooth"})}
       else b.src=url});
+    panelOpen=false;renderPanel();                       // close settings so the new media is in view
+    if(heroPhone&&!tall){toast("Saved as the phone version: it shows on phones (tap 👁 Preview on your phone to see it).");renderPanel();return}
     toast(kind==="video"?"Swapped in. Tap 👁 Preview to see the page as visitors will, then Publish.":"Swapped in. Tap 👁 Preview to see the page as visitors will, then Publish.");
     renderPanel();
   }
@@ -663,7 +665,7 @@
     panel.append(h("div",{class:"rt-head"},h("span",{},unitName(u)),h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{panelOpen=false;renderPanel()}}},"✕")));
     const mseen=new Set();
     mediaOf(u).forEach(m=>{const p=m.dataset.m;if(mseen.has(p))return;mseen.add(p);
-      const kind=m.dataset.mk,last=p.split(".").pop(),lab={showreel_video:"Showreel video",full_video:"Full video",mascot:"Character cut-out",cover:"Cover image",video:"Clip video"}[last]||(kind==="video"?"Video":"Image");
+      const kind=m.dataset.mk,last=p.split(/[.:]/).pop(),lab={showreel_video:"Showreel video",full_video:"Full video",mascot:"Character cut-out",cover:"Cover image",video:"Clip video"}[last]||(kind==="video"?"Video":"Image");
       panel.append(h("label",{},lab),h("div",{class:"rt-row"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>replaceMedia(p,kind,m)}},"Replace…")),thumb(p)||h("div",{class:"rt-file"},String(get(p)||"").split("/").pop()))});
     fieldsOf(u).filter(f=>!mseen.has(f[1])).forEach(f=>panel.append(field(u,f)));
     if(u.tagName==="A"&&u.getAttribute("href"))panel.append(h("div",{class:"rt-row",style:"margin-top:12px"},h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{if(!changes||confirm("Leave without publishing? Changes on this page will be lost.")){changes=0;location.href=u.href}}}},"↗ Open this link")));
@@ -740,12 +742,68 @@
       document.body.append(b);
     }
   }
+  /* ------------------------------------------------------------ sign in */
+  const AUTH_PATH="assets/editor-auth.json";
+  let authKey=null,authDoc=null;
+  const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u))),unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+  const hex=u=>[...new Uint8Array(u)].map(x=>x.toString(16).padStart(2,"0")).join("");
+  async function derive(user,pw,a){
+    const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(user.trim().toLowerCase()+"\n"+pw),"PBKDF2",false,["deriveBits"]);
+    const bits=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:unb64(a.salt),iterations:a.iter},base,512));
+    return{check:hex(bits.slice(0,32)),key:await crypto.subtle.importKey("raw",bits.slice(32),"AES-GCM",false,["encrypt","decrypt"])};
+  }
+  function loginBox(){
+    return new Promise(done=>{
+      const u=h("input",{type:"text",placeholder:"Name",autocomplete:"username",autocapitalize:"off",spellcheck:"false"});
+      const p=h("input",{type:"password",placeholder:"Password",autocomplete:"current-password"});
+      const err=h("p",{style:"color:#ff8a8a;margin:0;min-height:1.4em"});
+      const go=async()=>{
+        err.style.color="#aaa";err.textContent="Checking…";
+        try{
+          authDoc=await (await fetch(new URL("editor-auth.json",ME).href+"?t="+Date.now(),{cache:"no-store"})).json();
+          const d=await derive(u.value,p.value,authDoc);
+          if(d.check!==authDoc.check){await new Promise(r=>setTimeout(r,700));err.style.color="#ff8a8a";err.textContent="Wrong name or password.";return}
+          authKey=d.key;
+          if(authDoc.token&&!store.get(TOKEN_KEY)){
+            const tk=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(authDoc.token.iv)},authKey,unb64(authDoc.token.ct));
+            store.set(TOKEN_KEY,new TextDecoder().decode(tk));
+          }
+          m.remove();done(true);
+        }catch(e){err.style.color="#ff8a8a";err.textContent="Couldn't sign in ("+e.message+").";}
+      };
+      const m=modal(h("h3",{},"Sign in to edit"),u,p,err,
+        h("div",{class:"rt-row"},h("button",{class:"rt-btn",type:"button",on:{click:()=>{m.remove();done(false)}}},"Cancel"),h("button",{class:"rt-btn pri",type:"button",on:{click:go}},"Sign in")));
+      p.addEventListener("keydown",e=>{if(e.key==="Enter")go()});u.addEventListener("keydown",e=>{if(e.key==="Enter")p.focus()});
+      setTimeout(()=>u.focus(),50);
+    });
+  }
+  async function saveTokenForLogin(force){
+    // store the token encrypted with the password, so signing in on another device is enough
+    if(!authKey||!authDoc||(authDoc.token&&!force)||!store.get(TOKEN_KEY))return;
+    try{
+      const iv=crypto.getRandomValues(new Uint8Array(12));
+      const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},authKey,new TextEncoder().encode(store.get(TOKEN_KEY)));
+      const doc={...authDoc,token:{iv:b64(iv),ct:b64(ct)}};
+      const cur=await gh(`/repos/${REPO}/contents/${AUTH_PATH}?ref=${BR}&t=${Date.now()}`);
+      const body=JSON.stringify(doc,null,2)+"\n";
+      await gh(`/repos/${REPO}/contents/${AUTH_PATH}`,{method:"PUT",body:JSON.stringify({message:"Editor sign-in: keep the GitHub token encrypted",content:btoa(unescape(encodeURIComponent(body))),sha:cur.sha,branch:BR})});
+      authDoc=doc;
+    }catch(e){/* not critical: the token still works in this browser */}
+  }
+  function leaveQuietly(){try{sessionStorage.removeItem("rt-edit");sessionStorage.removeItem("rt-login")}catch(e){}
+    const u=new URL(location.href);u.searchParams.delete("edit");if(u.hash==="#edit")u.hash="";location.replace(u.toString())}
   async function start(){
+    let viaLogin=false;try{viaLogin=!!sessionStorage.getItem("rt-login")}catch(e){}
+    if(viaLogin||!store.get(TOKEN_KEY)){
+      if(!(await loginBox())){leaveQuietly();return}
+      try{sessionStorage.removeItem("rt-login")}catch(e){}
+    }
     if(document.body.classList.contains("gallery")||/gallery\.html$/.test(location.pathname)){
       document.body.append(h("div",{class:"rt-banner rt-ui"},"The gallery is built automatically from the project pages and the lab. Edit those, and it updates by itself."));
     }
     if(!store.get(TOKEN_KEY)){if(!(await askToken(true))){status("No token: you can look around, but not publish.",true);return}}
     else{try{await loadDocs()}catch(e){status("",true);if(!(await askToken()))return}}
+    saveTokenForLogin();
     $$("[data-edit-show]").forEach(x=>{x.hidden=false});
     $$("details").forEach(d=>{if($("[data-e]",d))d.open=true});
     $$("[data-e]").forEach(initText);
