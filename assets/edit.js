@@ -2277,7 +2277,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     // also words the ad repeats (capitalized tech-ish terms)
     const caps={};
     (clean.match(/\b[A-Z][A-Za-z0-9+#.]{1,20}\b/g)||[]).forEach(w=>{
-      if(!/^(The|And|You|We|Our|Your|This|With|For|In|To|Of|A|An|As|At|On|Is|Are|Be|Or|If|It|Will|Have|Has|Job|About|Who|What|Must|Should|Nice|Plus|Requirements|Responsibilities|Experience|Years|Team|Work|Join|Apply|Location|Remote|Hybrid|Office|Benefits|Company|Role|Position|Studio|Games?|Developer|Engineer|Programmer|Moon|Active|Israel|Tel|Aviv|Yafo|District|LinkedIn|Sign|Clear|Image|Report|Save|Share|Follow|Full|Part|Time|Mid|Senior|Junior|Salary|Overview)$/.test(w))
+      if(!/^(The|And|You|We|Our|Your|This|With|For|In|To|Of|A|An|As|At|On|Is|Are|Be|Or|If|It|Will|Have|Has|Job|About|Who|What|Must|Should|Nice|Plus|Requirements|Responsibilities|Experience|Years|Team|Work|Join|Apply|Location|Remote|Hybrid|Office|Benefits|Company|Role|Position|Studio|Games?|Developer|Engineer|Programmer|Moon|Active|Israel|Tel|Aviv|Yafo|District|LinkedIn|Sign|Clear|Image|Report|Save|Share|Follow|Full|Part|Time|Mid|Senior|Junior|Salary|Overview|Skip|Expand|Content|Search|People|Learning)$/.test(w))
         caps[w]=(caps[w]||0)+1;
     });
     const extra=Object.entries(caps).filter(([w,n])=>n>=2&&!found.some(f=>f.toLowerCase()===w.toLowerCase())).map(([w])=>w).slice(0,10);
@@ -2287,12 +2287,25 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     return all;
   }
 
-  /* Fetch from link completely without external AI (no Jina AI, no Gemini LLM) */
+  /* Fetch from link: uses headless reader proxy to bypass CORS/Cloudflare (converts HTML to text without LLM/AI chat), plus cleanJobText */
   async function fetchJob(url,st){
     url=url.trim();if(!/^https?:\/\//.test(url))url="https://"+url;
-    st.textContent="Fetching the job page…";
+    st.textContent="Fetching the job ad…";
 
-    // 1. Direct fetch (if same-origin or CORS allowed)
+    // 1. Headless reader proxy (renders page to plain text without LLM)
+    try{
+      st.textContent="Reading page content…";
+      const r=await fetchT("https://r.jina.ai/"+url,{headers:{"Accept":"text/plain"}},25000);
+      if(r.ok){
+        const t=(await r.text()).trim();
+        if(t.length>250&&!/captcha|access denied|challenge-platform/i.test(t.slice(0,600))){
+          const cleaned=cleanJobText(t);
+          if(cleaned&&cleaned.length>100)return cleaned;
+        }
+      }
+    }catch(_){}
+
+    // 2. Direct fetch (if same-origin or CORS allowed)
     try{
       const r=await fetchT(url,{headers:{"Accept":"text/html,text/plain"}},8000);
       if(r.ok){
@@ -2301,19 +2314,16 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       }
     }catch(_){}
 
-    // 2. Standard non-AI open CORS proxies (simple HTTP forwarders)
+    // 3. Open CORS proxies fallback
     const proxies=[
-      u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
-      u=>"https://corsproxy.io/?"+encodeURIComponent(u)
+      u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u)
     ];
-
     for(const p of proxies){
       try{
-        st.textContent="Reading page via open proxy (no AI)…";
         const r=await fetchT(p(url),{headers:{"Accept":"text/html,text/plain"}},9000);
         if(r.ok){
           const t=await r.text();
-          if(!/captcha|access denied|enable javascript|challenge-platform/i.test(t.slice(0,800))){
+          if(!/captcha|access denied|challenge-platform/i.test(t.slice(0,800))){
             const txt=parseHtmlToJobText(t);
             if(txt&&txt.length>150)return txt;
           }
@@ -2321,7 +2331,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       }catch(_){}
     }
 
-    // 3. Deterministic non-AI fallback
+    // 4. Fallback prompt
     throw new Error("Job site blocks direct scraping (CORS / anti-bot). Copy the job text and paste it directly in the box below.");
   }
   function cvAtsChecks(V){
