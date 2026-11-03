@@ -4,8 +4,10 @@
   "use strict";
   const R=window.RTSkins=window.RTSkins||{};
   let st=null;
+  // Short 8-bit sound (only when site sound is on).
   function beep(f,d){if(!st||!st.sound)return;try{st.ac=st.ac||new (window.AudioContext||window.webkitAudioContext)();const o=st.ac.createOscillator(),g=st.ac.createGain();
     o.type="square";o.frequency.value=f;g.gain.value=.05;o.connect(g).connect(st.ac.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,st.ac.currentTime+d);o.stop(st.ac.currentTime+d)}catch(e){}}
+  // Start the mini-game on the first screen.
   function on(){
     const hero=document.querySelector(".hero");if(!hero||st)return;
     const cv=document.createElement("canvas");cv.className="arc-game";cv.setAttribute("aria-hidden","true");
@@ -35,7 +37,9 @@
     st.ro=new ResizeObserver(layout);st.ro.observe(hero);layout();
     loop();
   }
+  // Jump (only when standing).
   function jump(){if(!st)return;if(st.p.on){st.p.vy=-4.6;st.p.on=false;beep(520,.08)}}
+  // Place platforms and coins from the page's links.
   function layout(){
     if(!st)return;const {hero,cv}=st,W=hero.clientWidth,H=hero.clientHeight,S=W<600?3:4,dpr=Math.min(2,devicePixelRatio||1);st.S=S;
     // the game thinks in big "pixels" (S screen px each); the canvas is full resolution so the labels stay sharp
@@ -55,11 +59,13 @@
     st.coins=links.slice(0,5).map((l,i)=>Object.assign({},l,spots[i],{got:got.has(l.label)}));
     if(!st.p.placed){st.p.x=mobile?w*.06:w*.52;st.p.y=ground-16;st.p.placed=true}
   }
+  // The platform the player stands on, if any.
   function solidUnder(p){
     if(p.y+16>=st.ground)return st.ground;
     for(const q of st.plats)if(p.vy>=0&&p.x+10>q.x&&p.x+2<q.x+q.w&&p.y+16<=q.y+1&&p.y+16+p.vy>=q.y)return q.y;
     return null;
   }
+  // Game physics for one frame (move, gravity, coins).
   function step(){
     const p=st.p,k=st.keys,w=st.lw;let dir=(k.r?1:0)-(k.l?1:0);
     if(!dir&&st.target!=null){const dx=st.target-(p.x+6);if(Math.abs(dx)>2)dir=Math.sign(dx);else st.target=null}
@@ -77,6 +83,7 @@
   const PAL={k:"#111",s:"#f2c29b",h:"#3a2418",c:"#29e7ff",m:"#ff3df2",b:"#2b3dbb",w:"#fff"};
   const HERO=["....hhhh....","...hhhhhh...","...hsssshh..","..cssksksc..","..csssssc...","...ssmss....","..mmmmmmm...",".mmmmmmmmm..",".s.mmmmm.s..","...mmmmm....","...bbbbb....","...bb.bb....","...bb.bb....","..kk...kk..."];
   const HERO2=["....hhhh....","...hhhhhh...","...hsssshh..","..cssksksc..","..csssssc...","...ssmss....","..mmmmmmm...",".mmmmmmmmm..",".s.mmmmm.s..","...mmmmm....","...bbbbb....","..bb...bb...",".bb.....bb..",".kk.....kk.."];
+  // Draw one frame.
   function draw(){
     const {ctx}=st,w=st.lw,h=st.lh,t=performance.now()/1000;ctx.clearRect(0,0,w,h);
     // ground + platforms
@@ -94,7 +101,9 @@
     if(st.n===0&&!st.moved){ctx.fillStyle="rgba(255,255,255,.8)";ctx.textAlign="left";const tip=matchMedia("(pointer:coarse)").matches?"TAP OR USE THE PAD":"← → MOVE  ↑ JUMP";if((t*2|0)%2)ctx.fillText(tip,Math.max(4,px-20),py-12)}
     if(st.keys.l||st.keys.r||st.target!=null)st.moved=true;
   }
+  // Animation loop (pauses when the hero is off screen).
   function loop(){if(!st)return;const r=st.hero.getBoundingClientRect();if(r.bottom>0&&!document.hidden){step();draw()}st.raf=requestAnimationFrame(loop)}
+  // Stop the game and clean up.
   function off(){if(!st)return;cancelAnimationFrame(st.raf);removeEventListener("keydown",st.kd);removeEventListener("keyup",st.kd);st.hero.removeEventListener("click",st.tap);
     st.ro.disconnect();st.cv.remove();st.hud.remove();st.pad.remove();st=null}
   R.arcade={on,off};

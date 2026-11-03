@@ -50,6 +50,7 @@
   // an optional bit of text: hidden when empty, shown (as a placeholder to fill) in edit mode
   const opt=(tag,cls,p,v,ph)=>`<${tag} class="${cls}"${E(p,ph)}${v?"":" hidden data-edit-show"}>${esc(v)}</${tag}>`;
 
+  // Fill in missing parts of a résumé so the renderer can rely on them.
   function normalize(v){
     v=Object.assign({template:"ats",accent:"#2a8a8f",font:"Inter",density:"normal",show_photo:true,dir:"ltr",lang:"en"},v||{});
     v.person=Object.assign({name:"Your Name",title:"",summary:"",email:"",phone:"",location:"",links:[]},v.person||{});
@@ -59,11 +60,14 @@
   }
   function fontHref(v){const f=FONTS[v.font]||FONTS.Inter;return "https://fonts.googleapis.com/css2?family="+f+"&display=swap"}
 
+  // HTML for a list of bullet points.
   function bullets(ip,list){
     const b=Array.isArray(list)?list:[];
     return `<ul class="cv-bul" data-l="${ip}.bullets"${b.length?"":" hidden data-edit-show"}>`+b.map((t,k)=>`<li data-i="${k}"${E(`${ip}.bullets.${k}`)}>${esc(t)}</li>`).join("")+`</ul>`;
   }
+  // HTML for an item's link.
   function linkHTML(ip,it){const url=full(it.link);return url?`<p class="cv-link"><a href="${esc(url)}">${svg("link",11)}<span${E(ip+".link_label")}>${esc(it.link_label||pretty(url))}</span></a></p>`:""}
+  // HTML for one entry (job, school, project, skill…) of a section.
   function itemHTML(s,sp,it,i,v){
     const ip=`${sp}.items.${i}`,T=v.template;
     switch(s.type){
@@ -96,10 +100,12 @@
     }
   }
   const SEC_ICON={experience:"brief",projects:"gamepad",education:"school",skills:"code",tags:"heart",languages:"language",list:"trophy",text:"user"};
+  // An icon as inline SVG (or <img> for uploaded icons).
   function iconHTML(env,name,size){
     const I=env.icons||{},raw=I[name];if(!raw)return "";
     return raw.startsWith("<svg")?raw.replace("<svg ",`<svg width="${size}" height="${size}" `):`<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${raw}</svg>`;
   }
+  // HTML for one section (heading + entries).
   function sectionHTML(s,sp,i,col,v,env){
     const lay=(s.type==="languages"&&v.template!=="ats")?" cv-lang-grid":"";
     const ic=v.show_icons?(s.icon||SEC_ICON[s.type]||"star"):"";
@@ -108,10 +114,12 @@
       `><h2>${ic?`<span class="cv-hi" data-ico="${sp}.icon">${iconHTML(env,ic,15)}</span>`:""}<span${E(sp+".title")}>${esc(s.title||SECTION_TYPES[s.type]&&SECTION_TYPES[s.type].label||"")}</span></h2>`+
       `<div class="cv-items${lay}" data-l="${sp}.items">`+s.items.map((it,k)=>itemHTML(s,sp,it||{},k,v)).join("")+`</div></section>`;
   }
+  // HTML for a column (main or side) of the résumé.
   function column(v,base,col,env){
     const list=v[col];
     return `<div class="cv-col cv-${col}" data-l="${base}.${col}">`+list.map((s,i)=>sectionHTML(s,`${base}.${col}.${i}`,i,col,v,env)).join("")+`</div>`;
   }
+  // The contact line (email, phone, place, links), with icons in designed templates.
   function contact(v,base,withIcons,edit){
     const P=v.person,pp=base+".person",rows=[];
     const row=(ic,val,inner,href)=>`<li${val?"":" hidden data-edit-show"}>${withIcons?svg(ic):""}${href?`<a href="${esc(href)}">${inner}</a>`:inner}</li>`;
@@ -121,10 +129,12 @@
     (P.links||[]).forEach((l,k)=>{const u=full(l.url);rows.push(`<li data-i="${k}"${X(["Web address",`${pp}.links.${k}.url`,"text"])}>${withIcons?svg(linkIcon(u)):""}<a href="${esc(u)}"><span${E(`${pp}.links.${k}.label`)}>${esc(l.label||pretty(u))}</span></a></li>`)});
     return rows;
   }
+  // The person's photo (when the template shows one).
   function photo(v,base,env,cls){
     if(!v.show_photo||!v.photo)return env.edit?`<button type="button" class="${cls} cv-photo-add rt-pick" data-m="${base}.photo" data-mk="image" data-cls="${cls}" title="Add your photo">＋ Photo</button>`:"";
     return `<img class="${cls}" src="${esc(env.photo?env.photo(v.photo,base+".photo"):v.photo)}" alt="" data-m="${base}.photo" data-mk="image">`;
   }
+  // Render a whole résumé to HTML. env: {edit, base path, asset root}.
   function render(v,id,env){
     env=env||{};v=normalize(v);
     const base=`${env.doc||"cv"}:variants.${id}`,P=v.person,pp=base+".person",T=v.template;
@@ -149,7 +159,9 @@
     }
     return `<article class="cvdoc t-${T} d-${v.density}" id="cv-${esc(id)}" dir="${v.dir==="rtl"?"rtl":"ltr"}" lang="${esc(v.lang||"en")}" style="--cv-accent:${esc(v.accent||"#2a8a8f")};--cv-font:'${esc(v.font||"Inter")}'" data-cv="${esc(id)}"${settings}>${body}</article>`;
   }
+  // A new empty section of a type, with one example entry.
   function newSection(type){const T=SECTION_TYPES[type]||SECTION_TYPES.text;return {type,title:T.label,items:[JSON.parse(JSON.stringify(T.item))]}}
+  // A new blank résumé.
   function blank(name){return normalize({label:"New résumé",template:"ats",person:{name:name||"Your Name",title:"Job title",summary:"",email:"",phone:"",location:"",links:[]},
     main:[newSection("experience"),newSection("projects"),newSection("education"),newSection("skills")],side:[newSection("languages")]})}
   // plain text of a résumé, in reading order (what an ATS sees) — used for the "ATS check"

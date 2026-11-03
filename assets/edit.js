@@ -2,7 +2,12 @@
    Open any page with ?edit (e.g. roeetal.com/?edit). Click text to type, click anything to get its
    settings (move, duplicate, delete, replace image/video, colors, layout), drag the ⠿ handle to reorder,
    then Publish: the changes are committed to GitHub and the GitHub Action rebuilds the site.
-   Visitors never load this file; publishing needs your own GitHub token. */
+   Visitors never load this file; publishing needs your own GitHub token.
+   Docs: docs/EDITOR.md (markers, menus, résumé builder), docs/AI.md (assistant), docs/GLOSSARY.md (terms).
+   Map of this file, top to bottom: content get/set + GitHub publish · bar, dialogs, history · text editing ·
+   selection + toolbar · lists (move/duplicate/add) · ＋ menus and hold menus · custom sections + web sections ·
+   media (pick, crop, replace) · settings panel fields + site settings · drag to reorder · AI assistant
+   (catalog, providers, rule commands, Gemini tools) · login · résumé builder (cv*) · ATS check · start(). */
 (function(){
   if(window.__rtEdit)return;window.__rtEdit=1;
   const ME=(document.currentScript&&document.currentScript.src)||location.href;
@@ -22,7 +27,9 @@
   let changes=0;
 
   const parse=p=>{const i=p.indexOf(":");return i<0?[p,[]]:[p.slice(0,i),p.slice(i+1).split(".").filter(Boolean)]};
+  // Read a value from the loaded content by editor path ('site:hero_title', 'projects:2.sections.0.title').
   function get(p){const[f,ks]=parse(p);let o=docs[f];for(const k of ks){if(o==null)return undefined;o=o[k]}return o}
+  // Write a value into the loaded content by path and mark that file as changed (unpublished).
   function set(p,v){
     const[f,ks]=parse(p);
     if(!ks.length)docs[f]=v;
@@ -41,6 +48,7 @@
     catch(e){if(e.name==="AbortError")throw new Error("no answer after "+Math.round(ms/1000)+"s, check the connection");throw e}
     finally{clearTimeout(t)}
   }
+  // Call the GitHub REST API with the owner's token (decrypted at login). Throws on errors.
   async function gh(path,opt={}){
     const r=await fetchT(API+path,{...opt,cache:"no-store",headers:{Authorization:"Bearer "+store.get(TOKEN_KEY),Accept:"application/vnd.github+json",...(opt.body?{"Content-Type":"application/json"}:{})}},opt.long?300000:25000);
     if(!r.ok){const t=await r.text().catch(()=>"");const err=new Error(r.status+" "+(t.match(/"message":"([^"]+)/)||[,t.slice(0,160)])[1]);err.status=r.status;throw err}
@@ -49,6 +57,7 @@
   const b64dec=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0)));
   const blobB64=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=no;r.readAsDataURL(b)});
 
+  // Load every content/*.json file the editor can change (from GitHub when logged in, else from the site).
   async function loadDocs(){
     // read the content straight from the site (fast, no GitHub needed); GitHub is only used to publish
     const root=new URL("../",ME).href,out={};
@@ -64,6 +73,7 @@
     docs=out;
   }
 
+  // Publish: commit all changed content files (and uploads) in ONE commit via the Git Data API, then watch the Action.
   async function publish(){
     if(!dirty.size&&!uploads.size){toast("Nothing to publish yet.");return}
     setBusy("Publishing…");
@@ -98,6 +108,7 @@
     }
   }
 
+  // Poll the GitHub Action for a commit until the rebuilt site is live, showing progress in the bar.
   async function watchBuild(sha){
     setBusy("Published ✓ Rebuilding the site…");
     const t0=Date.now();
@@ -344,6 +355,7 @@
   const item=(label,fn,cls)=>h("button",{type:"button",class:cls||"",on:{click:()=>{menu.style.display="none";fn()}}},label);
   menu.append(item("＋  New section (main page)",()=>sectionPicker(current&&current.closest('[data-ok="site:section_order"]'),$(".rt-more"))),item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
   const prevBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"Preview the page as visitors will see it",on:{click:e=>{e.stopPropagation();togglePreview()}}},"👁");
+  // Switch between editing and a clean preview of the page (hides all editor UI).
   function togglePreview(){
     const on=document.documentElement.classList.toggle("rt-preview");
     prevBtn.textContent=on?"✎":"👁";prevBtn.title=on?"Back to editing":"Preview the page as visitors will see it";
@@ -388,22 +400,29 @@
   document.addEventListener("click",e=>{if(!e.target.closest("#rt-menu,.rt-more"))menu.style.display="none"});
 
   let busyMsg="",toastTimer=0;
+  // Show a 'working…' message in the bottom bar (null clears it).
   function setBusy(m){busyMsg=m;updateBar()}
+  // Show a short status text in the bottom bar, with optional extra buttons; disappears unless keep is true.
   function status(text,keep,...extra){
     clearTimeout(toastTimer);
     if(!text&&!extra.length){toastEl.style.display="none";return}
     toastEl.replaceChildren(text,...extra);toastEl.style.display="block";
     if(!keep)toastTimer=setTimeout(()=>{toastEl.style.display="none"},4000);
   }
+  // Refresh the bottom bar: unpublished-changes count, busy message, Publish button state.
   function updateBar(){
     pubBtn.classList.toggle("dirty",!!changes);
     pubBtn.disabled=!!busyMsg||!changes;
     if(busyMsg)status(busyMsg,true);
   }
+  // Short notice for the owner (same as status).
   function toast(m){status(m)}
+  // Open a centered dialog with the given children; clicking outside closes it. Returns the dialog element.
   function modal(...kids){const m=h("div",{class:"rt-modal rt-ui",on:{click:e=>{if(e.target===m)m.remove()}}},h("div",{class:"rt-card"},...kids));document.body.append(m);return m}
+  // A dialog with one message and an OK button.
   function alertBox(msg){const m=modal(h("h3",{},"Heads up"),h("p",{},msg),h("div",{class:"rt-row"},h("button",{class:"rt-btn pri",type:"button",on:{click:()=>m.remove()}},"OK")))}
 
+  // Ask for the GitHub token (first time: explains how to make a fine-grained token for this repo only).
   function askToken(first){
     return new Promise(done=>{
       const inp=h("input",{type:"password",placeholder:"github_pat_…",autocomplete:"off",value:store.get(TOKEN_KEY)});
@@ -429,6 +448,7 @@
     });
   }
   const fmtDate=d=>new Date(d).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  // 'History' dialog: recent commits to content/ with a Restore button each.
   async function historyBox(){
     const list=h("div",{class:"rt-hist"},"Loading…");
     const m=modal(h("h3",{},"Versions"),
@@ -441,6 +461,7 @@
         i===0?h("span",{class:"rt-cur"},"Current"):h("button",{class:"rt-btn sm",type:"button",on:{click:()=>{m.remove();restore(c)}}},"Restore"))));
     }catch(e){list.textContent="Couldn't load the versions ("+e.message+").";}
   }
+  // Bring the content back to how it was at commit c (as new unpublished changes).
   async function restore(c){
     const when=fmtDate(c.commit.committer.date);
     if(changes&&!confirm("You have unpublished changes on this page. Restoring will throw them away. Continue?"))return;
@@ -457,6 +478,7 @@
       watchBuild(nc.sha);
     }catch(err){setBusy("");alertBox("Restoring failed: "+err.message+". Nothing was changed.")}
   }
+  // The help dialog: how to edit, shortcuts, where things are saved.
   function help(){
     const m=modal(h("h3",{},"How editing works"),
       h("ol",{},
@@ -471,6 +493,7 @@
       h("p",{style:"color:#aaa;font-size:13px"},"Publish before moving to another page. Links and videos don't open while editing; use the top menu or the jump menu to change pages."),
       h("div",{class:"rt-row"},h("button",{class:"rt-btn pri",type:"button",on:{click:()=>m.remove()}},"Got it")));
   }
+  // Leave edit mode and reload the page as a visitor sees it.
   function exitEdit(){
     if(changes&&!confirm("Leave without publishing? Your changes on this page will be lost."))return;
     changes=0;try{sessionStorage.removeItem("rt-edit")}catch(e){}
@@ -481,7 +504,9 @@
   /* ------------------------------------------------------------ text */
   const PT=(()=>{const d=document.createElement("div");try{d.contentEditable="plaintext-only";return d.contentEditable==="plaintext-only"}catch(e){return false}})();
   const norm=s=>String(s??"").replace(/\s+/g," ").trim();
+  // Text of an editable element as saved (code keeps its spaces and lines, other text is tidied).
   function readText(el){return el.hasAttribute("data-code")?el.innerText.replace(/ /g," "):norm(el.innerText)}
+  // Start typing into an editable text element (data-e), putting the caret at the tapped point.
   function startEdit(el,x,y){
     if(el.isContentEditable)return;
     el.contentEditable=PT?"plaintext-only":"true";el.spellcheck=true;el.focus();
@@ -492,6 +517,7 @@
     }catch(e){}
     T.edit.classList.add("on");
   }
+  // Make one data-e element editable: save on input, Enter rules, paste as plain text.
   function initText(el){
     el.addEventListener("blur",()=>{el.removeAttribute("contenteditable");T.edit.classList.remove("on");place()});
     el.addEventListener("input",()=>{
@@ -514,6 +540,7 @@
     clips:"Clip sections",screenshots:"Screenshots",full_video:"Full video",characters:"Characters",credits:"Credits",flow:"How it fits together",clip:"In action",code:"The code"};
   const listOf=item=>item.parentElement&&item.parentElement.closest("[data-l]");
   const listPath=item=>{const l=listOf(item);return l&&l.dataset.l};
+  // Friendly name of an editable thing for menus and the panel title ('Button', 'Card', 'Section'…).
   function unitName(u){
     if(u.hasAttribute("data-i")){const lp=listPath(u)||"";
       const cvm=lp.match(/^cv(?:local)?:variants\.[^.]+\.(main|side)(?:\.(\d+)\.items(?:\.\d+\.(items|bullets))?)?$/)||lp.match(/^cv(?:local)?:variants\.[^.]+\.(person)\.links$/);
@@ -541,6 +568,7 @@
   const owner=m=>{let p=m.parentElement&&m.parentElement.closest(UNIT);while(p&&p.matches("[data-m]")&&!p.matches("[data-i],[data-k],[data-x]"))p=p.parentElement&&p.parentElement.closest(UNIT);return p};
   const mediaOf=u=>[u,...u.querySelectorAll("[data-m]")].filter(m=>m.hasAttribute("data-m")&&(m===u||owner(m)===u));
   const fieldsOf=u=>{try{return u.dataset.x?JSON.parse(u.dataset.x):[]}catch(e){return []}};
+  // Select an element: outline it, show the selection toolbar and fill the settings panel.
   function select(target){
     chain=[];
     for(let u=target&&target.closest(UNIT);u;u=u.parentElement&&u.parentElement.closest(UNIT))chain.push(u);
@@ -554,6 +582,7 @@
     renderPanel();place();
   }
   const show=(el,on)=>{el.style.display=on?"":"none"};
+  // Position the selection toolbar (#rt-tb) next to the selected element, staying on screen.
   function place(){
     if(!current||!document.contains(current)){sel.style.display=tb.style.display="none";if(!settingsOpen)panel.style.display="none";return}
     const r=current.getBoundingClientRect();
@@ -593,6 +622,7 @@
     items.forEach(it=>{const from=it.dataset.from??it.dataset.i,to=remap(it);pass(it,from,"\u0001"+to);it.dataset.i=to;delete it.dataset.from});
     items.forEach(it=>pass(it,"\u0001"+it.dataset.i,it.dataset.i));
   }
+  // Run a list action on an item (up, down, duplicate, delete).
   function listOp(item,op){
     const lc=listOf(item),lp=lc.dataset.l,arr=get(lp);
     if(!Array.isArray(arr))return;
@@ -602,6 +632,7 @@
     renumber(lc,lp,it=>it.dataset.i==="new"?perm.indexOf(-1):perm.indexOf(+it.dataset.i));
     const cm=lp.match(/^site:custom_sections\.(\w+)\.items$/);if(cm)setTimeout(()=>{const n=$(".cs-steps",$("#cs-"+cm[1]));if(n)$$(".cs-num",n).forEach((x,k)=>x.textContent=k+1)},0);
   }
+  // Move a list item before/after another item of the same list (drag and drop) and save the new order.
   function moveItem(item,target,after){
     if(item===target)return;
     if(item.hasAttribute("data-k")){
@@ -621,6 +652,7 @@
     if(item.hasAttribute("data-k"))item.scrollIntoView({block:"start"});   // follow the section to its new place
     flash(item);select(item);secBars();
   }
+  // Draw the section bars (move up/down, settings, ＋ add below) on every ordered block (data-k).
   function secBars(){
     $$("[data-k]").forEach(sec=>{
       let b=$(":scope>.rt-secbar",sec);
@@ -638,10 +670,12 @@
       up.disabled=k<=0;down.disabled=k===sib.length-1;const can=plusLabel(am,sec);am.hidden=!can;b.hidden=sib.length<2&&!can;
     });
   }
+  // Move an item one place up (-1) or down (+1) in its list.
   function step(u,dir){
     const sib=siblingsOf(u),k=sib.indexOf(u),t=sib[k+dir];
     if(t)moveItem(u,t,dir>0);
   }
+  // Copy an item right after itself.
   function duplicate(item){
     const clone=item.cloneNode(true);
     clone.dataset.from=item.dataset.i;clone.dataset.i="new";
@@ -655,6 +689,7 @@
     if(clone.tagName==="A")clone.draggable=false;
     flash(clone);select(clone);
   }
+  // Add a new item to a list from its template (data-tpl) or by copying the last item.
   function addItem(holder){
     const lp=holder.dataset.add,tpl=holder.dataset.tpl||"btn";
     const box=$(`[data-l="${CSS.escape(lp)}"]`);
@@ -678,6 +713,7 @@
   }
   /* ---- the ＋ menu: what can be added depends on where you are */
   const listsIn=el=>$$("[data-l]",el).filter(l=>[...l.children].some(c=>c.hasAttribute("data-i"))&&!l.closest(".rt-ui"));
+  // What the ＋ button can add for this element (new item, section types, web section…), as menu options.
   function addOptions(u){
     if(!u||!document.contains(u))return [];
     const out=[],seen=new Set(),sec=u.closest("[data-k]")||u;
@@ -712,11 +748,16 @@
   /* tap ＋ = add the usual thing (shown on the button); hold ＋ = menu, slide to a choice and let go (or tap one) */
   const ADD_LAST="rt-add-last";
   const addCtx=u=>(u.closest("[data-k]")||u).dataset.k||"page";
+  // The ＋ choices remembered per place (localStorage 'rt-add-last').
   function lastMap(){try{return JSON.parse(store.get(ADD_LAST)||"{}")}catch(e){return {}}}
+  // The option a quick tap on ＋ adds: the last one picked here, else the first.
   function defaultOpt(u,opts){const k=lastMap()[addCtx(u)];return opts.find(o=>o.key===k)||opts[0]}
+  // Remember which ＋ option was picked in this place.
   function remember(u,key){const m=lastMap();m[addCtx(u)]=key;store.set(ADD_LAST,JSON.stringify(m))}
   let lastAnchor=null;
+  // Run a ＋ option, remember it, then refresh bars and toolbar.
   function runOpt(u,o,btn){remember(u,o.key);lastAnchor=btn;o.fn();lastAnchor=null;secBars();place()}
+  // Show on a ＋ button what a quick tap will add (the small label / tooltip).
   function plusLabel(btn,u){
     const opts=addOptions(u);if(!opts.length)return false;
     const d=defaultOpt(u,opts);btn.replaceChildren("＋",h("small",{},d.short||""));
@@ -725,7 +766,9 @@
   /* ---- Apple-style menus (every menu in the editor): press, slide to a choice, let go. Rows with › open a sub-menu:
      rest on it, tap it, or flick right on it. Flick left (or ‹) goes back. */
   let pm=null;
+  // Close the hold menu (Apple-style pop-up menu).
   function closePm(){if(pm){clearTimeout(pm.dwell);pm.el.remove();pm.back.remove();pm=null}}
+  // Draw the hold menu's options (title, back row when inside a sub-menu).
   function pmRender(items,title,sub){
     pm.items=items;pm.title=title;pm.hi=-1;clearTimeout(pm.dwell);
     pm.el.replaceChildren(sub?h("div",{class:"rt-pm-opt rt-pm-back-row","data-n":"-2"},h("span",{},"‹ "+title)):title?h("div",{class:"rt-pm-t"},title):null,
@@ -735,6 +778,7 @@
     pm.el.classList.remove("rt-pm-in","rt-pm-out");void pm.el.offsetWidth;if(sub!==undefined)pm.el.classList.add(sub?"rt-pm-in":"rt-pm-out");
     pm.el.scrollTop=0;pmPlace();
   }
+  // Keep the hold menu on screen next to its anchor.
   function pmPlace(){
     const el=pm.el,a=pm.anchor,r=a&&document.contains(a)?a.getBoundingClientRect():{right:innerWidth/2+120,top:innerHeight-80,bottom:innerHeight-80};
     const w=el.offsetWidth,hh=el.offsetHeight;
@@ -742,13 +786,16 @@
     el.style.left=Math.max(8,Math.min(innerWidth-w-8,r.right-w))+"px";el.style.top=top+"px";
     el.style.transformOrigin=(top<r.top?"bottom ":"top ")+(r.right-w>8?"right":"left");
   }
+  // Open a sub-menu (or run an option) in the hold menu.
   async function pmEnter(it){
     pm.stack.push([pm.items,pm.title]);const title=it.label.replace(/…$/,"");
     let items=it.sub();
     if(items&&items.then){pmRender([{label:"Loading…",off:true,fn:()=>{}}],title,true);const p0=pm;try{items=await items}catch(e){items=[{label:"⚠ "+errText(e),off:true,fn:()=>{}}]}if(pm!==p0)return}
     pmRender(items,title,true);try{navigator.vibrate&&navigator.vibrate(10)}catch(e){}
   }
+  // Go back one level in the hold menu (also the swipe-left gesture).
   function pmBack(){const p_=pm.stack.pop();if(p_){pmRender(p_[0],p_[1],pm.stack.length?true:false);try{navigator.vibrate&&navigator.vibrate(8)}catch(e){}}}
+  // Apple-style hold menu: press and hold, slide to an option, release to pick. Sub-menus open on hover/swipe right.
   function holdMenu(anchor,items,title){
     closePm();
     const back=h("div",{class:"rt-pm-back rt-ui",on:{pointerdown:e=>{e.preventDefault();closePm()}}});
@@ -770,6 +817,7 @@
     try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}
     return pm;
   }
+  // Start tracking a finger/mouse gesture in the hold menu (for swipes and slide-to-pick).
   function pmGestureStart(x,y){if(!pm)return;pm.trail=[{x,y,t:Date.now()}];const b=document.elementFromPoint(x,y),o=b&&b.closest(".rt-pm-opt");pm.gRow=o&&pm.el.contains(o)?+o.dataset.n:-1}
   // a quick sideways flick: left = back, right on a › row = open it
   function pmSwipe(x,y){
@@ -779,12 +827,14 @@
     if(dx>0){const it=pm.items[pm.gRow>=0?pm.gRow:pm.hi];if(it&&it.sub){pmEnter(it);pmGestureStart(x,y);return true}}
     return false;
   }
+  // Gesture moved: detect swipe left (back) / swipe right (open sub-menu) and highlight the option under the finger.
   function pmMove(x,y){
     if(!pm)return;if(pmSwipe(x,y))return;
     const r=pm.el.getBoundingClientRect();                                        // long menus scroll when you slide to their edge
     if(pm.el.scrollHeight>pm.el.clientHeight){if(y>r.bottom-28)pm.el.scrollTop+=14;else if(y<r.top+28)pm.el.scrollTop-=14}
     pmHover(x,y);
   }
+  // Highlight the option under the pointer; dwelling on a sub-menu row opens it.
   function pmHover(x,y){
     if(!pm)return;const b=document.elementFromPoint(x,y),o=b&&b.closest(".rt-pm-opt");let k=o&&pm.el.contains(o)?+o.dataset.n:-1;
     if(k>=0&&pm.items[k]&&pm.items[k].off)k=-1;
@@ -794,6 +844,7 @@
     const it=pm.items[k];
     if(pm.drag&&(k===-2||(it&&it.sub)))pm.dwell=setTimeout(()=>{if(!pm||pm.hi!==k)return;k===-2?pmBack():pmEnter(it)},450);   // rest on › to open it, on ‹ to go back
   }
+  // Finger/mouse released: pick the highlighted option (or keep the menu open on a plain tap).
   function pmRelease(){
     if(!pm)return;pm.drag=false;clearTimeout(pm.dwell);const k=pm.hi;
     if(k===-2)return pmBack();
@@ -822,6 +873,7 @@
       addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true);addEventListener("pointercancel",up,true);
     });
   }
+  // Wire a ＋ button: quick tap adds the remembered option, press-and-hold opens the hold menu.
   function wirePlus(btn,getU,onTap){
     wireHold(btn,{onTap,beforeOpen:()=>{const u=getU();if(!u)return false;if(u!==current)select(u)},menu:()=>{
       const u=getU();if(!u)return null;const opts=addOptions(u);const d=opts.length&&defaultOpt(u,opts);
@@ -842,12 +894,14 @@
   const iconSvg=n=>{const v=ICONS[n]||"";return v.startsWith("<svg")?v.replace("<svg ",'<svg width="18" height="18" '):`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${v}</svg>`};
   new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.nodeType!==1)continue;
     (n.tagName==="SELECT"?[n]:[...n.querySelectorAll("select")]).forEach(sl=>{if(sl.closest(".rt-ui,#rt-panel,.rt-modal,#rt-ai"))appleSelect(sl)})}}).observe(document.body,{childList:true,subtree:true});
+  // Quick tap on ＋: add the default option for this place.
   function plusTap(u,btn){
     if(!u)return;if(u!==current)select(u);
     const opts=addOptions(u);if(!opts.length)return;const d=defaultOpt(u,opts);
     runOpt(u,d,btn);
     if(!store.get("rt-hold-tip")){store.set("rt-hold-tip","1");setTimeout(()=>toast("Tip: hold ＋ for more choices (slide to one and let go)."),1200)}
   }
+  // Add a new item like this one (same list).
   function addLike(item){
     // a copy of this item after it, with fresh text ready to type
     duplicate(item);
@@ -856,11 +910,13 @@
     texts.forEach((te,k)=>{const v=k?"Write something here.":"New "+unitName(c).toLowerCase();set(te.dataset.e,v);te.textContent=v});
     const t0=texts[0];if(t0){select(t0);startEdit(t0);try{getSelection().selectAllChildren(t0)}catch(e){}}
   }
+  // Add a custom section of a given type after a section.
   function addSectionOf(after,type){
     const ref=after&&after.dataset.ok==="site:section_order"?after:null;
     store.set("rt-last-section",type);const r_=addSection(ref,{type});if(r_)startEdit($(`[data-e="${r_.base}.title"]`));
   }
   const SEC_HINT={"text-media":"title, text, picture","cards":"grid of boxes","stats":"big numbers","gallery":"pictures","quote":"testimonial","cta":"message + button","list":"short points","faq":"opens on tap","steps":"numbered","banner":"picture/video behind"};
+  // Hold-menu options for adding a section (all section types + 'from the web').
   function sectionItems(after){
     const last=store.get("rt-last-section");
     return Object.entries(SEC.TYPES).map(([k,t])=>({label:t.label,hint:SEC_HINT[k]||"",def:k===last,fn:()=>addSectionOf(after,k)}))
@@ -868,6 +924,7 @@
         {label:"🌐 Search web & build full section",hint:"Search facts & build rich content",fn:()=>promptWebSection(after)},
         {label:"✨ Let the AI build it",fn:()=>{const ref=after&&after.dataset.ok==="site:section_order"?after:null;if(ref)select(ref);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף סקשן ";ta.focus()}},150)}}]);
   }
+  // The section picker dialog (cards with a preview of each section type).
   function sectionPicker(after,anchor){
     if(!SEC){toast("One moment, still loading…");return}
     holdMenu(anchor||null,sectionItems(after),"New section");
@@ -878,6 +935,7 @@
   function csStruct(k){return /^(type|layout|cols|width|align|pad|height|icon|media|buttons\.align|items\.\d+\.(icon|image))$/.test(k)}
   let SEC=window.RTSections||null;
   const secLib=SEC?Promise.resolve(SEC):new Promise(ok=>{const sc=document.createElement("script");sc.src=new URL("sections.js"+new URL(ME).search,ME).href;sc.onload=()=>ok(SEC=window.RTSections);sc.onerror=()=>ok(null);document.head.append(sc)});
+  // Environment for the section renderer (RTSections) in the editor: get/set, edit markers on, asset paths.
   function csEnv(){
     return {icons:ICONS,
       media:(path,value)=>{const p_=pending.get(path);if(p_)return{kind:p_.type==="video"?"video":"img",url:p_.url};if(!value)return null;
@@ -885,10 +943,12 @@
         const v=String(value);return{kind:/\.(mp4|mov|webm|m4v)$/i.test(v)?"video":"img",url:/^(\/|https?:|blob:)/.test(v)?v:"https://drive.google.com/thumbnail?id="+v+"&sz=w1600"}},
       iconSrc:name=>{for(const[p_,x]of pending)if(get(p_)===name)return x.url;return name}};
   }
+  // Build the live DOM element for a custom section id from its data.
   function csElement(id,c){
     const t=document.createElement("template");t.innerHTML=SEC.render(id,c,csEnv()).trim();return t.content.firstElementChild;
   }
   let csTimer={};
+  // A custom section field changed: save it and redraw the section.
   function csChanged(id,key,v){
     if(key==="type"&&SEC){const T=SEC.TYPES[v];const c=get(`site:custom_sections.${id}`)||{};
       if(T&&T.item)c.items=SEC.convertItems(v,c.items);
@@ -896,6 +956,7 @@
     if(key==="media"&&v){const c=get(`site:custom_sections.${id}`)||{};if((c.type||"text-media")==="text-media"&&(c.layout||"text")==="text")c.layout="image-right"}
     clearTimeout(csTimer[id]);csTimer[id]=setTimeout(()=>rerenderSection(id),120);
   }
+  // Redraw one custom section in place after its data changed (keeps the selection).
   function rerenderSection(id){
     const old=$("#cs-"+id),c=get(`site:custom_sections.${id}`);if(!old||!c||!SEC)return;
     // remember what was selected so it stays selected
@@ -904,6 +965,7 @@
     $$("[data-e]",sec).forEach(initText);secBars();
     if(keep){const el=keep.l?itemEl(keep.l,keep.i)||sec:sec;select(el);if(wasOpen){panelOpen=true;renderPanel();place()}}
   }
+  // Insert a new custom section (data) after a given block and add it to site:section_order.
   function addSection(after,data){
     if(!$("#projects .ptiles")){toast("New sections go on the main page.");return null}
     if(!SEC){toast("One moment, still loading…");return null}
@@ -924,6 +986,7 @@
     sec.scrollIntoView({block:"start"});flash(sec);select($(".cs-copy h2",sec));
     return {id,key:"cs_"+id,base:`site:custom_sections.${id}`};
   }
+  // Delete a custom section (asks first unless quiet) and remove it from site:section_order.
   function deleteSection(sec,quiet){
     if(!quiet&&!confirm("Delete this whole section?"))return "cancelled";
     const id=sec.dataset.k.slice(3);delPath(`site:custom_sections.${id}`);
@@ -939,6 +1002,7 @@
     return s || text.trim();
   }
 
+  // Look a topic up on the web for 'section from the web': /api/search, then Wikipedia (he/en), then DuckDuckGo.
   async function searchWeb(query){
     const cleanQ = cleanSearchQuery(query);
     if (!cleanQ) return { query: "", results: [], summary: "No search query specified." };
@@ -1214,6 +1278,7 @@ Rules:
     return r_;
   }
 
+  // Ask for a topic and build a full section about it from web search results.
   function promptWebSection(after){
     const q = prompt("What topic or technology should the new section be about?\n(e.g., פירות וירקות, Unity ECS, Unreal Nanite, טיפוס הרים)");
     if (!q || !q.trim()) return;
@@ -1229,6 +1294,7 @@ Rules:
       await buildFullFluffySection(q.trim(), null, null, after);
     });
   }
+  // Add a new item after this one (empty copy).
   function addNew(item){
     // a fresh item right after this one: same look, text ready to type
     duplicate(item);
@@ -1237,6 +1303,7 @@ Rules:
     if(te){set(te.dataset.e,"New");te.textContent="New";select(te);startEdit(te);try{getSelection().selectAllChildren(te)}catch(e){}}
     if(c.parentElement&&c.parentElement.classList.contains("repo-tech"))status("The card shows the first 4 skills, the code page shows all of them. Move one with the arrows to choose which 4.");
   }
+  // Delete an item (asks first unless quiet).
   function remove(item,quiet){
     if((item.dataset.k||"").startsWith("cs_"))return deleteSection(item,quiet);
     if(!quiet&&!confirm(`Delete this ${unitName(item).toLowerCase()}?`))return;
@@ -1244,12 +1311,14 @@ Rules:
     item.remove();
     current=null;chain=[];panelOpen=false;renderPanel();place();
   }
+  // Flash a yellow outline on an element to show where something changed.
   function flash(el){el.animate([{outline:"3px solid #ffd23f",outlineOffset:"4px"},{outline:"3px solid transparent",outlineOffset:"4px"}],{duration:900})}
 
   /* ------------------------------------------------------------ media */
   const rand=()=>Math.random().toString(36).slice(2,6);
   const slugify=s=>(s||"file").toLowerCase().replace(/\.[^.]+$/,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"file";
   const pending=new Map();              // content path -> {url,type,name} of media chosen but not published yet
+  // Small preview box for an image/video/audio/file in the panel and dialogs.
   function previewBox(url,type,name,extra,small){
     return new Promise(done=>{
       const media=type==="audio"?h("audio",{src:url,controls:true,autoplay:true,style:"width:100%;display:block"}):type==="video"
@@ -1266,12 +1335,14 @@ Rules:
           h("button",{class:"rt-btn pri",type:"button",on:{click:()=>close("use")}},"Use it")));
     });
   }
+  // URL to show for an uploaded or site image path in the editor.
   function thumb(path){
     const p=pending.get(path);if(!p)return null;
     const el=p.type==="video"?h("video",{src:p.url,muted:true,loop:true,autoplay:true,playsinline:true}):h("img",{src:p.url,alt:""});
     el.style.cssText="width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-top:6px;display:block;background:#000";
     return h("div",{},el,h("div",{class:"rt-file"},"New, not published yet · "+p.name));
   }
+  // Open the file picker for a kind of file (image, video, audio…) and resolve with the chosen File.
   function pickFile(kind){
     return new Promise(done=>{
       const inp=h("input",{type:"file",accept:kind==="video"?"video/*,image/gif":kind==="media"?"image/*,video/*":kind==="audio"?"audio/*":"image/*",style:"display:none"});   // icons: any image, GIF included
@@ -1279,6 +1350,7 @@ Rules:
       ui.append(inp);inp.click();
     });
   }
+  // Prepare an uploaded icon: shrink to a small square PNG.
   async function prepIcon(file){
     // icons show at 16–32 px; a square 128×128 keeps them sharp on any screen
     const bmp=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error("This image can't be read in this browser."));i.src=URL.createObjectURL(file)});
@@ -1292,6 +1364,7 @@ Rules:
     const blob=await new Promise(ok=>c.toBlob(ok,"image/png"));
     return{blob,ext:"png",note:`Resized from ${w}×${hh} to ${c.width}×${c.height} px. ${tip}`};
   }
+  // Prepare an uploaded picture: downscale big images and convert to WebP/JPEG before upload.
   async function prepImage(file,kind){
     // phone photos (HEIC, huge JPEGs) are converted here so the build can read them
     if(file.type==="image/gif")return{blob:file,ext:"gif"};      // keep GIFs as they are
@@ -1315,6 +1388,7 @@ Rules:
     const br=parseFloat(getComputedStyle(t).borderTopLeftRadius)||0;
     return{aspect:r.width/r.height,round:br>=Math.min(r.width,r.height)*.4,alpha:kind==="art"};
   }
+  // The crop tool: zoom and drag a picture so exactly the wanted part fits the target shape.
   function cropBox(file,shape){
     return new Promise(async done=>{
       let img;try{img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(file)})}catch(e){done(file);return}
@@ -1324,6 +1398,7 @@ Rules:
       const frame=h("div",{class:"rt-crop"+(round?" round":"")}),pic=h("img",{src:img.src,alt:"",draggable:"false"});frame.append(pic);
       const zoom=h("input",{type:"range",min:"1",max:"6",step:"0.01",value:"1"});
       const chips=h("div",{class:"rt-row",style:"flex-wrap:wrap;gap:6px;margin:8px 0"});
+      // Lay out the crop tool for its current zoom/position (keep = keep the current position).
       function layout(keep){
         const maxW=Math.min(innerWidth*.86,560),maxH=innerHeight*.5;fw=maxW;fh=fw/asp;if(fh>maxH){fh=maxH;fw=fh*asp}
         frame.style.width=fw+"px";frame.style.height=fh+"px";
@@ -1358,6 +1433,7 @@ Rules:
       m.classList.add("rt-cropmodal");layout(false);
     });
   }
+  // Replace a picture/video/audio at a content path: pick or take a file, crop, save as an upload, update the page.
   async function replaceMedia(path,kind0,el,given){
     const file=given||await pickFile(kind0);if(!file)return;
     let kind=kind0;if(kind==="media")kind=file.type.startsWith("video/")||file.type==="image/gif"?"video":"image";   // either works here
@@ -1419,6 +1495,7 @@ Rules:
   /* ------------------------------------------------------------ settings panel */
   const COLOR_VAR={color_main:"--mid",color_deep:"--deep",color_accent:"--accent"};
   const tgtOf=(holder,sel)=>!sel?holder:sel[0]==="^"?holder.closest(sel.slice(1)):$(sel,holder);
+  // Show a color change live on the page before it is saved.
   function previewColor(holder,path,v,opts){
     const k=path.split(".").pop();
     if(opts&&opts.length){const t=tgtOf(holder,opts[0]);if(t){if(v)t.style.setProperty(opts[1],v);else t.style.removeProperty(opts[1])}return}
@@ -1432,10 +1509,13 @@ Rules:
   const hexOk=v=>/^#[0-9a-f]{6}$/i.test(v);
   const toRgb=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));
   const toHex=(r,g,b)=>"#"+[r,g,b].map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,"0")).join("");
+  // Color math: HSV → RGB (0-255).
   function hsv2rgb(hh,ss,vv){const f=n=>{const k=(n+hh/60)%6;return vv-vv*ss*Math.max(0,Math.min(k,4-k,1))};return[f(5)*255,f(3)*255,f(1)*255]}
+  // Color math: RGB → HSV.
   function rgb2hsv(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let hh=0;
     if(d){hh=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;hh*=60;if(hh<0)hh+=360}return[hh,mx?d/mx:0,mx]}
   const SWATCHES=["#ffd23f","#ff8fc0","#38b6ff","#9be15d","#ff9f5a","#6fd3c2","#b07cff","#ff5a5a","#ffffff","#0c2f6e"];
+  // Color picker field: swatch, hue/saturation square, hex input, ready-made colors.
   function colorField(val,apply){
     let [H,S,V]=hexOk(val)?rgb2hsv(...toRgb(val)):[45,.75,1];
     const sw=h("button",{type:"button",class:"rt-sw",title:"Open the color wheel",style:`background:${val||"transparent"}`});
@@ -1452,6 +1532,7 @@ Rules:
       const [rr,gg,bb]=hsv2rgb((Math.atan2(dy,dx)*180/Math.PI+360)%360,r/R0,1);img.data[i]=rr;img.data[i+1]=gg;img.data[i+2]=bb;img.data[i+3]=r>R0-1.5?Math.round((R0-r)/1.5*255):255}
     ctx.putImageData(img,0,0);
     const shade=h("span",{class:"rt-shade"});
+    // Copy the current value back to the page (commit = also save it).
     function sync(commit){
       const hex=toHex(...hsv2rgb(H,S,V));
       const a=H*Math.PI/180;dot.style.left=(size/2+Math.cos(a)*S*size/2)+"px";dot.style.top=(size/2+Math.sin(a)*S*size/2)+"px";
@@ -1475,11 +1556,13 @@ Rules:
     const reset=h("button",{class:"rt-btn sm",type:"button",title:"Back to the default color",on:{click:()=>{apply("");hexIn.value="";sw.style.background="transparent";wheel.hidden=true}}},"↺");
     return h("div",{},h("div",{class:"rt-color"},sw,hexIn,reset),wheel);
   }
+  // Show a layout change (columns, width, align) live.
   function previewLayout(holder,v){
     const g=$(".mech-grid",holder);if(!g)return;
     const n=$$(":scope>[data-i]",g).length,cols={"one-big":1,two:2,three:3}[v]||Math.min(Math.max(n,1),3);
     g.className=g.className.replace(/\bn\d\b/,"n"+cols);
   }
+  // One settings field in the panel from a data-x row [label, path, type, opts].
   function field(holder,[label,path,type,opts]){
     let val=get(path)??"";
     const wrap=h("div",{},h("label",{},label));
@@ -1536,6 +1619,7 @@ Rules:
   }
   let ICONS={};
   fetch(new URL("icons.json",ME).href).then(r=>r.json()).then(j=>{ICONS=j}).catch(()=>{});
+  // Show an icon change live.
   function previewIcon(path,name){
     $$(`[data-ico="${CSS.escape(path)}"]`).forEach(c=>{
       const old=$("svg,img",c),size=old?old.getAttribute("width"):"18";
@@ -1546,8 +1630,10 @@ Rules:
       if(c.classList.contains("h-ico"))c.hidden=!name;
     });
   }
+  // True when the element has anything to show in the settings panel.
   function hasSettings(u){return mediaOf(u).some(m=>m!==clickedMedia)||fieldsOf(u).length>0||(u.tagName==="A"&&!!u.getAttribute("href"))}
   let settingsOpen=false;
+  // The 'AI' part of the site settings: provider, models, the owner's notes for the AI.
   function aiSettingsBlock(){
     // saved on this device only (not on the site)
     const pv=h("select",{},h("option",{value:"hybrid",selected:provider()==="hybrid"},"⚡🤖 Hybrid: Rules first, AI backup (recommended)"),h("option",{value:"rules",selected:provider()==="rules"},"⚡ Instant Rules only: 100% Non-AI (instant, free)"),h("option",{value:"gemini",selected:provider()==="gemini"},"Gemini (free key, backup)"),h("option",{value:"local",selected:provider()==="local"},"📱 Inside the browser (free, private)"),h("option",{value:"app",selected:provider()==="app"},"🔌 AI app on this device (Ollama / LM Studio)"));
@@ -1566,6 +1652,7 @@ Rules:
       h("label",{},"In-browser model"),md,h("div",{class:"rt-row",style:"margin-top:8px"},dl,
       h("button",{class:"rt-btn sm",type:"button",on:{click:aiKeyBox}},"🔑 Gemini key")),st);
   }
+  // The site settings panel (style, colors, fonts, sound, menu, custom CSS…).
   function siteSettings(){
     // sound for the whole site; off until switched on here
     settingsOpen=true;current=null;chain=[];panelOpen=false;place();
@@ -1598,6 +1685,7 @@ Rules:
     panel.style.display="block";
     if(innerWidth>640){panel.style.top="72px";panel.style.left="";panel.style.right="12px"}
   }
+  // Fill the settings panel (#rt-panel) for the selected element.
   function renderPanel(){
     if(settingsOpen&&!current)return;
     settingsOpen=false;panel.style.right="";
@@ -1628,6 +1716,7 @@ Rules:
     e.target.setPointerCapture(e.pointerId);
     moveDrag(e);
   });
+  // Dragging an item with its ⠿ handle: follow the pointer and show where it will drop.
   function moveDrag(e){
     if(!drag)return;
     ghost.style.left=e.clientX-Math.min(drag.dx,200)+"px";ghost.style.top=e.clientY-Math.min(drag.dy,120)+"px";
@@ -1643,6 +1732,7 @@ Rules:
       :{display:"block",left:r.left+"px",top:(after?r.bottom:r.top)-2+"px",width:r.width+"px",height:"4px"});
     const edge=70;if(e.clientY<edge)scrollBy(0,-14);else if(e.clientY>innerHeight-edge)scrollBy(0,14);
   }
+  // Drop the dragged item and save the new order.
   function endDrag(){
     if(!drag)return;
     const{u,target,after}=drag;drag=null;ghost.style.display="none";drop.style.display="none";
@@ -1690,11 +1780,14 @@ Rules:
   const AI_KEY="rt-gemini-key",AI_MODEL="rt-gemini-model",GAPI="https://generativelanguage.googleapis.com/v1beta";
   const PROV_ICON={rules:"⚡",hybrid:"⚡🤖",local:"📱",app:"🔌",gemini:"G"};
   let provBtn=null,aiBox=null,aiLog=null,aiHist=[],aiFiles=[],aiBusy=false,rec=null,aiLang="he-IL";
+  // Apply the owner's custom CSS (site:custom_css) live.
   function applyCustomCss(css){let st=document.getElementById("custom-css");if(!st){st=document.createElement("style");st.id="custom-css";document.head.append(st)}st.textContent=css||""}
+  // Find the settings field definition (data-x row) for a content path on the page.
   function fieldDef(path){
     for(const el of $$("[data-x]")){if(!el.dataset.x.includes(path))continue;try{const f=JSON.parse(el.dataset.x).find(x=>x[1]===path);if(f)return{holder:el,f}}catch(e){}}
     return null;
   }
+  // Set a value from the AI or a rule command: convert to the field's type and update the page live.
   function applyValue(path,raw){
     const fd=fieldDef(path),type=fd?fd.f[2]:"text",opts=fd?fd.f[3]:null,holder=fd&&fd.holder;
     const texts=$$(`[data-e="${CSS.escape(path)}"]`);
@@ -1766,6 +1859,7 @@ Rules:
     {name:"remove_section",description:"Delete a section that was added in the editor (key starts with cs_).",parameters:{type:"OBJECT",properties:{key:{type:"STRING"}},required:["key"]}},
     {name:"use_attachment",description:"Put a file the owner attached (0 = first) into an image/video/media/icon/audio slot.",parameters:{type:"OBJECT",properties:{path:{type:"STRING"},attachment:{type:"INTEGER"}},required:["path"]}},
   ];
+  // A compact list of everything editable on this page (paths, current values, types) for the AI.
   function catalog(){
     const L=[],seen=new Set(),cut=(v,n=160)=>{v=v==null?"":typeof v==="string"?v:JSON.stringify(v);return v.length>n?v.slice(0,n)+"…":v};
     L.push("PAGE "+location.pathname+(document.title?" · "+document.title:""));
@@ -1808,6 +1902,7 @@ Rules:
   const AI_SYS=()=>AI_SYS_BASE+guideFull();
   // the models this key can use right now, best first (asked from Google, so new ones like Gemini 4 are picked up by themselves)
   let modelList=null;
+  // Ask Gemini which models this key can use and rank them (best first).
   async function rankModels(key){
     if(modelList)return modelList;
     const r=await fetchT(`${GAPI}/models?key=${encodeURIComponent(key)}&pageSize=200`,{},20000);const j=await r.json();
@@ -1818,6 +1913,7 @@ Rules:
     modelList=ok.map(x=>x.name.replace(/^models\//,""));
     return modelList;
   }
+  // Choose the Gemini model: the pinned one (rt-gemini-model-pin) or the best ranked.
   async function pickModel(key){
     const pin=store.get(AI_MODEL+"-pin");if(pin)return pin;
     let m=store.get(AI_MODEL);const t=+store.get(AI_MODEL+"-at")||0;
@@ -1826,6 +1922,7 @@ Rules:
     store.set(AI_MODEL,m);store.set(AI_MODEL+"-at",String(Date.now()));return m;
   }
   const fileToPart=f=>new Promise(ok=>{const r=new FileReader();r.onload=()=>ok({inlineData:{mimeType:f.type||"application/octet-stream",data:String(r.result).split(",")[1]}});r.readAsDataURL(f)});
+  // Add a message bubble to the AI chat.
   function aiSay(who,text){const el=h("div",{class:"rt-msg "+who},text);aiLog.append(el);aiLog.scrollTop=aiLog.scrollHeight;return el}
   /* ---- on-device AI (WebLLM): the model downloads once and runs on this phone's / PC's graphics chip. No key, nothing leaves the device. */
   const WEBLLM="https://esm.run/@mlc-ai/web-llm@0.2.87",AI_PROV="rt-ai-provider",AI_LOCAL="rt-ai-local-model";
@@ -1833,11 +1930,13 @@ Rules:
   let wl=null,engine=null,engineId="",loadingP=null;
   const isPhone=()=>matchMedia("(pointer:coarse)").matches&&Math.min(screen.width,screen.height)<900;
   const provider=()=>store.get(AI_PROV)||"hybrid";
+  // Which model the on-device AI (WebLLM) uses on this device.
   async function localModelId(){
     let base=store.get(AI_LOCAL)||"auto";if(base==="auto")base=isPhone()?"Qwen3.5-4B":"Qwen3.5-9B";
     let f16=false;try{const ad=await navigator.gpu.requestAdapter();f16=!!(ad&&ad.features.has("shader-f16"))}catch(e){}
     return base+(f16?"-q4f16_1-MLC":"-q4f32_1-MLC");
   }
+  // Load the on-device AI engine (WebLLM) once, reporting download progress.
   async function ensureEngine(onProgress){
     if(!("gpu" in navigator))throw new Error("this browser has no WebGPU. Use Chrome, or switch to Gemini in ⋯ › Site settings");
     const id=await localModelId();
@@ -1853,6 +1952,7 @@ Rules:
     try{return await loadingP}finally{loadingP=null}
   }
   const errText=e=>String((e&&(e.message||e.content))||e||"unknown error").replace(/^Error:\s*/,"").slice(0,300);
+  // A shorter editable-things list for small models (cut to a character limit).
   function smallCatalog(limit=6000){
     // the device model reads ~4k tokens: send the selected thing and its section, or a compact list of the page
     const L=[],seen=new Set(),cut=(v,n)=>{v=v==null?"":typeof v==="string"?v:JSON.stringify(v);return v.length>n?v.slice(0,n)+"…":v};
@@ -1884,6 +1984,7 @@ Actions (use paths exactly as listed):
 {"do":"attach","path":"<MEDIA or image/video FIELD path>","attachment":0}
 Only add a menu link (site:nav) or a button when the owner asks for a link/button. "this"/"זה" means the SELECTED item. Keep the site's text in English unless asked. reply = one short sentence in the owner's language.`;
   const LOCAL_SYS_FULL=()=>LOCAL_SYS+guideSmall();
+  // Apply an AI answer in the JSON protocol ({changes:[{path,value}], reply}).
   async function applyJsonAnswer(content,thinking){
     const raw=String(content||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/^```(?:json)?|```$/gm,"").trim();let out;
     try{out=JSON.parse(raw)}catch(e){const m=raw.match(/\{[\s\S]*\}/);try{out=m?JSON.parse(m[0]):null}catch(e2){out=null}if(!out)out={actions:[],reply:raw}}
@@ -1897,6 +1998,7 @@ Only add a menu link (site:nav) or a button when the owner asks for a link/butto
   /* ---- AI app on this phone / PC: any app with an OpenAI-style local server (Ollama in Termux, LM Studio, Ollama on the PC) */
   const APP_URL="rt-ai-app-url",APP_MODEL="rt-ai-app-model";
   const appUrl=()=>(store.get(APP_URL)||(isPhone()?"http://127.0.0.1:11434/v1":"http://localhost:1234/v1")).replace(/\/+$/,"");
+  // List models in the owner's local AI app (Ollama / LM Studio).
   async function appModels(){
     const r=await fetchT(appUrl()+"/models",{},8000);if(!r.ok)throw new Error("the app answered "+r.status);
     const j=await r.json();return (j.data||j.models||[]).map(m=>m.id||m.name).filter(Boolean);
@@ -1904,7 +2006,9 @@ Only add a menu link (site:nav) or a button when the owner asks for a link/butto
   // Ollama has its own API that can switch off "thinking", force JSON and stream progress; LM Studio etc. use the OpenAI-style one
   const appBase=()=>appUrl().replace(/\/v1$/,"");
   let isOllama=null;
+  // True when the local AI app is Ollama (it answers /api/tags).
   async function detectOllama(){if(isOllama!==null)return isOllama;try{const r=await fetchT(appBase()+"/api/tags",{},6000);isOllama=r.ok}catch(e){isOllama=false}return isOllama}
+  // The local AI app's model to use (saved choice or the first).
   async function appModel(){
     let model=store.get(APP_MODEL);
     if(!model){const ms=await appModels();model=ms.find(m=>!/embed/i.test(m))||ms[0];if(!model)throw new Error("the app has no model loaded");store.set(APP_MODEL,model)}
@@ -1914,6 +2018,7 @@ Only add a menu link (site:nav) or a button when the owner asks for a link/butto
     try{if(provider()!=="app"||!(await detectOllama()))return;const model=await appModel();
       fetchT(appBase()+"/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,prompt:"",keep_alive:"30m"})},300000).catch(()=>{})}catch(e){}
   }
+  // Send a message to the local AI app provider.
   async function appSend(text){
     const thinking=aiSay("sys","Asking the AI app…");
     try{
@@ -1923,6 +2028,7 @@ Only add a menu link (site:nav) or a button when the owner asks for a link/butto
       await applyJsonAnswer(content,thinking);
     }catch(e){thinking.remove();aiSay("err",appErr(e))}
   }
+  // Readable error when the local AI app can't be reached (CORS / not running).
   function appErr(e){
     const m=errText(e);
     return /fetch|network|load failed/i.test(m)
@@ -1930,6 +2036,7 @@ Only add a menu link (site:nav) or a button when the owner asks for a link/butto
       :/memory|ram|alloc/i.test(m)?"AI app: not enough memory for "+(store.get(APP_MODEL)||"this model")+". Try a smaller one (e.g. qwen3:1.7b) in ⋯ › Site settings. ("+m+")"
       :"AI app: "+m;
   }
+  // Chat with the local AI app (OpenAI-compatible or Ollama API).
   async function appChat(messages,thinking,maxTok){
       const model=await appModel(),big=!isPhone();
       let content="";
@@ -1964,6 +2071,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     ["cards",/(כרטיס|קלפים|cards?)/i],["list",/(רשימה|נקודות|bullet|list)/i]];
   const hintType=t=>{for(const [k,re] of TYPE_HINTS)if(re.test(t))return k;return ""};
   const WIDE=/(רחב|מלא|פול|פלאפ|מקצה לקצה|full|wide|edge)/i;
+  // Section flow for small AIs: ask for a section in steps (type, then content) instead of one big answer.
   async function sectionFlow(text){
     const thinking=aiSay("sys","Building the new section…");
     try{
@@ -1997,6 +2105,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       aiSay("ai",/[֐-׿]/.test(text)?"בניתי סקשן חדש. לחיצה כפולה על טקסט כדי לערוך; לחיצה על הסקשן ואז ⚙ כדי להחליף סוג, רוחב, צבעים ותמונה. אחר כך Publish.":"Built the section. Double-tap any text to edit; tap the section, then ⚙ to change its type, width, colors and picture. Then Publish.");
     }catch(e){thinking.remove();aiSay("err",provider()==="app"?appErr(e):"On-device AI: "+errText(e))}
   }
+  // Send a message to the on-device AI (WebLLM).
   async function localSend(text){
     const thinking=aiSay("sys","Loading the on-device model…");
     try{
@@ -2077,6 +2186,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     "text-media":{type:"text-media",kicker:"Focus",title:"Dedicated to Tactile Gameplay",text:"Passionate about gameplay programming where every input feels snappy, responsive, and grounded. Experienced in both C# and C++.",layout:"text"}
   };
 
+  // Turn a color word or code ('red', 'אדום', '#f00') into a hex color for rule commands.
   function parseColorVal(str){
     if(!str)return null;
     const s=str.trim().toLowerCase();
@@ -2087,6 +2197,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     return COLOR_MAP[s]||null;
   }
 
+  // The rule engine: run /commands (/help, /skin, /color, /add, /remove, /width, /align, /title, /kicker, /css) without any AI.
   async function executeRuleCommand(raw){
     const text=(raw||"").trim();
     if(!text)return {handled:false};
@@ -2375,6 +2486,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     return {handled:false};
   }
 
+  // Send a chat message to the chosen AI provider (rule commands are tried first).
   async function aiSend(text){
     if(aiBusy||!text.trim()&&!aiFiles.length)return;
     const cleanText=(text||"").trim();
@@ -2414,6 +2526,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       let others=[];try{others=await rankModels(key)}catch(e){}
       const models=[...new Set([model,...others.slice(0,5),"gemini-flash-latest"])];let mi=0;
       const busy=(st,msg)=>st===503||st===429||st===500||/demand|overload|unavailable|exhausted|quota|try again/i.test(msg);
+      // Call Gemini with tools (set values, add sections) and apply what it returns.
       async function call(){
         for(let attempt=0;;attempt++){
           const m_=models[mi];
@@ -2448,7 +2561,9 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     aiBusy=false;
   }
   let filesRow=null;
+  // Show the files attached to the AI chat as chips.
   function renderFiles(){if(filesRow)filesRow.replaceChildren(...aiFiles.map((f,i)=>h("span",{class:"rt-chip"},`${i}: ${f.name}`,h("button",{type:"button",on:{click:()=>{aiFiles.splice(i,1);renderFiles()}}},"×"))))}
+  // Dialog for the Gemini API key (kept only in this browser).
   function aiKeyBox(){
     const inp=h("input",{type:"password",placeholder:"AIza…",autocomplete:"off",value:store.get(AI_KEY)});
     const m=modal(h("h3",{},"✨ Free AI key (one time)"),
@@ -2462,6 +2577,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   /* ---- site styles: same content, different look (assets/skins/<name>.css + optional .js) */
   const SKIN_NAMES={classic:"Classic",arcade:"Arcade",sketchbook:"Sketchbook",hobbies:"Hobbies",plain:"Plain"};
   const SKIN_HINT={classic:"the current look",arcade:"game menu + mini-game",sketchbook:"hand-made notebook",hobbies:"climbing wall + manga",plain:"super boring"};
+  // Switch the site style (skin) live and save it to site:skin.
   function applySkin(k){
     const html=document.documentElement,prev=html.dataset.skin||"classic";if(prev===k)return;
     try{window.RTSkins&&RTSkins[prev]&&RTSkins[prev].off()}catch(e){}
@@ -2477,8 +2593,10 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     setTimeout(()=>{place();secBars()},300);
     toast(`Style: ${SKIN_NAMES[k]}. Look around (👁 Preview to try it like a visitor), then Publish to make it live.`);
   }
+  // Choose the AI provider (hybrid, rules, gemini, local, app) and update the button icon.
   function setProvider(v){store.set(AI_PROV,v);if(provBtn)provBtn.textContent=PROV_ICON[v]||"⚡🤖";
     aiSay("ai",{rules:"⚡ Using Instant Rules (100% Non-AI). Site commands execute instantly without tokens or models.",hybrid:"⚡🤖 Using Hybrid mode: Direct commands execute instantly; creative requests use AI.",local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[v]||"Assistant source set.");if(v==="app")warmApp()}
+  // The AI provider menu (hold menu).
   function aiMenu(){
     const pv=provider();
     const models=()=>{
@@ -2501,6 +2619,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       {label:"⚙  All AI settings",hint:"app address…",fn:()=>siteSettings()},
       {label:"↺  Undo unpublished changes",dan:true,fn:()=>{if(changes&&confirm("Throw away every change that isn't published yet (yours and the AI's)?")){changes=0;location.reload()}}}]};
   }
+  // Open the AI chat window.
   function openAI(){
     if(provider()==="gemini"&&!store.get(AI_KEY)){aiKeyBox();return}
     if(aiBox){aiBox.hidden=!aiBox.hidden;if(!aiBox.hidden)warmApp();return}
@@ -2550,11 +2669,13 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   let authKey=null,authDoc=null;
   const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u))),unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
   const hex=u=>[...new Uint8Array(u)].map(x=>x.toString(16).padStart(2,"0")).join("");
+  // Derive the AES key that unlocks the saved token from username + password (PBKDF2).
   async function derive(user,pw,a){
     const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(user.trim().toLowerCase()+"\n"+pw),"PBKDF2",false,["deriveBits"]);
     const bits=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:unb64(a.salt),iterations:a.iter},base,512));
     return{check:hex(bits.slice(0,32)),key:await crypto.subtle.importKey("raw",bits.slice(32),"AES-GCM",false,["encrypt","decrypt"])};
   }
+  // The editor login dialog (username + password unlock the token stored encrypted in assets/editor-auth.json).
   function loginBox(){
     return new Promise(done=>{
       const u=h("input",{type:"text",placeholder:"Name",autocomplete:"username",autocapitalize:"off",spellcheck:"false"});
@@ -2581,6 +2702,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       setTimeout(()=>u.focus(),50);
     });
   }
+  // Encrypt the GitHub token with the login and save it to assets/editor-auth.json.
   async function saveTokenForLogin(force){
     // store the token encrypted with the password, so signing in on another device is enough
     if(!authKey||!authDoc||(authDoc.token&&!force)||!store.get(TOKEN_KEY))return;
@@ -2595,6 +2717,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       authDoc=doc;
     }catch(e){/* not critical: the token still works in this browser */}
   }
+  // Leave edit mode without asking (bad login, closed dialog).
   function leaveQuietly(){try{sessionStorage.removeItem("rt-edit");sessionStorage.removeItem("rt-login")}catch(e){}
     const u=new URL(location.href);u.searchParams.delete("edit");if(u.hash==="#edit")u.hash="";location.replace(u.toString())}
   window.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rt-pick[data-m]");if(!b||!document.documentElement.classList.contains("rt-on")||document.documentElement.classList.contains("rt-preview"))return;
@@ -2605,8 +2728,11 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   const cvDocOf=id=>docs.cvlocal&&docs.cvlocal.variants&&docs.cvlocal.variants[id]?"cvlocal":"cv";
   const cvBase=id=>`${cvDocOf(id)}:variants.${id}`;
   const cvVar=id=>get(cvBase(id));
+  // All résumés: public ones (content/cv.json) and device-only ones (localStorage 'rt-cv-local').
   function cvAll(){const o=[];for(const d of ["cv","cvlocal"])for(const[k,v]of Object.entries((docs[d]&&docs[d].variants)||{}))o.push({id:k,doc:d,v});return o}
+  // Content path of a résumé item element.
   function cvItemPath(el){const l=el.parentElement&&el.parentElement.closest("[data-l]");return l?l.dataset.l+"."+el.dataset.i:null}
+  // A résumé value changed: save it (public file or device-only copy) and redraw soon.
   function cvChanged(p,v){
     const m=p.match(/^(cv|cvlocal):variants\.([^.]+)\.(.+)$/);if(!m||!CVS())return;
     const key=m[3];
@@ -2616,8 +2742,10 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       return cvSoon()}
     if(/^(template|font|density|show_photo|show_icons|photo|dir|person\.links)$/.test(key)||/^(main|side)\.\d+\.(icon|items\.\d+\.link)$/.test(key)||/^(main|side)$/.test(key))cvSoon();
   }
+  // Redraw the résumé shortly (batches fast typing).
   function cvSoon(){clearTimeout(cvT);cvT=setTimeout(()=>cvShow(cvCur,true),140)}
   function cvEnv(id){return {doc:cvDocOf(id),edit:true,icons:ICONS,photo:(p,path)=>{const pd=pending.get(path);return pd?pd.url:"/"+String(p).replace(/^\//,"")}}}
+  // Draw résumé id on the stage (#cvStage) with edit markers.
   function cvShow(id,keepSel){
     if(!CVS())return;const V=cvVar(id);if(!V)return;cvCur=id;
     const ae=document.activeElement,editing=ae&&ae.isContentEditable&&ae.dataset&&ae.dataset.e&&$("#cvStage").contains(ae)?ae.dataset.e:null;
@@ -2630,12 +2758,15 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     if(editing){const el=$(`[data-e="${CSS.escape(editing)}"]`,st);if(el){select(el);startEdit(el)}}
     cvBar();setTimeout(()=>{cvPages();cvTips()},60);
   }
+  // Show page-break lines on the A4 sheet.
   function cvPages(){
     const d=$("#cvStage .cvdoc");if(!d||!cvBarEl)return;
     const z=parseFloat(d.style.zoom)||1,hh=d.getBoundingClientRect().height/z,n=Math.max(1,Math.ceil(hh/1122.5-0.01));
     const b=$(".rt-cvpages",cvBarEl);if(b){b.textContent=n===1?"1 page ✓":n+" pages";b.classList.toggle("warn",n>1)}
   }
+  // Add a value to a résumé list and focus it.
   function cvPush(lp,val){const a=get(lp)||[];a.push(val);set(lp,a);cvShow(cvCur);const el=$(`#cvStage [data-e="${CSS.escape(lp+"."+(a.length-1))}"]`);if(el){select(el);startEdit(el);try{getSelection().selectAllChildren(el)}catch(e){}}}
+  // Add a section of a type to the current résumé.
   function cvAddSection(u,type){
     const base=cvBase(cvCur),secEl=u.closest(".cv-sec");let col="main",at=null;
     if(secEl){const lp=secEl.parentElement.dataset.l;col=lp.split(".").pop();at=+secEl.dataset.i+1}
@@ -2644,6 +2775,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     if(t){t.closest(".cv-sec").scrollIntoView({block:"center"});select(t);flash(t.closest(".cv-sec"))}
   }
   const slugId=s=>(String(s||"cv").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24)||"cv")+"-"+Math.random().toString(36).slice(2,5);
+  // Make a new résumé (blank, copy of this one, or imported).
   function cvNew(kind){
     let label=prompt(kind==="friend"?"Whose résumé is it? (their name)":"Name for this version (only you see it), e.g. \"Unity · short\"",kind==="copy"?(cvVar(cvCur).label||"")+" copy":"");
     if(label==null)return;label=label.trim()||"New résumé";
@@ -2654,6 +2786,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     set(`${doc}:variants.${id}`,v);cvShow(id);
     toast(kind==="friend"?"Saved only on this device (private). Fill it in, then ⬇ PDF.":"New version. Switch between versions with the menu at the top.");
   }
+  // Move a résumé between public (cv.json) and this device only.
   function cvMoveDoc(to){
     const from=cvDocOf(cvCur);if(from===to)return;const v=cvVar(cvCur);
     if(to==="cv"&&!confirm("Put this résumé on the site? Everything published is stored in your GitHub repository, which anyone can read."))return;
@@ -2661,6 +2794,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     if(from==="cv"&&get("cv:default")===cvCur){const o=Object.keys(docs.cv.variants)[0];if(o)set("cv:default",o)}
     cvShow(cvCur);toast(to==="cv"?"On the site after you publish.":"Now only on this device. Publish to remove it from the site.");
   }
+  // Delete the current résumé (asks first).
   function cvDelete(){
     const all=cvAll();if(all.length<2){toast("This is the only résumé; make another one first.");return}
     if(!confirm("Delete \""+(cvVar(cvCur).label||cvCur)+"\"?"))return;
@@ -2670,10 +2804,12 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   }
   // ⬇ PDF while editing: no unpublished changes → the real file straight to Downloads; with changes → choose
   function cvSaved(){try{const o=JSON.parse(orig.cv||"{}");return JSON.stringify((o.variants||{})[cvCur])===JSON.stringify(cvVar(cvCur))&&cvDocOf(cvCur)==="cv"}catch(e){return false}}
+  // Download a file by URL as a real file on the device (blob link).
   async function cvDownload(url,name){
     try{const b=await (await fetchT(url+"?t="+Date.now(),{},30000)).blob();const u=URL.createObjectURL(b);const a=h("a",{href:u,download:name});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
       toast("Saved: "+name+" · it's in your Downloads folder (phone: Files › Downloads).")}catch(e){toast("Couldn't download: "+errText(e))}
   }
+  // Download menu: PDF or PNG of the current résumé.
   function cvPdfMenu(){
     const d=(window.RTCVPage&&RTCVPage.data)||{},f=(d.files||{})[cvCur],nm=((d.names||{})[cvCur]||"CV")+".pdf";
     if(f&&cvSaved())return cvDownload(f,nm);
@@ -2685,6 +2821,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
         h("button",{type:"button",class:"rt-addopt",on:{click:()=>{m.remove();cvPrint()}}},h("b",{},"Save with my changes now"),h("span",{},"opens the print window: choose \"Save as PDF\" → it goes to Downloads"))),
       h("div",{class:"rt-row",style:"justify-content:flex-end;margin-top:10px"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel")));
   }
+  // Make a PDF of the current résumé in the browser (print dialog / Save as PDF).
   async function cvPrint(){
     const v=cvVar(cvCur);if(!v)return;const st=$("#cvStage");
     const pr=h("div",{class:"cv-print-root rt-cvprint"});pr.innerHTML=RTCV.render(v,cvCur,{photo:cvEnv(cvCur).photo});document.body.append(pr);
@@ -2694,6 +2831,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     toast("In the print window choose \"Save as PDF\" (not a printer), then Save: it goes to Downloads.");
     setTimeout(()=>window.print(),80);
   }
+  // Make a PNG image of the current résumé in the browser.
   async function cvImage(){
     toast("Making the image…");
     try{
@@ -2704,11 +2842,13 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       const nm=(v.person&&v.person.name||"CV").replace(/\s+/g,"-")+"-CV.png";const a=h("a",{href:url,download:nm});document.body.append(a);a.click();a.remove();toast("Saved: "+nm+" · it's in your Downloads folder (phone: Files › Downloads, or Gallery).");
     }catch(e){toast("Couldn't make the image here ("+errText(e)+"). After you publish, the Image button gives the ready file.")}
   }
+  // Scale the A4 sheet to fit the screen.
   function cvFit(){
     const b=cvBase(cvCur),order=["roomy","normal","compact"],d=get(b+".density")||"normal";
     if(d!=="compact"){set(b+".density","compact");setTimeout(()=>{cvPages();const t=$(".rt-cvpages",cvBarEl).textContent;toast(t.startsWith("1")?"Fits on one page now.":"Still longer than a page: shorten a few bullets or remove a section.")},400)}
     else toast("Already at the tightest spacing: shorten a few bullets, or move a section to the other column.");
   }
+  // The résumé toolbar: choose résumé, template, color, font, photo, add section, download, tips, ATS check.
   function cvBar(){
     if(!CVS())return;
     if(!cvBarEl){cvBarEl=h("div",{class:"rt-cvbar rt-ui"});$("#cvBar").after(cvBarEl)}
@@ -2747,6 +2887,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   }
   /* ---- one call to whichever AI is set up (Gemini / the app / in the browser); answers JSON */
   const parseJ=t=>{t=String(t||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/^```(?:json)?|```$/gm,"").trim();try{return JSON.parse(t)}catch(e){const m=t.match(/\{[\s\S]*\}/);if(m)try{return JSON.parse(m[0])}catch(_){}return null}};
+  // Ask the chosen AI for a text answer (used by the résumé tools); optional tools for the JSON protocol.
   async function aiText(sys,user,{max=900,status,tools}={}){
     const p=provider(),st=status||{set textContent(v){}};
     if(p==="gemini"){
@@ -2789,6 +2930,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   let cvTipsOn=true,cvTipT=null,cvTipLayer=null;
   const ignoreKey="rt-cv-ignore";
   const ignored=()=>{try{return new Set(JSON.parse(store.get(ignoreKey)||"[]"))}catch(e){return new Set()}};
+  // Résumé tips: check the résumé for common problems (red ! notes with a suggested fix).
   function cvLint(){
     const V=cvVar(cvCur);if(!V)return [];
     const base=cvBase(cvCur),P=V.person||{},pp=base+".person",out=[];
@@ -2837,10 +2979,12 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       if(n>1)add("pages",pp+".name",n+" pages: aim for one","Early-career résumés should fit one page (Google's recruiters).",{act:{label:"Fit on one page",fn:cvFit}})}
     const ig=ignored();return out.filter(x=>!ig.has(x.key));
   }
+  // Element on the sheet that a tip points to.
   function cvTargetEl(path){
     const st=$("#cvStage");if(!st)return null;
     return $(`[data-e="${CSS.escape(path)}"]`,st)||(()=>{const l=path.replace(/\.\d+$/,""),i=path.match(/\.(\d+)$/);return i?itemEl(l,i[1]):null})()||$(`[data-e="${CSS.escape(path.replace(/\.[^.]+$/,".name"))}"]`,st);
   }
+  // Show the tip markers (red !) on the sheet.
   function cvTips(){
     clearTimeout(cvTipT);cvTipT=setTimeout(()=>{
       if(!CVS()||!cvBarEl)return;
@@ -2856,6 +3000,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     },350);
   }
   addEventListener("resize",()=>{if(cvTipLayer)cvTips()});
+  // One tip: what's wrong, the suggested fix and a 'Fix it' button.
   function cvTipBox(t){
     const el=cvTargetEl(t.at);if(el){select(el.closest(UNIT)||el)}
     const sugBox=h("div",{class:"rt-sug"});
@@ -2877,6 +3022,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
         h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Close")));
     if(t.fix&&t.fix!==t.text)showSug(t.fix,"Suggested change (you can edit it before using it):");
   }
+  // All tips in one list.
   function cvTipList(){
     const tips=cvLint();
     const m=modal(h("h3",{},tips.length?`${tips.length} tips for this résumé`:"No tips ✓"),
@@ -2893,13 +3039,18 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     const lp=cvBase(cvCur)+".person.links";const a=get(lp)||[];a.push({label:label||"",url:u.trim()});set(lp,a);cvShow(cvCur);cvTips();toast("Link added.");
   }
   function cvSetLink(ip){const it=get(ip)||{};const u=prompt("Link (portfolio page, video, itch.io, Steam, GitHub…)",it.link||"https://");if(u==null)return;set(ip+".link",u.trim());cvShow(cvCur);cvTips()}
+  // Add a section to the right column for its type (ATS template: always main).
   function cvAddSectionTo(type){const base=cvBase(cvCur),col=(cvVar(cvCur).template==="ats")?"main":(type==="skills"||type==="languages"||type==="tags")?"side":"main";
     const arr=get(base+"."+col)||[];arr.push(RTCV.newSection(type));set(base+"."+col,arr);cvShow(cvCur);
     const t=$(`#cvStage [data-e="${CSS.escape(`${base}.${col}.${arr.length-1}.title`)}"]`);if(t){t.scrollIntoView({block:"center"});flash(t.closest(".cv-sec"))}cvTips()}
+  // All sections of the current résumé with their paths.
   function cvSections(){const V=cvVar(cvCur),b=cvBase(cvCur),o=[];for(const c of ["main","side"])(V[c]||[]).forEach((s,i)=>o.push({s,sp:`${b}.${c}.${i}`}));return o}
+  // Path of the selected résumé item, if any.
   function cvSelItem(){const it=current&&current.closest&&current.closest(".cv-item");return it&&$("#cvStage").contains(it)?cvItemPath(it):null}
+  // Add a new entry at the top of a résumé section.
   function cvAddEntry(sp){const s=get(sp);const T=RTCV.SECTION_TYPES[s.type]||RTCV.SECTION_TYPES.text;const a=s.items||[];a.unshift(JSON.parse(JSON.stringify(T.item)));set(sp+".items",a);cvShow(cvCur);
     const first=$(`#cvStage [data-l="${CSS.escape(sp+".items")}"] > [data-i="0"] [data-e]`);if(first){first.scrollIntoView({block:"center"});select(first);startEdit(first);try{getSelection().selectAllChildren(first)}catch(e){}}cvTips()}
+  // The résumé ＋ menu: add section, entry, bullet, date, link, icon, photo.
   function cvAddMenu(){
     const ip=cvSelItem(),V=cvVar(cvCur),b=cvBase(cvCur);
     const secsWith=f=>cvSections().filter(x=>f(x.s));
@@ -2934,7 +3085,9 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     "AI":["ai","artificial intelligence"],"VR":["vr","virtual reality"],"AR":["ar","augmented reality"],"UI":["ui","user interface"],"UX":["ux","user experience"],"Git":["git","github","gitlab"],"Agile":["agile"],"Scrum":["scrum"],
     "OOP":["oop","object oriented","object-oriented"],"3D math":["3d math","vector math","linear algebra"],"team lead":["team lead","led a team","lead a team","team leader"],"shipped":["shipped","released","launched","published"]};
   const esc_=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  // True when the text has the term (or one of its synonyms) as a whole word.
   function hasTerm(text,term){const alts=SYN[term]||[term.toLowerCase()];return alts.some(a=>new RegExp("(^|[^a-z0-9+#])"+esc_(a.toLowerCase())+"($|[^a-z0-9+#])","i").test(text))}
+  // Tidy job-post text pasted or fetched (drop menus, cookie notes, extra lines).
   function cleanJobText(raw){
     if(!raw)return "";
     let text=String(raw);
@@ -2950,6 +3103,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     return lines.join("\n").slice(0,12000);
   }
 
+  // Get the readable job text out of a job page's HTML (no AI).
   function parseHtmlToJobText(htmlStr){
     try{
       const d=new DOMParser().parseFromString(htmlStr,"text/html");
@@ -2963,6 +3117,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     }catch(_){return "";}
   }
 
+  // Key terms of a job post (skills, tools, titles) for the ATS check.
   function jobTerms(job){
     const clean=cleanJobText(job);
     const t=" "+clean.toLowerCase()+" ",found=KW.filter(k=>hasTerm(t,k));
@@ -3026,6 +3181,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     // 4. Fallback prompt
     throw new Error("Job site blocks direct scraping (CORS / anti-bot). Copy the job text and paste it directly in the box below.");
   }
+  // ATS checks of a résumé: one column, real text, standard headings, dates, contact info.
   function cvAtsChecks(V){
     const txt=RTCV.plainText(V),P=V.person||{},secs=(V.main||[]).concat(V.side||[]),R=[];
     const c=(ok,title,why,w=1)=>R.push({ok:!!ok,title,why,w});
@@ -3045,6 +3201,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     c(!/\b(I|my|me)\b/.test(txt.replace(/\n.*@.*\n/,"")),"No \"I\" / \"my\"","Résumés leave out pronouns.");
     return R;
   }
+  // The ATS check page (edit mode only): match the résumé against a job link or text, with fixes.
   function cvAtsPage(){
     const V=cvVar(cvCur);if(!V)return;
     let old=$("#rt-ats");if(old)old.remove();
@@ -3100,6 +3257,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i),tc=await pg.getTextContent();let y=null;for(const it of tc.items){if(y!==null&&Math.abs(it.transform[5]-y)>4)out+="\n";else if(out&&!out.endsWith(" "))out+=" ";out+=it.str;y=it.transform[5]}out+="\n\n"}
     return out;
   }
+  // Import a résumé from a PDF (pdf.js) or text, with AI help when available.
   function cvImport(){
     const ta=h("textarea",{rows:"9",placeholder:"Paste the text of an old résumé or a LinkedIn profile…",spellcheck:"false"});
     const fi=h("input",{type:"file",accept:"application/pdf,.pdf,.txt",style:"display:none"});
@@ -3123,11 +3281,13 @@ skills/tags {"label":"group name or empty","items":["..."]}; languages {"name","
       ta,h("div",{class:"rt-row",style:"margin:8px 0;gap:8px;flex-wrap:wrap"},h("button",{class:"rt-btn",type:"button",on:{click:()=>{ui.append(fi);fi.click()}}},"📄 Pick a PDF"),where),st,
       h("div",{class:"rt-row",style:"justify-content:flex-end;gap:8px"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel"),go));
   }
+  // Start the résumé editor on cv.html.
   function cvInit(){
     if(!CVS())return;
     const want=RTCVPage.current;cvCur=cvVar(want)?want:(get("cv:default")&&cvVar(get("cv:default"))?get("cv:default"):(cvAll()[0]||{}).id);
     if(cvCur)cvShow(cvCur);
   }
+  // Start the editor: login, load content, mark the page, wire everything.
   async function start(){
     let viaLogin=false;try{viaLogin=!!sessionStorage.getItem("rt-login")}catch(e){}
     if(viaLogin||!store.get(TOKEN_KEY)){

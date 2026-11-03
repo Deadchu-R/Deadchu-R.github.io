@@ -26,6 +26,7 @@
     let c={r:255,g:255,b:255,a:1};for(let i=layers.length-1;i>=0;i--)c=mix(layers[i],c);return c;
   }
   const BLACK={r:17,g:17,b:17,a:1},WHITE={r:255,g:255,b:255,a:1};
+  // Check all text on the page (or under root) and fix colors that are hard to read.
   function fix(root){
     const skin=document.documentElement.dataset.skin;
     if(!skin||skin==="classic"){document.querySelectorAll("[data-guard]").forEach(el=>{el.style.removeProperty("color");el.style.removeProperty("-webkit-text-fill-color");el.style.removeProperty("text-shadow");delete el.dataset.guard});return}

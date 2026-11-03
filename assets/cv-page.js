@@ -5,12 +5,15 @@
   let data={};try{data=JSON.parse($("#cv-data").textContent)}catch(e){}
   const stage=$("#cvStage");if(!stage)return;
   let cur=data.default;
+  // Scale the A4 sheet to fit the screen width.
   function fit(){
     const sh=stage.querySelector(".cvdoc");if(!sh)return;
     sh.style.zoom="";const w=stage.clientWidth-(innerWidth<600?16:48);
     const z=Math.min(1,w/sh.offsetWidth);sh.style.zoom=z<1?String(z):"";
   }
+  // Load the résumé's font from Google Fonts.
   function setFont(href){let l=$("#cv-font");if(!l){l=document.createElement("link");l.rel="stylesheet";l.id="cv-font";document.head.append(l)}if(l.href!==href)l.href=href}
+  // Show résumé id (data v) on the page and point the download/share buttons at its files.
   function show(id,v,env){
     v=v||(data.variants||{})[id];if(!v||!window.RTCV)return;
     cur=id;stage.innerHTML=RTCV.render(v,id,env||{icons:data.icons||{}});setFont(RTCV.fontHref(RTCV.normalize(v)));
@@ -25,6 +28,7 @@
   // share: the PDF itself (WhatsApp, mail…) through the phone's share menu; the file is fetched ahead so the menu opens right away
   const share=$("#cvShare"),cache={};
   const fileOf=id=>(data.files||{})[id];
+  // The résumé's PDF as a Blob (for sharing to WhatsApp, mail… via the phone's share menu).
   async function blobFor(id){const f=fileOf(id);if(!f)return null;if(!cache[id])cache[id]=fetch(f).then(r=>r.ok?r.blob():null).catch(()=>null);return cache[id]}
   setTimeout(()=>blobFor(cur),1200);
   const note=(el,t)=>{if(el._h==null)el._h=el.innerHTML;el.textContent=t;clearTimeout(el._t);el._t=setTimeout(()=>{el.innerHTML=el._h},2600)};

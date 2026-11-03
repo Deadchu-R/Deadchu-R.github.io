@@ -18,18 +18,22 @@ C = ROOT / "content"
 
 
 def _load(name):
+    """Read content/<name> as JSON."""
     return json.loads((C / name).read_text())
 
 
 def _slug(s):
+    """File-name-safe slug."""
     return re.sub(r"[^a-z0-9]+", "-", Path(s).stem.lower()).strip("-") or "file"
 
 
 def _src(path):
+    """Path of an upload ('/assets/uploads/x.png' → Path), or None when it isn't a local file."""
     return ROOT / str(path).lstrip("/")
 
 
 def _ffmpeg(*args):
+    """Run ffmpeg quietly; returns True when it succeeded."""
     if shutil.which("ffmpeg") is None:
         print("  ! ffmpeg not found, skipping", args[-1])
         return False
@@ -163,6 +167,7 @@ POSTERS = {}  # clip file -> image key of a thumbnail the owner picked
 
 
 def _clip_tuple(c):
+    """A clip from content JSON → (label, caption, file name in assets/clips, Google Drive id)."""
     f = clip_file(c.get("video"))
     if c.get("poster") and f:
         POSTERS[f] = image_key(c["poster"])
@@ -170,6 +175,7 @@ def _clip_tuple(c):
 
 
 def _write_snippet(name, code):
+    """Save a project's code sample to snippets/ so build.py can show it."""
     (ROOT / "snippets").mkdir(exist_ok=True)
     p = ROOT / "snippets" / name
     if not p.exists() or p.read_text() != code:
@@ -371,6 +377,7 @@ for cp in _load("code-pages.json"):
 
 # ---------------------------------------------------------------- lab + early work
 def _lab(c):
+    """A lab / early-work clip → (label, file, drive id, caption)."""
     lbl, cap, f, d = _clip_tuple(c)
     return (lbl, f, d, cap)
 LAB = [_lab(c) for c in _load("lab.json")]

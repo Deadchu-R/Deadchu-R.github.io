@@ -7,8 +7,10 @@
   const txt=el=>(el&&el.textContent||"").replace(/\s+/g," ").trim();
   const big=src=>String(src||"").replace(/-s\.jpg$/,".jpg");
   const root=$("#tv");
+  // Fetch a site page and parse it.
   async function page(url){const r=await fetch(url,{cache:"no-cache"});if(!r.ok)throw new Error(url);return new DOMParser().parseFromString(await r.text(),"text/html")}
 
+  // Build the TV rows from index.html and gallery.html (projects, code, clips, pictures, about, links).
   async function load(){
     const [idx,gal]=await Promise.all([page("index.html"),page("gallery.html").catch(()=>null)]);
     const clipsOf=key=>gal?$$(`.gitem[data-proj="${key}"]`,gal).map(f=>{const b=$(".clip,.zoom",f);if(!b)return null;const v=$("video",b),im=$("img",b);
@@ -52,6 +54,7 @@
 
   // ---------------- screen
   let D,S={area:"bill",b:0,r:0,cols:[],off:[],rail:0},els={};
+  // One card in a row.
   function card(it){
     const imgs=it.thumb||it.img;
     const c=h("button",{class:"tv-card"+(imgs?"":" text"),type:"button",style:`--c1:${it.c1||"#1f2b4d"};--c2:${it.c2||"#0b0b10"}`},
@@ -61,6 +64,7 @@
     c.addEventListener("click",()=>openItem(it));
     return c;
   }
+  // Build the whole TV screen (menu rail, billboard, rows).
   function build(){
     root.innerHTML="";
     els.bg1=h("div",{class:"tv-bg"});els.bg2=h("div",{class:"tv-bg"});
@@ -87,9 +91,12 @@
     bill.addEventListener("mouseenter",()=>{if(S.area==="rows"){S.area="bill";S.billItem=D.show;render()}});
     $$(".tv-card",root).forEach((c,k)=>c.addEventListener("mouseenter",()=>{const r=els.rows.findIndex(x=>x.tr.contains(c));S.area="rows";S.r=r;S.hover=true;S.cols[r]=[...els.rows[r].tr.children].indexOf(c);render()}));
   }
+  // Go to row r.
   function go(r){if(r<0)return;S.area="rows";S.r=r;S.cols[r]=S.cols[r]||0}
+  // The item under focus.
   function cur(){if(S.area==="rows")return D.rows[S.r].items[S.cols[S.r]];return S.billItem||D.show}
   let bgFlip=false,bgT=null,lastBg="";
+  // Fill the billboard (big picture, title, text, buttons) for an item.
   function setBill(it){
     S.billItem=it;
     els.kick.textContent=it.kick||"";els.title.textContent=it.title||"";els.meta.textContent=it.meta||"";els.desc.textContent=it.desc||it.more||"";
@@ -101,6 +108,7 @@
     bgT=setTimeout(()=>{if(src===lastBg)return;lastBg=src;const a=bgFlip?els.bg1:els.bg2,b=bgFlip?els.bg2:els.bg1;bgFlip=!bgFlip;
       if(src){a.style.backgroundImage=`url("${src}")`;a.classList.add("on")}else a.classList.remove("on");b.classList.remove("on")},140);
   }
+  // Redraw focus, rows position and the billboard.
   function render(){
     const it=cur();setBill(it);
     els.play.classList.toggle("f",S.area==="bill"&&S.b===0);els.more.classList.toggle("f",S.area==="bill"&&S.b===1);
@@ -116,8 +124,11 @@
       if(x.prev){x.prev.hidden=off<=0;x.next.hidden=off>=cards.length-fit}});
     els.rail.classList.toggle("open",S.area==="rail");els.railItems.forEach((x,k)=>x.b.classList.toggle("f",S.area==="rail"&&k===S.rail));
   }
+  // Close the left menu.
   function closeRail(){if(S.area==="rail")S.area=S.prev||"rows"}
+  // OK on the billboard buttons: 0 = play/open, 1 = go to the page.
   function act(which){const it=cur();if(which===1){if(it.href)location.href=it.href;return}openItem(it)}
+  // Open an item: play its clip, show its picture, or go to its page.
   function openItem(it){
     if(it.type==="project"){if(it.play)return play(it.play,it.title);location.href=it.href;return}
     if(it.type==="video")return play(it,it.title);
@@ -125,8 +136,11 @@
     if(it.type==="link"&&it.href){location.href=it.href;return}
   }
   let over=null;
+  // Close the player/picture.
   function closeOver(){if(!over)return;over.remove();over=null;render()}
+  // Fade the player hints after a few seconds.
   function hintFade(o){const t=$(".tv-ohint",o),n=$(".tv-otitle",o);setTimeout(()=>{t&&t.classList.add("hide");n&&n.classList.add("hide")},3500)}
+  // Play a clip full screen.
   function play(it,title){
     let media;
     if(it.video){media=h("video",{src:it.video,autoplay:true,controls:true,playsinline:true});media.addEventListener("ended",closeOver)}
@@ -135,8 +149,10 @@
     over=h("div",{class:"tv-over"},media,h("div",{class:"tv-otitle"},title||""),h("div",{class:"tv-ohint"},it.video?"OK pause · ◀ ▶ 10 seconds · Back close":"Back close"));
     document.body.append(over);hintFade(over);if(media.play)media.play().catch(()=>{});
   }
+  // Show a picture full screen.
   function picture(it){over=h("div",{class:"tv-over"},h("img",{src:it.full||it.img,alt:""}),h("div",{class:"tv-otitle"},it.title||""),h("div",{class:"tv-ohint"},"Back close"));document.body.append(over);hintFade(over)}
 
+  // Remote keys: arrows, OK, Back, CH ▲▼ / Page Up/Down.
   function key(e){
     S.hover=false;
     const k=e.key,back=k==="Escape"||k==="Backspace"||k==="GoBack"||k==="BrowserBack"||e.keyCode===10009||e.keyCode===461;

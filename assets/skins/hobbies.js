@@ -8,6 +8,7 @@
   let st=null;
   const svgHold=(i)=>`<svg viewBox="0 0 64 52" aria-hidden="true"><path d="${SHAPES[i%SHAPES.length]}" fill="${COLORS[i%COLORS.length]}" stroke="#111" stroke-width="3"/><circle cx="32" cy="26" r="4" fill="#3a3a3a" stroke="#111" stroke-width="1.5"/></svg>`;
   const CLIMBER='<svg viewBox="0 0 60 80" aria-hidden="true"><g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M30 30 L30 52"/><path d="M30 34 L14 18"/><path d="M30 34 L46 16"/><path d="M30 52 L18 70"/><path d="M30 52 L44 66"/></g><circle cx="30" cy="20" r="8" fill="#ffd9b8" stroke="#111" stroke-width="4"/><path d="M22 16 q8 -10 16 0" fill="#ff4d4d" stroke="#111" stroke-width="3"/><rect x="33" y="44" width="10" height="11" rx="3" fill="#5aa2ff" stroke="#111" stroke-width="3"/></svg>';
+  // Start the climbing wall.
   function on(){
     const hero=document.querySelector(".hero");if(!hero||st)return;
     const wall=document.createElement("div");wall.className="hb-wall";
@@ -15,6 +16,7 @@
     st={hero,wall,holds:[],at:0,busy:false};
     st.ro=new ResizeObserver(layout);st.ro.observe(hero);layout();
   }
+  // The places on the site that become holds.
   function places(){
     const out=[...document.querySelectorAll(".hero .hero-links a")].map(a=>({label:(a.textContent||"").trim(),href:a.getAttribute("href")}));
     document.querySelectorAll(".topbar nav a").forEach(a=>{const href=a.getAttribute("href")||"",label=(a.textContent||"").trim();
@@ -22,6 +24,7 @@
     out.push({label:"Top out: say hi",href:"#contact"});
     return out.slice(0,7);
   }
+  // Place the colored holds on the wall.
   function layout(){
     if(!st)return;const {hero,wall}=st,W=hero.clientWidth,H=hero.clientHeight,mobile=W<760;
     const panel=hero.querySelector(".hero-panel"),hr=hero.getBoundingClientRect(),pr=panel?panel.getBoundingClientRect():null;
@@ -41,6 +44,7 @@
     if(!st.at){const t=document.createElement("div");t.className="hb-hint";t.textContent="Tap a hold to climb there!";const h0=st.holds[0];
       if(h0){t.style.left=Math.max(8,Math.min(W-220,h0.x-180))+"px";t.style.top=(h0.y+44)+"px"}wall.append(t);st.hint=t}
   }
+  // Climb the route to hold i, then go to href.
   function climb(i,href){
     if(!st||st.busy)return;st.busy=true;if(st.hint)st.hint.remove();
     const go=()=>{if(href&&href.startsWith("#")){const t=document.querySelector(href);if(t)t.scrollIntoView({behavior:"smooth"})}else if(href)location.href=href;st.busy=false};
@@ -49,6 +53,7 @@
     let n=0;const next=()=>{if(!st)return;if(n>=path.length){st.at=i;setTimeout(go,260);return}const h=st.holds[path[n++]];st.c.style.left=h.x+"px";st.c.style.top=h.y+"px";setTimeout(next,330)};
     next();
   }
+  // Remove the wall.
   function off(){if(!st)return;st.ro.disconnect();st.wall.remove();st=null}
   R.hobbies={on,off};
   const start=()=>{if(document.documentElement.dataset.skin==="hobbies")on()};

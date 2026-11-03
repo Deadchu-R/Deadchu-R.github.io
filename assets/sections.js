@@ -35,9 +35,11 @@
   const iconNames=env=>[""].concat(Object.keys(env.icons));
   const href=l=>{l=String(l||"");return /^(https?:|mailto:|tel:|#)/.test(l)?l:l.replace(/^\/+/,"")};
   const ext=l=>/^https?:/.test(l||"")||/\.pdf$/.test(l||"")?' target="_blank" rel="noopener"':"";
+  // Inline style for a button's custom look (fill, text, border colors).
   function btnStyle(d){d=d||{};let v=[["fill","--bf"],["text_color","--bt"],["border","--bb"]].filter(([k])=>d[k]).map(([k,x])=>`${x}:${d[k]};`).join("");
     if(d.bw!=null&&d.bw!=="")v+=`--bw:${d.bw}px;`;return {style:v,cls:d.glow?" glow":""}}
   const btnFields=p=>[["Button color",p+".fill","color",["","--bf"]],["Text color",p+".text_color","color",["","--bt"]],["Outline color",p+".border","color",["","--bb"]],["Outline width",p+".bw","range",[0,8,0.5,"px","--bw",""]],["Glow",p+".glow","toggle",["glow",""]]];
+  // A new section's starting data for a type.
   function defaults(type,data){
     const t=TYPES[type]?type:"text-media",c=Object.assign({},COMMON,{type:t},data||{});
     if(TYPES[t].item&&!Array.isArray(c.items))c.items=[0,1,2].map(()=>Object.assign({},TYPES[t].item));
@@ -54,6 +56,7 @@
     for(const k of ["cols","overlay"])if(c[k]!=null&&c[k]!==""){const n=Number(c[k]);c[k]=isNaN(n)?COMMON[k]:n}
     return c;
   }
+  // Settings fields (data-x) of a section for the editor.
   function fields(b,c,env){
     const ICN=iconNames(env);
     const f=[["Section type",b+".type","select",Object.keys(TYPES)]];
@@ -66,10 +69,12 @@
       ["Heading icon",b+".icon","select",ICN]);
     return f;
   }
+  // A picture/video in a section (replaceable in the editor).
   function media(env,path,value,cls){
     const m=env.media(path,value);if(!m)return "";
     return m.kind==="video"?`<video class="${cls}" data-cs="${path}" src="${esc(m.url)}" autoplay muted loop playsinline preload="metadata"></video>`:`<img class="${cls}" data-cs="${path}" src="${esc(m.url)}" alt="" loading="lazy">`;
   }
+  // The section's buttons.
   function buttons(env,b,cfg){
     const items=(cfg&&cfg.items)||[],al=(cfg&&cfg.align)||"left",lp=b+".buttons.items";
     const out=items.map((bt,i)=>{const p=`${lp}.${i}`,st=btnStyle(bt);
@@ -78,12 +83,14 @@
         `><span class="ic"${ICO(p+".icon")}>${bt.icon?icon(env,bt.icon,18):""}</span><span${E(p+".label")}>${esc(bt.label)}</span></a>`}).join("");
     return `<div class="xrow al-${al} blk" data-l="${lp}"${X(["Align",b+".buttons.align","select",["left","center","right"]])}>${out}</div>`;
   }
+  // The section heading (kicker, title, intro).
   function head(env,b,c,tag){
     tag=tag||"h2";
     return `<div class="cs-head"><p class="kicker"${E(b+".kicker","small line above the title")}${c.kicker?"":" hidden data-edit-show"}>${esc(c.kicker)}</p>`+
       `<${tag}><span class="h-ico" style="--c:var(--accent)"${ICO(b+".icon")}${c.icon?"":" hidden"}>${c.icon?icon(env,c.icon,18):""}</span><span${E(b+".title")}>${esc(c.title)}</span></${tag}>`+
       `<p class="muted cs-text"${E(b+".text","text")}${c.text||c.type!=="cta"?"":" hidden data-edit-show"}>${esc(c.text)}</p></div>`;
   }
+  // The section body for its type (cards, gallery, text, quote, list…).
   function body(env,b,c){
     const L=b+".items",it=c.items||[],T=TYPES[c.type].item;
     const item=(i,inner,cls,extra)=>`<${extra&&extra.tag||"div"} class="${cls}" data-i="${i}"${extra&&extra.x?X(...extra.x):""}>${inner}</${extra&&extra.tag||"div"}>`;
@@ -106,6 +113,7 @@
       default:return "";
     }
   }
+  // Render a custom section to HTML. env: {edit, root} decides edit markers and asset paths.
   function render(id,data,env){
     const c=normalize(data),b=`site:custom_sections.${id}`;
     const style=[["bg","--sec-bg"],["accent","--accent"],["text_color","--sec-ink"]].filter(([k])=>c[k]).map(([k,v])=>`${v}:${c[k]}`).join(";")+(c.type==="banner"?`;--ov:${c.overlay==null?55:c.overlay}%`:"");

@@ -49,6 +49,7 @@
   const visible=el=>{const g=el.closest(".gitem");return !g||!g.hidden};
   const count=()=>gallery.length>1?`${gi+1} / ${gallery.length}`:"";
 
+  // Close the video/picture viewer.
   function close(){
     if(!open_)return;
     open_=false;
@@ -62,6 +63,7 @@
   // so release the lock right away and let the phone's rotation decide
   // screenshots and character art have no player controls, so they get their own full-screen button
   const maxBtn=$("#viewerMax"),canFs=!!(viewer.requestFullscreen||viewer.webkitRequestFullscreen);
+  // Toggle the viewer between window and full screen.
   function toggleMax(){
     if(isFs()){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}return}
     try{Promise.resolve((viewer.requestFullscreen||viewer.webkitRequestFullscreen).call(viewer)).catch(()=>{})}catch(e){}
@@ -72,6 +74,7 @@
   const freeRotation=()=>{try{screen.orientation&&screen.orientation.unlock&&screen.orientation.unlock()}catch(e){}};
   ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{
     if(isFs()){freeRotation();setTimeout(freeRotation,150);setTimeout(freeRotation,600)}}));
+  // Play a clip in the viewer (self-hosted file or Google Drive).
   function playInStage(name,src,driveId){
     stage.innerHTML="";let v=null;
     const drive=()=>{stage.innerHTML=`<iframe src="${drivePreview(driveId)}" allow="autoplay; fullscreen" allowfullscreen title="${String(name).replace(/"/g,"")}"></iframe>`};
@@ -83,6 +86,7 @@
     }else drive();
     return v;
   }
+  // Draw the current picture of the lightbox gallery.
   function render(){
     const el=gallery[gi],vid=isVideo(el);
     viewer.className="viewer "+(vid?"is-video":"is-image")+(gallery.length>1?" has-nav":"");
@@ -99,7 +103,9 @@
     stage.innerHTML=`<img src="${el.dataset.full}" alt="${(el.querySelector("img")||{}).alt||""}">`;
     return null;
   }
+  // Hide the info overlay on gallery tiles.
   function closeTileInfo(){document.querySelectorAll(".gitem.show-info").forEach(f=>{f.classList.remove("show-info");const b=f.querySelector(".info");b.setAttribute("aria-expanded","false");b.querySelector(".i-tx").textContent="Info"})}
+  // Open the lightbox at a picture.
   function open(el){
     closeTileInfo();
     last=document.activeElement;open_=true;
@@ -112,6 +118,7 @@
     viewer.hidden=false;document.body.style.overflow="hidden";pauseAll();
     $("#viewerClose").focus({preventScroll:true});
   }
+  // Next/previous picture in the lightbox.
   function step(d){if(!open_||gallery.length<2)return;gi=(gi+d+gallery.length)%gallery.length;render()}
 
   document.addEventListener("click",e=>{
@@ -317,6 +324,7 @@
 
   /* ---------- gallery filters ---------- */
   const grid=$("#ggrid"),gcount=$("#gcount");
+  // Gallery filter chips: show only tiles of the chosen kind.
   function filter(chip){
     const f=chip.dataset.filter;
     document.querySelectorAll("[data-filter]").forEach(c=>c.setAttribute("aria-pressed",c===chip));
@@ -335,10 +343,12 @@
   let ctx=null;const ac=()=>ctx||(ctx=new (window.AudioContext||window.webkitAudioContext)());
   // built-in clicks, made on the fly (no files to load)
   const SYN={soft:[1700,.03,"sine"],pop:[520,.07,"triangle"],blip:[1150,.05,"square"],tick:[3200,.012,"square"],wood:[900,.04,"triangle"]};
+  // Play a short synthesized sound (click, hover…).
   function tone(kind,vol){try{const c=ac(),[f,d,type]=SYN[kind]||SYN.soft,o=c.createOscillator(),g=c.createGain(),t=c.currentTime;
     o.type=type;o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*.55,t+d);
     g.gain.setValueAtTime(Math.max(.0001,vol*.35),t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
   const cache={};
+  // Play a sound file (owner's own sounds).
   function file(url,vol){let a=cache[url];if(!a){a=cache[url]=new Audio(url);a.preload="auto"}const b=a.cloneNode();b.volume=Math.min(1,vol);b.play().catch(()=>{})}
   let music=null;
   window.rtSound={
@@ -354,8 +364,11 @@
   const ICON_OFF='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="m17 9 5 6M22 9l-5 6"/></svg>';
   const btn=document.createElement("button");btn.type="button";btn.className="sound-btn";
   let bg=null,started=false;
+  // Draw the sound button (on/off).
   function render(){btn.innerHTML=on?ICON_ON:ICON_OFF;btn.classList.toggle("on",on);btn.setAttribute("aria-pressed",String(on));btn.setAttribute("aria-label",on?"Turn sound off":"Turn sound on");btn.title=btn.getAttribute("aria-label")}
+  // Start the background music, if the owner set one.
   function playMusic(){if(!cfg.music)return;if(!bg){bg=new Audio(cfg.music);bg.loop=true;bg.volume=Math.min(1,cfg.mv)}bg.play().then(()=>{started=true}).catch(()=>{})}
+  // Turn sound on/off and remember it.
   function set(v){on=v;try{localStorage.setItem("rt-sound",v?"1":"0")}catch(e){}render();if(v)playMusic();else if(bg)bg.pause()}
   btn.addEventListener("click",e=>{e.stopPropagation();set(!on)});
   render();document.body.appendChild(btn);
@@ -398,6 +411,7 @@
   const SEL='a[href],button:not([disabled]),summary,input,select,textarea,[tabindex]:not([tabindex="-1"]),video[controls]';
   const visible=el=>{if(el.closest("[hidden],.rt-ui")&&!el.closest(".jump"))return false;const r=el.getBoundingClientRect();if(r.width<4||r.height<4)return false;const cs=getComputedStyle(el);return cs.visibility!=="hidden"&&cs.display!=="none"&&+cs.opacity>.05};
   const center=r=>({x:r.left+r.width/2,y:r.top+r.height/2});
+  // TV remote: the best element to focus in a direction (spatial navigation).
   function best(dir){
     const cur=document.activeElement&&document.activeElement!==document.body?document.activeElement:null;
     const viewer=document.querySelector("#viewer:not([hidden])"),scope=viewer||document;
@@ -414,10 +428,13 @@
   }
   // TV menu: CH ▲ / CH ▼ (or Page Up / Down) jump a whole part of the page, like changing channels
   const PARTS=".hero,.phero,.band,.custom-sec,.project .mech-sec,.project .intro,.about-game,.credits,.next-band,.tbc-band,.foot,.cv-stage,.gal-grid,.gallery-grid";
+  // TV: the page's parts (sections) for CH ▲▼ / Page Up/Down.
   function parts(){const all=[...document.querySelectorAll(PARTS)].filter(el=>el.offsetHeight>60&&!el.parentElement.closest(PARTS.replace(/,\.foot/,"")));
     return all.sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top)}
   let chip=null,chipT=null;
+  // TV: show a small label of where CH moved to.
   function showChip(txt){if(!chip){chip=document.createElement("div");chip.className="tv-chip";document.body.append(chip)}chip.textContent=txt;chip.classList.add("on");clearTimeout(chipT);chipT=setTimeout(()=>chip.classList.remove("on"),1600)}
+  // TV: go to the next/previous part of the page.
   function page(dir){
     const P=parts();if(!P.length)return;const top=(document.querySelector(".topbar")||{}).offsetHeight||0;
     // i = the part we are in; go to the next / previous one

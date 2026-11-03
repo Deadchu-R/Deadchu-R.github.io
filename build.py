@@ -25,6 +25,7 @@ def L(path):
     """Container of a reorderable list (items carry data-i)."""
     return f' data-l="{path}"'
 def I(i):
+    """Marker: the item's index inside its list (the editor renumbers these when items move)."""
     return f' data-i="{i}"'
 def M(path, kind="image"):
     """Replaceable media: kind image | art | video."""
@@ -42,11 +43,13 @@ def BG(*paths):
     """Background media the editor previews when replaced."""
     return f' data-bg="{" ".join(paths)}"'
 def href(link, depth):
+    """Turn a link from the content into a page-relative href. Absolute URLs, mailto:, tel: and #anchors pass through; site paths get '../' * depth."""
     link = link or ""
     if re.match(r"^(https?:|mailto:|tel:|#)", link):
         return link
     return "../" * depth + link.lstrip("/")
 def ext(link):
+    """Attributes that open external links and PDFs in a new tab."""
     return ' target="_blank" rel="noopener"' if re.match(r"^https?:", link or "") or (link or "").endswith(".pdf") else ""
 def ADD(path, tpl="btn"):
     """Lets the editor's + add a new item to this list."""
@@ -59,10 +62,12 @@ def xrow(base, cfg, depth, extra_cls=""):
     return (f'<div class="xrow al-{align}{" " + extra_cls if extra_cls else ""}"{L(base + ".items")}{x}>'
             + btn_list(base + ".items", items, depth, lambda b: "btn small" + (" ghost" if b.get("style", "ghost") == "ghost" else "")) + '</div>')
 def colors(base):
+    """Settings fields (for X()) for a project's three theme colors: main, dark and accent."""
     return (("Main color", f"{base}.color_main", "color"), ("Dark color", f"{base}.color_deep", "color"), ("Accent color", f"{base}.color_accent", "color"))
 
 
 def thumb(i, w=1280):
+    """URL of a screenshot by its image key: the local copy in assets/img (small '-s' version when w <= 900), else a Google Drive thumbnail."""
     small = w <= 900
     name = f"{i}-s.jpg" if small else f"{i}.jpg"
     if (ROOT / "assets/img" / name).exists():
@@ -73,6 +78,7 @@ def thumb(i, w=1280):
 ART_CREDIT = "Art and animation by the team's artists. I'm not an artist: my part was the code and game design."
 ART_CREDIT_SHORT = "Art by the team's artists, not by me."
 def credit_attr(slug):
+    """data-credit attribute for clips whose art was made by teammates (shown in the video viewer)."""
     return f' data-credit="{e(ART_CREDIT_SHORT)}"' if slug in ART_CREDIT_SLUGS else ""
 
 def play_attrs(drive_id, title, cap="The full gameplay video."):
@@ -86,6 +92,7 @@ def play_attrs(drive_id, title, cap="The full gameplay video."):
 
 
 def has_clip(f):
+    """True when the self-hosted clip file exists in assets/clips."""
     return (ROOT / "assets/clips" / f).exists()
 
 
@@ -100,8 +107,10 @@ def ver(path):
 SKINS = ["classic", "arcade", "sketchbook", "hobbies", "plain"]   # site styles, picked in the editor (⋯ › Site style)
 SKIN = SITE_TEXT.get("skin") if SITE_TEXT.get("skin") in SKINS else "classic"
 def skin_css(p):
+    """<link> for the active site style's stylesheet (assets/skins/<SKIN>.css); nothing for the Classic style."""
     return f'\n<link rel="stylesheet" href="{p}assets/skins/{SKIN}.css?v={ver("assets/skins/" + SKIN + ".css")}" id="skin-css">' if SKIN != "classic" else ""
 def skin_js(p):
+    """<script> tags for the active site style: the readability guard (guard.js) plus the style's own script if it has one."""
     f = ROOT / "assets/skins" / (SKIN + ".js")
     if SKIN == "classic":
         return ""
@@ -109,6 +118,7 @@ def skin_js(p):
     return g + (f'<script src="{p}assets/skins/{SKIN}.js?v={ver("assets/skins/" + SKIN + ".js")}" defer></script>\n' if f.exists() else "")
 
 def head(title, desc, depth, theme=None):
+    """Start of every page: <head> with title, description, fonts, site.css (+ style css, + owner's custom CSS) and optional theme colors."""
     p = "../" * depth
     style = ""
     if theme:
@@ -139,6 +149,7 @@ def brand_photo(p):
     return '<span role="button" class="mark-ava rt-pick add" data-m="site:brand_photo" data-mk="image" data-cls="mark-ava" hidden data-edit-show title="Add your photo">＋</span>'
 
 def topbar(depth, current=""):
+    """The top bar on every page: name (home link, optional small photo), the edit pencil, and the menu links from site:nav."""
     p = "../" * depth
     cur_map = {"projects": "#projects", "gallery": "gallery.html", "lab": "lab.html"}
     links = []
@@ -155,6 +166,7 @@ def topbar(depth, current=""):
 
 
 def footer(depth, peek=True):
+    """The footer on every page: contact text, email/phone, buttons, the peeking character, the video viewer markup and the scripts."""
     p = "../" * depth
     return f"""<footer class="foot" id="contact"{ADD("site:footer_buttons")}{X(("Peeking character (transparent PNG)", "site:footer_peek", "art")) if peek else ""}>
 <svg class="foot-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 260 80 520 0 760 30 S 1220 70 1440 22 V70 H0Z"/></svg>
@@ -195,6 +207,7 @@ def more_text(pj, section=None):
 
 
 def more_attrs(text, href=""):
+    """data-more / data-href attributes: the longer project description and its page, shown by the (i) button in the viewer."""
     return f' data-more="{e(text)}"' + (f' data-href="{href}"' if href else "")
 
 
@@ -202,6 +215,7 @@ FS_ICON = '<span class="fs" title="Full screen"><svg viewBox="0 0 24 24" width="
 
 
 def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False, more="", credit="", mpath=""):
+    """One playable clip tile (button with a poster/video) used on project pages, the lab and the gallery."""
     p = "../" * depth
     poster = f"{p}assets/posters/{file.replace('.mp4', '.jpg')}"
     if not (ROOT / "assets/posters" / file.replace(".mp4", ".jpg")).exists():
@@ -282,6 +296,7 @@ def bp_svg():
 
 
 def mosaic_html(pool):
+    """The moving wall of screenshots behind the 'Gallery & lab' band (4 rows of 8 images)."""
     rows = []
     for r in range(4):
         imgs = "".join(f'<img src="{pool[(r * 8 + k) % len(pool)]}" loading="lazy" alt="">' for k in range(8))
@@ -320,6 +335,7 @@ def peek(path, n=9):
     return highlight_cs("\n".join(lines[i:i + n]))
 
 def more_code_html():
+    """The 'More code' band on the home page: one card per code page (file bar, title, tech chips, description, code peek)."""
     cards = "".join(
         f'<a class="repo"{I(ci)} id="c-{cp["slug"]}" href="code/{cp["slug"]}.html" style="--deep:{cp["theme"][0]};--mid:{cp["theme"][1]};--accent:{cp["theme"][2]}"{X(("Cover image (optional)", f"code-pages:{ci}.cover", "image"))}><img class="repo-bg" src="{thumb(cp["cover"], 900) if cp["cover"] else ""}" alt=""{BG(f"code-pages:{ci}.cover")}{"" if cp["cover"] else " hidden"}><span class="repo-bar"><span class="dots"><i></i><i></i><i></i></span><span{E(f"code-pages:{ci}.code.{cp['code_idx'][0]}.file_label")}>{e(cp["code"][0][0])}</span></span>'
         f'<span class="repo-mcover"{"" if cp["cover"] else " hidden"}><img src="{thumb(cp["cover"], 900) if cp["cover"] else ""}" alt=""{BG(f"code-pages:{ci}.cover")}></span>'
@@ -340,19 +356,23 @@ ICON_PAD = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" f
 ICON_CODE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg>'
 
 def _ym(v):
+    """'2025-02' → '02/2025'."""
     y, m = v.split("-")[:2]
     return f"{m}/{y}"
 
 def job_dates():
+    """The current job's date range text, e.g. '02/2025 – Present'."""
     end = SITE_TEXT.get("job_end") or ""
     return f"{_ym(SITE_TEXT['job_start'])} – {_ym(end) if end else 'Present'}"
 
 def job_live():
+    """The green 'Ongoing · 1 yr 9 mos' badge while the job has no end date (site.js keeps the duration current)."""
     if SITE_TEXT.get("job_end"):
         return ""
     return f'<span class="live" title="Ongoing"><i></i>Ongoing · <span data-since="{SITE_TEXT["job_start"][:7]}">since {_ym(SITE_TEXT["job_start"])}</span></span>'
 
 def timeline_html():
+    """The 3-step timeline under the experience band (school → job → next)."""
     items = SITE_TEXT.get("timeline", [])
     out = []
     for i, t in enumerate(items):
@@ -431,6 +451,7 @@ def bstyle(d):
     return v, (" glow" if d.get("glow") else "")
 
 def btn_list(path, items, depth, cls_fn):
+    """Render a list of editable buttons (label, icon, link, style, look) at the given content path."""
     out = []
     for i, b in enumerate(items):
         bp = f"{path}.{i}"
@@ -450,19 +471,23 @@ ICON_RAW = {  # brand marks and solid shapes, drawn filled
 TOOL_CLS = {"unreal": "ue", "blueprints": "bpi", "cesium": "cs"}
 ICON_CHOICES = None
 def icon_choices():
+    """All icon names the editor offers in icon pickers ('' = no icon)."""
     return [""] + list(ICONS_22) + list(ICON_RAW)
 
 UI = SITE_TEXT.get("ui") or {}
 def ui_icon(key, size=18):
+    """Just the icon part of a fixed label from site:ui.<key> (icon + color), hidden when empty."""
     d = UI.get(key) or {}
     ic, col = d.get("icon", ""), d.get("color", "")
     return (f'<span class="ui-ic"{f" style=\"--c:{col}\"" if col else ""}{ICO(f"site:ui.{key}.icon")}{"" if ic else " hidden"}>'
             f'{_icon(ic, size) if ic else ""}</span>')
 
 def bs_attr(key):
+    """style='…' attribute with a fixed button's saved look (fill, text, outline) from site:ui.<key>."""
     sv = bstyle(UI.get(key))[0]
     return f' style="{sv}"' if sv else ""
 def bcls(key):
+    """Extra class (' glow') for a fixed button whose saved look has glow on."""
     return bstyle(UI.get(key))[1]
 
 def ui(key, default, tag="span", cls="", attrs="", icon="", big=False, size=18, btn=""):
@@ -478,6 +503,7 @@ def ui(key, default, tag="span", cls="", attrs="", icon="", big=False, size=18, 
     return f'<{tag}{c}{attrs}{x}>{ico}<span{E(p + ".text")}>{e(text)}</span></{tag}>'
 
 def _icon(name, size):
+    """SVG (or <img> for an uploaded icon) for an icon name at a size in px."""
     if name and str(name).startswith("/"):            # an icon the owner uploaded (image or GIF)
         from content_loader import icon_file
         src = icon_file(name)
@@ -490,6 +516,7 @@ def _icon(name, size):
             f'stroke-width="{1.9 if size > 18 else 2}" stroke-linecap="round" stroke-linejoin="round">{body}</svg>')
 
 def about_html():
+    """The 'Get to know me' band: text, hobby cards, favorite games, the local-AI side-project card and the PC parts."""
     SV = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
     ICN = icon_choices()
     cards = "".join(f'<li style="--c:{h["color"]}"{I(i)}{X(("Icon", f"about:hobbies.{i}.icon", "select", ICN), ("Color", f"about:hobbies.{i}.color", "color"))}><span class="hb-ico"{ICO(f"about:hobbies.{i}.icon")}>{_icon(h["icon"], 22)}</span><span{E(f"about:hobbies.{i}.name")}>{e(h["name"])}</span></li>' for i, h in enumerate(ABOUT["hobbies"]))
@@ -535,6 +562,7 @@ J_NEXT = J_I + '<path d="M5 12h14M13 6l6 6-6 6"/></svg>'
 J_PLAY = J_I + '<path d="M7 5v14l11-7z"/></svg>'
 
 def INDEX_JUMP():
+    """Entries of the floating 'jump to' menu on the home page, in the current section order (custom sections included)."""
     H = SITE_TEXT["headings"]
     def hj(k, default):
         return (e(H[k]["title"]), H[k]["color"], _icon(H[k]["icon"] or default, 16))
@@ -577,6 +605,7 @@ def jump_menu(items, depth, site=None):
 '''
 
 def hero_buttons():
+    """The colored quick-link pills under the hero (site:hero_buttons)."""
     out = []
     for i, b in enumerate(SITE_TEXT["hero_buttons"]):
         bp = f"site:hero_buttons.{i}"
@@ -587,6 +616,7 @@ def hero_buttons():
     return "".join(out)
 
 def bp_media_html():
+    """What fills the Blueprint window: an uploaded video/GIF, an uploaded picture, or the drawn Blueprint SVG."""
     kind, v = SITE_TEXT["_bp"]
     if kind == "video":
         return f'<video class="bp-media" src="{v}" autoplay muted loop playsinline preload="auto"{BG("site:bp_media")}></video>'
@@ -628,6 +658,7 @@ def custom_sections_html():
     return _json.loads(r.stdout)
 
 def build_index():
+    """Write index.html: hero, then the main-page sections in site:section_order (experience, projects, more code, about, gallery & lab, custom sections), then the footer."""
     global DEPTH
     DEPTH = 0
     tiles = []
@@ -750,6 +781,7 @@ if in int interface internal is new null object out override private protected p
 struct switch this throw true try typeof using var virtual void while yield nullptr auto const""".split())
 
 def highlight_cs(code):
+    """Tiny C#/C++ syntax highlighter for the code snippets (comments, strings, attributes, keywords, types, numbers)."""
     import re, html
     tok = re.compile(r'(//[^\n]*)|("(?:[^"\\]|\\.)*")|(\[[A-Z][A-Za-z]*(?=\())|\b([A-Za-z_][A-Za-z0-9_]*)\b|(\d+(?:\.\d+)?f?)')
     out, last = [], 0
@@ -770,6 +802,7 @@ def highlight_cs(code):
     return "".join(out)
 
 def code_section(pj, base=""):
+    """The 'Code sample' block on a project page, from SNIPPETS (file name, source link, highlighted code)."""
     if pj["slug"] not in SNIPPETS:
         return ""
     name, url, path = SNIPPETS[pj["slug"]]
@@ -780,11 +813,13 @@ def code_section(pj, base=""):
             f'{ui("trimmed", "Trimmed and commented for this page.", tag="p", cls="muted small center")}</section>')
 
 def code_figure(name, path, base="", idx=0):
+    """One highlighted code window (title bar + numbered lines)."""
     code = (ROOT / path).read_text().rstrip()
     return (f'<figure class="code"{I(idx)}><figcaption><span class="dots"><i></i><i></i><i></i></span><span{E(f"{base}.code.{idx}.file_label")}>{e(name)}</span></figcaption>'
             f'<pre><code{E(f"{base}.code.{idx}.code")} data-code>{highlight_cs(code)}</code></pre></figure>')
 
 def build_code_page(i, cp):
+    """Write code/<slug>.html: a page for one code system (intro, tech, highlights, the code itself, buttons)."""
     global DEPTH
     depth = DEPTH = 1
     nxt = CODE_PAGES[i + 1] if i + 1 < len(CODE_PAGES) else None
@@ -846,6 +881,7 @@ def grid_cols(layout, n):
     return {"one-big": 1, "two": 2, "three": 3}.get(layout or "auto", min(max(n, 1), 3))
 
 def build_project(i, pj):
+    """Write projects/<slug>.html: the project page (header with mascot, facts, what I built, clip sections, video, about, characters, credits, next project)."""
     global DEPTH
     depth = DEPTH = 1
     nxt = PROJECTS[i + 1] if i + 1 < len(PROJECTS) else None
@@ -941,6 +977,7 @@ def build_project(i, pj):
 
 
 def build_lab():
+    """Write lab.html: experiments and early work as clip tiles."""
     global DEPTH
     DEPTH = 0
     def labfig(fn, j, lbl, f, d, cap):
@@ -1042,15 +1079,18 @@ def _cv_render(variants, depth, edit=False):
     return _json.loads(r.stdout)
 
 def _cv_font(v):
+    """Google Fonts URL for a résumé's chosen font (mirrors FONTS in assets/cv.js)."""
     fonts = {"Open Sans": "Open+Sans:ital,wght@0,400;0,600;0,700;1,400", "Inter": "Inter:wght@400;500;600;700", "Lato": "Lato:ital,wght@0,400;0,700;1,400",
              "Source Serif 4": "Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400", "Rubik": "Rubik:ital,wght@0,400;0,500;0,700;1,400", "Assistant": "Assistant:wght@400;600;700"}
     return "https://fonts.googleapis.com/css2?family=" + fonts.get(v.get("font"), fonts["Inter"]) + "&display=swap"
 
 def _cv_file(v):
+    """File name base for a résumé's downloads, from the person's name: 'Roee Tal' → 'Roee-Tal-CV'."""
     name = re.sub(r"[^A-Za-z0-9]+", "-", (v.get("person") or {}).get("name") or "CV").strip("-") or "CV"
     return name + "-CV"
 
 def _chrome():
+    """Path of a Chrome/Chromium binary for making résumé PDFs/PNGs (CHROME env var, PATH, or Playwright's copy); None if missing."""
     import shutil, glob, os
     for c in (os.environ.get("CHROME"), shutil.which("google-chrome"), shutil.which("google-chrome-stable"), shutil.which("chromium"), shutil.which("chromium-browser"),
               *sorted(glob.glob(os.path.expanduser("~/.cache/ms-playwright/chromium-*/chrome-linux*/chrome")))):
@@ -1059,6 +1099,7 @@ def _chrome():
     return None
 
 def build_cv():
+    """Write cv.html (the public résumé page with the main résumé, download/share buttons and the data of all public versions) and make their PDFs/PNGs."""
     global DEPTH
     DEPTH = 0
     path = ROOT / "content/cv.json"
