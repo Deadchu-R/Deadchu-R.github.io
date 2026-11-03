@@ -785,6 +785,75 @@ def build_index():
         sub_html = sub_html.replace('href="lab.html', 'href="../lab.html').replace('href="cv.html', 'href="../cv.html')
         sub_html = sub_html.replace('data-edit="assets/', 'data-edit="../assets/')
         (sub / "index.html").write_text(sub_html)
+    sw_html = (
+        '<div class="style-switcher-bar" title="Change style for this preview only (main site unaffected)">'
+        '<span class="style-preview-badge">Preview</span>'
+        '<label for="skinSelect" class="style-switcher-label">🎨 Style:</label>'
+        '<select id="skinSelect" class="style-switcher-select" aria-label="Change preview style">'
+        '<option value="classic">🏛️ Classic</option>'
+        '<option value="apple">🍏 Apple (Minimal)</option>'
+        '<option value="valley">🎬 Robert Valley (Cinematic)</option>'
+        '<option value="avraham">🌌 Avraham (Cyber Space)</option>'
+        '<option value="arcade">🎮 Arcade (Retro)</option>'
+        '<option value="hobbies">🧗‍♂️ Hobbies (Climbing)</option>'
+        '<option value="sketchbook">📓 Sketchbook</option>'
+        '<option value="plain">📄 Plain</option>'
+        '</select></div>'
+    )
+    sw_css = (
+        '<style id="style-switcher-css">'
+        '.style-switcher-bar{display:inline-flex;align-items:center;gap:8px;background:rgba(18,18,24,0.88);'
+        'border:1px solid rgba(255,255,255,0.2);border-radius:980px;padding:4px 12px;margin-left:12px;'
+        'backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);vertical-align:middle;z-index:1000;box-shadow:0 4px 16px rgba(0,0,0,0.4);}'
+        '.style-preview-badge{font-size:10px;background:#2563eb;color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;}'
+        '.style-switcher-label{font-size:12.5px;font-weight:600;color:#f1f5f9;display:flex;align-items:center;gap:4px;margin:0;white-space:nowrap;}'
+        '.style-switcher-select{background:rgba(30,41,59,0.95);color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:980px;padding:4px 10px;font-size:13px;font-weight:600;outline:none;cursor:pointer;transition:all 0.2s;}'
+        '.style-switcher-select:hover,.style-switcher-select:focus{background:#1e293b;border-color:#38bdf8;box-shadow:0 0 10px rgba(56,189,248,0.35);}'
+        '.style-switcher-select option{background:#0f172a;color:#fff;}'
+        '@media (max-width:768px){.style-switcher-bar{padding:3px 8px;margin-left:6px;gap:5px;}.style-preview-badge,.style-switcher-label{display:none;}.style-switcher-select{font-size:11.5px;padding:3px 6px;}}'
+        '</style>'
+    )
+    sw_js = (
+        '<script id="style-previewer-script">'
+        '(function(){'
+        'const sel=document.getElementById("skinSelect");if(!sel)return;'
+        'const isSub=location.pathname.toLowerCase().indexOf("/sitestyles/")>=0;'
+        'const prefix=isSub?"../":"";'
+        'function setSkin(k,save){'
+        'const prev=document.documentElement.dataset.skin||"classic";'
+        'document.documentElement.dataset.skin=k;'
+        'try{window.RTSkins&&window.RTSkins[prev]&&window.RTSkins[prev].off();}catch(e){}'
+        'let link=document.getElementById("skin-css");'
+        'if(k==="classic"){if(link)link.remove();}'
+        'else{if(!link){link=document.createElement("link");link.rel="stylesheet";link.id="skin-css";document.head.append(link);}'
+        'link.href=prefix+"assets/skins/"+k+".css?v="+Date.now();}'
+        'if(!window.RTGuard){const g=document.createElement("script");g.src=prefix+"assets/skins/guard.js";document.head.append(g);}'
+        'const start=()=>{try{window.RTSkins&&window.RTSkins[k]&&window.RTSkins[k].on();}catch(e){}};'
+        'if(k!=="classic"&&!(window.RTSkins&&window.RTSkins[k])){const sc=document.createElement("script");sc.src=prefix+"assets/skins/"+k+".js";sc.onload=start;sc.onerror=()=>sc.remove();document.head.append(sc);}'
+        'else{start();}'
+        'if(save){sessionStorage.setItem("preview_skin",k);const url=new URL(location);url.searchParams.set("style",k);history.replaceState(null,"",url.toString());}'
+        'sel.value=k;'
+        '}'
+        'sel.addEventListener("change",()=>setSkin(sel.value,true));'
+        'const params=new URLSearchParams(location.search);'
+        'const init=params.get("style")||sessionStorage.getItem("preview_skin")||"classic";'
+        'if(init&&sel.querySelector(`option[value="${init}"]`)){setSkin(init,false);}'
+        '})();'
+        '</script>'
+    )
+    ss_page = html.replace('</button>', '</button>' + sw_html, 1)
+    if '</head>' in ss_page:
+        ss_page = ss_page.replace('</head>', sw_css + '\n</head>')
+    if '</body>' in ss_page:
+        ss_page = ss_page.replace('</body>', sw_js + '\n</body>')
+    (ROOT / "SiteStyles.html").write_text(ss_page)
+    sub_ss = ROOT / "SiteStyles"
+    sub_ss.mkdir(exist_ok=True)
+    sub_ss_html = ss_page.replace('href="assets/', 'href="../assets/').replace('src="assets/', 'src="../assets/')
+    sub_ss_html = sub_ss_html.replace('href="index.html', 'href="../index.html').replace('href="gallery.html', 'href="../gallery.html')
+    sub_ss_html = sub_ss_html.replace('href="lab.html', 'href="../lab.html').replace('href="cv.html', 'href="../cv.html')
+    sub_ss_html = sub_ss_html.replace('data-edit="assets/', 'data-edit="../assets/')
+    (sub_ss / "index.html").write_text(sub_ss_html)
 
 
 def tbc_band(back_href, back_label):
