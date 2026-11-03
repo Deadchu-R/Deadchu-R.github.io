@@ -1,6 +1,7 @@
 /* ==========================================================================
    CVEditor - Professional Collaborative CV Studio Stylesheet
    Designed for roeetal.com/CVEditor
+   Enhanced with NovoResume-Style Visual Layout & On-Canvas Controls
    ========================================================================== */
 
 :root {
@@ -57,16 +58,16 @@ body.cve-body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  padding: 0 16px;
   z-index: 100;
   flex-shrink: 0;
-  gap: 12px;
+  gap: 10px;
 }
 
 .cve-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .cve-back-link {
@@ -77,7 +78,7 @@ body.cve-body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 5px 9px;
   border-radius: var(--cve-radius-sm);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--cve-border);
@@ -93,7 +94,7 @@ body.cve-body {
 .cve-title-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .cve-logo-badge {
@@ -111,7 +112,7 @@ body.cve-body {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .cve-doc-select {
@@ -119,12 +120,12 @@ body.cve-body {
   color: #fff;
   border: 1px solid var(--cve-border);
   border-radius: var(--cve-radius-sm);
-  padding: 6px 12px;
-  font-size: 13.5px;
+  padding: 5px 10px;
+  font-size: 13px;
   font-weight: 600;
   outline: none;
   cursor: pointer;
-  max-width: 220px;
+  max-width: 180px;
 }
 
 .cve-doc-select:focus {
@@ -152,6 +153,65 @@ body.cve-body {
   border-color: rgba(255, 255, 255, 0.25);
 }
 
+/* NovoResume Page Meter in Topbar */
+.cve-page-meter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--cve-border);
+  border-radius: var(--cve-radius-full);
+  padding: 4px 10px;
+}
+
+.cve-page-meter-track {
+  width: 48px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cve-page-meter-fill {
+  height: 100%;
+  width: 85%;
+  background: var(--cve-success);
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.cve-page-meter-fill.warn {
+  background: var(--cve-danger);
+}
+
+.cve-page-meter-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+
+.cve-page-meter-text.warn {
+  color: #f87171;
+}
+
+.cve-autofit-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 980px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.cve-autofit-btn:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
 /* Template switcher pills */
 .cve-tpl-pills {
   display: flex;
@@ -166,9 +226,9 @@ body.cve-body {
   background: transparent;
   border: none;
   color: var(--cve-text-muted);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: var(--cve-radius-full);
   cursor: pointer;
   transition: all 0.2s;
@@ -185,36 +245,35 @@ body.cve-body {
   box-shadow: 0 2px 8px var(--cve-accent-glow);
 }
 
-/* Presence and action cluster */
+/* Actions and button clusters */
 .cve-topbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
 .cve-presence-cluster {
   display: flex;
   align-items: center;
-  gap: -6px;
-  margin-right: 6px;
+  gap: 4px;
 }
 
 .cve-presence-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   background: rgba(16, 185, 129, 0.15);
   border: 1px solid rgba(16, 185, 129, 0.3);
   color: #34d399;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: var(--cve-radius-full);
 }
 
 .cve-presence-pulse {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   background: #34d399;
   border-radius: 50%;
   animation: cvePulse 1.8s infinite;
@@ -230,8 +289,8 @@ body.cve-body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  font-size: 13px;
+  padding: 6px 12px;
+  font-size: 12.5px;
   font-weight: 600;
   border-radius: var(--cve-radius-sm);
   border: 1px solid var(--cve-border);
@@ -261,6 +320,17 @@ body.cve-body {
   border-color: var(--cve-accent-hover);
 }
 
+.cve-btn.layout-btn {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.cve-btn.layout-btn:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.55);
+}
+
 .cve-btn.ats-btn {
   background: rgba(245, 158, 11, 0.12);
   border-color: rgba(245, 158, 11, 0.35);
@@ -284,13 +354,12 @@ body.cve-body {
 }
 
 .cve-score-pill {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   padding: 2px 6px;
   border-radius: var(--cve-radius-full);
   background: #f59e0b;
   color: #000;
-  margin-left: 2px;
 }
 
 .cve-score-pill.good {
@@ -301,13 +370,13 @@ body.cve-body {
 .cve-user-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   padding: 4px 10px;
   border-radius: var(--cve-radius-full);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--cve-border);
   color: #fff;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -318,14 +387,14 @@ body.cve-body {
 }
 
 .cve-user-avatar {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6, #ec4899);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   color: #fff;
 }
@@ -353,14 +422,6 @@ body.cve-body {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.cve-sidebar.collapsed {
-  transform: translateX(-100%);
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-}
-
 .cve-sidebar-tabs {
   display: flex;
   border-bottom: 1px solid var(--cve-border);
@@ -371,7 +432,7 @@ body.cve-body {
 .cve-sidebar-tab {
   flex: 1;
   padding: 12px 6px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--cve-text-muted);
   background: transparent;
@@ -382,7 +443,7 @@ body.cve-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .cve-sidebar-tab:hover {
@@ -402,7 +463,7 @@ body.cve-body {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 /* Form controls inside sidebar */
@@ -424,7 +485,7 @@ body.cve-body {
 }
 
 .cve-section-title {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -452,7 +513,7 @@ body.cve-body {
 }
 
 .cve-label {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--cve-text-muted);
   text-transform: uppercase;
@@ -526,39 +587,6 @@ body.cve-body {
 .cve-bullet-del:hover {
   color: var(--cve-danger);
   background: rgba(239, 68, 68, 0.1);
-}
-
-/* Chips list for skills */
-.cve-chips-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.cve-chip-tag {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--cve-border);
-  padding: 3px 8px;
-  border-radius: var(--cve-radius-full);
-  font-size: 12px;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.cve-chip-tag button {
-  background: transparent;
-  border: none;
-  color: var(--cve-text-muted);
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
-}
-
-.cve-chip-tag button:hover {
-  color: var(--cve-danger);
 }
 
 /* Color Palette Picker */
@@ -712,34 +740,274 @@ body.cve-body {
   box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
 }
 
-/* Collaborator live cursor indicator */
-.cve-collab-cursor {
+/* ==========================================================================
+   NovoResume On-Canvas Section & Entry Hover Toolbars
+   ========================================================================== */
+
+.cvdoc .cv-sec {
+  position: relative;
+  transition: box-shadow 0.2s, background 0.2s;
+  border-radius: 4px;
+}
+
+.cvdoc .cv-sec:hover {
+  outline: 1px dashed rgba(37, 99, 235, 0.4);
+}
+
+.cve-sec-toolbar {
   position: absolute;
+  top: -14px;
+  inset-inline-end: 4px;
+  background: rgba(19, 23, 34, 0.94);
+  border: 1px solid var(--cve-border);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+  border-radius: 6px;
+  display: none;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+}
+
+.cvdoc .cv-sec:hover > .cve-sec-toolbar {
+  display: flex;
+}
+
+.cve-tool-btn {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.cve-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.cve-tool-btn.highlight {
+  background: var(--cve-accent);
+  color: #fff;
+}
+
+.cve-tool-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+
+/* Item hover toolbar */
+.cvdoc .cv-item {
+  position: relative;
+  transition: background 0.15s;
+}
+
+.cvdoc .cv-item:hover {
+  background: rgba(56, 189, 248, 0.03);
+  border-radius: 4px;
+}
+
+.cve-item-toolbar {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  background: rgba(19, 23, 34, 0.92);
+  border: 1px solid var(--cve-border);
+  border-radius: 4px;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px;
+  z-index: 40;
+}
+
+.cvdoc .cv-item:hover > .cve-item-toolbar {
+  display: flex;
+}
+
+/* Page Break Divider Line on A4 Sheet */
+.cve-page-break-line {
+  position: absolute;
+  top: 1122.5px; /* exactly 297mm */
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px dashed #ef4444;
+  z-index: 100;
   pointer-events: none;
-  z-index: 1000;
-  transition: all 0.1s ease;
+}
+
+.cve-page-break-label {
+  position: absolute;
+  right: 12px;
+  top: -10px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* NovoResume Column Layout Ratio Options */
+.t-novo.ratio-50-50 .cv-cols {
+  grid-template-columns: 1fr 1fr;
+}
+.t-novo.ratio-35-65 .cv-cols {
+  grid-template-columns: 35% 1fr;
+}
+.t-novo.ratio-65-35 .cv-cols {
+  grid-template-columns: 1fr 35%;
+}
+.t-novo.ratio-1col .cv-cols {
+  display: block;
+}
+
+.t-studio.ratio-35-65 {
+  grid-template-columns: 64mm 1fr;
+}
+.t-studio.ratio-65-35 {
+  grid-template-columns: 1fr 64mm;
+}
+.t-studio.ratio-65-35 .cv-aside {
+  order: 2;
+  border-inline-end: none;
+  border-inline-start: 3px solid var(--a);
+}
+.t-studio.ratio-65-35 .cv-body {
+  order: 1;
+}
+
+/* ==========================================================================
+   Section Organizer Board (NovoResume-style modal)
+   ========================================================================== */
+
+.cve-board-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.cve-board-col {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--cve-border);
+  border-radius: var(--cve-radius);
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 10px;
+  min-height: 280px;
 }
 
-.cve-collab-cursor-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 0 6px rgba(0,0,0,0.4);
-}
-
-.cve-collab-cursor-label {
-  font-size: 10px;
+.cve-board-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--cve-border);
+  padding-bottom: 8px;
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
+}
+
+.cve-board-card {
+  background: var(--cve-surface-card);
+  border: 1px solid var(--cve-border);
+  border-radius: var(--cve-radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.cve-board-card:hover {
+  border-color: var(--cve-border-focus);
+}
+
+.cve-board-card-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cve-board-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.cve-board-card-badge {
+  font-size: 10px;
+  color: var(--cve-text-muted);
+  background: rgba(255, 255, 255, 0.06);
   padding: 2px 6px;
   border-radius: 4px;
-  white-space: nowrap;
-  margin-top: 2px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.cve-board-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Section Library Cards */
+.cve-lib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.cve-lib-card {
+  background: var(--cve-surface-card);
+  border: 1px solid var(--cve-border);
+  border-radius: var(--cve-radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.cve-lib-card:hover {
+  border-color: var(--cve-border-focus);
+  transform: translateY(-2px);
+}
+
+.cve-lib-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cve-lib-card-desc {
+  font-size: 12px;
+  color: var(--cve-text-muted);
+  flex: 1;
+}
+
+.cve-lib-card-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 /* ==========================================================================
@@ -787,7 +1055,7 @@ body.cve-body {
 }
 
 .cve-modal.wide {
-  max-width: 820px;
+  max-width: 840px;
 }
 
 .cve-modal-header {
@@ -845,10 +1113,7 @@ body.cve-body {
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* ==========================================================================
-   ATS & Job Matcher Modal Components
-   ========================================================================== */
-
+/* ATS Rings */
 .cve-score-rings {
   display: flex;
   justify-content: center;
@@ -996,10 +1261,7 @@ body.cve-body {
   margin-top: 2px;
 }
 
-/* ==========================================================================
-   Collaboration & Room UI
-   ========================================================================== */
-
+/* Room UI */
 .cve-room-box {
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--cve-border);
@@ -1018,42 +1280,6 @@ body.cve-body {
   word-break: break-all;
 }
 
-.cve-peer-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.cve-peer-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--cve-border);
-  border-radius: var(--cve-radius-sm);
-}
-
-.cve-peer-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.cve-peer-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10b981;
-}
-
-.cve-peer-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-}
-
 /* ==========================================================================
    Print Styles for Pixel-Perfect A4 PDF Export
    ========================================================================== */
@@ -1070,6 +1296,9 @@ body.cve-body {
   .cve-sidebar,
   .cve-canvas-toolbar,
   .cve-modal-backdrop,
+  .cve-sec-toolbar,
+  .cve-item-toolbar,
+  .cve-page-break-line,
   .cve-collab-cursor {
     display: none !important;
   }
@@ -1113,7 +1342,7 @@ body.cve-body {
   .cve-sidebar {
     width: 320px;
   }
-  .cve-tpl-pills {
+  .cve-tpl-pills, .cve-page-meter-wrap {
     display: none;
   }
 }

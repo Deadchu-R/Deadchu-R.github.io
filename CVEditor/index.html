@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CV Studio & Real-Time Collaboration — Roee Tal</title>
-  <meta name="description" content="Professional collaborative CV editor with ATS scoring, job description scanner, multi-user accounts and Figma-style real-time collaboration.">
+  <meta name="description" content="Professional collaborative CV editor with ATS scoring, NovoResume-style layout management, multi-user accounts and Figma-style real-time collaboration.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rubik:ital,wght@0,400;0,500;0,700;1,400&family=Assistant:wght@400;600;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Lato:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap">
@@ -30,6 +30,15 @@
       </div>
     </div>
 
+    <!-- NovoResume Page Overflow Meter -->
+    <div class="cve-page-meter-wrap" id="pageMeterWrap">
+      <div class="cve-page-meter-track" id="pageMeterTrack">
+        <div class="cve-page-meter-fill" id="pageMeterFill"></div>
+      </div>
+      <span class="cve-page-meter-text" id="pageMeterText">📄 1 Page (85% full)</span>
+      <button type="button" class="cve-autofit-btn" id="autofitBtn" style="display:none;" onclick="window.CVE.autoFitToOnePage()">⚡ Auto-Fit</button>
+    </div>
+
     <!-- Template Switcher Pills -->
     <div class="cve-tpl-pills">
       <button type="button" class="cve-tpl-btn active" data-tpl="ats" onclick="window.CVE.setTemplate('ats')">ATS Pro</button>
@@ -41,6 +50,10 @@
     <div class="cve-topbar-actions">
       <div id="presenceCluster" class="cve-presence-cluster"></div>
 
+      <button type="button" class="cve-btn layout-btn" onclick="window.CVE.openLayoutModal()" title="Arrange columns and layouts">
+        <span>📐 Layout & Columns</span>
+      </button>
+
       <button type="button" class="cve-btn ats-btn" onclick="window.CVE.openAtsModal()">
         <span>🎯 ATS & Job Match</span>
         <span id="atsScoreBadge" class="cve-score-pill">90%</span>
@@ -51,7 +64,7 @@
       </button>
 
       <button type="button" class="cve-btn" onclick="window.CVE.openEmailModal()">
-        <span>✉️ Send via Email</span>
+        <span>✉️ Send</span>
       </button>
 
       <button type="button" class="cve-btn pri" onclick="window.CVE.printPdf()">
@@ -87,7 +100,8 @@
             <button type="button" class="cve-zoom-btn" onclick="window.CVE.setZoom(0.1)">＋</button>
             <button type="button" class="cve-zoom-btn" style="width:auto;padding:0 6px;" onclick="window.CVE.setZoom('fit')">Fit</button>
           </div>
-          <span class="cve-inline-edit-hint">💡 Click any text directly on the sheet to edit live</span>
+          <button type="button" class="cve-btn" style="padding:3px 9px;font-size:11.5px;" onclick="window.CVE.openAddSectionModal()">＋ Add Section</button>
+          <span class="cve-inline-edit-hint">💡 Hover over any section for quick column moves & reordering</span>
         </div>
         <div id="saveStatus" class="cve-save-status">
           <span>✓ Saved locally</span>
@@ -103,6 +117,38 @@
   </main>
 
   <!-- ================= Modals ================= -->
+
+  <!-- Layout & Column Organizer Modal (NovoResume-style) -->
+  <div id="layoutModal" class="cve-modal-backdrop">
+    <div class="cve-modal wide">
+      <div class="cve-modal-header">
+        <div class="cve-modal-title">
+          <span>📐 Visual Layout & Column Organizer</span>
+        </div>
+        <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('layoutModal')">✕</button>
+      </div>
+      <div class="cve-modal-body" id="layoutModalBody"></div>
+      <div class="cve-modal-footer">
+        <button type="button" class="cve-btn pri" onclick="window.CVE.closeModal('layoutModal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Library Picker Modal (NovoResume-style) -->
+  <div id="addSecModal" class="cve-modal-backdrop">
+    <div class="cve-modal wide">
+      <div class="cve-modal-header">
+        <div class="cve-modal-title">
+          <span>＋ Add Section Library</span>
+        </div>
+        <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('addSecModal')">✕</button>
+      </div>
+      <div class="cve-modal-body" id="addSecModalBody"></div>
+      <div class="cve-modal-footer">
+        <button type="button" class="cve-btn" onclick="window.CVE.closeModal('addSecModal')">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ATS Scanner & Job Matcher Modal -->
   <div id="atsModal" class="cve-modal-backdrop">
@@ -191,7 +237,7 @@
           <label class="cve-label">How live sync works:</label>
           <ul style="font-size:12.5px;color:var(--cve-text-muted);margin:8px 0 0 18px;line-height:1.6;">
             <li>Anyone opening this link connects directly to your live session.</li>
-            <li>Typing on either screen synchronizes fields and bullet points instantly.</li>
+            <li>Typing on either screen synchronizes fields, layouts and bullet points instantly.</li>
             <li>Presence badges show who is viewing or editing right now.</li>
           </ul>
         </div>

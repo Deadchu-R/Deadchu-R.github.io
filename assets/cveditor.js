@@ -1,6 +1,7 @@
 /* ==========================================================================
    CVEditor Engine - Standalone Collaborative CV Studio
    Powering roeetal.com/CVEditor
+   Enhanced with NovoResume-Style Visual Layout & On-Canvas Controls
    ========================================================================== */
 
 (function(window, document) {
@@ -68,6 +69,17 @@
     script: "scripted", deploy: "deployed"
   };
   const PAST2PRES = Object.fromEntries(Object.entries(VERBS).map(([a, b]) => [b, a]));
+
+  const SECTION_CATALOG = [
+    { type: "experience", title: "Work Experience", desc: "Jobs, roles, responsibilities and quantified accomplishments." },
+    { type: "projects", title: "Selected Projects", desc: "Games, web applications, portfolio demos and tech stack." },
+    { type: "education", title: "Education & Courses", desc: "Degrees, colleges, academic achievements and relevant coursework." },
+    { type: "skills", title: "Skills & Technologies", desc: "Engines, programming languages, frameworks and tools." },
+    { type: "languages", title: "Languages", desc: "Language proficiencies (Native, Fluent, Professional)." },
+    { type: "list", title: "Certificates & Awards", desc: "Licenses, competition honors, scholarships and badges." },
+    { type: "tags", title: "Interests & Hobbies", desc: "Game jams, tech passions, open source and creative pursuits." },
+    { type: "text", title: "Custom Free Text", desc: "Personal pitch, publication list or custom block." }
+  ];
 
   // --- Helper Functions ---
   const $ = (sel, el = document) => el.querySelector(sel);
@@ -154,6 +166,7 @@
   const ROEE_DEFAULT_CV = {
     label: "Unity · ATS (Main)",
     template: "ats",
+    layout_ratio: "50-50",
     accent: "#1f5fa8",
     font: "Inter",
     density: "normal",
@@ -303,7 +316,6 @@
         if (cur) {
           state.currentUser = JSON.parse(cur);
         } else {
-          // Default to Roee admin session for easy first visit
           state.currentUser = roee;
         }
       } catch (e) {
@@ -323,6 +335,7 @@
           "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
             label: "Unreal · Novo (Two-Column)",
             template: "novo",
+            layout_ratio: "50-50",
             accent: "#7c3aed"
           })
         };
@@ -398,7 +411,6 @@
     logout() {
       sessionStorage.removeItem("cve_cur_user");
       localStorage.removeItem("cve_cur_user");
-      // Fallback to guest or Roee
       state.currentUser = null;
     }
   };
@@ -406,7 +418,6 @@
   function getCurrentCV() {
     const owner = state.vault[state.activeOwnerId] || {};
     if (!owner[state.activeCvId]) {
-      // fallback
       const first = Object.keys(owner)[0];
       if (first) {
         state.activeCvId = first;
@@ -426,7 +437,6 @@
     if (!state.vault[state.activeOwnerId]) state.vault[state.activeOwnerId] = {};
     state.vault[state.activeOwnerId][state.activeCvId] = cv;
     Storage.saveVault();
-    // Broadcast live update if collaborating
     broadcastCollabUpdate(cv);
   }
 
@@ -438,7 +448,7 @@
     }
   }
 
-  // --- Real-time Rendering & Live View ---
+  // --- Real-time Rendering & Live View with NovoResume Controls ---
   function renderA4Sheet() {
     const cv = getCurrentCV();
     const stage = $("#cvSheet");
@@ -450,6 +460,12 @@
     // Render HTML
     stage.innerHTML = window.RTCV.render(norm, state.activeCvId, { edit: true });
 
+    // Apply layout ratio styling to .cvdoc
+    const doc = stage.querySelector(".cvdoc");
+    if (doc) {
+      doc.classList.add("ratio-" + (cv.layout_ratio || "50-50"));
+    }
+
     // Load font
     let fontLink = $("#cv-dynamic-font");
     if (!fontLink) {
@@ -459,6 +475,9 @@
       document.head.appendChild(fontLink);
     }
     fontLink.href = window.RTCV.fontHref(norm);
+
+    // Attach NovoResume-Style On-Canvas Section & Entry Hover Toolbars
+    attachSectionToolbars(stage);
 
     // Apply inline editing listeners to data-e elements
     attachInlineEditors(stage);
@@ -471,6 +490,178 @@
 
     // Re-check ATS score badge
     updateAtsBadge();
+
+    // Check NovoResume Page Overflow Meter
+    setTimeout(updatePageMeter, 80);
+  }
+
+  function attachSectionToolbars(stage) {
+    const cv = getCurrentCV();
+    const secs = stage.querySelectorAll(".cv-sec");
+
+    secs.forEach(secEl => {
+      const parentColEl = secEl.closest(".cv-side, .cv-main");
+      const col = parentColEl && parentColEl.classList.contains("cv-side") ? "side" : "main";
+      const idx = parseInt(secEl.getAttribute("data-i"), 10);
+      const colList = cv[col] || [];
+
+      // Avoid duplicate toolbars
+      const existing = secEl.querySelector(":scope > .cve-sec-toolbar");
+      if (existing) existing.remove();
+
+      const bar = document.createElement("div");
+      bar.className = "cve-sec-toolbar";
+
+      // ⇄ Switch Column Button (Move section from Left/Side to Right/Main or vice-versa)
+      const otherColLabel = col === "main" ? "Side" : "Main";
+      const switchBtn = document.createElement("button");
+      switchBtn.type = "button";
+      switchBtn.className = "cve-tool-btn highlight";
+      switchBtn.innerHTML = `⇄ ${otherColLabel} Col`;
+      switchBtn.title = `Move to ${otherColLabel} Column`;
+      switchBtn.onclick = (e) => {
+        e.stopPropagation();
+        window.CVE.moveSectionColumn(col, idx);
+      };
+      bar.appendChild(switchBtn);
+
+      // ▲ Reorder Up
+      if (idx > 0) {
+        const upBtn = document.createElement("button");
+        upBtn.type = "button";
+        upBtn.className = "cve-tool-btn";
+        upBtn.innerHTML = "▲";
+        upBtn.title = "Move Up";
+        upBtn.onclick = (e) => {
+          e.stopPropagation();
+          window.CVE.reorderSection(col, idx, -1);
+        };
+        bar.appendChild(upBtn);
+      }
+
+      // ▼ Reorder Down
+      if (idx < colList.length - 1) {
+        const downBtn = document.createElement("button");
+        downBtn.type = "button";
+        downBtn.className = "cve-tool-btn";
+        downBtn.innerHTML = "▼";
+        downBtn.title = "Move Down";
+        downBtn.onclick = (e) => {
+          e.stopPropagation();
+          window.CVE.reorderSection(col, idx, 1);
+        };
+        bar.appendChild(downBtn);
+      }
+
+      // ＋ Entry Button
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "cve-tool-btn";
+      addBtn.innerHTML = "＋ Entry";
+      addBtn.title = "Add entry to this section";
+      addBtn.onclick = (e) => {
+        e.stopPropagation();
+        window.CVE.addEntry(`${col}.${idx}`);
+      };
+      bar.appendChild(addBtn);
+
+      // 🗑 Delete Section
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "cve-tool-btn danger";
+      delBtn.innerHTML = "🗑";
+      delBtn.title = "Delete Section";
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        window.CVE.removeSection(`${col}.${idx}`);
+      };
+      bar.appendChild(delBtn);
+
+      secEl.prepend(bar);
+    });
+
+    // Attach Hover Toolbars to Items (.cv-item)
+    const items = stage.querySelectorAll(".cv-item");
+    items.forEach(itemEl => {
+      const existing = itemEl.querySelector(":scope > .cve-item-toolbar");
+      if (existing) existing.remove();
+
+      const parentSec = itemEl.closest(".cv-sec");
+      if (!parentSec) return;
+      const parentColEl = parentSec.closest(".cv-side, .cv-main");
+      const col = parentColEl && parentColEl.classList.contains("cv-side") ? "side" : "main";
+      const secIdx = parseInt(parentSec.getAttribute("data-i"), 10);
+      const itemIdx = parseInt(itemEl.getAttribute("data-i"), 10);
+      const itemPath = `${col}.${secIdx}.items.${itemIdx}`;
+
+      const itemBar = document.createElement("div");
+      itemBar.className = "cve-item-toolbar";
+
+      if (parentSec.classList.contains("cv-experience") || parentSec.classList.contains("cv-projects")) {
+        const bulBtn = document.createElement("button");
+        bulBtn.type = "button";
+        bulBtn.className = "cve-tool-btn";
+        bulBtn.innerHTML = "＋ Bullet";
+        bulBtn.title = "Add bullet point";
+        bulBtn.onclick = (e) => {
+          e.stopPropagation();
+          window.CVE.addBullet(itemPath);
+        };
+        itemBar.appendChild(bulBtn);
+      }
+
+      const delItem = document.createElement("button");
+      delItem.type = "button";
+      delItem.className = "cve-tool-btn danger";
+      delItem.innerHTML = "✕";
+      delItem.title = "Delete Entry";
+      delItem.onclick = (e) => {
+        e.stopPropagation();
+        window.CVE.removeEntry(`${col}.${secIdx}`, itemIdx);
+      };
+      itemBar.appendChild(delItem);
+
+      itemEl.prepend(itemBar);
+    });
+  }
+
+  function updatePageMeter() {
+    const doc = $("#cvSheet .cvdoc");
+    const track = $("#pageMeterTrack");
+    const fill = $("#pageMeterFill");
+    const text = $("#pageMeterText");
+    const btn = $("#autofitBtn");
+    if (!doc || !fill || !text) return;
+
+    const z = state.zoom || 1;
+    const h = doc.offsetHeight || (doc.getBoundingClientRect().height / z);
+    const a4H = 1122.5; // 297mm in pixels at 96 DPI
+
+    const pct = Math.min(250, Math.round((h / a4H) * 100));
+
+    let breakLine = doc.querySelector(".cve-page-break-line");
+
+    if (h <= a4H + 6) {
+      fill.style.width = Math.min(100, pct) + "%";
+      fill.classList.remove("warn");
+      text.className = "cve-page-meter-text";
+      text.textContent = `📄 1 Page (${pct}% full)`;
+      if (btn) btn.style.display = "none";
+      if (breakLine) breakLine.remove();
+    } else {
+      fill.style.width = "100%";
+      fill.classList.add("warn");
+      text.className = "cve-page-meter-text warn";
+      text.textContent = `⚠️ 2 Pages (${pct}% - Overfull)`;
+      if (btn) btn.style.display = "inline-flex";
+
+      if (!breakLine) {
+        breakLine = document.createElement("div");
+        breakLine.className = "cve-page-break-line";
+        breakLine.innerHTML = `<span class="cve-page-break-label">Page 1 End (297mm)</span>`;
+        doc.appendChild(breakLine);
+      }
+    }
   }
 
   function attachInlineEditors(stage) {
@@ -482,7 +673,6 @@
       el.addEventListener("input", () => {
         const path = el.getAttribute("data-e");
         if (!path) return;
-        // strip out document prefix e.g. "cv:variants.id."
         const cleanPath = path.replace(/^[^:]+:variants\.[^.]+\./, "");
         const val = el.innerText.trim();
 
@@ -490,9 +680,9 @@
         setByPath(cv, cleanPath, val);
         saveCurrentCV(cv);
 
-        // Update corresponding sidebar field without re-rendering entire sheet
         syncSidebarField(cleanPath, val);
         updateAtsBadge();
+        updatePageMeter();
         broadcastPresence(cleanPath);
       });
 
@@ -545,6 +735,16 @@
     const P = cv.person || {};
 
     let html = `
+      <!-- Quick Layout & Add Action Banner -->
+      <div style="display:flex;gap:8px;margin-bottom:4px;">
+        <button type="button" class="cve-btn layout-btn" style="flex:1;justify-content:center;" onclick="window.CVE.openLayoutModal()">
+          <span>📐 Layout & Sections</span>
+        </button>
+        <button type="button" class="cve-btn pri" style="flex:1;justify-content:center;" onclick="window.CVE.openAddSectionModal()">
+          <span>＋ Add Section</span>
+        </button>
+      </div>
+
       <!-- Personal Details -->
       <div class="cve-section-card">
         <div class="cve-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
@@ -594,8 +794,12 @@
       html += `
         <div class="cve-section-card">
           <div class="cve-section-header">
-            <span class="cve-section-title">📂 ${esc(sec.title || sec.type)}</span>
+            <span class="cve-section-title">
+              <span style="font-size:10px;background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px;text-transform:uppercase;">${col}</span>
+              ${esc(sec.title || sec.type)}
+            </span>
             <div class="cve-section-actions">
+              <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.moveSectionColumn('${col}', ${colIdx})" title="Move to other column">⇄</button>
               <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.addEntry('${basePath}')" title="Add Item">＋</button>
               <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.removeSection('${basePath}')" title="Delete Section">✕</button>
             </div>
@@ -689,22 +893,6 @@
       html += `</div></div>`;
     });
 
-    // Add Section button
-    html += `
-      <div style="display:flex;gap:8px;padding-top:8px;">
-        <select id="newSecType" class="cve-select" style="flex:1;">
-          <option value="experience">💼 Experience</option>
-          <option value="projects">🎮 Projects</option>
-          <option value="skills">⚡ Skills</option>
-          <option value="education">🎓 Education</option>
-          <option value="languages">🌐 Languages</option>
-          <option value="list">🏆 Certifications / Awards</option>
-          <option value="text">📝 Custom Text</option>
-        </select>
-        <button type="button" class="cve-btn pri" onclick="window.CVE.addSection(document.getElementById('newSecType').value)">＋ Add Section</button>
-      </div>
-    `;
-
     body.innerHTML = html;
     attachSidebarInputs(body);
   }
@@ -717,13 +905,33 @@
     body.innerHTML = `
       <div class="cve-section-card">
         <div class="cve-section-header">
-          <span class="cve-section-title">🎨 Layout & Template</span>
+          <span class="cve-section-title">🎨 Layout & Column Options</span>
         </div>
         <div class="cve-section-body">
           <div class="cve-form-group">
-            <label class="cve-label">Template</label>
+            <label class="cve-label">Column Layout Ratio</label>
+            <select class="cve-select" onchange="window.CVE.setLayoutRatio(this.value)">
+              <option value="50-50" ${(cv.layout_ratio || "50-50") === "50-50" ? "selected" : ""}>50 / 50 Balanced Split (Novo Standard)</option>
+              <option value="35-65" {cv.layout_ratio === "35-65" ? "selected" : ""}>35 / 65 Left Sidebar (Studio Style)</option>
+              <option value="65-35" ${cv.layout_ratio === "65-35" ? "selected" : ""}>65 / 35 Right Sidebar (Modern)</option>
+              <option value="1-col" ${cv.layout_ratio === "1-col" ? "selected" : ""}>1-Column Full Width (ATS Classic)</option>
+            </select>
+          </div>
+          <button type="button" class="cve-btn layout-btn" style="justify-content:center;margin-top:2px;" onclick="window.CVE.openLayoutModal()">
+            📐 Open Visual Column Organizer
+          </button>
+        </div>
+      </div>
+
+      <div class="cve-section-card">
+        <div class="cve-section-header">
+          <span class="cve-section-title">🖌 Styling & Appearance</span>
+        </div>
+        <div class="cve-section-body">
+          <div class="cve-form-group">
+            <label class="cve-label">Template Preset</label>
             <select class="cve-select" data-bind="template" onchange="window.CVE.setTemplate(this.value)">
-              <option value="ats" ${cv.template === "ats" ? "selected" : ""}>ATS Pro (1-Column, Pure ATS Friendly)</option>
+              <option value="ats" ${cv.template === "ats" ? "selected" : ""}>ATS Pro (1-Column, High Parsing Accuracy)</option>
               <option value="novo" ${cv.template === "novo" ? "selected" : ""}>Novo (2-Column, Modern & Balanced)</option>
               <option value="studio" ${cv.template === "studio" ? "selected" : ""}>Studio (Colored Sidebar)</option>
             </select>
@@ -744,7 +952,7 @@
             </select>
           </div>
           <div class="cve-form-group">
-            <label class="cve-label">Density / Spacing</label>
+            <label class="cve-label">Density / Line Spacing</label>
             <select class="cve-select" data-bind="density" onchange="window.CVE.setDensity(this.value)">
               <option value="compact" ${cv.density === "compact" ? "selected" : ""}>Compact (Fit More on 1 Page)</option>
               <option value="normal" ${cv.density === "normal" ? "selected" : ""}>Normal</option>
@@ -806,7 +1014,7 @@
               <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:6px;background:${state.activeCvId === id ? "rgba(37,99,235,0.2)" : "rgba(255,255,255,0.03)"};border:1px solid ${state.activeCvId === id ? "var(--cve-accent)" : "var(--cve-border)"};">
                 <div>
                   <div style="font-weight:700;font-size:13px;color:#fff;">${esc(item.label || id)}</div>
-                  <div style="font-size:11px;color:var(--cve-text-muted);text-transform:uppercase;">${esc(item.template)} · ${(item.main || []).length} sections</div>
+                  <div style="font-size:11px;color:var(--cve-text-muted);text-transform:uppercase;">${esc(item.template)} · ${(item.main || []).length + (item.side || []).length} sections</div>
                 </div>
                 <div style="display:flex;gap:4px;">
                   <button type="button" class="cve-btn" style="padding:3px 8px;font-size:11.5px;" onclick="window.CVE.switchCV('${id}')">${state.activeCvId === id ? "Active" : "Open"}</button>
@@ -820,7 +1028,6 @@
       </div>
     `;
 
-    // If Roee is logged in, show Friends' Vaults
     if (isRoee) {
       const friends = state.allUsers.filter(u => u.id !== "roee");
       html += `
@@ -884,7 +1091,6 @@
     const cv = getCurrentCV();
     const myCvs = state.vault[state.activeOwnerId] || {};
 
-    // Select dropdown
     const sel = $("#docSelect");
     if (sel) {
       sel.innerHTML = Object.entries(myCvs).map(([id, item]) => `
@@ -892,12 +1098,10 @@
       `).join("");
     }
 
-    // Template pills
     $$(".cve-tpl-btn").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-tpl") === cv.template);
     });
 
-    // User button
     const userBtn = $("#userBtn");
     if (userBtn) {
       const u = state.currentUser;
@@ -968,7 +1172,6 @@
     url = url.trim();
     if (!/^https?:\/\//i.test(url)) url = "https://" + url;
 
-    // Headless reader proxy (r.jina.ai)
     try {
       const res = await fetch("https://r.jina.ai/" + url, { headers: { "Accept": "text/plain" } });
       if (res.ok) {
@@ -979,7 +1182,6 @@
       }
     } catch (e) {}
 
-    // Fallback CORS proxy
     try {
       const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
       const res = await fetch(proxy);
@@ -1018,7 +1220,6 @@
 
     const overallScore = jt.length > 60 ? Math.round(kwScore * 0.55 + formatScore * 0.45) : formatScore;
 
-    // Update Score Rings
     const ringOverall = $("#ringOverall");
     const ringFormat = $("#ringFormat");
     const ringKeywords = $("#ringKeywords");
@@ -1039,7 +1240,6 @@
       ringKeywords.querySelector(".cve-circular-progress-val").textContent = jt.length > 60 ? kwScore + "%" : "—";
     }
 
-    // Render Keywords
     const kwContainer = $("#atsKwContainer");
     if (kwContainer) {
       if (jt.length > 60) {
@@ -1064,7 +1264,6 @@
       }
     }
 
-    // Render Checklist
     const chkContainer = $("#atsChecklistContainer");
     if (chkContainer) {
       chkContainer.innerHTML = checks.map(c => `
@@ -1083,7 +1282,6 @@
   function initCollab(roomId) {
     if (state.peer) return;
 
-    // Load PeerJS dynamically
     const script = document.createElement("script");
     script.src = PEERJS_CDN;
     script.onload = () => {
@@ -1098,15 +1296,12 @@
         updateCollabModalUI();
 
         if (roomId) {
-          // Join existing room
           connectToHost(roomId);
         }
       });
 
-      // Handle incoming connections (host side)
       state.peer.on("connection", conn => {
         setupConnection(conn);
-        // Send initial CV snapshot to new collaborator
         conn.on("open", () => {
           conn.send({
             type: "init_cv",
@@ -1135,7 +1330,6 @@
     conn.on("data", data => {
       if (!data) return;
       if (data.type === "init_cv" || data.type === "sync_cv") {
-        // Apply remote CV changes
         if (data.cv) {
           const cv = getCurrentCV();
           Object.assign(cv, data.cv);
@@ -1213,6 +1407,111 @@
     }
   }
 
+  // --- Layout Organizer Modal Renderer ---
+  function renderLayoutModalBody() {
+    const cv = getCurrentCV();
+    const body = $("#layoutModalBody");
+    if (!body) return;
+
+    const ratio = cv.layout_ratio || "50-50";
+
+    let html = `
+      <!-- Column ratio presets -->
+      <div class="cve-form-group">
+        <label class="cve-label">Column Ratio Layout Preset</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+          <button type="button" class="cve-btn ${ratio === "50-50" ? "pri" : ""}" onclick="window.CVE.setLayoutRatio('50-50')">50 / 50 Balanced (Novo)</button>
+          <button type="button" class="cve-btn ${ratio === "35-65" ? "pri" : ""}" onclick="window.CVE.setLayoutRatio('35-65')">35 / 65 Left Sidebar</button>
+          <button type="button" class="cve-btn ${ratio === "65-35" ? "pri" : ""}" onclick="window.CVE.setLayoutRatio('65-35')">65 / 35 Right Sidebar</button>
+          <button type="button" class="cve-btn ${ratio === "1-col" ? "pri" : ""}" onclick="window.CVE.setLayoutRatio('1-col')">100% Single Col (ATS)</button>
+        </div>
+      </div>
+
+      <!-- Two-Column Drag & Reorder Board -->
+      <div class="cve-board-grid">
+        <!-- Left / Side Column -->
+        <div class="cve-board-col">
+          <div class="cve-board-col-header">
+            <span>Left Column (Side)</span>
+            <span style="font-size:11px;color:var(--cve-text-muted);">${(cv.side || []).length} sections</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex:1;">
+            ${(cv.side || []).map((sec, idx) => `
+              <div class="cve-board-card">
+                <div class="cve-board-card-info">
+                  <span class="cve-board-card-title">${esc(sec.title || sec.type)}</span>
+                  <span class="cve-board-card-badge">${(sec.items || []).length} items</span>
+                </div>
+                <div class="cve-board-card-actions">
+                  <button type="button" class="cve-icon-btn-sm" title="Move to Right Column" onclick="window.CVE.moveSectionColumn('side', ${idx})">→ Main</button>
+                  ${idx > 0 ? `<button type="button" class="cve-icon-btn-sm" title="Move Up" onclick="window.CVE.reorderSection('side', ${idx}, -1)">▲</button>` : ""}
+                  ${idx < (cv.side || []).length - 1 ? `<button type="button" class="cve-icon-btn-sm" title="Move Down" onclick="window.CVE.reorderSection('side', ${idx}, 1)">▼</button>` : ""}
+                  <button type="button" class="cve-icon-btn-sm" title="Delete Section" onclick="window.CVE.removeSection('side.${idx}')">✕</button>
+                </div>
+              </div>
+            `).join("")}
+            ${(!cv.side || cv.side.length === 0) ? `<p style="font-size:12px;color:var(--cve-text-muted);font-style:italic;padding:12px 0;">No sections in left column. Click below to add one!</p>` : ""}
+          </div>
+          <button type="button" class="cve-btn" style="width:100%;justify-content:center;margin-top:auto;" onclick="window.CVE.openAddSectionModal('side')">＋ Add Section Here</button>
+        </div>
+
+        <!-- Right / Main Column -->
+        <div class="cve-board-col">
+          <div class="cve-board-col-header">
+            <span>Right Column (Main)</span>
+            <span style="font-size:11px;color:var(--cve-text-muted);">${(cv.main || []).length} sections</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex:1;">
+            ${(cv.main || []).map((sec, idx) => `
+              <div class="cve-board-card">
+                <div class="cve-board-card-info">
+                  <span class="cve-board-card-title">${esc(sec.title || sec.type)}</span>
+                  <span class="cve-board-card-badge">${(sec.items || []).length} items</span>
+                </div>
+                <div class="cve-board-card-actions">
+                  <button type="button" class="cve-icon-btn-sm" title="Move to Left Column" onclick="window.CVE.moveSectionColumn('main', ${idx})">← Side</button>
+                  ${idx > 0 ? `<button type="button" class="cve-icon-btn-sm" title="Move Up" onclick="window.CVE.reorderSection('main', ${idx}, -1)">▲</button>` : ""}
+                  ${idx < (cv.main || []).length - 1 ? `<button type="button" class="cve-icon-btn-sm" title="Move Down" onclick="window.CVE.reorderSection('main', ${idx}, 1)">▼</button>` : ""}
+                  <button type="button" class="cve-icon-btn-sm" title="Delete Section" onclick="window.CVE.removeSection('main.${idx}')">✕</button>
+                </div>
+              </div>
+            `).join("")}
+            ${(!cv.main || cv.main.length === 0) ? `<p style="font-size:12px;color:var(--cve-text-muted);font-style:italic;padding:12px 0;">No sections in right column. Click below to add one!</p>` : ""}
+          </div>
+          <button type="button" class="cve-btn" style="width:100%;justify-content:center;margin-top:auto;" onclick="window.CVE.openAddSectionModal('main')">＋ Add Section Here</button>
+        </div>
+      </div>
+    `;
+
+    body.innerHTML = html;
+  }
+
+  // --- Section Library Modal Renderer ---
+  function renderAddSectionModalBody(targetCol) {
+    const body = $("#addSecModalBody");
+    if (!body) return;
+
+    let html = `
+      <p style="font-size:13px;color:var(--cve-text-muted);">
+        Choose a section to add to your résumé. You can position it in either the Left or Right column:
+      </p>
+      <div class="cve-lib-grid">
+        ${SECTION_CATALOG.map(s => `
+          <div class="cve-lib-card">
+            <span class="cve-lib-card-title">${esc(s.title)}</span>
+            <span class="cve-lib-card-desc">${esc(s.desc)}</span>
+            <div class="cve-lib-card-btns">
+              <button type="button" class="cve-btn ${targetCol === "side" ? "pri" : ""}" onclick="window.CVE.addSectionToCol('${s.type}', 'side')">＋ Left Col</button>
+              <button type="button" class="cve-btn ${targetCol === "main" ? "pri" : ""}" onclick="window.CVE.addSectionToCol('${s.type}', 'main')">＋ Right Col</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+
+    body.innerHTML = html;
+  }
+
   // --- Public API for UI Event Handlers ---
   window.CVE = {
     init() {
@@ -1221,7 +1520,6 @@
       renderSidebar();
       setFitZoom();
 
-      // Check URL for room
       const params = new URLSearchParams(location.search);
       const room = params.get("room");
       if (room) {
@@ -1230,6 +1528,7 @@
 
       window.addEventListener("resize", () => {
         if (state.zoom === 1.0) setFitZoom();
+        updatePageMeter();
       });
     },
 
@@ -1254,6 +1553,32 @@
       saveCurrentCV(cv);
       renderA4Sheet();
       renderSidebar();
+    },
+
+    setLayoutRatio(ratio) {
+      const cv = getCurrentCV();
+      cv.layout_ratio = ratio;
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+      renderLayoutModalBody();
+    },
+
+    autoFitToOnePage() {
+      const cv = getCurrentCV();
+      cv.density = "compact";
+      for (const c of ["main", "side"]) {
+        (cv[c] || []).forEach(sec => {
+          (sec.items || []).forEach(it => {
+            if (it.bullets) it.bullets = it.bullets.filter(b => b && b.trim());
+          });
+        });
+      }
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+      setTimeout(updatePageMeter, 100);
+      alert("Layout adjusted to Compact density to fit onto 1 single page!");
     },
 
     setAccent(color) {
@@ -1342,18 +1667,53 @@
       this.switchCV(next);
     },
 
-    addSection(type) {
+    moveSectionColumn(col, idx) {
       const cv = getCurrentCV();
-      const newSec = window.RTCV ? window.RTCV.newSection(type) : { type, title: type, items: [] };
-      if (!cv.main) cv.main = [];
-      cv.main.push(newSec);
+      if (!cv[col] || !cv[col][idx]) return;
+      const otherCol = col === "main" ? "side" : "main";
+      if (!cv[otherCol]) cv[otherCol] = [];
+      const sec = cv[col].splice(idx, 1)[0];
+      cv[otherCol].push(sec);
       saveCurrentCV(cv);
       renderA4Sheet();
       renderSidebar();
+      renderLayoutModalBody();
+    },
+
+    reorderSection(col, idx, dir) {
+      const cv = getCurrentCV();
+      const list = cv[col];
+      if (!list) return;
+      const target = idx + dir;
+      if (target < 0 || target >= list.length) return;
+      const temp = list[idx];
+      list[idx] = list[target];
+      list[target] = temp;
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+      renderLayoutModalBody();
+    },
+
+    addSection(type) {
+      this.addSectionToCol(type, "main");
+    },
+
+    addSectionToCol(type, targetCol) {
+      const cv = getCurrentCV();
+      const newSec = window.RTCV ? window.RTCV.newSection(type) : { type, title: type, items: [] };
+      const col = targetCol === "side" ? "side" : "main";
+      if (!cv[col]) cv[col] = [];
+      cv[col].push(newSec);
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+      this.closeModal("addSecModal");
+      renderLayoutModalBody();
     },
 
     removeSection(path) {
-      if (!confirm("Remove this entire section?")) return;
+      if (!confirm("Remove this section?")) return;
       const cv = getCurrentCV();
       const parts = path.split(".");
       const col = parts[0];
@@ -1363,6 +1723,7 @@
         saveCurrentCV(cv);
         renderA4Sheet();
         renderSidebar();
+        renderLayoutModalBody();
       }
     },
 
@@ -1426,7 +1787,7 @@
       const allSecs = (cv.main || []).concat(cv.side || []);
       let skillSec = allSecs.find(s => s.type === "skills");
       if (!skillSec) {
-        this.addSection("skills");
+        this.addSectionToCol("skills", "main");
         skillSec = (cv.main || []).concat(cv.side || []).find(s => s.type === "skills");
       }
       if (skillSec && skillSec.items && skillSec.items[0]) {
@@ -1442,6 +1803,22 @@
     },
 
     // --- Modals ---
+    openLayoutModal() {
+      const m = $("#layoutModal");
+      if (m) {
+        m.classList.add("open");
+        renderLayoutModalBody();
+      }
+    },
+
+    openAddSectionModal(targetCol = "main") {
+      const m = $("#addSecModal");
+      if (m) {
+        m.classList.add("open");
+        renderAddSectionModalBody(targetCol);
+      }
+    },
+
     openAtsModal() {
       const m = $("#atsModal");
       if (m) {
