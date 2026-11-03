@@ -42,8 +42,8 @@ These work with every provider. Words in Hebrew or English also work ("שנה צ
 | `/color <accent\|bg\|text> <color>` | Color of the selected section (or site); color words → hex by `parseColorVal`/`COLOR_MAP` |
 | `/add <type> [topic]` | Adds a custom section (`faq`, `stats`, `cards`, `banner`, `quote`, `cta`, `steps`…). With a topic it is built from web search (`buildFullFluffySection`) |
 | `/remove <cs_id>` / "remove last section" | Deletes a custom section |
-| `/width full\|contained`, `/align center\|left` | Layout of the selected section. (`/pad …` is listed in /help but **not implemented yet**) |
-| `/title …`, `/kicker …` | Text of the selected section. (`/text …` is listed in /help but **not implemented yet**) |
+| `/width full\|contained`, `/align center\|left`, `/pad compact\|normal\|spacious` | Layout of the selected custom section (`ריווח רחב`, `רוחב מלא`, `יישר למרכז` also work). If no section you added is selected, it asks you to select one |
+| `/title …`, `/kicker …`, `/text …` | Text of the selected text field or custom section; `/title` and `/kicker` fall back to the hero |
 | `/css <rules>` | Appends to `site:custom_css` |
 
 ## 4. Gemini tools (the JSON protocol)

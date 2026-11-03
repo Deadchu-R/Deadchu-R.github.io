@@ -8,6 +8,9 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-03
 
+### Fixes
+- **AI:** rule commands `/width`, `/align`, `/title`, `/kicker` and section colors wrote to a wrong path (`content/site.json:…`) and silently did nothing; now they change the selected section and redraw it. Added `/pad` and `/text` (they were in /help but missing). "כותרת קטנה" now goes to the kicker, not the title. Your message no longer shows twice in the chat with Gemini/Hybrid.
+
 ### Docs
 - **Docs:** AGENTS.md (entry point for AI agents), README, and `docs/` with ARCHITECTURE, CONTENT, EDITOR, AI and GLOSSARY. Also this changelog, a generated commit log (`tools/commit_log.py`), a comment on every JS function and docstrings for every Python function. No behavior changes. Stray `top360.png` removed; `.gitignore` extended.
 

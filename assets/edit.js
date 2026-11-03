@@ -2197,7 +2197,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     return COLOR_MAP[s]||null;
   }
 
-  // The rule engine: run /commands (/help, /skin, /color, /add, /remove, /width, /align, /title, /kicker, /css) without any AI.
+  // The rule engine: run /commands (/help, /skin, /color, /add, /remove, /width, /align, /pad, /title, /kicker, /text, /css) without any AI.
   async function executeRuleCommand(raw){
     const text=(raw||"").trim();
     if(!text)return {handled:false};
@@ -2212,8 +2212,8 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
 • חיפוש ברשת וסקשן מלא: /search <נושא> | /full <נושא> (למשל: /full Unity Multiplayer, /search Unreal 5 Nanite)
 • סקשנים: /add faq (או: add stats, add cards, add banner, add quote, add cta, add steps)
 • מחיקה: /remove cs_... (או: מחק סקשן אחרון / מחק סקשן)
-• פריסה: /width full (רוחב מלא/רגיל) | /align center (יישר למרכז)
-• טקסט: /title כותרת חדשה (או: שנה כותרת ל...) | /kicker קיקר חדש
+• פריסה: /width full (רוחב מלא/רגיל) | /align center (יישר למרכז) | /pad spacious (ריווח רחב/רגיל/צפוף)
+• טקסט: /title כותרת חדשה (או: שנה כותרת ל...) | /kicker קיקר חדש | /text טקסט חדש
 • עיצוב אישי: /css .custom { color: red; }
 • ביטול: /undo (איפוס שינויים שלא פורסמו)
 💡 במצב Hybrid: פקודות אלו רצות מיידית ב-0ms ללא עלות AI!` :
@@ -2307,7 +2307,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
         const sec=current&&current.closest('[data-ok="site:section_order"]');
         let targetPath=`site:${prop}`;
         if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_")){
-          const csBase=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}`;
+          const csBase=`site:custom_sections.${sec.dataset.k.slice(3)}`;
           targetPath=`${csBase}.${prop}`;
         }
         const res=applyValue(targetPath,parsedHex);
@@ -2395,48 +2395,54 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       return {handled:true};
     }
 
-    // 7. WIDTH / ALIGN / PADDING (Layout settings)
+    // 7. WIDTH / ALIGN / PADDING (Layout settings) — they change the selected section that the owner added (cs_…)
+    // The custom section (cs_…) around the selection, or null.
+    const csSel=()=>{const sec=current&&current.closest&&current.closest('[data-ok="site:section_order"]');return sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_")?sec.dataset.k.slice(3):null};
+    // Set one field of the selected custom section, save it and redraw the section. False when no such section is selected.
+    const csSet=(key,val)=>{const id=csSel();if(!id||!get(`site:custom_sections.${id}`))return false;const p=`site:custom_sections.${id}.${key}`;set(p,val);csChanged(id,key,val);aiSay("act",`✓ set_value ${p} ${JSON.stringify(val)}`);return true};
+    const needSec=()=>{aiSay("ai",isHeb?"קודם בחר (לחץ על) סקשן שהוספת, ואז שלח שוב את הפקודה.":"First select (tap) a section you added, then send the command again.");return {handled:true}};
+
     let widthMatch=text.match(/^\/width\s+(full|contained)/i)||
                    text.match(/(?:רוחב|width)\s*(?:ל|to|=)?\s*(מלא|רגיל|מקצה לקצה|full|contained)/i);
     if(widthMatch){
       const val=/מלא|מקצה לקצה|full/i.test(widthMatch[1])?"full":"contained";
-      const sec=current&&current.closest('[data-ok="site:section_order"]');
-      if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_")){
-        const p=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}.width`;
-        applyValue(p,val);
-        aiSay("act",`✓ set_value ${p} ${val}`);
-        aiSay("ai",isHeb?`רוחב הסקשן הוגדר ל-${val}.`:`Set section width to ${val}.`);
-        return {handled:true};
-      }
+      if(!csSet("width",val))return needSec();
+      aiSay("ai",isHeb?`רוחב הסקשן הוגדר ל-${val}.`:`Set section width to ${val}.`);
+      return {handled:true};
     }
 
     let alignMatch=text.match(/^\/align\s+(center|left)/i)||
                    text.match(/(?:יישור|יישר|align)\s*(?:ל|to|=)?\s*(מרכז|שמאל|למרכז|לשמאל|center|left)/i);
     if(alignMatch){
       const val=/מרכז|center/i.test(alignMatch[1])?"center":"left";
-      const sec=current&&current.closest('[data-ok="site:section_order"]');
-      if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_")){
-        const p=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}.align`;
-        applyValue(p,val);
-        aiSay("act",`✓ set_value ${p} ${val}`);
-        aiSay("ai",isHeb?`יישור הסקשן הוגדר ל-${val}.`:`Set section alignment to ${val}.`);
-        return {handled:true};
-      }
+      if(!csSet("align",val))return needSec();
+      aiSay("ai",isHeb?`יישור הסקשן הוגדר ל-${val}.`:`Set section alignment to ${val}.`);
+      return {handled:true};
     }
 
-    // 8. TITLE / KICKER DIRECT UPDATES
+    let padMatch=text.match(/^\/pad\s+(compact|normal|spacious)/i)||
+                 text.match(/(?:ריווח|מרווח|padding|spacing)\s*(?:ל|to|=)?\s*(צפוף|קטן|רגיל|רחב|גדול|מרווח|compact|normal|spacious)/i);
+    if(padMatch){
+      const w=padMatch[1];
+      const val=/צפוף|קטן|compact/i.test(w)?"compact":/רחב|גדול|מרווח|spacious/i.test(w)?"spacious":"normal";
+      if(!csSet("pad",val))return needSec();
+      aiSay("ai",isHeb?`הריווח של הסקשן הוגדר ל-${val}.`:`Set section spacing to ${val}.`);
+      return {handled:true};
+    }
+
+    // 8. TITLE / KICKER / TEXT DIRECT UPDATES
+    // Put text into the selected text element when it is that kind of field, else into the selected custom section.
+    const setText=(key,val,fallback)=>{
+      if(current&&current.matches&&current.matches(`[data-e$=".${key}"],[data-e$="_${key}"]`)){const p=current.dataset.e;applyValue(p,val);aiSay("act",`✓ set_value ${p} "${val}"`);return true}
+      if(csSet(key,val))return true;
+      if(fallback&&get(fallback)!==undefined){applyValue(fallback,val);aiSay("act",`✓ set_value ${fallback} "${val}"`);return true}
+      return false;
+    };
     let titleMatch=text.match(/^\/title\s+(.+)/i)||
-                   text.match(/(?:שנה\s+)?(?:כותרת|כותרת ראשית|title)\s*(?:ל|אל|to|=)?\s*["']?([^"']+)["']?$/i);
+                   text.match(/(?:שנה\s+)?(?:כותרת(?!\s*קטנה)|title)\s*(?:ל|אל|to|=)?\s*["']?([^"']+)["']?$/i);
     if(titleMatch){
       const val=titleMatch[1].trim();
-      const sec=current&&current.closest('[data-ok="site:section_order"]');
-      let p=null;
-      if(current&&current.matches&&current.matches('[data-e$=".title"]'))p=current.dataset.e;
-      else if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_"))p=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}.title`;
-      else if($('[data-e="home:hero.title"]'))p="home:hero.title";
-      if(p){
-        applyValue(p,val);
-        aiSay("act",`✓ set_value ${p} "${val}"`);
+      if(setText("title",val,"site:hero_title")){
         aiSay("ai",isHeb?`הכותרת עודכנה ל: "${val}".`:`Title updated to: "${val}".`);
         return {handled:true};
       }
@@ -2446,16 +2452,22 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
                     text.match(/(?:שנה\s+)?(?:קיקר|כותרת קטנה|תווית|kicker)\s*(?:ל|אל|to|=)?\s*["']?([^"']+)["']?$/i);
     if(kickerMatch){
       const val=kickerMatch[1].trim();
-      const sec=current&&current.closest('[data-ok="site:section_order"]');
-      let p=null;
-      if(current&&current.matches&&current.matches('[data-e$=".kicker"]'))p=current.dataset.e;
-      else if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_"))p=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}.kicker`;
-      if(p){
-        applyValue(p,val);
-        aiSay("act",`✓ set_value ${p} "${val}"`);
+      if(setText("kicker",val,"site:hero_kicker")){
         aiSay("ai",isHeb?`הקיקר עודכן ל: "${val}".`:`Kicker updated to: "${val}".`);
         return {handled:true};
       }
+      return needSec();
+    }
+
+    let textMatch=text.match(/^\/text\s+([\s\S]+)/i)||
+                  text.match(/^(?:שנה\s+)?(?:את\s+)?(?:הטקסט|טקסט|תיאור|פסקה)\s*(?:ל|אל|=|:)\s*["']?([^"']+)["']?$/i);
+    if(textMatch){
+      const val=textMatch[1].trim();
+      if(setText("text",val,null)){
+        aiSay("ai",isHeb?"הטקסט עודכן.":"Text updated.");
+        return {handled:true};
+      }
+      return needSec();
     }
 
     // 9. CUSTOM CSS
@@ -2513,7 +2525,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     if(provider()==="local"||provider()==="app"){aiBusy=true;
       await (wantsSection(text)?sectionFlow(text):provider()==="app"?appSend(text):localSend(text));aiBusy=false;return}
     const key=store.get(AI_KEY);if(!key){aiKeyBox();return}
-    aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
+    aiBusy=true;
     const thinking=aiSay("sys","…");
     try{
       const model=await pickModel(key);
