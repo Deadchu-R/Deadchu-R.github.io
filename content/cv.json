@@ -47,9 +47,9 @@
               "about": "Real-time interactive apps for real-estate companies, built in Unreal Engine",
               "label": "",
               "bullets": [
-                "Develop and integrate interactive 3D architectural features across 4+ real-estate client projects in Unreal Engine 5",
-                "Debug and optimize complex Blueprint logic, maintaining steady 60 FPS real-time rendering performance",
-                "Implement custom interactive UI elements and camera controls tailored to client specifications"
+                "Develop and integrate interactive features based on client requirements across multiple projects",
+                "Debug and optimize complex logic for stability and performance",
+                "Implement custom UI elements and functionality tailored to client needs"
               ]
             }
           ]
@@ -87,8 +87,8 @@
               "link": "https://www.roeetal.com/projects/infiltration.html",
               "link_label": "",
               "bullets": [
-                "Programmed responsive raycast weapon systems with recoil feedback, 3 pickup types, and an event-driven architecture driving sound and VFX",
-                "Built patrolling enemy AI with detection meters across 2 stealth encounter zones in an 8-week C++ prototype"
+                "Programmed raycast shooting with recoil, weapon pickups and a shot event that triggers sound and VFX",
+                "Built patrolling enemy AI with a detection meter: escape or shoot enemies before it fills"
               ]
             }
           ]
@@ -541,6 +541,180 @@
           ]
         }
       ]
+    },
+    "gemini-edited": {
+      "label": "Gemini Edited",
+      "template": "ats",
+      "accent": "#1f5fa8",
+      "font": "Inter",
+      "density": "normal",
+      "photo": "/assets/uploads/1000211257-f1al.jpg",
+      "show_photo": true,
+      "dir": "ltr",
+      "lang": "en",
+      "public": true,
+      "person": {
+        "name": "Roee Tal",
+        "title": "Game Developer — Unity",
+        "summary": "Game developer with 1.5 years of professional real-time 3D development at 3DVision and a 3-year game design and development program at Tiltan. Strong Unity and C# foundation: modular, data-driven systems, event-driven gameplay and UI.",
+        "email": "roeetal17@gmail.com",
+        "phone": "053-337-4350",
+        "location": "Israel",
+        "links": [
+          {
+            "label": "roeetal.com",
+            "url": "https://www.roeetal.com/"
+          },
+          {
+            "label": "LinkedIn",
+            "url": "https://linkedin.com/in/roee-tal"
+          },
+          {
+            "label": "GitHub",
+            "url": "https://github.com/Deadchu-R"
+          }
+        ]
+      },
+      "main": [
+        {
+          "type": "experience",
+          "title": "Experience",
+          "items": [
+            {
+              "role": "Unreal Developer",
+              "org": "3DVision",
+              "dates": "02/2025 – Present",
+              "location": "Tel Aviv",
+              "about": "Real-time interactive apps for real-estate companies, built in Unreal Engine",
+              "label": "",
+              "bullets": [
+                "Develop and integrate interactive 3D architectural features across 4+ real-estate client projects in Unreal Engine 5",
+                "Debug and optimize complex Blueprint logic, maintaining steady 60 FPS real-time rendering performance",
+                "Implement custom interactive UI elements and camera controls tailored to client specifications"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "projects",
+          "title": "Projects",
+          "items": [
+            {
+              "name": "Isometric Story-Driven Game",
+              "meta": "Unity · 3-week hackathon",
+              "dates": "11/2023",
+              "link": "https://www.roeetal.com/projects/shards.html",
+              "link_label": "",
+              "bullets": [
+                "Built the full dialogue system in a 3-week hackathon: ScriptableObject sheets and pages, with page types via inheritance for branching answers and level changes",
+                "Typewriter text raising per-letter, per-word and finish events that drive talking sounds and mouth animation"
+              ]
+            },
+            {
+              "name": "Boss Rush: Grid-Based Tactical Combat",
+              "meta": "Unity · Producer & Team Lead",
+              "dates": "12/2023 – 09/2024",
+              "link": "https://www.roeetal.com/projects/boss-rush.html",
+              "link_label": "",
+              "bullets": [
+                "Led a cross-functional team of programmers and artists for 9 months, through delivery",
+                "Oversaw the second programmer's code to keep it working and maintainable"
+              ]
+            },
+            {
+              "name": "FPS Stealth Level",
+              "meta": "Unreal Engine, C++ & Blueprints",
+              "dates": "06/2024 – 08/2024",
+              "link": "https://www.roeetal.com/projects/infiltration.html",
+              "link_label": "",
+              "bullets": [
+                "Programmed responsive raycast weapon systems with recoil feedback, 3 pickup types, and an event-driven architecture driving sound and VFX",
+                "Built patrolling enemy AI with detection meters across 2 stealth encounter zones in an 8-week C++ prototype"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "education",
+          "title": "Education",
+          "items": [
+            {
+              "degree": "Game Design and Development",
+              "school": "Tiltan School of Design and Visual Communication",
+              "dates": "10/2021 – 10/2024",
+              "location": "Haifa",
+              "about": "",
+              "label": "Courses",
+              "bullets": [
+                "C# 1–2",
+                "Unity Development 1–2",
+                "C++",
+                "Multiplayer",
+                "Unreal Development 1–2",
+                "Game Design 1–2",
+                "Game Production"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "skills",
+          "title": "Skills",
+          "items": [
+            {
+              "label": "Engines",
+              "items": [
+                "Unity",
+                "Unreal Engine (Blueprints, C++)"
+              ]
+            },
+            {
+              "label": "Programming",
+              "items": [
+                "C#",
+                "C++"
+              ]
+            },
+            {
+              "label": "Practices",
+              "items": [
+                "OOP",
+                "design patterns",
+                "event-driven and data-driven design",
+                "debugging and optimization",
+                "Git",
+                "Agile"
+              ]
+            },
+            {
+              "label": "AI-assisted development",
+              "items": [
+                "GitHub Copilot",
+                "OpenCode",
+                "ChatGPT",
+                "Gemini",
+                "local LLMs (Ollama, LM Studio)",
+                "adopting Claude Code"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "languages",
+          "title": "Languages",
+          "items": [
+            {
+              "name": "Hebrew",
+              "level": "Native"
+            },
+            {
+              "name": "English",
+              "level": "Full professional proficiency"
+            }
+          ]
+        }
+      ],
+      "side": []
     }
   }
 }
