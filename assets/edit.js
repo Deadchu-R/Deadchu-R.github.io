@@ -864,7 +864,9 @@
   function sectionItems(after){
     const last=store.get("rt-last-section");
     return Object.entries(SEC.TYPES).map(([k,t])=>({label:t.label,hint:SEC_HINT[k]||"",def:k===last,fn:()=>addSectionOf(after,k)}))
-      .concat([{label:"✨ Let the AI build it",fn:()=>{const ref=after&&after.dataset.ok==="site:section_order"?after:null;if(ref)select(ref);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף סקשן ";ta.focus()}},150)}}]);
+      .concat([
+        {label:"🌐 Search web & build full section",hint:"Search facts & build rich content",fn:()=>promptWebSection(after)},
+        {label:"✨ Let the AI build it",fn:()=>{const ref=after&&after.dataset.ok==="site:section_order"?after:null;if(ref)select(ref);openAI();setTimeout(()=>{const ta=$("#rt-ai textarea");if(ta){ta.value="תוסיף סקשן ";ta.focus()}},150)}}]);
   }
   function sectionPicker(after,anchor){
     if(!SEC){toast("One moment, still loading…");return}
@@ -928,6 +930,190 @@
     set("site:section_order",(get("site:section_order")||[]).filter(k=>k!==sec.dataset.k));
     sec.remove();current=null;chain=[];panelOpen=false;renderPanel();place();secBars();return "removed";
   }
+  /* ------------------------------------------------------------ 🌐 Web Search & Rich Knowledge Enrichment */
+  async function searchWeb(query){
+    const cleanQ=(query||"").trim();
+    if(!cleanQ)return {query:"",results:[],summary:"No search query specified."};
+    // 1. Try local Express /api/search endpoint
+    try{
+      const r=await fetchT("/api/search?q="+encodeURIComponent(cleanQ),{cache:"no-store"},6000);
+      if(r.ok){
+        const j=await r.json();
+        if(j.summary&&j.results&&j.results.length)return j;
+      }
+    }catch(e){}
+    // 2. Client-side fallback: Wikipedia search API (CORS enabled)
+    const results=[];
+    try{
+      const wikiUrl=`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ)}&utf8=&format=json&origin=*`;
+      const wr=await fetchT(wikiUrl,{},6000);
+      if(wr.ok){
+        const wj=await wr.json();
+        const hits=(wj.query&&wj.query.search)||[];
+        for(const hit of hits.slice(0,4)){
+          const cleanSnippet=(hit.snippet||"").replace(/<[^>]+>/g,"").replace(/&quot;/g,'"').replace(/&#039;/g,"'");
+          results.push({title:hit.title,snippet:cleanSnippet,source:"Wikipedia",url:`https://en.wikipedia.org/wiki/${encodeURIComponent(hit.title)}`});
+        }
+      }
+    }catch(e){}
+    // 3. DuckDuckGo Instant Answer API fallback
+    try{
+      const ddgUrl=`https://api.duckduckgo.com/?q=${encodeURIComponent(cleanQ)}&format=json&origin=*`;
+      const dr=await fetchT(ddgUrl,{},5000);
+      if(dr.ok){
+        const dj=await dr.json();
+        if(dj.AbstractText){
+          results.push({title:dj.Heading||cleanQ,snippet:dj.AbstractText,source:dj.AbstractSource||"DuckDuckGo",url:dj.AbstractURL});
+        }
+        for(const t of (dj.RelatedTopics||[]).slice(0,3)){
+          if(t.Text&&!results.some(x=>x.snippet===t.Text)){
+            results.push({title:(t.Text.split(" - ")[0]||cleanQ).slice(0,50),snippet:t.Text,source:"DuckDuckGo",url:t.FirstURL});
+          }
+        }
+      }
+    }catch(e){}
+    const summary=results.length
+      ? results.map(r=>`• [${r.source}: ${r.title}] ${r.snippet}`).join("\n\n")
+      : `Authoritative technical overview of ${cleanQ} in real-time engine systems, gameplay programming, and architecture.`;
+    return {query:cleanQ,results,summary};
+  }
+
+  /* ------------------------------------------------------------ 🏗 Rich & Fluffy Section Builder */
+  function buildFullFluffySection(topic, prefType, webData, after){
+    if(!$("#projects .ptiles")){
+      aiSay("err",/[֐-׿]/.test(topic)?"סקשנים מתווספים בעמוד הבית בלבד (index.html).":"Sections can only be added on the main home page.");
+      return null;
+    }
+    const isHeb=/[֐-׿]/.test(topic);
+    const cleanTopic=(topic||"Gameplay Systems").replace(SECTION_DO,"").replace(SECTION_ASK,"").replace(/^(על|בנושא|about|on|for)\s+/i,"").trim()||"Gameplay Architecture";
+
+    let type=prefType||"";
+    if(!type||!SEC.TYPES[type]){
+      const lower=cleanTopic.toLowerCase();
+      if(/faq|שאלות|q&a/i.test(lower))type="faq";
+      else if(/stats|מספרים|הישגים|ביצועים|numbers|metrics|fps/i.test(lower))type="stats";
+      else if(/steps|שלבים|workflow|תהליך|pipeline/i.test(lower))type="steps";
+      else if(/gallery|תמונות|צילומים|screenshots/i.test(lower))type="gallery";
+      else if(/quote|המלצה|ציטוט|testimonial/i.test(lower))type="quote";
+      else type="cards";
+    }
+
+    const snippets=(webData&&webData.results)||[];
+    const title=cleanTopic.length>55?cleanTopic.slice(0,53)+"…":cleanTopic;
+    const kicker=(isHeb?"התמחות טכנית ומערכות":"TECHNICAL SPECIALTY & ARCHITECTURE").slice(0,36);
+
+    let introText=isHeb
+      ? `מערכות גיימפלי וארכיטקטורת זמן-אמת ב-${cleanTopic}. פיתוח מודולרי, אופטימיזציה מתמדת ודגש על תחושת משחק (Game Feel) בקצב של 60 FPS יציב.`
+      : `Real-time engineering and architecture for ${cleanTopic}. Modular systems design, clean decoupling, and profiling for seamless 60 FPS performance.`;
+
+    if(snippets.length&&snippets[0].snippet){
+      const s0=snippets[0].snippet.slice(0,140);
+      introText=(isHeb?`סטנדרטים ומידע מקצועי: ${s0}. `: `${s0}. `)+introText;
+    }
+
+    let items=[];
+    if(type==="cards"){
+      const cardBlueprints=[
+        {
+          icon:"code",
+          title:isHeb?"ארכיטקטורה מודולרית ומערכות":"Modular Systems & Architecture",
+          text:isHeb?"תכנון מונחה-נתונים (ScriptableObjects / Subsystems) עם הפרדת תלויות ואירועים (Event-Driven) המאפשרים הרחבה נוחה ללא קוד ספגטי.":"Data-driven architecture with decoupled events and state machines, keeping gameplay systems maintainable and extensible across teams.",
+          tag:"Architecture"
+        },
+        {
+          icon:"bolt",
+          title:isHeb?"אופטימיזציה וביצועים (60 FPS)":"Profiling & Memory Optimization",
+          text:isHeb?"ניהול זיכרון קפדני, ביטול הקצאות GC בפריימים חמים, הפחתת Draw Calls ושימוש בפרופיילר לאיתור צווארי בקבוק בזמן אמת.":"Zero garbage collection allocations in hot update loops, draw-call batching, and continuous profiler audits for rock-solid frame rates.",
+          tag:"Performance"
+        },
+        {
+          icon:"gamepad",
+          title:isHeb?"מכניקות משחק ו-Game Feel":"Tactile Mechanics & Game Feel",
+          text:isHeb?"בקרת שחקן רספונסיבית, משוב אור-קולי מדויק (Camera Shake, Hitstops, Audio Cues) ואינטראקציות פיזיקליות אינטואיטיביות.":"Responsive character controllers, dynamic camera behaviors, hit-pause cues, and audiovisual feedback tuned for maximum player immersion.",
+          tag:"Game Feel"
+        },
+        {
+          icon:"tools",
+          title:isHeb?"כלי פיתוח וצינור עבודה (Pipeline)":"Custom Tooling & Editor Workflows",
+          text:isHeb?"הרחבות מותאמות לעורך (Custom Inspectors & Gizmos) המאפשרות למעצבי שלבים לבדוק ולאזן תכנים במהירות ובבטחה.":"Custom Editor inspectors, scene gizmos, and workflow automation enabling rapid balancing and iteration for designers.",
+          tag:"Tooling"
+        }
+      ];
+      if(snippets.length>=2){
+        cardBlueprints[0].text=snippets[0].snippet.slice(0,160)+" "+cardBlueprints[0].text.slice(0,80);
+        cardBlueprints[1].text=snippets[1].snippet.slice(0,160)+" "+cardBlueprints[1].text.slice(0,80);
+      }
+      if(snippets.length>=3){
+        cardBlueprints[2].title=snippets[2].title.slice(0,36)||cardBlueprints[2].title;
+        cardBlueprints[2].text=snippets[2].snippet.slice(0,160);
+      }
+      items=cardBlueprints;
+    }else if(type==="stats"){
+      items=[
+        {value:"60 FPS",label:isHeb?"יעד ביצועים קבוע":"Stable Frame Target",sub:isHeb?"אופטימיזציה למחשב ומובייל":"Desktop & mobile profiling"},
+        {value:"0 GC",label:isHeb?"הקצאות זיכרון ב-Update":"Zero GC Hot Loops",sub:isHeb?"מניעת קפיצות פריימים":"Garbage-collection free"},
+        {value:"100%",label:isHeb?"שליטה במנוע וקוד":"Deterministic Mechanics",sub:isHeb?"בקרת פיזיקה וקומבט":"Combat & physics state control"}
+      ];
+    }else if(type==="faq"){
+      items=[
+        {q:isHeb?`כיצד מיושם ${cleanTopic} בפרויקטים?`:`How is ${cleanTopic} architected in production?`,a:isHeb?"באמצעות פירוק למודולים עצמאיים, שימוש ב-Interfaces וב-Events, תוך בדיקות ביצועים מקיפות בפרופיילר של המנוע.":"Through decoupled subsystems, interface-driven communication, and strict memory budgeting verified with in-engine profiling tools."},
+        {q:isHeb?"מה הגישה לאופטימיזציה ולמניעת צווארי בקבוק?":"What is the profiling and optimization approach?",a:isHeb?"מדידה מוקדמת באמצעות Unity Profiler / Unreal Insights, ביטול allocations בקוד שרץ בכל פריים, ושימוש ב-Object Pooling.":"Benchmarking via Unity Profiler and Unreal Insights, pooling dynamic entities, and avoiding heap allocations in critical game loops."},
+        {q:isHeb?"האם המערכות מותאמות לעבודת צוות ומעצבים?":"Is the architecture friendly for designers?",a:isHeb?"כן, כל הפרמטרים החשובים חשופים ב-ScriptableObjects או Data Tables עם Gizmos ויזואליים בכדי לאפשר שינויים מיידיים ללא צורך בקוד חדש.":"Yes, tuneable parameters are exposed via ScriptableObjects or Data Tables with visual scene handles for immediate designer iteration."}
+      ];
+    }else if(type==="steps"){
+      items=[
+        {title:isHeb?"1. אפיון דרישות וארכיטקטורה":"1. System Design & Contracts",text:isHeb?"הגדרת ממשקים וזרימת נתונים נקייה.":"Defining decoupled interfaces and event flows."},
+        {title:isHeb?"2. מימוש המכניקה ו-Game Feel":"2. Core Mechanics & Feel",text:isHeb?"קידוד הבקרים, המשוב והפיזיקה.":"Coding responsive controls, cameras, and feedback."},
+        {title:isHeb?"3. פרופיילינג ואופטימיזציה":"3. Profiling & Budgeting",text:isHeb?"בדיקת זיכרון, GC ו-Draw Calls.":"Ensuring 0-allocation updates and 60 FPS budgets."},
+        {title:isHeb?"4. כלי עורך ובדיקות קצה":"4. Tooling & Polish",text:isHeb?"חשיפת הגדרות למעצבים וליטוש.":"Custom inspector tools and edge-case testing."}
+      ];
+    }
+
+    const sectionPayload={
+      type,
+      kicker,
+      title,
+      text:introText,
+      width:"contained",
+      align:"left",
+      pad:"spacious",
+      icon:"code",
+      items,
+      buttons:[
+        {label:isHeb?"צפה בפרויקטים ובקוד":"View Systems & Code",link:"#projects",style:"solid"},
+        {label:isHeb?"יצירת קשר":"Get in Touch",link:"#about",style:"ghost"}
+      ]
+    };
+
+    const ref=after||(current&&current.closest('[data-ok="site:section_order"]'));
+    const r_=addSection(ref,sectionData(sectionPayload));
+    if(!r_)return null;
+
+    aiSay("act",`✓ add full section ${r_.key} · ${SEC.TYPES[type].label} (${items.length} items + web facts)`);
+    aiSay("ai",isHeb
+      ? `✨ יצרתי סקשן מלא ועשיר בנושא "${cleanTopic}" (${SEC.TYPES[type].label}, ${items.length} כרטיסיות)! המידע הורחב עם פרטים טכניים מהרשת וניסיון הפיתוח. לחיצה כפולה על טקסט לעריכה, או על ⚙ לעיצוב.`
+      : `✨ Created a full, rich section for "${cleanTopic}" (${SEC.TYPES[type].label} with ${items.length} detailed items)! Enhanced with technical concepts from the web. Double-click any text to edit, or tap ⚙ for layout.`);
+    return r_;
+  }
+
+  function promptWebSection(after){
+    const q=prompt("What topic or technology should the new section be about?\n(e.g., Unity ECS, Multiplayer Netcode, Combat AI, Raymarching Shaders)");
+    if(!q||!q.trim())return;
+    openAI();
+    aiSay("me",`בנה סקשן מלא מהרשת על: ${q.trim()}`);
+    const thinking=aiSay("sys",`🔍 מחפש מידע ברשת על "${q.trim()}"...`);
+    searchWeb(q.trim()).then(webData=>{
+      thinking.textContent="✨ בונה סקשן מלא ופלאפי...";
+      setTimeout(()=>{
+        thinking.remove();
+        buildFullFluffySection(q.trim(),null,webData,after);
+      },300);
+    }).catch(err=>{
+      thinking.remove();
+      buildFullFluffySection(q.trim(),null,null,after);
+    });
+  }
+
   function addNew(item){
     // a fresh item right after this one: same look, text ready to type
     duplicate(item);
@@ -1434,6 +1620,7 @@
   }
   const itemEl=(lp,i)=>{const c=$(`[data-l="${CSS.escape(lp)}"]`);return c&&[...c.children].find(x=>x.dataset.i===String(i))};
   const AI_TOOLS={
+    search_web:async({query})=>{const res=await searchWeb(query);return res.summary||"No search results found.";},
     add_section:(a)=>{const ref=a.after?$$('[data-ok="site:section_order"]').find(x=>x.dataset.k===a.after):null;
       const data=sectionData(a);
       const r_=addSection(ref,data);
@@ -1453,6 +1640,7 @@
       await replaceMedia(path,kind,(fd&&fd.holder)||m||document.body,f);return "placed "+f.name},
   };
   const AI_DECL=[
+    {name:"search_web",description:"Search the web for real facts, technical specs, game engines, tools, or companies to build full, high-quality, 'fluffy' portfolio sections.",parameters:{type:"OBJECT",properties:{query:{type:"STRING",description:"Search query or topic"}},required:["query"]}},
     {name:"set_value",description:"Set any text or setting from the catalog (text, color #rrggbb, icon name, select option, link, number for ranges, true/false for switches).",parameters:{type:"OBJECT",properties:{path:{type:"STRING"},value:{type:"STRING"}},required:["path","value"]}},
     {name:"move_item",description:"Reorder an item inside a LIST.",parameters:{type:"OBJECT",properties:{list_path:{type:"STRING"},index:{type:"INTEGER"},to_index:{type:"INTEGER"}},required:["list_path","index","to_index"]}},
     {name:"move_section",description:"Reorder a whole section or page block (ORDER lists).",parameters:{type:"OBJECT",properties:{order_path:{type:"STRING"},key:{type:"STRING"},to_index:{type:"INTEGER"}},required:["order_path","key","to_index"]}},
@@ -1499,6 +1687,8 @@ Rules:
 - A new section on the main page ("add a section about…", "סקשן"): add_section with type and section = the FULL section JSON (see GUIDE › Section types): pick the type that fits, write real content (title, kicker, text, 3-6 items, buttons when useful), set width/align/pad/colors when asked. Afterwards adjust it with set_value on its paths.
 - Layout and visual design without a FIELD (sizes, spacing, columns, fonts, backgrounds, effects, animations): write CSS with set_custom_css. Keep the existing custom CSS and add to it; scope rules to selectors from PAGE STRUCTURE; keep it mobile-friendly; never hide the editor (classes starting with rt-).
 - Images/videos/GIFs/sounds: only files the owner attached, via use_attachment into a MEDIA or media FIELD path. You cannot create images.
+- Rich & Fluffy Full Sections: When the user asks for a section, or a "full section" ("סקשן מלא", "סקשן עשיר", "פלאפי כזה וטוב"), never output a bare 1-line placeholder. Build a complete, detailed, production-quality section with 4-6 rich items, specific mechanics, metrics, architecture patterns, and compelling descriptions.
+- Web Search: You have the search_web tool! Whenever the user asks you to look up or search the internet ("חפש באינטרנט", "search the web", "מידע מהרשת", or when researching a specific game, studio, engine feature, tech stack, or topic), call search_web({ query: "..." }) first to get fresh, authoritative information and real data. Then use that information to flesh out a deep, persuasive, fluffy and well-crafted section or site update.
 - Keep the site's English text in English unless he asks otherwise. Reply in the language he used, in 1-3 short sentences: what you changed, and remind him to check with 👁 Preview and press Publish.`;
   const AI_SYS=()=>AI_SYS_BASE+guideFull();
   // the models this key can use right now, best first (asked from Google, so new ones like Gemini 4 are picked up by themselves)
@@ -1664,7 +1854,9 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     try{
       await guideP;
       const hint=hintType(text),icons="ICONS: "+Object.keys(ICONS).join(",");
-      const msgs=[{role:"system",content:SECTION_SYS()},{role:"user",content:icons+"\n"+(hint?`TYPE: ${hint}\n`:"")+(WIDE.test(text)?"WIDTH: full\n":"")+(aiFiles.length?"The owner attached a picture/video: it goes into the section's media.\n":"")+"REQUEST: "+text}];
+      let webSummary="";
+      try{const w_=await searchWeb(text.replace(SECTION_DO,"").replace(SECTION_ASK,"").trim());webSummary=w_.summary||"";}catch(e){}
+      const msgs=[{role:"system",content:SECTION_SYS()+(webSummary?"\n\nWEB FACTS TO INCORPORATE:\n"+webSummary:"")},{role:"user",content:icons+"\n"+(hint?`TYPE: ${hint}\n`:"")+(WIDE.test(text)?"WIDTH: full\n":"")+(aiFiles.length?"The owner attached a picture/video: it goes into the section's media.\n":"")+"REQUEST: "+text}];
       let content;
       if(provider()==="app")content=await appChat(msgs,thinking,900);
       else{const eng=await ensureEngine(r=>{thinking.textContent=`Downloading the AI model… ${Math.round((r.progress||0)*100)}%`});
@@ -1791,7 +1983,8 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
         `⚡ מדריך פקודות ישירות (100% ללא צורך ב-AI):
 • סקין/ערכת נושא: /skin arcade (או: סקין קלאסי, סקין מחברת, סקין תחביבים, סקין פשוט)
 • צבעים: /color accent #10b981 (או: שנה צבע מבטא לירוק, צבע רקע לשחור)
-• סקשנים: /add faq (או: הוסף סקשן שאלות נפוצות, הוסף סקשן סטטיסטיקות, הוסף כרטיסים, באנר, ציטוט)
+• חיפוש ברשת וסקשן מלא: /search <נושא> | /full <נושא> (למשל: /full Unity Multiplayer, /search Unreal 5 Nanite)
+• סקשנים: /add faq (או: add stats, add cards, add banner, add quote, add cta, add steps)
 • מחיקה: /remove cs_... (או: מחק סקשן אחרון / מחק סקשן)
 • פריסה: /width full (רוחב מלא/רגיל) | /align center (יישר למרכז)
 • טקסט: /title כותרת חדשה (או: שנה כותרת ל...) | /kicker קיקר חדש
@@ -1801,6 +1994,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
         `⚡ Instant Command Guide (100% Non-AI):
 • Themes/Skins: /skin arcade (options: classic, arcade, sketchbook, hobbies, plain)
 • Colors: /color accent #10b981 (or: accent blue, bg dark, text white)
+• Web Search & Rich Sections: /search <topic> | /full <topic> (e.g. /full Unity ECS, /search Unreal Nanite)
 • Sections: /add faq (or: add stats, add cards, add banner, add quote, add cta, add steps)
 • Delete: /remove cs_... (or: remove last section)
 • Layout: /width full | /width contained | /align center | /align left | /pad spacious
@@ -1809,6 +2003,45 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
 • Reset: /undo (revert unpublished changes)
 💡 In Hybrid mode: These execute instantly at 0ms without consuming any AI tokens!`;
       aiSay("ai",helpMsg);
+      return {handled:true};
+    }
+
+    // 1.1 WEB SEARCH (/search <query>, /web <query>, /find <query>, or "חפש ברשת...", "חפש באינטרנט...")
+    let searchMatch=text.match(/^\/(?:search|web|research|find)\s+(.+)/i)||
+                    text.match(/^(?:חפש|תחפש|חיפוש)(?:\s+(?:ב|ברשת|באינטרנט|על))?\s+(.+)/i);
+    if(searchMatch){
+      const q=searchMatch[1].trim();
+      const thinking=aiSay("sys",isHeb?`🔍 מחפש ברשת מידע על "${q}"...`:`🔍 Searching the web for "${q}"...`);
+      const webRes=await searchWeb(q);
+      thinking.remove();
+      aiSay("act",`✓ web_search "${q}" (${webRes.results.length} sources)`);
+      const resMsg=isHeb
+        ? `🌐 תוצאות חיפוש ברשת עבור "${q}":\n\n${webRes.summary}\n\n💡 רוצה להפוך את המידע לסקשן מלא ועשיר? הקלד /full ${q} או השתמש בכפתור למטה:`
+        : `🌐 Web search results for "${q}":\n\n${webRes.summary}\n\n💡 Ready to build a full section from this? Type /full ${q} or click below:`;
+      const bubble=aiSay("ai",resMsg);
+      const btn=h("button",{
+        type:"button",class:"rt-chip-btn pri",style:"margin-top:6px;display:inline-block;",
+        on:{click:async()=>{
+          btn.disabled=true;
+          const t_=aiSay("sys",isHeb?`✨ בונה סקשן מלא ופלאפי על "${q}"...`:`✨ Building rich section for "${q}"...`);
+          buildFullFluffySection(q,null,webRes,current&&current.closest('[data-ok="site:section_order"]'));
+          t_.remove();
+        }}
+      },isHeb?"➕ בנה מזה סקשן מלא ופלאפי":"➕ Build full rich section from this");
+      bubble.append(document.createElement("br"),btn);
+      return {handled:true};
+    }
+
+    // 1.2 FULL & FLUFFY SECTION (/full <topic>, /rich <topic>, or "סקשן מלא על...", "סקשן עשיר על...")
+    let fullMatch=text.match(/^\/(?:full|rich|fluffy|expand)(?:-section)?\s+(.+)/i)||
+                  text.match(/(?:בנה|הוסף|צור|תעשה|תבנה|הכן)?\s*(?:סקשן|סעיף)\s+(?:מלא|עשיר|פלאפי|מפורט)\s*(?:על|בנושא|about|on)?\s*(.+)/i);
+    if(fullMatch){
+      const topic=fullMatch[1].trim();
+      const thinking=aiSay("sys",isHeb?`🌐 חוקר ברשת ובונה סקשן מלא ועשיר על "${topic}"...`:`🌐 Researching web and building full rich section for "${topic}"...`);
+      const webRes=await searchWeb(topic);
+      thinking.remove();
+      const after=current&&current.closest('[data-ok="site:section_order"]');
+      buildFullFluffySection(topic,null,webRes,after);
       return {handled:true};
     }
 
@@ -1881,27 +2114,37 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       }
     }
 
-    // 6. ADD SECTION (Rule-based with game developer templates)
-    let addMatch=text.match(/^\/add(?:-section)?\s*(\w+)?\s*(.*)?/i)||(wantsSection(text)?[text,"",""]:null);
-    if(addMatch){
+    // 6. ADD SECTION (/add <type> [topic])
+    let addSlash=text.match(/^\/add(?:-section)?\s*(\w+)?\s*(.*)?/i);
+    if(addSlash){
       const rawReq=text.toLowerCase();
-      let type=hintType(rawReq)||addMatch[1]||"";
+      let type=hintType(rawReq)||addSlash[1]||"";
       if(type&&!SEC.TYPES[type]){
         for(const [k] of TYPE_HINTS)if(rawReq.includes(k)){type=k;break;}
       }
-      if(!SEC.TYPES[type])type="text-media";
-      const tmpl=DEV_TEMPLATES[type]||DEV_TEMPLATES["text-media"];
-      const data=JSON.parse(JSON.stringify(tmpl));
+      if(!SEC.TYPES[type])type="cards";
 
-      let customTitle=addMatch[2]?addMatch[2].trim().replace(/^["']|["']$/g,""):"";
+      let customTitle=addSlash[2]?addSlash[2].trim().replace(/^["']|["']$/g,""):"";
       if(!customTitle){
         const titleM=text.match(/(?:בשם|בנושא|על|titled?|about)\s+["']?([^"'\n,]+)["']?/i);
         if(titleM)customTitle=titleM[1].trim();
       }
-      if(customTitle&&customTitle.length>1)data.title=customTitle.slice(0,70);
+
+      // If user specified a topic, build a full rich section with web search!
+      if(customTitle&&customTitle.length>2){
+        const thinking=aiSay("sys",isHeb?`🌐 חוקר ברשת ובונה סקשן מלא על "${customTitle}"...`:`🌐 Researching web and building full section for "${customTitle}"...`);
+        const webRes=await searchWeb(customTitle);
+        thinking.remove();
+        const after=current&&current.closest('[data-ok="site:section_order"]');
+        buildFullFluffySection(customTitle,type,webRes,after);
+        return {handled:true};
+      }
+
+      // Explicit empty template shortcut: e.g. "/add faq" with no topic
+      const tmpl=DEV_TEMPLATES[type]||DEV_TEMPLATES["cards"]||DEV_TEMPLATES["text-media"];
+      const data=JSON.parse(JSON.stringify(tmpl));
       if(WIDE.test(text))data.width="full";
       if(text.includes("מרכז")||text.includes("center"))data.align="center";
-
       const after=current&&current.closest('[data-ok="site:section_order"]');
       const r_=addSection(after,sectionData(data));
       if(!r_){
@@ -1910,8 +2153,19 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       }
       aiSay("act",`✓ add section ${r_.key} · ${SEC.TYPES[data.type].label} (Instant Rules)`);
       aiSay("ai",isHeb?
-        `נוסף סקשן חדש מסוג ${SEC.TYPES[data.type].label} (${r_.key}) ללא שימוש ב-AI! ניתן ללחוץ פעמיים על הטקסטים לעריכה, או על ⚙ לשינוי סגנון.`:
-        `Added ${SEC.TYPES[data.type].label} section (${r_.key}) instantly without AI. Double-click text to edit; tap ⚙ for layout/styling.`);
+        `נוסף סקשן חדש מסוג ${SEC.TYPES[data.type].label} (${r_.key}). ניתן ללחוץ פעמיים על הטקסטים לעריכה, או על ⚙ לשינוי סגנון.`:
+        `Added ${SEC.TYPES[data.type].label} section (${r_.key}). Double-click text to edit; tap ⚙ for layout/styling.`);
+      return {handled:true};
+    }
+
+    // If natural language section request (wantsSection) AND user is strictly in 100% "rules" mode:
+    if(wantsSection(text)&&provider()==="rules"){
+      const topic=text.replace(SECTION_DO,"").replace(SECTION_ASK,"").replace(/^(על|בנושא|about|on|for)\s+/i,"").trim()||"Gameplay Systems";
+      const thinking=aiSay("sys",isHeb?`🌐 חוקר ברשת ובונה סקשן מלא על "${topic}"...`:`🌐 Researching web and building full section for "${topic}"...`);
+      const webRes=await searchWeb(topic);
+      thinking.remove();
+      const after=current&&current.closest('[data-ok="site:section_order"]');
+      buildFullFluffySection(topic,null,webRes,after);
       return {handled:true};
     }
 
@@ -2152,8 +2406,10 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     filesRow=h("div",{class:"rt-files"});
     const chipsRow=h("div",{class:"rt-chips-row"},
       h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>aiSend("/help")}},"⚡ עזרה ופקודות"),
+      h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>{ta.value="/full ";ta.focus()}}},"🌐 סקשן מלא מהרשת"),
+      h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>{ta.value="/search ";ta.focus()}}},"🔍 חיפוש ברשת"),
       h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>{ta.value="/skin ";ta.focus()}}},"🎨 סקין"),
-      h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>{ta.value="הוסף סקשן ";ta.focus()}}},"➕ סקשן חדש"),
+      h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>{ta.value="הוסף סקשן מלא על ";ta.focus()}}},"➕ סקשן עשיר"),
       h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>{ta.value="שנה צבע מבטא ל";ta.focus()}}},"🌈 צבע מבטא"),
       h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>aiSend("רוחב מלא")}},"📐 רוחב מלא"));
     aiBox=h("div",{id:"rt-ai",class:"rt-ui"},
