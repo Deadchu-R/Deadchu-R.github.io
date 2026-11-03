@@ -67,12 +67,16 @@
         <span>✉️ Send</span>
       </button>
 
-      <button type="button" class="cve-btn pri" onclick="window.CVE.printPdf()">
-        <span>🖨️ PDF / Print</span>
+      <button type="button" class="cve-btn pri" onclick="window.CVE.saveAction()">
+        <span>💾 Save</span>
+      </button>
+
+      <button type="button" class="cve-btn" onclick="window.CVE.printPdf()">
+        <span>🖨️ PDF</span>
       </button>
 
       <button type="button" id="userBtn" class="cve-user-btn" onclick="window.CVE.openAuthModal()">
-        <span class="cve-user-avatar">R</span>
+        <span class="cve-user-avatar">👤</span>
         <span>Account</span>
       </button>
     </div>
@@ -118,6 +122,112 @@
 
   <!-- ================= Modals ================= -->
 
+  <!-- Welcome Onboarding Wizard Modal (For New Visitors) -->
+  <div id="welcomeModal" class="cve-modal-backdrop">
+    <div class="cve-modal wide">
+      <div class="cve-modal-header">
+        <div class="cve-modal-title">
+          <span>✨ Welcome to CV Studio — ברוך הבא ליוצר קורות החיים</span>
+        </div>
+      </div>
+      <div class="cve-modal-body">
+        <div class="cve-gate-banner">
+          <span class="cve-gate-banner-icon">🚀</span>
+          <div class="cve-gate-banner-text">
+            <h4>Build your professional résumé in seconds</h4>
+            <p>בחר את שמך ואת עיצוב הלייאאוט המועדף עליך, והתחל לעבוד ישירות על גבי הדף ללא הגבלה!</p>
+          </div>
+        </div>
+
+        <div class="cve-form-group">
+          <label class="cve-label">מה השם שלך? (Full Name)</label>
+          <input type="text" id="wizardNameInput" class="cve-input" placeholder="e.g. Alex Cohen / אלכס כהן" style="font-size:15px;padding:10px 14px;">
+        </div>
+
+        <div class="cve-form-group" style="margin-top:10px;">
+          <label class="cve-label">בחר סגנון עיצוב ולייאאוט (Choose Layout)</label>
+          <div class="cve-tpl-choice-grid">
+            <div class="cve-tpl-card active" data-tpl="ats" onclick="window.CVE.selectWizardTemplate('ats')">
+              <span class="cve-tpl-card-icon">📄</span>
+              <span class="cve-tpl-card-name">ATS Pro</span>
+              <span class="cve-tpl-card-desc">עמודה אחת נקייה, מעבר מושלם של מערכות סינון אוטומטיות.</span>
+            </div>
+            <div class="cve-tpl-card" data-tpl="novo" onclick="window.CVE.selectWizardTemplate('novo')">
+              <span class="cve-tpl-card-icon">📑</span>
+              <span class="cve-tpl-card-name">Novo Split</span>
+              <span class="cve-tpl-card-desc">שתי עמודות מודרניות, תגיות מיומנויות ותמונת פרופיל מעוצבת.</span>
+            </div>
+            <div class="cve-tpl-card" data-tpl="studio" onclick="window.CVE.selectWizardTemplate('studio')">
+              <span class="cve-tpl-card-icon">🎨</span>
+              <span class="cve-tpl-card-name">Studio Sidebar</span>
+              <span class="cve-tpl-card-desc">סרגל צדדי צבעוני עם תמצית אישית וחלוקת תוכן אלגנטית.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cve-form-group" style="margin-top:10px;">
+          <label class="cve-label">שפת קורות החיים וכיוון (Language & Direction)</label>
+          <div class="cve-lang-choice-grid">
+            <button type="button" class="cve-lang-btn active" data-dir="ltr" onclick="window.CVE.selectWizardDir('ltr')">
+              <span>🇺🇸 English (Left-to-Right)</span>
+            </button>
+            <button type="button" class="cve-lang-btn" data-dir="rtl" onclick="window.CVE.selectWizardDir('rtl')">
+              <span>🇮🇱 עברית (Right-to-Left)</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:10px;border-top:1px solid var(--cve-border);">
+          <button type="button" style="background:none;border:none;color:#38bdf8;font-size:12.5px;cursor:pointer;text-decoration:underline;" onclick="window.CVE.openAuthModal()">
+            כבר יש לך משתמש? לחץ כאן להתחברות (רועי / משתמש קיים)
+          </button>
+          <button type="button" class="cve-btn pri" style="padding:10px 22px;font-size:14px;" onclick="window.CVE.submitWelcomeWizard()">
+            התחל לעבוד על קורות החיים →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mandatory Save Gate Modal (When Visitor tries to Save / PDF / Send) -->
+  <div id="mandatorySaveModal" class="cve-modal-backdrop">
+    <div class="cve-modal">
+      <div class="cve-modal-header">
+        <div class="cve-modal-title">
+          <span>🔐 שמירת קורות החיים ושליחה ישירה למייל</span>
+        </div>
+        <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('mandatorySaveModal')">✕</button>
+      </div>
+      <div class="cve-modal-body">
+        <div class="cve-gate-banner">
+          <span class="cve-gate-banner-icon">✉️</span>
+          <div class="cve-gate-banner-text">
+            <h4>Save Your Résumé & Get Instant Email Delivery</h4>
+            <p>כדי לשמור את העבודה שלך לצמיתות, לאפשר עריכה ושיתוף בכל עת ולקבל עותק מלא ישירות למייל שלך:</p>
+          </div>
+        </div>
+
+        <div class="cve-form-group">
+          <label class="cve-label">כתובת האימייל שלך (Email)</label>
+          <input type="email" id="mandEmailInput" class="cve-input" placeholder="alex@gmail.com" style="font-size:14px;padding:9px 12px;">
+        </div>
+
+        <div class="cve-form-group" style="margin-top:6px;">
+          <label class="cve-label">בחר סיסמה לכניסה עתידית (Password)</label>
+          <input type="password" id="mandPassInput" class="cve-input" placeholder="בחר סיסמה מאובטחת" style="font-size:14px;padding:9px 12px;">
+        </div>
+
+        <p id="mandSaveError" style="font-size:12px;color:var(--cve-danger);font-weight:600;min-height:16px;margin-top:4px;"></p>
+      </div>
+      <div class="cve-modal-footer">
+        <button type="button" class="cve-btn" onclick="window.CVE.closeModal('mandatorySaveModal')">ביטול</button>
+        <button type="button" class="cve-btn pri" style="padding:8px 18px;" onclick="window.CVE.submitMandatorySave()">
+          ✉️ שמור ושלח למייל שלי
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Layout & Column Organizer Modal (NovoResume-style) -->
   <div id="layoutModal" class="cve-modal-backdrop">
     <div class="cve-modal wide">
@@ -160,7 +270,6 @@
         <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('atsModal')">✕</button>
       </div>
       <div class="cve-modal-body">
-        <!-- Progress Rings -->
         <div class="cve-score-rings">
           <div class="cve-ring-card">
             <div id="ringOverall" class="cve-circular-progress" style="--ring-pct:90;--ring-color:#10b981;">
@@ -182,7 +291,6 @@
           </div>
         </div>
 
-        <!-- Job Scanner Input -->
         <div class="cve-form-group">
           <label class="cve-label">Target Job Link (LinkedIn, Company Careers, AllJobs)</label>
           <div class="cve-job-fetch-box">
@@ -197,10 +305,8 @@
           <textarea id="jobTextarea" rows="4" class="cve-textarea" placeholder="Paste requirements and responsibilities here to match keywords..." oninput="window.CVE.onJobTextChange(this.value)"></textarea>
         </div>
 
-        <!-- Keywords Analysis -->
         <div id="atsKwContainer"></div>
 
-        <!-- Format Rules Checklist -->
         <div class="cve-kw-section" style="margin-top:10px;">
           <span class="cve-kw-title">📋 Format & Content Audit (Harvard & Google Standards)</span>
           <div id="atsChecklistContainer" class="cve-checklist"></div>
@@ -295,7 +401,7 @@
         <!-- Log In Section -->
         <div class="cve-section-card" style="margin-top:6px;">
           <div class="cve-section-header">
-            <span class="cve-section-title">Sign In to Existing Account</span>
+            <span class="cve-section-title">Sign In (Roee / Returning User)</span>
           </div>
           <div class="cve-section-body">
             <div class="cve-form-group">
@@ -304,7 +410,7 @@
             </div>
             <div class="cve-form-group">
               <label class="cve-label">Password</label>
-              <input type="password" id="loginPass" class="cve-input" placeholder="Password">
+              <input type="password" id="loginPass" class="cve-input" placeholder="Password (roee123 for Roee)">
             </div>
             <button type="button" class="cve-btn pri" onclick="window.CVE.loginSubmit()">Sign In</button>
           </div>

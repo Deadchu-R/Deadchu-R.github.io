@@ -1,7 +1,7 @@
 /* ==========================================================================
    CVEditor Engine - Standalone Collaborative CV Studio
    Powering roeetal.com/CVEditor
-   Enhanced with NovoResume-Style Visual Layout & On-Canvas Controls
+   Enhanced with Visitor Onboarding Wizard & Mandatory Email Save Gate
    ========================================================================== */
 
 (function(window, document) {
@@ -146,20 +146,23 @@
 
   // --- CVEditor Application State ---
   const state = {
-    currentUser: null,       // { id, email, name, role: 'admin'|'friend' }
+    currentUser: null,       // { id, email, name, role: 'admin'|'friend' } or null for visitor
     allUsers: [],            // List of registered accounts
     vault: {},               // Keyed by user ID: { [cvId]: cvObject }
-    activeCvId: "unity-ats", // ID of CV currently shown/edited
-    activeOwnerId: "roee",   // Owner of the active CV
+    activeCvId: "my-cv",     // ID of CV currently shown/edited
+    activeOwnerId: "guest",  // Owner of the active CV
     zoom: 1.0,
     activeTab: "content",    // "content" | "design" | "vault"
     isCollabHost: false,
     collabRoomId: null,
     peer: null,
     connections: [],
-    collaborators: {},       // { [peerId]: { name, color, activeField } }
+    collaborators: {},
     jobText: "",
-    jobUrl: ""
+    jobUrl: "",
+    pendingAction: null,     // Callback to execute after mandatory save
+    wizardTemplate: "ats",   // Selected template in welcome wizard
+    wizardDir: "ltr"         // Selected direction in welcome wizard
   };
 
   // Pre-seed Roee's base CV data
@@ -296,13 +299,11 @@
   // --- Auth & Storage Service ---
   const Storage = {
     init() {
-      // Load all users
       try {
         const u = localStorage.getItem("cve_users");
         state.allUsers = u ? JSON.parse(u) : [];
       } catch (e) { state.allUsers = []; }
 
-      // Check if Roee exists; if not, create master profile
       let roee = state.allUsers.find(x => x.email.toLowerCase() === DEFAULT_ADMIN_EMAIL.toLowerCase());
       if (!roee) {
         roee = { id: "roee", email: DEFAULT_ADMIN_EMAIL, name: "Roee Tal", role: "admin", pass: "roee123" };
@@ -310,25 +311,11 @@
         this.saveUsers();
       }
 
-      // Load session
-      try {
-        const cur = sessionStorage.getItem("cve_cur_user") || localStorage.getItem("cve_cur_user");
-        if (cur) {
-          state.currentUser = JSON.parse(cur);
-        } else {
-          state.currentUser = roee;
-        }
-      } catch (e) {
-        state.currentUser = roee;
-      }
-
-      // Load Vault
       try {
         const v = localStorage.getItem("cve_vault");
         state.vault = v ? JSON.parse(v) : {};
       } catch (e) { state.vault = {}; }
 
-      // Make sure Roee has default CV
       if (!state.vault["roee"]) {
         state.vault["roee"] = {
           "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
@@ -342,10 +329,41 @@
         this.saveVault();
       }
 
-      state.activeOwnerId = state.currentUser ? state.currentUser.id : "roee";
-      const ownerCvs = state.vault[state.activeOwnerId] || {};
-      const firstCvId = Object.keys(ownerCvs)[0];
-      if (firstCvId) state.activeCvId = firstCvId;
+      // Check session
+      let loggedInUser = null;
+      try {
+        const cur = sessionStorage.getItem("cve_cur_user") || localStorage.getItem("cve_cur_user");
+        if (cur) loggedInUser = JSON.parse(cur);
+      } catch (e) {}
+
+      if (loggedInUser) {
+        // Authenticated user (Roee or registered friend)
+        state.currentUser = loggedInUser;
+        state.activeOwnerId = loggedInUser.id;
+        const ownerCvs = state.vault[loggedInUser.id] || {};
+        state.activeCvId = Object.keys(ownerCvs)[0] || "my-cv";
+      } else {
+        // VISITOR / GUEST
+        state.currentUser = null;
+        state.activeOwnerId = "guest";
+        state.activeCvId = "draft";
+
+        // Check if visitor has existing draft in local storage
+        let savedDraft = null;
+        try {
+          const d = localStorage.getItem("cve_draft_cv");
+          if (d) savedDraft = JSON.parse(d);
+        } catch (e) {}
+
+        if (savedDraft) {
+          state.vault["guest"] = { "draft": savedDraft };
+        } else {
+          // No draft and not logged in -> Trigger Welcome Wizard!
+          setTimeout(() => {
+            window.CVE.openWelcomeModal();
+          }, 150);
+        }
+      }
     },
 
     saveUsers() {
@@ -378,7 +396,7 @@
       email = email.trim().toLowerCase();
       if (!email || !pass) throw new Error("Please enter email and password.");
       if (state.allUsers.some(x => x.email.toLowerCase() === email)) {
-        throw new Error("An account with this email already exists.");
+        throw new Error("An account with this email already exists. Please sign in.");
       }
       const isRoee = email === DEFAULT_ADMIN_EMAIL.toLowerCase();
       const id = "usr_" + Math.random().toString(36).substring(2, 9);
@@ -392,19 +410,8 @@
       state.allUsers.push(newUser);
       this.saveUsers();
 
-      // Create new private CV for this friend
-      state.vault[id] = {
-        "cv-1": Object.assign(window.RTCV ? window.RTCV.blank(newUser.name) : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
-          label: newUser.name + " - Standard CV",
-          person: { name: newUser.name, email: newUser.email, title: "Professional", summary: "", phone: "", location: "", links: [] }
-        })
-      };
-      this.saveVault();
-
       state.currentUser = newUser;
       localStorage.setItem("cve_cur_user", JSON.stringify(newUser));
-      state.activeOwnerId = id;
-      state.activeCvId = "cv-1";
       return newUser;
     },
 
@@ -412,6 +419,8 @@
       sessionStorage.removeItem("cve_cur_user");
       localStorage.removeItem("cve_cur_user");
       state.currentUser = null;
+      state.activeOwnerId = "guest";
+      state.activeCvId = "draft";
     }
   };
 
@@ -423,10 +432,9 @@
         state.activeCvId = first;
         return owner[first];
       }
-      const blank = window.RTCV ? window.RTCV.blank(state.currentUser ? state.currentUser.name : "Your Name") : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
-      owner["cv-main"] = blank;
+      const blank = window.RTCV ? window.RTCV.blank("Your Name") : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
+      owner[state.activeCvId] = blank;
       state.vault[state.activeOwnerId] = owner;
-      state.activeCvId = "cv-main";
       Storage.saveVault();
       return blank;
     }
@@ -436,16 +444,36 @@
   function saveCurrentCV(cv) {
     if (!state.vault[state.activeOwnerId]) state.vault[state.activeOwnerId] = {};
     state.vault[state.activeOwnerId][state.activeCvId] = cv;
-    Storage.saveVault();
+
+    if (state.activeOwnerId === "guest") {
+      localStorage.setItem("cve_draft_cv", JSON.stringify(cv));
+    } else {
+      Storage.saveVault();
+    }
+
     broadcastCollabUpdate(cv);
   }
 
   function showSaveIndicator() {
     const el = $("#saveStatus");
     if (el) {
-      el.innerHTML = "<span>✓ Saved locally</span>";
+      el.innerHTML = state.currentUser ? "<span>✓ Saved to account</span>" : "<span style='color:#f59e0b;'>● Draft (Log in to save)</span>";
       el.style.opacity = "1";
     }
+  }
+
+  // --- Mandatory Save & Auth Guard ---
+  function ensureAuthenticated(actionCallback) {
+    if (state.currentUser && state.currentUser.email) {
+      // Already logged in!
+      if (actionCallback) actionCallback();
+      return true;
+    }
+
+    // Guest / Visitor -> Open Mandatory Registration & Save Modal!
+    state.pendingAction = actionCallback;
+    window.CVE.openMandatorySaveModal();
+    return false;
   }
 
   // --- Real-time Rendering & Live View with NovoResume Controls ---
@@ -454,19 +482,14 @@
     const stage = $("#cvSheet");
     if (!stage || !window.RTCV) return;
 
-    // Normalizing CV
     const norm = window.RTCV.normalize(cv);
-
-    // Render HTML
     stage.innerHTML = window.RTCV.render(norm, state.activeCvId, { edit: true });
 
-    // Apply layout ratio styling to .cvdoc
     const doc = stage.querySelector(".cvdoc");
     if (doc) {
       doc.classList.add("ratio-" + (cv.layout_ratio || "50-50"));
     }
 
-    // Load font
     let fontLink = $("#cv-dynamic-font");
     if (!fontLink) {
       fontLink = document.createElement("link");
@@ -476,22 +499,11 @@
     }
     fontLink.href = window.RTCV.fontHref(norm);
 
-    // Attach NovoResume-Style On-Canvas Section & Entry Hover Toolbars
     attachSectionToolbars(stage);
-
-    // Apply inline editing listeners to data-e elements
     attachInlineEditors(stage);
-
-    // Apply zoom
     applyZoom();
-
-    // Update Topbar document selector & template buttons
     updateTopbarUI();
-
-    // Re-check ATS score badge
     updateAtsBadge();
-
-    // Check NovoResume Page Overflow Meter
     setTimeout(updatePageMeter, 80);
   }
 
@@ -505,14 +517,12 @@
       const idx = parseInt(secEl.getAttribute("data-i"), 10);
       const colList = cv[col] || [];
 
-      // Avoid duplicate toolbars
       const existing = secEl.querySelector(":scope > .cve-sec-toolbar");
       if (existing) existing.remove();
 
       const bar = document.createElement("div");
       bar.className = "cve-sec-toolbar";
 
-      // ⇄ Switch Column Button (Move section from Left/Side to Right/Main or vice-versa)
       const otherColLabel = col === "main" ? "Side" : "Main";
       const switchBtn = document.createElement("button");
       switchBtn.type = "button";
@@ -525,7 +535,6 @@
       };
       bar.appendChild(switchBtn);
 
-      // ▲ Reorder Up
       if (idx > 0) {
         const upBtn = document.createElement("button");
         upBtn.type = "button";
@@ -539,7 +548,6 @@
         bar.appendChild(upBtn);
       }
 
-      // ▼ Reorder Down
       if (idx < colList.length - 1) {
         const downBtn = document.createElement("button");
         downBtn.type = "button";
@@ -553,7 +561,6 @@
         bar.appendChild(downBtn);
       }
 
-      // ＋ Entry Button
       const addBtn = document.createElement("button");
       addBtn.type = "button";
       addBtn.className = "cve-tool-btn";
@@ -565,7 +572,6 @@
       };
       bar.appendChild(addBtn);
 
-      // 🗑 Delete Section
       const delBtn = document.createElement("button");
       delBtn.type = "button";
       delBtn.className = "cve-tool-btn danger";
@@ -580,7 +586,6 @@
       secEl.prepend(bar);
     });
 
-    // Attach Hover Toolbars to Items (.cv-item)
     const items = stage.querySelectorAll(".cv-item");
     items.forEach(itemEl => {
       const existing = itemEl.querySelector(":scope > .cve-item-toolbar");
@@ -635,7 +640,7 @@
 
     const z = state.zoom || 1;
     const h = doc.offsetHeight || (doc.getBoundingClientRect().height / z);
-    const a4H = 1122.5; // 297mm in pixels at 96 DPI
+    const a4H = 1122.5;
 
     const pct = Math.min(250, Math.round((h / a4H) * 100));
 
@@ -709,7 +714,7 @@
     const container = $("#a4Container");
     if (!viewport || !container) return;
     const availW = viewport.clientWidth - 48;
-    const sheetW = 794; // 210mm in standard 96dpi pixels is ~794px
+    const sheetW = 794;
     const z = Math.min(1.2, Math.max(0.4, availW / sheetW));
     state.zoom = z;
     applyZoom();
@@ -735,7 +740,6 @@
     const P = cv.person || {};
 
     let html = `
-      <!-- Quick Layout & Add Action Banner -->
       <div style="display:flex;gap:8px;margin-bottom:4px;">
         <button type="button" class="cve-btn layout-btn" style="flex:1;justify-content:center;" onclick="window.CVE.openLayoutModal()">
           <span>📐 Layout & Sections</span>
@@ -745,7 +749,6 @@
         </button>
       </div>
 
-      <!-- Personal Details -->
       <div class="cve-section-card">
         <div class="cve-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
           <span class="cve-section-title">👤 Personal Details</span>
@@ -754,11 +757,11 @@
           <div class="cve-row-2">
             <div class="cve-form-group">
               <label class="cve-label">Full Name</label>
-              <input type="text" class="cve-input" data-bind="person.name" value="${esc(P.name || "")}" placeholder="Roee Tal">
+              <input type="text" class="cve-input" data-bind="person.name" value="${esc(P.name || "")}" placeholder="Your Name">
             </div>
             <div class="cve-form-group">
               <label class="cve-label">Professional Title</label>
-              <input type="text" class="cve-input" data-bind="person.title" value="${esc(P.title || "")}" placeholder="Game Developer">
+              <input type="text" class="cve-input" data-bind="person.title" value="${esc(P.title || "")}" placeholder="Software Engineer / Game Dev">
             </div>
           </div>
           <div class="cve-row-2">
@@ -783,7 +786,6 @@
       </div>
     `;
 
-    // Sections (Experience, Projects, Skills, etc.)
     const allSections = (cv.main || []).concat(cv.side || []);
     allSections.forEach((sec, sIdx) => {
       const isSide = sIdx >= (cv.main || []).length;
@@ -811,7 +813,6 @@
             </div>
       `;
 
-      // Render Entries inside section
       (sec.items || []).forEach((item, iIdx) => {
         const itemPath = `${basePath}.items.${iIdx}`;
         html += `<div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:8px;">`;
@@ -842,7 +843,7 @@
           html += `
             <div class="cve-row-2">
               <input type="text" class="cve-input" data-bind="${itemPath}.name" value="${esc(item.name || "")}" placeholder="Project Name">
-              <input type="text" class="cve-input" data-bind="${itemPath}.meta" value="${esc(item.meta || "")}" placeholder="Engine · Role">
+              <input type="text" class="cve-input" data-bind="${itemPath}.meta" value="${esc(item.meta || "")}" placeholder="Role · Tech">
             </div>
             <div class="cve-row-2">
               <input type="text" class="cve-input" data-bind="${itemPath}.dates" value="${esc(item.dates || "")}" placeholder="Year">
@@ -912,7 +913,7 @@
             <label class="cve-label">Column Layout Ratio</label>
             <select class="cve-select" onchange="window.CVE.setLayoutRatio(this.value)">
               <option value="50-50" ${(cv.layout_ratio || "50-50") === "50-50" ? "selected" : ""}>50 / 50 Balanced Split (Novo Standard)</option>
-              <option value="35-65" {cv.layout_ratio === "35-65" ? "selected" : ""}>35 / 65 Left Sidebar (Studio Style)</option>
+              <option value="35-65" ${cv.layout_ratio === "35-65" ? "selected" : ""}>35 / 65 Left Sidebar (Studio Style)</option>
               <option value="65-35" ${cv.layout_ratio === "65-35" ? "selected" : ""}>65 / 35 Right Sidebar (Modern)</option>
               <option value="1-col" ${cv.layout_ratio === "1-col" ? "selected" : ""}>1-Column Full Width (ATS Classic)</option>
             </select>
@@ -991,18 +992,17 @@
           <span class="cve-section-title">🔐 User Account & Vault</span>
         </div>
         <div class="cve-section-body">
-          <p style="font-size:13px;color:#fff;">Logged in as: <b>${esc(user ? user.name : "Guest")}</b> (${esc(user ? user.email : "Local")})</p>
+          <p style="font-size:13px;color:#fff;">Logged in as: <b>${esc(user ? user.name : "Guest")}</b> (${esc(user ? user.email : "Not logged in")})</p>
           <p style="font-size:12px;color:var(--cve-text-muted);">
-            ${isRoee ? "🌟 Roee Admin Mode: Full access to all your and friends' CVs." : "🔒 Friend Account: Your CVs are private to you and Roee."}
+            ${isRoee ? "🌟 Roee Admin Mode: Full access to all your and friends' CVs." : user ? "🔒 Friend Account: Your CVs are private to you and Roee." : "⚠️ You are editing as Guest. Save and register to keep your CV permanently!"}
           </p>
           <div style="display:flex;gap:8px;margin-top:4px;">
-            <button type="button" class="cve-btn" onclick="window.CVE.openAuthModal()">Switch / Log In</button>
+            <button type="button" class="cve-btn" onclick="window.CVE.openAuthModal()">${user ? "Account Settings" : "Sign In"}</button>
             <button type="button" class="cve-btn" onclick="window.CVE.exportVaultJson()">💾 Backup All (JSON)</button>
           </div>
         </div>
       </div>
 
-      <!-- CV Variants List -->
       <div class="cve-section-card">
         <div class="cve-section-header">
           <span class="cve-section-title">📄 My Resumes (${Object.keys(myCvs).length})</span>
@@ -1053,7 +1053,7 @@
                   </div>
                 `;
               }).join("")}
-              ${friends.length === 0 ? `<p style="font-size:12px;color:var(--cve-text-muted);font-style:italic;">No friend accounts registered yet. Friends can sign up via the Account menu!</p>` : ""}
+              ${friends.length === 0 ? `<p style="font-size:12px;color:var(--cve-text-muted);font-style:italic;">No friend accounts registered yet.</p>` : ""}
             </div>
             ${state.activeOwnerId !== "roee" ? `
               <button type="button" class="cve-btn pri" style="margin-top:8px;" onclick="window.CVE.switchOwner('roee')">← Return to Roee's CVs</button>
@@ -1106,10 +1106,12 @@
     if (userBtn) {
       const u = state.currentUser;
       userBtn.innerHTML = `
-        <span class="cve-user-avatar">${u ? u.name.charAt(0).toUpperCase() : "G"}</span>
+        <span class="cve-user-avatar">${u ? u.name.charAt(0).toUpperCase() : "👤"}</span>
         <span>${esc(u ? u.name : "Sign In")}</span>
       `;
     }
+
+    showSaveIndicator();
   }
 
   // --- ATS Scanner & Job Matcher Logic ---
@@ -1286,9 +1288,7 @@
     script.src = PEERJS_CDN;
     script.onload = () => {
       const myId = roomId ? null : "cve-" + Math.random().toString(36).substring(2, 9);
-      state.peer = new window.Peer(myId, {
-        debug: 1
-      });
+      state.peer = new window.Peer(myId, { debug: 1 });
 
       state.peer.on("open", id => {
         state.collabRoomId = id;
@@ -1306,7 +1306,7 @@
           conn.send({
             type: "init_cv",
             cv: getCurrentCV(),
-            hostName: state.currentUser ? state.currentUser.name : "Roee"
+            hostName: state.currentUser ? state.currentUser.name : "Friend"
           });
         });
       });
@@ -1353,13 +1353,13 @@
   function broadcastCollabUpdate(cv) {
     state.connections.forEach(conn => {
       if (conn.open) {
-        conn.send({ type: "sync_cv", cv, author: state.currentUser ? state.currentUser.name : "Roee" });
+        conn.send({ type: "sync_cv", cv, author: state.currentUser ? state.currentUser.name : "Friend" });
       }
     });
   }
 
   function broadcastPresence(fieldPath) {
-    const user = state.currentUser || { name: "Roee" };
+    const user = state.currentUser || { name: "Friend" };
     state.connections.forEach(conn => {
       if (conn.open) {
         conn.send({
@@ -1416,7 +1416,6 @@
     const ratio = cv.layout_ratio || "50-50";
 
     let html = `
-      <!-- Column ratio presets -->
       <div class="cve-form-group">
         <label class="cve-label">Column Ratio Layout Preset</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
@@ -1427,9 +1426,7 @@
         </div>
       </div>
 
-      <!-- Two-Column Drag & Reorder Board -->
       <div class="cve-board-grid">
-        <!-- Left / Side Column -->
         <div class="cve-board-col">
           <div class="cve-board-col-header">
             <span>Left Column (Side)</span>
@@ -1455,7 +1452,6 @@
           <button type="button" class="cve-btn" style="width:100%;justify-content:center;margin-top:auto;" onclick="window.CVE.openAddSectionModal('side')">＋ Add Section Here</button>
         </div>
 
-        <!-- Right / Main Column -->
         <div class="cve-board-col">
           <div class="cve-board-col-header">
             <span>Right Column (Main)</span>
@@ -1640,7 +1636,7 @@
       blank.label = name;
       if (!state.vault[state.activeOwnerId]) state.vault[state.activeOwnerId] = {};
       state.vault[state.activeOwnerId][id] = blank;
-      Storage.saveVault();
+      saveCurrentCV(blank);
       this.switchCV(id);
     },
 
@@ -1651,7 +1647,7 @@
       const dup = JSON.parse(JSON.stringify(src));
       dup.label = (dup.label || "CV") + " (Copy)";
       state.vault[state.activeOwnerId][newId] = dup;
-      Storage.saveVault();
+      saveCurrentCV(dup);
       this.switchCV(newId);
     },
 
@@ -1802,6 +1798,162 @@
       }
     },
 
+    // --- Onboarding Welcome Wizard ---
+    openWelcomeModal() {
+      const m = $("#welcomeModal");
+      if (m) m.classList.add("open");
+    },
+
+    selectWizardTemplate(tpl) {
+      state.wizardTemplate = tpl;
+      $$(".cve-tpl-card").forEach(c => {
+        c.classList.toggle("active", c.getAttribute("data-tpl") === tpl);
+      });
+    },
+
+    selectWizardDir(dir) {
+      state.wizardDir = dir;
+      $$(".cve-lang-btn").forEach(b => {
+        b.classList.toggle("active", b.getAttribute("data-dir") === dir);
+      });
+    },
+
+    submitWelcomeWizard() {
+      const nameInput = $("#wizardNameInput");
+      const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Your Name";
+      const tpl = state.wizardTemplate || "ats";
+      const dir = state.wizardDir || "ltr";
+
+      const freshCv = window.RTCV ? window.RTCV.blank(name) : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
+      freshCv.label = `${name} - Résumé`;
+      freshCv.template = tpl;
+      freshCv.dir = dir;
+      freshCv.lang = dir === "rtl" ? "he" : "en";
+      if (dir === "rtl") freshCv.font = "Rubik";
+      freshCv.person.name = name;
+      freshCv.person.email = "";
+      freshCv.person.phone = "";
+      freshCv.person.summary = "";
+
+      state.vault["guest"] = { "draft": freshCv };
+      state.activeOwnerId = "guest";
+      state.activeCvId = "draft";
+      localStorage.setItem("cve_draft_cv", JSON.stringify(freshCv));
+
+      this.closeModal("welcomeModal");
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    // --- Mandatory Save Gate Modal ---
+    openMandatorySaveModal() {
+      const m = $("#mandatorySaveModal");
+      if (m) {
+        const cv = getCurrentCV();
+        const P = cv.person || {};
+        const emailInput = $("#mandEmailInput");
+        if (emailInput && P.email) emailInput.value = P.email;
+        m.classList.add("open");
+      }
+    },
+
+    submitMandatorySave() {
+      const email = $("#mandEmailInput").value.trim();
+      const pass = $("#mandPassInput").value.trim();
+      const err = $("#mandSaveError");
+      const cv = getCurrentCV();
+      const P = cv.person || {};
+      const name = P.name || "Your Name";
+
+      if (!email || !pass) {
+        if (err) err.textContent = "Please enter your email and choose a password.";
+        return;
+      }
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        if (err) err.textContent = "Please enter a valid email address.";
+        return;
+      }
+
+      try {
+        let user;
+        const existing = state.allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (existing) {
+          user = Storage.login(email, pass);
+        } else {
+          user = Storage.register(email, name, pass);
+        }
+
+        // Bind draft to newly registered user
+        P.email = email;
+        state.vault[user.id] = { "my-cv": cv };
+        state.activeOwnerId = user.id;
+        state.activeCvId = "my-cv";
+        Storage.saveVault();
+        localStorage.removeItem("cve_draft_cv");
+
+        // Send to Email flow
+        const plain = window.RTCV ? window.RTCV.plainText(cv) : "";
+        const subject = encodeURIComponent(`${name} — Résumé & Online CV`);
+        const body = encodeURIComponent(`Hi ${name},\n\nYour résumé has been saved to your CV Studio account on roeetal.com!\n\nYou can access, edit and share your CV anytime here:\nhttps://roeetal.com/CVEditor\n\n------------------------------\n${plain}`);
+
+        // Trigger mail client or toast
+        location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+
+        this.closeModal("mandatorySaveModal");
+        renderA4Sheet();
+        renderSidebar();
+
+        alert(`✓ Résumé successfully saved to your account and sent to ${email}!`);
+
+        if (state.pendingAction) {
+          const action = state.pendingAction;
+          state.pendingAction = null;
+          action();
+        }
+      } catch (e) {
+        if (err) err.textContent = e.message;
+      }
+    },
+
+    // --- Action Wrappers with Mandatory Save Check ---
+    saveAction() {
+      ensureAuthenticated(() => {
+        Storage.saveVault();
+        alert("✓ Résumé saved to your private account!");
+      });
+    },
+
+    printPdf() {
+      ensureAuthenticated(() => {
+        window.print();
+      });
+    },
+
+    openEmailModal() {
+      ensureAuthenticated(() => {
+        const m = $("#emailModal");
+        if (m) {
+          const cv = getCurrentCV();
+          const plain = window.RTCV ? window.RTCV.plainText(cv) : "";
+          const P = cv.person || {};
+          $("#emailSubjectInput").value = `${P.name || "My"} — Résumé / CV`;
+          $("#emailBodyPreview").value = `Hi,\n\nPlease find my résumé (${P.title || "Game Developer"}).\n\nLive online version: https://roeetal.com/CVEditor\n\n${plain}`;
+          m.classList.add("open");
+        }
+      });
+    },
+
+    openCollabModal() {
+      ensureAuthenticated(() => {
+        const m = $("#collabModal");
+        if (m) {
+          m.classList.add("open");
+          if (!state.peer) initCollab();
+          else updateCollabModalUI();
+        }
+      });
+    },
+
     // --- Modals ---
     openLayoutModal() {
       const m = $("#layoutModal");
@@ -1849,15 +2001,6 @@
       runAtsJobAnalysis();
     },
 
-    openCollabModal() {
-      const m = $("#collabModal");
-      if (m) {
-        m.classList.add("open");
-        if (!state.peer) initCollab();
-        else updateCollabModalUI();
-      }
-    },
-
     copyCollabLink() {
       const el = $("#collabRoomLink");
       if (!el) return;
@@ -1869,22 +2012,10 @@
     inviteViaEmail() {
       const el = $("#collabRoomLink");
       const link = el ? el.textContent : location.href;
-      const user = state.currentUser ? state.currentUser.name : "Roee";
+      const user = state.currentUser ? state.currentUser.name : "Friend";
       const subject = encodeURIComponent(`${user} invited you to collaborate on a CV`);
-      const body = encodeURIComponent(`Hey,\n\nI'm working on my CV on roeetal.com/CVEditor and would love your feedback and collaboration!\n\nJoin my live Figma-style session here:\n${link}\n\nSee you there!`);
+      const body = encodeURIComponent(`Hey,\n\nI'm working on my CV on roeetal.com/CVEditor and would love your collaboration!\n\nJoin my live session here:\n${link}`);
       location.href = `mailto:?subject=${subject}&body=${body}`;
-    },
-
-    openEmailModal() {
-      const m = $("#emailModal");
-      if (m) {
-        const cv = getCurrentCV();
-        const plain = window.RTCV ? window.RTCV.plainText(cv) : "";
-        const P = cv.person || {};
-        $("#emailSubjectInput").value = `${P.name || "Roee Tal"} — Résumé / CV`;
-        $("#emailBodyPreview").value = `Hi,\n\nPlease find attached the résumé of ${P.name || "Roee Tal"} (${P.title || "Game Developer"}).\n\nLive online version & portfolio: https://roeetal.com/CVEditor\n\n${plain}`;
-        m.classList.add("open");
-      }
     },
 
     sendEmailAction() {
@@ -1901,7 +2032,7 @@
       const plain = window.RTCV ? window.RTCV.plainText(cv) : "";
       if (navigator.share) {
         navigator.share({
-          title: `${P.name || "Roee Tal"} — Résumé`,
+          title: `${P.name || "My"} — Résumé`,
           text: `Check out my résumé (${P.title || "Game Developer"}):\n\n${plain}`,
           url: "https://roeetal.com/CVEditor"
         }).catch(() => {});
@@ -1925,6 +2056,7 @@
         Storage.login(email, pass);
         if (err) err.textContent = "";
         this.closeModal("authModal");
+        this.closeModal("welcomeModal");
         renderA4Sheet();
         renderSidebar();
       } catch (e) {
@@ -1941,6 +2073,7 @@
         Storage.register(email, name, pass);
         if (err) err.textContent = "";
         this.closeModal("authModal");
+        this.closeModal("welcomeModal");
         renderA4Sheet();
         renderSidebar();
       } catch (e) {
@@ -1956,17 +2089,12 @@
       a.click();
     },
 
-    printPdf() {
-      window.print();
-    },
-
     closeModal(modalId) {
       const m = document.getElementById(modalId);
       if (m) m.classList.remove("open");
     }
   };
 
-  // Launch on load
   window.addEventListener("DOMContentLoaded", () => {
     window.CVE.init();
   });
