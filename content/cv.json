@@ -547,7 +547,7 @@
       "template": "ats",
       "accent": "#1f5fa8",
       "font": "Inter",
-      "density": "normal",
+      "density": "compact",
       "photo": "/assets/uploads/1000211257-f1al.jpg",
       "show_photo": true,
       "dir": "ltr",
@@ -646,13 +646,8 @@
               "about": "",
               "label": "Courses",
               "bullets": [
-                "C# 1–2",
-                "Unity Development 1–2",
-                "C++",
-                "Multiplayer",
-                "Unreal Development 1–2",
-                "Game Design 1–2",
-                "Game Production"
+                "Programming & Engines: C# 1–2, Unity Development 1–2, Unreal Development 1–2, C++, Multiplayer",
+                "Game Design & Production: Game Design 1–2, Game Production"
               ]
             }
           ]
