@@ -2243,21 +2243,86 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     "OOP":["oop","object oriented","object-oriented"],"3D math":["3d math","vector math","linear algebra"],"team lead":["team lead","led a team","lead a team","team leader"],"shipped":["shipped","released","launched","published"]};
   const esc_=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
   function hasTerm(text,term){const alts=SYN[term]||[term.toLowerCase()];return alts.some(a=>new RegExp("(^|[^a-z0-9+#])"+esc_(a.toLowerCase())+"($|[^a-z0-9+#])","i").test(text))}
-  function jobTerms(job){
-    const t=" "+job.toLowerCase()+" ",found=KW.filter(k=>hasTerm(t,k));
-    // also words the ad repeats (capitalized tech-ish terms)
-    const caps={};(job.match(/\b[A-Z][A-Za-z0-9+#.]{1,20}\b/g)||[]).forEach(w=>{if(!/^(The|And|You|We|Our|Your|This|With|For|In|To|Of|A|An|As|At|On|Is|Are|Be|Or|If|It|Will|Have|Has|Job|About|Who|What|Must|Should|Nice|Plus|Requirements|Responsibilities|Experience|Years|Team|Work|Join|Apply|Location|Remote|Hybrid|Office|Benefits|Company|Role|Position|Studio|Games?|Developer|Engineer|Programmer)$/.test(w))caps[w]=(caps[w]||0)+1});
-    const extra=Object.entries(caps).filter(([w,n])=>n>=2&&!found.some(f=>f.toLowerCase()===w.toLowerCase())).map(([w])=>w).slice(0,12);
-    let all=[...new Set(found.concat(extra))];if(all.includes("Unreal Engine"))all=all.filter(x=>x!=="Unreal");if(all.includes("UI Toolkit"))all=all.filter(x=>x!=="UI");return all;
+  function cleanJobText(raw){
+    if(!raw)return "";
+    let text=String(raw);
+    const start=text.match(/(?:About the job|Job description|Role overview|About the role|Position overview|The role|Who we are looking for|Responsibilities)[\s\S]*/i);
+    if(start)text=start[0];
+    text=text.replace(/(?:Show more|Show less|Similar jobs|People also viewed|Report this job|Set alert for similar jobs|Sign in to apply)[\s\S]*/i,"");
+    const lines=text.split("\n").map(l=>l.trim()).filter(l=>{
+      if(!l)return false;
+      if(/^(Clear text|Sign in|Join now|Apply|Easy Apply|Save job|Share|Image \d+|Follow|Dismiss|Loading\.\.\.)$/i.test(l))return false;
+      if(/^Posted \d+|^\d+ applicants?|^\d+ months? ago|^\d+ days? ago/i.test(l))return false;
+      return true;
+    });
+    return lines.join("\n").slice(0,12000);
   }
+
+  function parseHtmlToJobText(htmlStr){
+    try{
+      const d=new DOMParser().parseFromString(htmlStr,"text/html");
+      d.querySelectorAll("script,style,noscript,svg,nav,header,footer,aside,iframe,button,form").forEach(e=>e.remove());
+      const cont=d.querySelector(".show-more-less-html__markup, .description__text, .job-description, #job-description, [data-automation-id='jobPostingDescription'], article, main")||d.body;
+      if(!cont)return "";
+      cont.querySelectorAll("p,li,h1,h2,h3,h4,h5,h6,tr,div").forEach(e=>e.append("\n"));
+      cont.querySelectorAll("br").forEach(e=>e.replaceWith("\n"));
+      const raw=(cont.innerText||cont.textContent||"").trim();
+      return cleanJobText(raw);
+    }catch(_){return "";}
+  }
+
+  function jobTerms(job){
+    const clean=cleanJobText(job);
+    const t=" "+clean.toLowerCase()+" ",found=KW.filter(k=>hasTerm(t,k));
+    // also words the ad repeats (capitalized tech-ish terms)
+    const caps={};
+    (clean.match(/\b[A-Z][A-Za-z0-9+#.]{1,20}\b/g)||[]).forEach(w=>{
+      if(!/^(The|And|You|We|Our|Your|This|With|For|In|To|Of|A|An|As|At|On|Is|Are|Be|Or|If|It|Will|Have|Has|Job|About|Who|What|Must|Should|Nice|Plus|Requirements|Responsibilities|Experience|Years|Team|Work|Join|Apply|Location|Remote|Hybrid|Office|Benefits|Company|Role|Position|Studio|Games?|Developer|Engineer|Programmer|Moon|Active|Israel|Tel|Aviv|Yafo|District|LinkedIn|Sign|Clear|Image|Report|Save|Share|Follow|Full|Part|Time|Mid|Senior|Junior|Salary|Overview)$/.test(w))
+        caps[w]=(caps[w]||0)+1;
+    });
+    const extra=Object.entries(caps).filter(([w,n])=>n>=2&&!found.some(f=>f.toLowerCase()===w.toLowerCase())).map(([w])=>w).slice(0,10);
+    let all=[...new Set(found.concat(extra))];
+    if(all.includes("Unreal Engine"))all=all.filter(x=>x!=="Unreal");
+    if(all.includes("UI Toolkit"))all=all.filter(x=>x!=="UI");
+    return all;
+  }
+
+  /* Fetch from link completely without external AI (no Jina AI, no Gemini LLM) */
   async function fetchJob(url,st){
     url=url.trim();if(!/^https?:\/\//.test(url))url="https://"+url;
-    try{const r=await fetchT(url,{},12000);if(r.ok){const t=await r.text();const d=new DOMParser().parseFromString(t,"text/html");const x=(d.body&&d.body.innerText||d.body.textContent||"").trim();if(x.length>300)return cleanJobText(x)}}catch(e){}
-    st.textContent="Reading the page through a reader service…";
-    try{const r=await fetchT("https://r.jina.ai/"+url,{headers:{"Accept":"text/plain"}},30000);if(r.ok){const t=(await r.text()).trim();if(t.length>300&&!/captcha|access denied|enable javascript/i.test(t.slice(0,600)))return cleanJobText(t)}}catch(e){}
-    if(provider()==="gemini"&&store.get(AI_KEY)){st.textContent="Asking Gemini to read the page…";
-      const t=await aiText("Return the full text of the job advertisement at the URL the user gives: title, company, requirements, responsibilities, nice-to-haves. Plain text only.",url,{max:2500,status:st,tools:[{url_context:{}}]});if(t&&t.length>200)return t}
-    throw new Error("couldn't read that page (many job sites block it). Copy the job text and paste it in the box instead.");
+    st.textContent="Fetching the job page…";
+
+    // 1. Direct fetch (if same-origin or CORS allowed)
+    try{
+      const r=await fetchT(url,{headers:{"Accept":"text/html,text/plain"}},8000);
+      if(r.ok){
+        const txt=parseHtmlToJobText(await r.text());
+        if(txt&&txt.length>150)return txt;
+      }
+    }catch(_){}
+
+    // 2. Standard non-AI open CORS proxies (simple HTTP forwarders)
+    const proxies=[
+      u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
+      u=>"https://corsproxy.io/?"+encodeURIComponent(u)
+    ];
+
+    for(const p of proxies){
+      try{
+        st.textContent="Reading page via open proxy (no AI)…";
+        const r=await fetchT(p(url),{headers:{"Accept":"text/html,text/plain"}},9000);
+        if(r.ok){
+          const t=await r.text();
+          if(!/captcha|access denied|enable javascript|challenge-platform/i.test(t.slice(0,800))){
+            const txt=parseHtmlToJobText(t);
+            if(txt&&txt.length>150)return txt;
+          }
+        }
+      }catch(_){}
+    }
+
+    // 3. Deterministic non-AI fallback
+    throw new Error("Job site blocks direct scraping (CORS / anti-bot). Copy the job text and paste it directly in the box below.");
   }
   function cvAtsChecks(V){
     const txt=RTCV.plainText(V),P=V.person||{},secs=(V.main||[]).concat(V.side||[]),R=[];
@@ -2319,8 +2384,8 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
           h("ul",{class:"rt-checks"},...checks.map(x=>h("li",{class:x.ok?"ok":"bad"},h("b",{},(x.ok?"✓ ":"✕ ")+x.title),h("span",{},x.why)))),
           h("h4",{},"What an ATS reads (in order)"),h("pre",{class:"rt-plain"},RTCV.plainText(V))),
         h("section",{},h("h3",{},"Check against a job"),url,
-          h("div",{class:"rt-row",style:"margin:6px 0"},h("button",{class:"rt-btn",type:"button",on:{click:async()=>{store.set("rt-job-url",url.value.trim());if(!url.value.trim())return;st.textContent="Fetching the job ad…";
-            try{job.value=(await fetchJob(url.value,st)).slice(0,12000);st.textContent="Got it. Check the text, then press Check.";run()}catch(e){st.textContent="⚠ "+errText(e)}}}},"Fetch from link")),
+          h("div",{class:"rt-row",style:"margin:6px 0"},h("button",{class:"rt-btn",type:"button",on:{click:async()=>{store.set("rt-job-url",url.value.trim());if(!url.value.trim()){st.textContent="Please enter a job URL first.";return}st.textContent="Fetching the job ad…";
+            try{job.value=(await fetchJob(url.value,st)).slice(0,12000);st.textContent="Got it. Review the text below, then press Check.";run()}catch(e){st.textContent="⚠ "+errText(e);job.focus()}}}},"Fetch from link")),
           job,st,h("div",{class:"rt-row",style:"margin-top:6px"},h("button",{class:"rt-btn pri",type:"button",on:{click:run}},"Check")),res))));
     document.body.append(page);if((store.get("rt-job-text")||"").length>80)run();
   }
