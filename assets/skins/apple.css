@@ -1,0 +1,254 @@
+/* Site style: Apple (Minimal) — Inspired by Apple's minimalist, spacious aesthetic.
+   Spacious breathing room, glass cards, SF Pro typography, refined categories, and high-impact concise highlights. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+html[data-skin=apple] {
+  --deep: #000000;
+  --mid: #121216;
+  --accent: #2997ff;
+  --accent-glow: rgba(41, 151, 255, 0.35);
+  --paper: #f5f5f7;
+  --ink: #f5f5f7;
+  --muted-ink: rgba(245, 245, 247, 0.72);
+  --glass-bg: rgba(26, 26, 30, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --font-apple: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  color-scheme: dark;
+}
+
+html[data-skin=apple] body {
+  background: #000000 !important;
+  color: var(--paper) !important;
+  font-family: var(--font-apple) !important;
+  letter-spacing: -0.012em;
+  line-height: 1.5;
+}
+
+/* Smooth transitions */
+html[data-skin=apple] :is(.ptile, .repo, .btn, .cs-card, .tool, .chip) {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Bands & Spacing: Generous Apple breathing room */
+html[data-skin=apple] :is(.band, .custom-sec):not(.cvdoc *) {
+  background: #000000 !important;
+  padding-block: clamp(70px, 8vw, 130px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-skin=apple] :is(.band):not(.cvdoc *)::before,
+html[data-skin=apple] :is(.band):not(.cvdoc *)::after {
+  display: none !important;
+}
+
+/* Headings: Clean, centered, large typography */
+html[data-skin=apple] :is(.sec-head, .cs-head):not(.cvdoc *) {
+  text-align: center;
+  max-width: 820px;
+  margin-inline: auto;
+  margin-bottom: clamp(36px, 5vw, 64px) !important;
+}
+
+html[data-skin=apple] :is(.sec-head h2, .band h2, .foot h2, .cs-head h2):not(.cvdoc *) {
+  font-family: var(--font-apple) !important;
+  font-size: clamp(36px, 5.2vw, 62px) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.1 !important;
+  color: #ffffff !important;
+  justify-content: center;
+}
+
+html[data-skin=apple] .kicker:not(.cvdoc *) {
+  font-family: var(--font-apple) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: var(--accent) !important;
+  margin-bottom: 10px !important;
+}
+
+html[data-skin=apple] :is(.lead, .sec-head p, .cs-head .cs-text, .muted):not(.cvdoc *) {
+  font-family: var(--font-apple) !important;
+  font-size: clamp(17px, 2vw, 20px) !important;
+  color: var(--muted-ink) !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+}
+
+/* Top bar: Ultra-clean frosted glass */
+html[data-skin=apple] .topbar {
+  background: rgba(0, 0, 0, 0.8) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-skin=apple] .topbar .wrap {
+  padding-block: 14px !important;
+}
+
+html[data-skin=apple] .mark:not(.cvdoc *) {
+  font-family: var(--font-apple) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+}
+
+html[data-skin=apple] .topbar nav a:not(.cvdoc *) {
+  font-family: var(--font-apple) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: rgba(245, 245, 247, 0.8) !important;
+  opacity: 1 !important;
+}
+
+html[data-skin=apple] .topbar nav a:hover:not(.cvdoc *) {
+  color: #ffffff !important;
+}
+
+/* Hero Section: Minimalist showcase */
+html[data-skin=apple] .hero {
+  background: #000000 !important;
+  min-height: 85vh !important;
+}
+
+html[data-skin=apple] .hero-panel:not(.cvdoc *) {
+  background: rgba(20, 20, 24, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 32px !important;
+  -webkit-backdrop-filter: blur(32px) !important;
+  backdrop-filter: blur(32px) !important;
+  padding: clamp(32px, 5vw, 56px) !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+html[data-skin=apple] .hero h1:not(.cvdoc *) {
+  font-family: var(--font-apple) !important;
+  font-size: clamp(44px, 8vw, 92px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.05 !important;
+}
+
+/* Buttons: Apple Pill Buttons */
+html[data-skin=apple] :is(.btn, .hero-links a, .xrow a, .copyrow .btn):not(.cvdoc *) {
+  border-radius: 980px !important;
+  font-family: var(--font-apple) !important;
+  font-weight: 500 !important;
+  font-size: 15px !important;
+  padding: 8px 24px !important;
+  min-height: 44px !important;
+  letter-spacing: -0.01em !important;
+}
+
+html[data-skin=apple] .btn:not(.ghost):not(.cvdoc *) {
+  background: #0071e3 !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+}
+
+html[data-skin=apple] .btn:not(.ghost):hover:not(.cvdoc *) {
+  background: #0077ed !important;
+  transform: scale(1.02) !important;
+}
+
+html[data-skin=apple] .btn.ghost:not(.cvdoc *),
+html[data-skin=apple] .hero-links a:not(.cvdoc *) {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #f5f5f7 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+html[data-skin=apple] .btn.ghost:hover:not(.cvdoc *) {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  transform: scale(1.02) !important;
+}
+
+/* Projects Grid: Spacious Cards (1-2 per row) */
+html[data-skin=apple] .ptiles {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)) !important;
+  gap: 32px !important;
+}
+
+@media (max-width: 580px) {
+  html[data-skin=apple] .ptiles {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+html[data-skin=apple] .ptile:not(.cvdoc *) {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 28px !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
+  padding: 32px !important;
+  overflow: hidden !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3) !important;
+}
+
+html[data-skin=apple] .ptile:hover:not(.cvdoc *) {
+  transform: translateY(-5px) !important;
+  border-color: rgba(41, 151, 255, 0.45) !important;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55), 0 0 24px rgba(41, 151, 255, 0.2) !important;
+}
+
+html[data-skin=apple] .ptile-img img:not(.cvdoc *) {
+  border-radius: 18px !important;
+}
+
+html[data-skin=apple] .ptile-title:not(.cvdoc *) {
+  font-family: var(--font-apple) !important;
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  margin-block: 8px 6px !important;
+}
+
+html[data-skin=apple] .role-tag:not(.cvdoc *),
+html[data-skin=apple] .ptile-tech span:not(.cvdoc *),
+html[data-skin=apple] .chip:not(.cvdoc *) {
+  border-radius: 980px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 4px 12px !important;
+  color: var(--muted-ink) !important;
+}
+
+/* Custom Sections & Cards */
+html[data-skin=apple] :is(.cs-card, .repo, .about-game):not(.cvdoc *) {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 24px !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
+  padding: 28px !important;
+}
+
+html[data-skin=apple] :is(.cs-card, .repo):hover:not(.cvdoc *) {
+  transform: translateY(-4px) !important;
+  border-color: rgba(41, 151, 255, 0.4) !important;
+}
+
+/* Experience / Bullets: Punchy, clean dots */
+html[data-skin=apple] .ticks li:not(.cvdoc *)::before {
+  border-radius: 50% !important;
+  background: var(--accent) !important;
+  box-shadow: 0 0 10px var(--accent-glow) !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+
+/* Footer: Minimal & clean */
+html[data-skin=apple] .foot {
+  background: #000000 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding-block: clamp(60px, 8vw, 100px) !important;
+}

@@ -2146,7 +2146,9 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     "arcade":"arcade","ארקייד":"arcade","משחק":"arcade","משחקים":"arcade","רטרו":"arcade",
     "sketchbook":"sketchbook","סקיצה":"sketchbook","מחברת":"sketchbook","סקצ'בוק":"sketchbook",
     "hobbies":"hobbies","תחביבים":"hobbies","טיפוס":"hobbies",
-    "plain":"plain","פשוט":"plain","נקי":"plain","מינימלי":"plain"
+    "plain":"plain","פשוט":"plain","נקי":"plain",
+    "apple":"apple","אפל":"apple","מינימלי":"apple","מינימליסטי":"apple","סטודיו":"apple",
+    "valley":"valley","וואלי":"valley","רוברט":"valley","סינמטי":"valley","גרפי":"valley"
   };
   const DEV_TEMPLATES={
     faq:{type:"faq",kicker:"FAQ",title:"Frequently Asked Questions",items:[
@@ -2587,8 +2589,8 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     setTimeout(()=>inp.focus(),50);
   }
   /* ---- site styles: same content, different look (assets/skins/<name>.css + optional .js) */
-  const SKIN_NAMES={classic:"Classic",arcade:"Arcade",sketchbook:"Sketchbook",hobbies:"Hobbies",plain:"Plain"};
-  const SKIN_HINT={classic:"the current look",arcade:"game menu + mini-game",sketchbook:"hand-made notebook",hobbies:"climbing wall + manga",plain:"super boring"};
+  const SKIN_NAMES={classic:"Classic",arcade:"Arcade",sketchbook:"Sketchbook",hobbies:"Hobbies",plain:"Plain",apple:"Apple (Minimal)",valley:"Robert Valley (Cinematic)"};
+  const SKIN_HINT={classic:"the current look",arcade:"game menu + mini-game",sketchbook:"hand-made notebook",hobbies:"climbing wall + manga",plain:"super boring",apple:"Apple-style spacious minimalism & glass cards",valley:"Robert Valley style: bold graphic contrast, wide cinematic frames & sharp typography"};
   // Switch the site style (skin) live and save it to site:skin.
   function applySkin(k){
     const html=document.documentElement,prev=html.dataset.skin||"classic";if(prev===k)return;

@@ -8,6 +8,9 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-03
 
+### Styles
+- **Styles:** new "Apple (Minimal)" and "Robert Valley (Cinematic)" site styles selectable in the editor's Site style menu (⋯ › Site style), featuring airy glass cards and high-contrast widescreen graphic framing.
+
 ### Fixes
 - **AI:** rule commands `/width`, `/align`, `/title`, `/kicker` and section colors wrote to a wrong path (`content/site.json:…`) and silently did nothing; now they change the selected section and redraw it. Added `/pad` and `/text` (they were in /help but missing). "כותרת קטנה" now goes to the kicker, not the title. Your message no longer shows twice in the chat with Gemini/Hybrid.
 

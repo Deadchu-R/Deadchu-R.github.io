@@ -104,7 +104,7 @@ def ver(path):
     return hashlib.md5((ROOT / path).read_bytes()).hexdigest()[:8]
 
 
-SKINS = ["classic", "arcade", "sketchbook", "hobbies", "plain"]   # site styles, picked in the editor (⋯ › Site style)
+SKINS = ["classic", "arcade", "sketchbook", "hobbies", "plain", "apple", "valley"]   # site styles, picked in the editor (⋯ › Site style)
 SKIN = SITE_TEXT.get("skin") if SITE_TEXT.get("skin") in SKINS else "classic"
 def skin_css(p):
     """<link> for the active site style's stylesheet (assets/skins/<SKIN>.css); nothing for the Classic style."""

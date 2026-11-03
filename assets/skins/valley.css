@@ -1,0 +1,239 @@
+/* Site style: Robert Valley (Cinematic) — Inspired by the iconic art direction of Robert Valley.
+   Stark graphic noir contrast, bold crimson/amber accents, sharp geometric frames, cinematic widescreen ratios, and impactful punchy typography. */
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;700&display=swap");
+
+html[data-skin=valley] {
+  --deep: #050508;
+  --mid: #0d0d12;
+  --accent: #ff2a4b;
+  --accent-secondary: #ffb800;
+  --paper: #ffffff;
+  --ink: #ffffff;
+  --muted-ink: #a0a0a8;
+  --valley-font-title: "Bebas Neue", -apple-system, sans-serif;
+  --valley-font-body: "Inter", -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+html[data-skin=valley] body {
+  background: #050508 !important;
+  color: var(--paper) !important;
+  font-family: var(--valley-font-body) !important;
+  letter-spacing: 0.01em;
+}
+
+/* Stark graphic borders & zero radius */
+html[data-skin=valley] :is(.ptile, .repo, .btn, .cs-card, .tool, .chip, .hero-panel, .jump>button, img, video) {
+  border-radius: 0 !important;
+}
+
+/* Bands: Dramatic widescreen blocks with stark divider lines */
+html[data-skin=valley] :is(.band, .custom-sec):not(.cvdoc *) {
+  background: #050508 !important;
+  padding-block: clamp(75px, 8vw, 130px) !important;
+  border-top: 2px solid rgba(255, 42, 75, 0.4) !important;
+  position: relative;
+}
+
+html[data-skin=valley] :is(.band):not(.cvdoc *)::before,
+html[data-skin=valley] :is(.band):not(.cvdoc *)::after {
+  display: none !important;
+}
+
+/* Headings: Bold, tall, condensed graphic novel style */
+html[data-skin=valley] :is(.sec-head h2, .band h2, .foot h2, .cs-head h2):not(.cvdoc *) {
+  font-family: var(--valley-font-title) !important;
+  font-size: clamp(48px, 6.8vw, 84px) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 0.95 !important;
+  text-transform: uppercase !important;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 0px rgba(255, 42, 75, 0.5) !important;
+}
+
+html[data-skin=valley] .kicker:not(.cvdoc *) {
+  font-family: var(--valley-font-title) !important;
+  font-size: 16px !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  color: var(--accent) !important;
+  margin-bottom: 6px !important;
+}
+
+html[data-skin=valley] :is(.lead, .sec-head p, .cs-head .cs-text, .muted):not(.cvdoc *) {
+  font-family: var(--valley-font-body) !important;
+  font-size: clamp(16px, 1.8vw, 19px) !important;
+  color: var(--muted-ink) !important;
+  line-height: 1.5 !important;
+}
+
+/* Top bar: High-contrast minimalist letterbox */
+html[data-skin=valley] .topbar {
+  background: rgba(5, 5, 8, 0.92) !important;
+  border-bottom: 2px solid #ff2a4b !important;
+}
+
+html[data-skin=valley] .mark:not(.cvdoc *) {
+  font-family: var(--valley-font-title) !important;
+  font-size: 22px !important;
+  letter-spacing: 0.1em !important;
+  color: #ffffff !important;
+}
+
+html[data-skin=valley] .topbar nav a:not(.cvdoc *) {
+  font-family: var(--valley-font-title) !important;
+  font-size: 16px !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: #ffffff !important;
+  opacity: 0.8 !important;
+}
+
+html[data-skin=valley] .topbar nav a:hover:not(.cvdoc *) {
+  opacity: 1 !important;
+  color: var(--accent) !important;
+}
+
+/* Hero Section: Cinematic poster framing */
+html[data-skin=valley] .hero {
+  background: #050508 !important;
+  min-height: 90vh !important;
+}
+
+html[data-skin=valley] .hero-panel:not(.cvdoc *) {
+  background: rgba(13, 13, 18, 0.85) !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 12px 12px 0px var(--accent) !important;
+  padding: clamp(32px, 5vw, 60px) !important;
+}
+
+html[data-skin=valley] .hero h1:not(.cvdoc *) {
+  font-family: var(--valley-font-title) !important;
+  font-size: clamp(60px, 11vw, 130px) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.05em !important;
+  line-height: 0.92 !important;
+  text-transform: uppercase !important;
+  color: #ffffff !important;
+}
+
+/* Buttons: Angular, bold, high-contrast hover */
+html[data-skin=valley] :is(.btn, .hero-links a, .xrow a, .copyrow .btn):not(.cvdoc *) {
+  border-radius: 0 !important;
+  font-family: var(--valley-font-title) !important;
+  font-size: 18px !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  padding: 8px 26px !important;
+  min-height: 46px !important;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+html[data-skin=valley] .btn:not(.ghost):not(.cvdoc *) {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border: 2px solid var(--accent) !important;
+}
+
+html[data-skin=valley] .btn:not(.ghost):hover:not(.cvdoc *) {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+  transform: translate(-3px, -3px) !important;
+  box-shadow: 4px 4px 0px var(--accent) !important;
+}
+
+html[data-skin=valley] .btn.ghost:not(.cvdoc *),
+html[data-skin=valley] .hero-links a:not(.cvdoc *) {
+  background: transparent !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+html[data-skin=valley] .btn.ghost:hover:not(.cvdoc *) {
+  background: #ff2a4b !important;
+  color: #ffffff !important;
+  border-color: #ff2a4b !important;
+  transform: translate(-3px, -3px) !important;
+  box-shadow: 4px 4px 0px #ffffff !important;
+}
+
+/* Projects: Cinematic Widescreen Feature Frames */
+html[data-skin=valley] .ptiles {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)) !important;
+  gap: 36px !important;
+}
+
+@media (max-width: 580px) {
+  html[data-skin=valley] .ptiles {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+html[data-skin=valley] .ptile:not(.cvdoc *) {
+  background: #0d0d14 !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  padding: 28px !important;
+  position: relative !important;
+  box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.8) !important;
+}
+
+html[data-skin=valley] .ptile:hover:not(.cvdoc *) {
+  border-color: var(--accent) !important;
+  transform: translate(-4px, -4px) !important;
+  box-shadow: 10px 10px 0px var(--accent) !important;
+}
+
+html[data-skin=valley] .ptile-title:not(.cvdoc *) {
+  font-family: var(--valley-font-title) !important;
+  font-size: 34px !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  margin-block: 8px 6px !important;
+}
+
+html[data-skin=valley] .role-tag:not(.cvdoc *),
+html[data-skin=valley] .ptile-tech span:not(.cvdoc *),
+html[data-skin=valley] .chip:not(.cvdoc *) {
+  border-radius: 0 !important;
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  font-family: var(--valley-font-title) !important;
+  font-size: 14px !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  padding: 4px 10px !important;
+  color: var(--accent-secondary) !important;
+}
+
+/* Custom Cards / Repos */
+html[data-skin=valley] :is(.cs-card, .repo, .about-game):not(.cvdoc *) {
+  background: #0d0d14 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  padding: 26px !important;
+}
+
+html[data-skin=valley] :is(.cs-card, .repo):hover:not(.cvdoc *) {
+  border-color: var(--accent) !important;
+  transform: translate(-3px, -3px) !important;
+  box-shadow: 6px 6px 0px var(--accent) !important;
+}
+
+/* Bullet Points: Sharp red diagonal/triangle indicators */
+html[data-skin=valley] .ticks li:not(.cvdoc *)::before {
+  border-radius: 0 !important;
+  background: var(--accent) !important;
+  width: 7px !important;
+  height: 7px !important;
+  transform: rotate(45deg);
+  box-shadow: none !important;
+}
+
+/* Footer */
+html[data-skin=valley] .foot {
+  background: #050508 !important;
+  border-top: 3px solid #ff2a4b !important;
+  padding-block: clamp(60px, 8vw, 110px) !important;
+}
