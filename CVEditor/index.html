@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rubik:ital,wght@0,400;0,500;0,700;1,400&family=Assistant:wght@400;600;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Lato:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap">
   <link rel="stylesheet" href="../assets/cv.css">
   <link rel="stylesheet" href="../assets/cveditor.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body class="cve-body">
 
@@ -28,6 +29,10 @@
         <select id="docSelect" class="cve-doc-select" onchange="window.CVE.switchCV(this.value)"></select>
         <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.createNewCV()" title="New CV">＋</button>
       </div>
+
+      <button type="button" class="cve-btn" style="margin-left:6px;padding:5px 10px;font-size:12px;" onclick="window.CVE.openWelcomeModal()" title="Start onboarding wizard or import existing CV">
+        <span>✨ Import / New CV</span>
+      </button>
     </div>
 
     <!-- NovoResume Page Overflow Meter -->
@@ -122,68 +127,221 @@
 
   <!-- ================= Modals ================= -->
 
-  <!-- Welcome Onboarding Wizard Modal (For New Visitors) -->
+  <!-- Welcome Onboarding Multi-Step Wizard Modal -->
   <div id="welcomeModal" class="cve-modal-backdrop">
     <div class="cve-modal wide">
-      <div class="cve-modal-header">
-        <div class="cve-modal-title">
-          <span>✨ Welcome to CV Studio — ברוך הבא ליוצר קורות החיים</span>
+      <div class="cve-wizard-header">
+        <div class="cve-wizard-top">
+          <div class="cve-modal-title">
+            <span>✨ CV Studio — יצירת והמרת קורות חיים מקצועיים</span>
+          </div>
+          <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('welcomeModal')">✕</button>
+        </div>
+        <!-- Steps Progress Bar -->
+        <div class="cve-wizard-steps">
+          <div class="cve-wizard-step active" id="wizStepPill1">
+            <span class="cve-wizard-step-num">1</span>
+            <span>נקודת התחלה והמרה</span>
+          </div>
+          <div class="cve-wizard-step" id="wizStepPill2">
+            <span class="cve-wizard-step-num">2</span>
+            <span>פרטים אישיים ותמונה</span>
+          </div>
+          <div class="cve-wizard-step" id="wizStepPill3">
+            <span class="cve-wizard-step-num">3</span>
+            <span>לייאאוט וסגנון</span>
+          </div>
         </div>
       </div>
+
       <div class="cve-modal-body">
-        <div class="cve-gate-banner">
-          <span class="cve-gate-banner-icon">🚀</span>
-          <div class="cve-gate-banner-text">
-            <h4>Build your professional résumé in seconds</h4>
-            <p>בחר את שמך ואת עיצוב הלייאאוט המועדף עליך, והתחל לעבוד ישירות על גבי הדף ללא הגבלה!</p>
-          </div>
-        </div>
-
-        <div class="cve-form-group">
-          <label class="cve-label">מה השם שלך? (Full Name)</label>
-          <input type="text" id="wizardNameInput" class="cve-input" placeholder="e.g. Alex Cohen / אלכס כהן" style="font-size:15px;padding:10px 14px;">
-        </div>
-
-        <div class="cve-form-group" style="margin-top:10px;">
-          <label class="cve-label">בחר סגנון עיצוב ולייאאוט (Choose Layout)</label>
-          <div class="cve-tpl-choice-grid">
-            <div class="cve-tpl-card active" data-tpl="ats" onclick="window.CVE.selectWizardTemplate('ats')">
-              <span class="cve-tpl-card-icon">📄</span>
-              <span class="cve-tpl-card-name">ATS Pro</span>
-              <span class="cve-tpl-card-desc">עמודה אחת נקייה, מעבר מושלם של מערכות סינון אוטומטיות.</span>
-            </div>
-            <div class="cve-tpl-card" data-tpl="novo" onclick="window.CVE.selectWizardTemplate('novo')">
-              <span class="cve-tpl-card-icon">📑</span>
-              <span class="cve-tpl-card-name">Novo Split</span>
-              <span class="cve-tpl-card-desc">שתי עמודות מודרניות, תגיות מיומנויות ותמונת פרופיל מעוצבת.</span>
-            </div>
-            <div class="cve-tpl-card" data-tpl="studio" onclick="window.CVE.selectWizardTemplate('studio')">
-              <span class="cve-tpl-card-icon">🎨</span>
-              <span class="cve-tpl-card-name">Studio Sidebar</span>
-              <span class="cve-tpl-card-desc">סרגל צדדי צבעוני עם תמצית אישית וחלוקת תוכן אלגנטית.</span>
+        <!-- ================= Step 1: Starting Point (Import vs Scratch) ================= -->
+        <div id="wizView1" class="cve-wizard-view active">
+          <div class="cve-gate-banner" style="margin-bottom:6px;">
+            <span class="cve-gate-banner-icon">🚀</span>
+            <div class="cve-gate-banner-text">
+              <h4>איך תרצה להתחיל לבנות את קורות החיים?</h4>
+              <p>תוכל להעלות קובץ קורות חיים ישן והמערכת תחלץ ממנו את כל התוכן ישירות לעיצוב חדש, או להתחיל מאפס צעד אחר צעד.</p>
             </div>
           </div>
-        </div>
 
-        <div class="cve-form-group" style="margin-top:10px;">
-          <label class="cve-label">שפת קורות החיים וכיוון (Language & Direction)</label>
-          <div class="cve-lang-choice-grid">
-            <button type="button" class="cve-lang-btn active" data-dir="ltr" onclick="window.CVE.selectWizardDir('ltr')">
-              <span>🇺🇸 English (Left-to-Right)</span>
+          <div class="cve-wizard-mode-grid">
+            <!-- Mode Card 1: Import Existing CV -->
+            <div class="cve-wizard-mode-card active" id="wizModeUploadCard" onclick="window.CVE.setWizardMode('upload')">
+              <span class="cve-wizard-mode-badge">מומלץ ומהיר ⚡</span>
+              <span class="cve-wizard-mode-icon">📂</span>
+              <span class="cve-wizard-mode-title">המרת קורות חיים קיימים</span>
+              <span class="cve-wizard-mode-desc">העלה קובץ PDF / TXT ישן או הדבק טקסט מלינקדאין. המערכת תזהה את הניסיון, ההשכלה והמיומנויות ותעביר אותם לעיצוב חדש!</span>
+            </div>
+
+            <!-- Mode Card 2: Build From Scratch -->
+            <div class="cve-wizard-mode-card" id="wizModeScratchCard" onclick="window.CVE.setWizardMode('scratch')">
+              <span class="cve-wizard-mode-icon">📝</span>
+              <span class="cve-wizard-mode-title">בנייה נקייה מאפס</span>
+              <span class="cve-wizard-mode-desc">התחל מדף ריק. נזין את הפרטים האישיים, תמונת פרופיל ופרטי קשר, ונבחר את סגנון הלייאאוט המועדף.</span>
+            </div>
+          </div>
+
+          <!-- Upload Box (Visible when mode === 'upload') -->
+          <div id="wizUploadArea" style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+            <div class="cve-dropzone" id="wizDropzone" onclick="window.CVE.triggerOldCvFilePick()">
+              <input type="file" id="wizCvFileInput" accept="application/pdf,.pdf,.txt" style="display:none" onchange="window.CVE.onOldCvFileSelected(this.files[0])">
+              <span class="cve-dropzone-icon">📄</span>
+              <span class="cve-dropzone-title">לחץ כאן לבחירת קובץ קורות חיים ישן (PDF / TXT)</span>
+              <span class="cve-dropzone-sub">או גרור את הקובץ ישירות לכאן</span>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;color:var(--cve-text-muted);font-size:12px;margin:2px 0;">
+              <span style="flex:1;height:1px;background:var(--cve-border);"></span>
+              <span>או הדבק טקסט של קורות חיים / לינקדאין</span>
+              <span style="flex:1;height:1px;background:var(--cve-border);"></span>
+            </div>
+
+            <textarea id="wizPasteTextarea" rows="3" class="cve-textarea" placeholder="הדבק כאן את הטקסט של קורות החיים הישנים שלך או מלינקדאין..."></textarea>
+            <div style="display:flex;justify-content:flex-end;">
+              <button type="button" class="cve-btn" onclick="window.CVE.parsePastedText()">⚡ חלץ נתונים מהטקסט שהודבק</button>
+            </div>
+
+            <!-- Parsed Extraction Success Preview -->
+            <div id="wizExtractPreview" class="cve-extract-preview" style="display:none;">
+              <span class="cve-extract-title">✅ הנתונים חולצו בהצלחה ומחכים לעיצוב החדש!</span>
+              <div id="wizExtractSummary" style="font-size:12.5px;color:#fff;line-height:1.5;"></div>
+              <div class="cve-extract-pills" id="wizExtractPills"></div>
+            </div>
+          </div>
+
+          <!-- Step 1 Footer -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--cve-border);">
+            <button type="button" style="background:none;border:none;color:#38bdf8;font-size:12.5px;cursor:pointer;text-decoration:underline;" onclick="window.CVE.openAuthModal()">
+              כבר יש לך משתמש? לחץ כאן להתחברות
             </button>
-            <button type="button" class="cve-lang-btn" data-dir="rtl" onclick="window.CVE.selectWizardDir('rtl')">
-              <span>🇮🇱 עברית (Right-to-Left)</span>
+            <button type="button" class="cve-btn pri" id="wizStep1NextBtn" style="padding:10px 22px;font-size:14px;" onclick="window.CVE.goToWizardStep(2)">
+              המשך לשלב הבא →
             </button>
           </div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:10px;border-top:1px solid var(--cve-border);">
-          <button type="button" style="background:none;border:none;color:#38bdf8;font-size:12.5px;cursor:pointer;text-decoration:underline;" onclick="window.CVE.openAuthModal()">
-            כבר יש לך משתמש? לחץ כאן להתחברות (רועי / משתמש קיים)
-          </button>
-          <button type="button" class="cve-btn pri" style="padding:10px 22px;font-size:14px;" onclick="window.CVE.submitWelcomeWizard()">
-            התחל לעבוד על קורות החיים →
-          </button>
+        <!-- ================= Step 2: Personal Details & Photo ================= -->
+        <div id="wizStep2" class="cve-wizard-view">
+          <div class="cve-wizard-photo-box">
+            <img id="wizPhotoAvatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='%2364748b'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>" class="cve-wizard-avatar" alt="Avatar">
+            <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+              <span style="font-size:13.5px;font-weight:700;color:#fff;">תמונת פרופיל (Profile Photo)</span>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="cve-btn pri" style="padding:6px 14px;font-size:12.5px;" onclick="window.CVE.openPhotoPicker('wizard')">📷 העלה תמונה</button>
+                <button type="button" class="cve-btn" id="wizRemovePhotoBtn" style="padding:6px 12px;font-size:12.5px;display:none;" onclick="window.CVE.removeWizardPhoto()">הסר</button>
+                <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#cbd5e1;cursor:pointer;margin-right:8px;">
+                  <input type="checkbox" id="wizShowPhotoCb" checked onchange="window.CVE.toggleWizardPhoto(this.checked)"> הצג תמונה בקורות החיים
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="cve-row-2">
+            <div class="cve-form-group">
+              <label class="cve-label">שם מלא (Full Name)</label>
+              <input type="text" id="wizNameInput" class="cve-input" placeholder="e.g. Alex Cohen / אלכס כהן">
+            </div>
+            <div class="cve-form-group">
+              <label class="cve-label">כותרת מקצועית (Job Title)</label>
+              <input type="text" id="wizTitleInput" class="cve-input" placeholder="e.g. Full Stack Developer / Software Engineer">
+            </div>
+          </div>
+
+          <div class="cve-row-2">
+            <div class="cve-form-group">
+              <label class="cve-label">אימייל (Email)</label>
+              <input type="email" id="wizEmailInput" class="cve-input" placeholder="alex@gmail.com">
+            </div>
+            <div class="cve-form-group">
+              <label class="cve-label">טלפון (Phone)</label>
+              <input type="tel" id="wizPhoneInput" class="cve-input" placeholder="050-1234567">
+            </div>
+          </div>
+
+          <div class="cve-row-2">
+            <div class="cve-form-group">
+              <label class="cve-label">עיר ומיקום (City / Location)</label>
+              <input type="text" id="wizLocationInput" class="cve-input" placeholder="תל אביב, ישראל / Tel Aviv">
+            </div>
+            <div class="cve-form-group">
+              <label class="cve-label">לינקדאין או אתר (LinkedIn / Portfolio URL)</label>
+              <input type="text" id="wizLinkInput" class="cve-input" placeholder="https://linkedin.com/in/alex">
+            </div>
+          </div>
+
+          <div class="cve-form-group">
+            <label class="cve-label">תמצית קצרה (Summary / Bio - 2-3 sentences)</label>
+            <textarea id="wizSummaryInput" rows="2" class="cve-textarea" placeholder="מפתח תוכנה בעל תשוקה לפתרון בעיות מורכבות..."></textarea>
+          </div>
+
+          <!-- Step 2 Footer -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--cve-border);">
+            <button type="button" class="cve-btn" onclick="window.CVE.goToWizardStep(1)">
+              ← חזור
+            </button>
+            <button type="button" class="cve-btn pri" style="padding:10px 22px;font-size:14px;" onclick="window.CVE.goToWizardStep(3)">
+              המשך לבחירת עיצוב ולייאאוט →
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= Step 3: Layout, Language & Style ================= -->
+        <div id="wizStep3" class="cve-wizard-view">
+          <div class="cve-form-group">
+            <label class="cve-label">בחר תבנית לייאאוט (Choose Layout)</label>
+            <div class="cve-tpl-choice-grid">
+              <div class="cve-tpl-card active" data-tpl="novo" onclick="window.CVE.selectWizardTemplate('novo')">
+                <span class="cve-tpl-card-icon">📑</span>
+                <span class="cve-tpl-card-name">Novo Split</span>
+                <span class="cve-tpl-card-desc">שתי עמודות מודרניות בהשראת NovoResume, תגיות כישורים ותמונת פרופיל.</span>
+              </div>
+              <div class="cve-tpl-card" data-tpl="ats" onclick="window.CVE.selectWizardTemplate('ats')">
+                <span class="cve-tpl-card-icon">📄</span>
+                <span class="cve-tpl-card-name">ATS Pro</span>
+                <span class="cve-tpl-card-desc">עמודה אחת נקייה, מעבר מושלם של כל מערכות הסינון הרובוטיות (Applicant Tracking Systems).</span>
+              </div>
+              <div class="cve-tpl-card" data-tpl="studio" onclick="window.CVE.selectWizardTemplate('studio')">
+                <span class="cve-tpl-card-icon">🎨</span>
+                <span class="cve-tpl-card-name">Studio Sidebar</span>
+                <span class="cve-tpl-card-desc">סרגל צדדי צבעוני ואלגנטי עם חלוקה אידיאלית להדגשת פרופיל וכישורים.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cve-form-group" style="margin-top:8px;">
+            <label class="cve-label">שפת קורות החיים וכיוון כתיבה (Language & Direction)</label>
+            <div class="cve-lang-choice-grid">
+              <button type="button" class="cve-lang-btn" id="wizLangLtr" data-dir="ltr" onclick="window.CVE.selectWizardDir('ltr')">
+                <span>🇺🇸 English (Left-to-Right)</span>
+              </button>
+              <button type="button" class="cve-lang-btn active" id="wizLangRtl" data-dir="rtl" onclick="window.CVE.selectWizardDir('rtl')">
+                <span>🇮🇱 עברית (Right-to-Left)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="cve-form-group" style="margin-top:8px;">
+            <label class="cve-label">צבע ראשי (Accent Palette)</label>
+            <div class="cve-color-palette" id="wizColorPalette">
+              <div class="cve-color-swatch active" style="background:#2a8a8f;" data-color="#2a8a8f" onclick="window.CVE.selectWizardAccent('#2a8a8f')"></div>
+              <div class="cve-color-swatch" style="background:#2563eb;" data-color="#2563eb" onclick="window.CVE.selectWizardAccent('#2563eb')"></div>
+              <div class="cve-color-swatch" style="background:#7c3aed;" data-color="#7c3aed" onclick="window.CVE.selectWizardAccent('#7c3aed')"></div>
+              <div class="cve-color-swatch" style="background:#059669;" data-color="#059669" onclick="window.CVE.selectWizardAccent('#059669')"></div>
+              <div class="cve-color-swatch" style="background:#334155;" data-color="#334155" onclick="window.CVE.selectWizardAccent('#334155')"></div>
+              <div class="cve-color-swatch" style="background:#b91c1c;" data-color="#b91c1c" onclick="window.CVE.selectWizardAccent('#b91c1c')"></div>
+            </div>
+          </div>
+
+          <!-- Step 3 Footer -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:10px;border-top:1px solid var(--cve-border);">
+            <button type="button" class="cve-btn" onclick="window.CVE.goToWizardStep(2)">
+              ← חזור
+            </button>
+            <button type="button" class="cve-btn pri" style="padding:10px 24px;font-size:14.5px;background:linear-gradient(135deg, #2563eb, #7c3aed);" onclick="window.CVE.finishWizardAndLaunch()">
+              🚀 סיום וכניסה לעריכה בסטודיו
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -445,6 +603,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Hidden Photo Upload File Input -->
+  <input type="file" id="cvePhotoFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none">
 
   <!-- Core Scripts -->
   <script src="../assets/cv.js"></script>

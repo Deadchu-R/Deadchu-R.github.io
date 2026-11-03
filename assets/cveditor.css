@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    CVEditor - Professional Collaborative CV Studio Stylesheet
    Designed for roeetal.com/CVEditor
    Enhanced with NovoResume-Style Visual Layout & On-Canvas Controls
@@ -1476,4 +1476,277 @@ body.cve-body {
   font-size: 12px;
   color: var(--cve-text-muted);
   margin-top: 2px;
+}
+/* Multi-Step Onboarding Wizard */
+.cve-wizard-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--cve-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+.cve-wizard-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cve-wizard-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cve-wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cve-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--cve-border);
+  transition: all 0.2s ease;
+}
+.cve-wizard-step.active {
+  color: #fff;
+  background: rgba(37, 99, 235, 0.2);
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+.cve-wizard-step.done {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.cve-wizard-step-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.cve-wizard-step.active .cve-wizard-step-num {
+  background: #38bdf8;
+  color: #0b0f19;
+  font-weight: 700;
+}
+.cve-wizard-step.done .cve-wizard-step-num {
+  background: #10b981;
+  color: #fff;
+}
+.cve-wizard-view {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+.cve-wizard-view.active {
+  display: flex;
+}
+.cve-wizard-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 640px) {
+  .cve-wizard-mode-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.cve-wizard-mode-card {
+  background: var(--cve-surface-card);
+  border: 2px solid var(--cve-border);
+  border-radius: var(--cve-radius);
+  padding: 18px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: right;
+}
+.cve-wizard-mode-card:hover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.05);
+  transform: translateY(-2px);
+}
+.cve-wizard-mode-card.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+}
+.cve-wizard-mode-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 10px;
+  background: #2563eb;
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+.cve-wizard-mode-icon {
+  font-size: 32px;
+}
+.cve-wizard-mode-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+.cve-wizard-mode-desc {
+  font-size: 12px;
+  color: var(--cve-text-muted);
+  line-height: 1.45;
+}
+
+/* Dropzone & Import Box */
+.cve-dropzone {
+  border: 2px dashed rgba(56, 189, 248, 0.4);
+  border-radius: var(--cve-radius);
+  padding: 22px 16px;
+  text-align: center;
+  background: rgba(56, 189, 248, 0.03);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.cve-dropzone:hover, .cve-dropzone.dragover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+}
+.cve-dropzone-icon {
+  font-size: 34px;
+}
+.cve-dropzone-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+.cve-dropzone-sub {
+  font-size: 12px;
+  color: var(--cve-text-muted);
+}
+.cve-extract-preview {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--cve-radius);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: right;
+}
+.cve-extract-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cve-extract-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.cve-extract-pill {
+  font-size: 11.5px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: #f1f5f9;
+}
+
+/* Photo Upload Elements */
+.cve-wizard-photo-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--cve-border);
+  border-radius: var(--cve-radius);
+}
+.cve-wizard-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #38bdf8;
+  background: #1e293b;
+  flex-shrink: 0;
+}
+.cve-sidebar-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 10px;
+}
+.cve-sidebar-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--cve-border);
+  background: #1e293b;
+  flex-shrink: 0;
+}
+
+/* Palette Swatches */
+.cve-color-palette {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.cve-color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.cve-color-swatch:hover {
+  transform: scale(1.15);
+}
+.cve-color-swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+.cve-color-swatch.active::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Canvas photo hover effect */
+.cv-photo, .cv-photo-add, [data-m$=".photo"] {
+  cursor: pointer !important;
+  transition: all 0.2s ease;
+}
+.cv-photo:hover, .cv-photo-add:hover, [data-m$=".photo"]:hover {
+  outline: 3px solid #38bdf8 !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5) !important;
+  filter: brightness(1.08);
 }

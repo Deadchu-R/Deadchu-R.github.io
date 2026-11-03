@@ -161,8 +161,17 @@
     jobText: "",
     jobUrl: "",
     pendingAction: null,     // Callback to execute after mandatory save
-    wizardTemplate: "ats",   // Selected template in welcome wizard
-    wizardDir: "ltr"         // Selected direction in welcome wizard
+    wizardStep: 1,           // 1: Starting point, 2: Details & Photo, 3: Layout & Style
+    wizardMode: "upload",    // "upload" | "scratch"
+    wizardTemplate: "novo",  // Selected template in welcome wizard
+    wizardDir: "rtl",        // Selected direction in welcome wizard
+    wizardAccent: "#2a8a8f", // Selected accent color in wizard
+    wizardDraft: {
+      photo: "",
+      show_photo: true
+    },
+    parsedOldCv: null,       // Structured CV extracted from old file/text
+    photoPickerTarget: "activeCv" // "activeCv" | "wizard"
   };
 
   // Pre-seed Roee's base CV data
@@ -501,6 +510,7 @@
 
     attachSectionToolbars(stage);
     attachInlineEditors(stage);
+    attachPhotoInteractions(stage);
     applyZoom();
     updateTopbarUI();
     updateAtsBadge();
@@ -669,6 +679,384 @@
     }
   }
 
+
+  // --- Photo Upload & Processing Service ---
+  function initPhotoFileInput() {
+    let fi = $("#cvePhotoFileInput");
+    if (!fi) {
+      fi = document.createElement("input");
+      fi.type = "file";
+      fi.id = "cvePhotoFileInput";
+      fi.accept = "image/png,image/jpeg,image/webp,image/gif";
+      fi.style.display = "none";
+      document.body.appendChild(fi);
+    }
+    fi.onchange = (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      processUploadedImage(file, (dataUrl) => {
+        if (state.photoPickerTarget === "wizard") {
+          state.wizardDraft.photo = dataUrl;
+          state.wizardDraft.show_photo = true;
+          updateWizardPhotoUI();
+        } else {
+          const cv = getCurrentCV();
+          cv.photo = dataUrl;
+          cv.show_photo = true;
+          saveCurrentCV(cv);
+          renderA4Sheet();
+          renderSidebar();
+        }
+      });
+      fi.value = "";
+    };
+  }
+
+  function processUploadedImage(file, callback) {
+    if (!file || !file.type.startsWith("image/")) {
+      alert("×× × ×‘×—×¨ ×§×•×‘×¥ ×ª×ž×•× ×” ×ª×§×™×Ÿ (PNG, JPG, WebP).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 500;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
+        callback(dataUrl);
+      };
+      img.onerror = () => {
+        alert("×©×’×™××” ×‘×˜×¢×™× ×ª ×§×•×‘×¥ ×”×ª×ž×•× ×”.");
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function attachPhotoInteractions(stage) {
+    const photoEls = stage.querySelectorAll(".cv-photo, .cv-photo-add, [data-m$='.photo']");
+    photoEls.forEach(el => {
+      el.style.cursor = "pointer";
+      el.title = "ðŸ“· ×œ×—×¥ ×›××Ÿ ×œ×”×¢×œ××ª ×ª×ž×•× ×ª ×¤×¨×•×¤×™×œ / Change Photo";
+      el.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.CVE.openPhotoPicker("activeCv");
+      };
+    });
+  }
+
+  function updateWizardPhotoUI() {
+    const avatar = $("#wizPhotoAvatar");
+    const removeBtn = $("#wizRemovePhotoBtn");
+    const cb = $("#wizShowPhotoCb");
+    if (avatar) {
+      avatar.src = state.wizardDraft.photo || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='%2364748b'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>";
+    }
+    if (removeBtn) {
+      removeBtn.style.display = state.wizardDraft.photo ? "inline-flex" : "none";
+    }
+    if (cb) {
+      cb.checked = !!state.wizardDraft.show_photo;
+    }
+  }
+
+  // --- Intelligent Old CV Extraction & Parser ---
+  async function extractPdfText(file) {
+    if (!window.pdfjsLib) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("×œ× × ×™×ª×Ÿ ×œ×˜×¢×•×Ÿ ××ª ×ž×¤×¢× ×— ×”-PDF ×ž×”×¨×©×ª. × ×¡×” ×œ×”×“×‘×™×§ ××ª ×”×˜×§×¡×˜."));
+        document.head.appendChild(s);
+      });
+    }
+    if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      let lastY = null;
+      for (const item of content.items) {
+        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+          text += "\n";
+        } else if (text && !text.endsWith(" ")) {
+          text += " ";
+        }
+        text += item.str;
+        lastY = item.transform[5];
+      }
+      text += "\n\n";
+    }
+    return text;
+  }
+
+  function parseCvText(rawText) {
+    if (!rawText || typeof rawText !== "string") return null;
+
+    const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return null;
+
+    // Detect language / direction
+    const hebrewChars = (rawText.match(/[\u0590-\u05FF]/g) || []).length;
+    const isHebrew = hebrewChars > 25 || (hebrewChars / rawText.length > 0.1);
+    const dir = isHebrew ? "rtl" : "ltr";
+    const lang = isHebrew ? "he" : "en";
+
+    const person = {
+      name: "",
+      title: "",
+      summary: "",
+      email: "",
+      phone: "",
+      location: "",
+      links: []
+    };
+
+    // 1. Email extraction
+    const emailMatch = rawText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    if (emailMatch) person.email = emailMatch[0];
+
+    // 2. Phone extraction
+    const phoneMatch = rawText.match(/(?:(?:\+972|00972)[\s-]?)?(?:0\d{1,2}|\d{2,3})[\s-]?\d{3}[\s-]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/);
+    if (phoneMatch) person.phone = phoneMatch[0];
+
+    // 3. Links extraction
+    const urlMatches = rawText.match(/(?:https?:\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{2,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g) || [];
+    urlMatches.forEach(u => {
+      if (u.includes("@")) return;
+      const fullUrl = u.startsWith("http") ? u : "https://" + u;
+      let label = "Website";
+      if (u.includes("linkedin.com")) label = "LinkedIn";
+      else if (u.includes("github.com")) label = "GitHub";
+      else if (u.includes("portfolio") || u.includes("artstation")) label = "Portfolio";
+
+      if (!person.links.some(l => l.url === fullUrl)) {
+        person.links.push({ label, url: fullUrl });
+      }
+    });
+
+    // 4. Name & Title
+    for (let i = 0; i < Math.min(4, lines.length); i++) {
+      const l = lines[i];
+      if (l.includes("@") || l.includes("http") || l.length > 50 || /^\d/.test(l)) continue;
+      if (!person.name) {
+        person.name = l.replace(/[|â€¢â€“â€”].*$/, "").trim();
+        continue;
+      }
+      if (!person.title && l.length < 60 && !l.toLowerCase().includes("resume") && !l.toLowerCase().includes("cv")) {
+        person.title = l;
+        break;
+      }
+    }
+    if (!person.name) person.name = isHebrew ? "×©× ×ž×œ×" : "Your Name";
+
+    // 5. Section segmentation
+    const SEC_PATTERNS = [
+      { key: "experience", rx: /^(?:work\s+)?experience|employment|work\s+history|career|professional\s+experience|× ×™×¡×™×•×Ÿ\s+(?:×ª×¢×¡×•×§×ª×™|×ž×§×¦×•×¢×™)|× ×™×¡×™×•×Ÿ/i },
+      { key: "education", rx: /^education|academic|studies|academic\s+background|degrees|×”×©×›×œ×”|×œ×™×ž×•×“×™×|×ª××¨×™×/i },
+      { key: "skills", rx: /^skills|technical\s+skills|technologies|tools|competencies|core\s+competencies|×›×™×©×•×¨×™×|×ž×™×•×ž× ×•×™×•×ª|×˜×›× ×•×œ×•×’×™×•×ª|×›×œ×™×/i },
+      { key: "summary", rx: /^summary|professional\s+summary|profile|about\s+me|objective|about|×ª×ž×¦×™×ª|××•×“×•×ª|×¤×¨×•×¤×™×œ\s+××™×©×™/i },
+      { key: "projects", rx: /^projects|key\s+projects|portfolio|×¤×¨×•×™×§×˜×™×/i },
+      { key: "languages", rx: /^languages|×©×¤×•×ª/i }
+    ];
+
+    const sections = [];
+    let curSec = { key: "header", lines: [] };
+
+    lines.forEach(line => {
+      const cleanLine = line.replace(/[:_=-]+$/, "").trim();
+      if (cleanLine.length < 40) {
+        const match = SEC_PATTERNS.find(p => p.rx.test(cleanLine));
+        if (match) {
+          if (curSec.lines.length) sections.push(curSec);
+          curSec = { key: match.key, title: cleanLine, lines: [] };
+          return;
+        }
+      }
+      curSec.lines.push(line);
+    });
+    if (curSec.lines.length) sections.push(curSec);
+
+    // Parse Experience
+    const expSec = sections.find(s => s.key === "experience");
+    const parsedExpItems = [];
+    if (expSec) {
+      let curItem = null;
+      expSec.lines.forEach(l => {
+        const isBullet = /^[â€¢\-\*â–ªâ€“]\s*/.test(l);
+        const hasDate = /\b(20\d\d|19\d\d)\b|\b(present|current|×›×™×•×|×”×™×•×)\b/i.test(l);
+
+        if (!isBullet && (hasDate || curItem === null || curItem.bullets.length > 0)) {
+          if (curItem) parsedExpItems.push(curItem);
+          let dates = "";
+          const dateMatch = l.match(/\b(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d\s*(?:â€“|-|to|×¢×“)\s*(?:(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d|Present|Current|×›×™×•×|×”×™×•×)/i);
+          if (dateMatch) {
+            dates = dateMatch[0];
+            l = l.replace(dates, "").trim();
+          }
+          const parts = l.split(/[-â€“|,\sat\s]+/).filter(Boolean);
+          const role = parts[0] ? parts[0].trim() : (isHebrew ? "×ª×¤×§×™×“" : "Job Title");
+          const org = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "×—×‘×¨×”" : "Company");
+
+          curItem = {
+            role,
+            org,
+            dates: dates || "2021 â€“ Present",
+            location: "",
+            about: "",
+            label: "",
+            bullets: []
+          };
+        } else if (curItem) {
+          const cleanBullet = l.replace(/^[â€¢\-\*â–ªâ€“]\s*/, "").trim();
+          if (cleanBullet) curItem.bullets.push(cleanBullet);
+        }
+      });
+      if (curItem) parsedExpItems.push(curItem);
+    }
+
+    // Parse Education
+    const eduSec = sections.find(s => s.key === "education");
+    const parsedEduItems = [];
+    if (eduSec) {
+      let curItem = null;
+      eduSec.lines.forEach(l => {
+        const isBullet = /^[â€¢\-\*â–ªâ€“]\s*/.test(l);
+        const hasDate = /\b(20\d\d|19\d\d)\b/.test(l);
+        if (!isBullet && (hasDate || curItem === null)) {
+          if (curItem) parsedEduItems.push(curItem);
+          let dates = "";
+          const dMatch = l.match(/(?:19|20)\d\d\s*(?:â€“|-|to|×¢×“)\s*(?:(?:19|20)\d\d|Present|×›×™×•×)/i) || l.match(/(?:19|20)\d\d/);
+          if (dMatch) {
+            dates = dMatch[0];
+            l = l.replace(dates, "").trim();
+          }
+          const parts = l.split(/[-â€“|,]+/).filter(Boolean);
+          const degree = parts[0] ? parts[0].trim() : (isHebrew ? "×ª×•××¨ / ×ª×¢×•×“×”" : "Degree / Program");
+          const school = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "×ž×•×¡×“ ××§×“×ž×™" : "School");
+          curItem = {
+            degree,
+            school,
+            dates: dates || "2018 â€“ 2021",
+            location: "",
+            about: "",
+            label: "Courses",
+            bullets: []
+          };
+        } else if (curItem) {
+          const cleanBullet = l.replace(/^[â€¢\-\*â–ªâ€“]\s*/, "").trim();
+          if (cleanBullet) curItem.bullets.push(cleanBullet);
+        }
+      });
+      if (curItem) parsedEduItems.push(curItem);
+    }
+
+    // Parse Skills
+    const skillSec = sections.find(s => s.key === "skills");
+    const parsedSkills = [];
+    if (skillSec) {
+      skillSec.lines.forEach(l => {
+        const tokens = l.split(/[,|â€¢;/\n]+/).map(t => t.replace(/^[â€¢\-\*â–ªâ€“]\s*/, "").trim()).filter(t => t.length > 1 && t.length < 35);
+        tokens.forEach(tok => {
+          if (!parsedSkills.includes(tok)) parsedSkills.push(tok);
+        });
+      });
+    }
+
+    // Parse Summary
+    const sumSec = sections.find(s => s.key === "summary");
+    if (sumSec && sumSec.lines.length) {
+      person.summary = sumSec.lines.join(" ");
+    }
+
+    const main = [];
+    const side = [];
+
+    if (parsedExpItems.length) {
+      main.push({
+        type: "experience",
+        title: isHebrew ? "× ×™×¡×™×•×Ÿ ×ž×§×¦×•×¢×™" : "Work Experience",
+        items: parsedExpItems
+      });
+    } else {
+      main.push(window.RTCV ? window.RTCV.newSection("experience") : {
+        type: "experience",
+        title: isHebrew ? "× ×™×¡×™×•×Ÿ ×ž×§×¦×•×¢×™" : "Work Experience",
+        items: [{ role: isHebrew ? "×ª×¤×§×™×“" : "Software Engineer", org: isHebrew ? "×—×‘×¨×”" : "Tech Corp", dates: "2021 â€“ Present", bullets: [isHebrew ? "×¤×™×ª×•×— ×ž×¢×¨×›×•×ª ×œ×™×‘×” ×•×©×™×¤×•×¨ ×‘×™×¦×•×¢×™×." : "Architected high-scale features."] }]
+      });
+    }
+
+    if (parsedEduItems.length) {
+      main.push({
+        type: "education",
+        title: isHebrew ? "×”×©×›×œ×”" : "Education",
+        items: parsedEduItems
+      });
+    } else {
+      main.push(window.RTCV ? window.RTCV.newSection("education") : {
+        type: "education",
+        title: isHebrew ? "×”×©×›×œ×”" : "Education",
+        items: [{ degree: isHebrew ? "×ª×•××¨ ×¨××©×•×Ÿ ×‘×ž×“×¢×™ ×”×ž×—×©×‘" : "B.Sc. in Computer Science", school: isHebrew ? "××•× ×™×‘×¨×¡×™×˜×”" : "University", dates: "2017 â€“ 2020", bullets: [] }]
+      });
+    }
+
+    if (parsedSkills.length) {
+      side.push({
+        type: "skills",
+        title: isHebrew ? "×ž×™×•×ž× ×•×™×•×ª ×•×›×œ×™×" : "Skills",
+        items: [{ label: isHebrew ? "×˜×›× ×•×œ×•×’×™×•×ª ×¢×™×§×¨×™×•×ª" : "Core Skills", items: parsedSkills }]
+      });
+    } else {
+      side.push(window.RTCV ? window.RTCV.newSection("skills") : {
+        type: "skills",
+        title: isHebrew ? "×ž×™×•×ž× ×•×™×•×ª ×•×›×œ×™×" : "Skills",
+        items: [{ label: "", items: ["JavaScript", "Python", "React", "Git"] }]
+      });
+    }
+
+    return {
+      label: `${person.name} - RÃ©sumÃ©`,
+      template: "novo",
+      accent: "#2a8a8f",
+      font: isHebrew ? "Rubik" : "Inter",
+      density: "normal",
+      show_photo: true,
+      photo: "",
+      dir,
+      lang,
+      person,
+      main,
+      side,
+      _extractedCount: {
+        experiences: parsedExpItems.length,
+        education: parsedEduItems.length,
+        skills: parsedSkills.length
+      }
+    };
+  }
+
   function attachInlineEditors(stage) {
     const editables = stage.querySelectorAll("[data-e]");
     editables.forEach(el => {
@@ -754,6 +1142,18 @@
           <span class="cve-section-title">👤 Personal Details</span>
         </div>
         <div class="cve-section-body">
+          <div class="cve-sidebar-photo-row">
+            <img src="${cv.photo || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24' fill='%2364748b'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>"}" class="cve-sidebar-avatar" alt="Photo">
+            <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button type="button" class="cve-btn pri" style="padding:4px 10px;font-size:12px;" onclick="window.CVE.openPhotoPicker('activeCv')">📷 Upload Photo</button>
+                ${cv.photo ? `<button type="button" class="cve-btn" style="padding:4px 8px;font-size:12px;" onclick="window.CVE.removeCurrentPhoto()">Remove</button>` : ""}
+              </div>
+              <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--cve-text-muted);cursor:pointer;">
+                <input type="checkbox" ${cv.show_photo ? "checked" : ""} onchange="window.CVE.togglePhoto(this.checked)"> Show photo on CV
+              </label>
+            </div>
+          </div>
           <div class="cve-row-2">
             <div class="cve-form-group">
               <label class="cve-label">Full Name</label>
@@ -969,10 +1369,17 @@
           </div>
           <div class="cve-form-group">
             <label class="cve-label">Profile Photo</label>
-            <input type="text" class="cve-input" data-bind="photo" value="${esc(cv.photo || "")}" placeholder="Image URL / path">
-            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-              <input type="checkbox" id="showPhotoCb" ${cv.show_photo ? "checked" : ""} onchange="window.CVE.togglePhoto(this.checked)">
-              <label for="showPhotoCb" style="font-size:13px;color:#fff;cursor:pointer;">Show Photo on CV</label>
+            <div class="cve-sidebar-photo-row" style="margin-bottom:6px;border-bottom:none;">
+              <img src="${cv.photo || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24' fill='%2364748b'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>"}" class="cve-sidebar-avatar" alt="Photo">
+              <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button type="button" class="cve-btn pri" style="padding:4px 10px;font-size:12px;" onclick="window.CVE.openPhotoPicker('activeCv')">ðŸ“· Upload Photo</button>
+                  ${cv.photo ? <button type="button" class="cve-btn" style="padding:4px 8px;font-size:12px;" onclick="window.CVE.removeCurrentPhoto()">Remove</button> : ""}
+                </div>
+                <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--cve-text-muted);cursor:pointer;">
+                  <input type="checkbox" id="showPhotoCb" ${cv.show_photo ? "checked" : ""} onchange="window.CVE.togglePhoto(this.checked)"> Show Photo on CV
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -1511,6 +1918,7 @@
   // --- Public API for UI Event Handlers ---
   window.CVE = {
     init() {
+      initPhotoFileInput();
       Storage.init();
       renderA4Sheet();
       renderSidebar();
@@ -1798,10 +2206,177 @@
       }
     },
 
-    // --- Onboarding Welcome Wizard ---
+    // --- Multi-Step Onboarding & CV Import Wizard ---
     openWelcomeModal() {
       const m = $("#welcomeModal");
-      if (m) m.classList.add("open");
+      if (!m) return;
+      initPhotoFileInput();
+
+      // Reset to Step 1
+      state.wizardStep = 1;
+      state.wizardMode = "upload";
+      state.parsedOldCv = null;
+
+      const cv = getCurrentCV();
+      state.wizardDraft = {
+        photo: cv.photo || "",
+        show_photo: cv.show_photo !== false
+      };
+
+      // Pre-fill Step 2 from current CV if available
+      const P = cv.person || {};
+      const nameIn = $("#wizNameInput"); if (nameIn && P.name) nameIn.value = P.name;
+      const titleIn = $("#wizTitleInput"); if (titleIn && P.title) titleIn.value = P.title;
+      const emailIn = $("#wizEmailInput"); if (emailIn && P.email) emailIn.value = P.email;
+      const phoneIn = $("#wizPhoneInput"); if (phoneIn && P.phone) phoneIn.value = P.phone;
+      const locIn = $("#wizLocationInput"); if (locIn && P.location) locIn.value = P.location;
+      const sumIn = $("#wizSummaryInput"); if (sumIn && P.summary) sumIn.value = P.summary;
+
+      this.goToWizardStep(1);
+      this.setWizardMode("upload");
+      updateWizardPhotoUI();
+
+      m.classList.add("open");
+    },
+
+    goToWizardStep(step) {
+      state.wizardStep = step;
+
+      // Update step progress pills
+      for (let i = 1; i <= 3; i++) {
+        const pill = $(`#wizStepPill${i}`);
+        if (pill) {
+          pill.classList.toggle("active", i === step);
+          pill.classList.toggle("done", i < step);
+        }
+      }
+
+      // Toggle views
+      const v1 = $("#wizView1"); if (v1) v1.classList.toggle("active", step === 1);
+      const v2 = $("#wizStep2"); if (v2) v2.classList.toggle("active", step === 2);
+      const v3 = $("#wizStep3"); if (v3) v3.classList.toggle("active", step === 3);
+
+      if (step === 2) {
+        updateWizardPhotoUI();
+      }
+    },
+
+    setWizardMode(mode) {
+      state.wizardMode = mode;
+      const upCard = $("#wizModeUploadCard");
+      const scCard = $("#wizModeScratchCard");
+      const upArea = $("#wizUploadArea");
+      const nextBtn = $("#wizStep1NextBtn");
+
+      if (upCard) upCard.classList.toggle("active", mode === "upload");
+      if (scCard) scCard.classList.toggle("active", mode === "scratch");
+      if (upArea) upArea.style.display = mode === "upload" ? "flex" : "none";
+
+      if (nextBtn) {
+        if (mode === "scratch") {
+          nextBtn.textContent = "המשך לפרטים אישיים ותמונה →";
+          nextBtn.onclick = () => window.CVE.goToWizardStep(2);
+        } else {
+          if (state.parsedOldCv) {
+            nextBtn.textContent = "המשך לבחירת עיצוב ולייאאוט →";
+            nextBtn.onclick = () => window.CVE.goToWizardStep(3);
+          } else {
+            nextBtn.textContent = "המשך לשלב הבא →";
+            nextBtn.onclick = () => window.CVE.goToWizardStep(2);
+          }
+        }
+      }
+    },
+
+    triggerOldCvFilePick() {
+      const fi = $("#wizCvFileInput");
+      if (fi) fi.click();
+    },
+
+    async onOldCvFileSelected(file) {
+      if (!file) return;
+      const dz = $("#wizDropzone");
+      const prevTitle = dz ? dz.querySelector(".cve-dropzone-title") : null;
+      if (prevTitle) prevTitle.textContent = `⏳ קורא את ${file.name} ומחלץ נתונים...`;
+
+      try {
+        let text = "";
+        if (/\.pdf$/i.test(file.name)) {
+          text = await extractPdfText(file);
+        } else {
+          text = await file.text();
+        }
+
+        if (!text || text.trim().length < 40) {
+          alert("לא הצלחנו לחלץ מספיק טקסט מהקובץ. נסה להדביק את הטקסט בתיבה למטה.");
+          if (prevTitle) prevTitle.textContent = "לחץ כאן לבחירת קובץ קורות חיים ישן (PDF / TXT)";
+          return;
+        }
+
+        this.applyParsedCvText(text, file.name);
+      } catch (err) {
+        alert("שגיאה בפענוח הקובץ: " + (err.message || err));
+        if (prevTitle) prevTitle.textContent = "לחץ כאן לבחירת קובץ קורות חיים ישן (PDF / TXT)";
+      }
+    },
+
+    parsePastedText() {
+      const ta = $("#wizPasteTextarea");
+      const text = ta ? ta.value.trim() : "";
+      if (text.length < 30) {
+        alert("אנא הדבק טקסט קורות חיים מלא יותר.");
+        return;
+      }
+      this.applyParsedCvText(text, "טקסט שהודבק");
+    },
+
+    applyParsedCvText(text, sourceLabel) {
+      const parsed = parseCvText(text);
+      if (!parsed) {
+        alert("לא הצלחנו לזהות מבנה קורות חיים בטקסט.");
+        return;
+      }
+      state.parsedOldCv = parsed;
+
+      // Update Preview Box
+      const prevBox = $("#wizExtractPreview");
+      const summaryBox = $("#wizExtractSummary");
+      const pillsBox = $("#wizExtractPills");
+
+      if (prevBox) prevBox.style.display = "flex";
+      if (summaryBox) {
+        summaryBox.innerHTML = `
+          <b>מקור: ${esc(sourceLabel)}</b><br>
+          👤 שם: <b>${esc(parsed.person.name)}</b> ${parsed.person.title ? `| כותרת: <b>${esc(parsed.person.title)}</b>` : ""}<br>
+          📞 פרטי קשר: ${esc(parsed.person.email || "—")} | ${esc(parsed.person.phone || "—")}
+        `;
+      }
+      if (pillsBox) {
+        pillsBox.innerHTML = `
+          <span class="cve-extract-pill">💼 ${parsed._extractedCount.experiences} משרות שזוהו</span>
+          <span class="cve-extract-pill">🎓 ${parsed._extractedCount.education} מוסדות השכלה</span>
+          <span class="cve-extract-pill">🛠️ ${parsed._extractedCount.skills} מיומנויות</span>
+          <span class="cve-extract-pill">🌐 ${parsed.dir === "rtl" ? "עברית (RTL)" : "English (LTR)"}</span>
+        `;
+      }
+
+      // Pre-fill Step 2 fields
+      const P = parsed.person;
+      const nameIn = $("#wizNameInput"); if (nameIn && P.name) nameIn.value = P.name;
+      const titleIn = $("#wizTitleInput"); if (titleIn && P.title) titleIn.value = P.title;
+      const emailIn = $("#wizEmailInput"); if (emailIn && P.email) emailIn.value = P.email;
+      const phoneIn = $("#wizPhoneInput"); if (phoneIn && P.phone) phoneIn.value = P.phone;
+      const locIn = $("#wizLocationInput"); if (locIn && P.location) locIn.value = P.location;
+      const sumIn = $("#wizSummaryInput"); if (sumIn && P.summary) sumIn.value = P.summary;
+
+      // Select direction in wizard
+      this.selectWizardDir(parsed.dir);
+
+      const nextBtn = $("#wizStep1NextBtn");
+      if (nextBtn) {
+        nextBtn.textContent = "מעולה, המשך לבחירת עיצוב ולייאאוט →";
+        nextBtn.onclick = () => window.CVE.goToWizardStep(3);
+      }
     },
 
     selectWizardTemplate(tpl) {
@@ -1813,32 +2388,128 @@
 
     selectWizardDir(dir) {
       state.wizardDir = dir;
-      $$(".cve-lang-btn").forEach(b => {
-        b.classList.toggle("active", b.getAttribute("data-dir") === dir);
+      const ltrBtn = $("#wizLangLtr");
+      const rtlBtn = $("#wizLangRtl");
+      if (ltrBtn) ltrBtn.classList.toggle("active", dir === "ltr");
+      if (rtlBtn) rtlBtn.classList.toggle("active", dir === "rtl");
+    },
+
+    selectWizardAccent(color) {
+      state.wizardAccent = color;
+      $$(".cve-color-swatch").forEach(s => {
+        s.classList.toggle("active", s.getAttribute("data-color") === color);
       });
     },
 
-    submitWelcomeWizard() {
-      const nameInput = $("#wizardNameInput");
-      const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Your Name";
-      const tpl = state.wizardTemplate || "ats";
-      const dir = state.wizardDir || "ltr";
+    openPhotoPicker(target = "activeCv") {
+      state.photoPickerTarget = target;
+      initPhotoFileInput();
+      const fi = $("#cvePhotoFileInput");
+      if (fi) fi.click();
+    },
 
-      const freshCv = window.RTCV ? window.RTCV.blank(name) : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
-      freshCv.label = `${name} - Résumé`;
-      freshCv.template = tpl;
-      freshCv.dir = dir;
-      freshCv.lang = dir === "rtl" ? "he" : "en";
-      if (dir === "rtl") freshCv.font = "Rubik";
-      freshCv.person.name = name;
-      freshCv.person.email = "";
-      freshCv.person.phone = "";
-      freshCv.person.summary = "";
+    removeWizardPhoto() {
+      state.wizardDraft.photo = "";
+      state.wizardDraft.show_photo = false;
+      updateWizardPhotoUI();
+    },
 
-      state.vault["guest"] = { "draft": freshCv };
-      state.activeOwnerId = "guest";
-      state.activeCvId = "draft";
-      localStorage.setItem("cve_draft_cv", JSON.stringify(freshCv));
+    removeCurrentPhoto() {
+      const cv = getCurrentCV();
+      cv.photo = "";
+      cv.show_photo = false;
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    toggleWizardPhoto(show) {
+      state.wizardDraft.show_photo = show;
+    },
+
+    finishWizardAndLaunch() {
+      const name = ($("#wizNameInput") && $("#wizNameInput").value.trim()) || "Your Name";
+      const title = ($("#wizTitleInput") && $("#wizTitleInput").value.trim()) || "";
+      const email = ($("#wizEmailInput") && $("#wizEmailInput").value.trim()) || "";
+      const phone = ($("#wizPhoneInput") && $("#wizPhoneInput").value.trim()) || "";
+      const location = ($("#wizLocationInput") && $("#wizLocationInput").value.trim()) || "";
+      const link = ($("#wizLinkInput") && $("#wizLinkInput").value.trim()) || "";
+      const summary = ($("#wizSummaryInput") && $("#wizSummaryInput").value.trim()) || "";
+
+      const tpl = state.wizardTemplate || "novo";
+      const dir = state.wizardDir || "rtl";
+      const accent = state.wizardAccent || "#2a8a8f";
+
+      let targetCv;
+
+      if (state.parsedOldCv) {
+        targetCv = JSON.parse(JSON.stringify(state.parsedOldCv));
+        // Apply any overrides from Step 2
+        if (name) targetCv.person.name = name;
+        if (title) targetCv.person.title = title;
+        if (email) targetCv.person.email = email;
+        if (phone) targetCv.person.phone = phone;
+        if (location) targetCv.person.location = location;
+        if (summary) targetCv.person.summary = summary;
+        if (link && !targetCv.person.links.some(l => l.url === link)) {
+          targetCv.person.links.push({ label: "Portfolio", url: link });
+        }
+      } else {
+        // Built from scratch
+        targetCv = window.RTCV ? window.RTCV.blank(name) : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
+        targetCv.person.name = name;
+        targetCv.person.title = title;
+        targetCv.person.email = email;
+        targetCv.person.phone = phone;
+        targetCv.person.location = location;
+        targetCv.person.summary = summary;
+        if (link) targetCv.person.links = [{ label: "Portfolio", url: link }];
+
+        if (dir === "rtl") {
+          targetCv.main = [
+            {
+              type: "experience",
+              title: "ניסיון מקצועי",
+              items: [{ role: title || "מפתח תוכנה", org: "חברה", dates: "2021 – כיום", location: location || "תל אביב", about: "", label: "", bullets: ["פיתוח מערכות ליבה, הובלת פרויקטים ושיפור ביצועים.", "עבודה במתודולוגיות Agile מול צוותים רב-תחומיים."] }]
+            },
+            {
+              type: "education",
+              title: "השכלה",
+              items: [{ degree: "תואר ראשון במדעי המחשב / הנדסה", school: "מוסד אקדמי", dates: "2017 – 2020", location: "", about: "", label: "קורסים", bullets: [] }]
+            }
+          ];
+          targetCv.side = [
+            {
+              type: "skills",
+              title: "מיומנויות וכלים",
+              items: [{ label: "טכנולוגיות", items: ["JavaScript", "Python", "React", "Git", "Docker"] }]
+            },
+            {
+              type: "languages",
+              title: "שפות",
+              items: [{ name: "עברית", level: "שפת אם" }, { name: "אנגלית", level: "רמה גבוהה" }]
+            }
+          ];
+        }
+      }
+
+      targetCv.label = `${name} - Résumé`;
+      targetCv.template = tpl;
+      targetCv.dir = dir;
+      targetCv.lang = dir === "rtl" ? "he" : "en";
+      targetCv.font = dir === "rtl" ? "Rubik" : "Inter";
+      targetCv.accent = accent;
+      targetCv.photo = state.wizardDraft.photo || targetCv.photo || "";
+      targetCv.show_photo = state.wizardDraft.show_photo;
+
+      if (!state.vault[state.activeOwnerId]) state.vault[state.activeOwnerId] = {};
+      state.vault[state.activeOwnerId][state.activeCvId] = targetCv;
+
+      if (state.activeOwnerId === "guest") {
+        localStorage.setItem("cve_draft_cv", JSON.stringify(targetCv));
+      } else {
+        Storage.saveVault();
+      }
 
       this.closeModal("welcomeModal");
       renderA4Sheet();
