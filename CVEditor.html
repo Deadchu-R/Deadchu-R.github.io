@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CV Studio & Real-Time Collaboration — Roee Tal</title>
+  <meta name="description" content="Professional collaborative CV editor with ATS scoring, job description scanner, multi-user accounts and Figma-style real-time collaboration.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rubik:ital,wght@0,400;0,500;0,700;1,400&family=Assistant:wght@400;600;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Lato:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="assets/cv.css">
+  <link rel="stylesheet" href="assets/cveditor.css">
+</head>
+<body class="cve-body">
+
+  <!-- Topbar Header -->
+  <header class="cve-topbar">
+    <div class="cve-brand">
+      <a href="index.html" class="cve-back-link">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>roeetal.com</span>
+      </a>
+      <div class="cve-title-wrap">
+        <span class="cve-logo-badge">CV Studio</span>
+      </div>
+
+      <div class="cve-doc-select-wrap">
+        <select id="docSelect" class="cve-doc-select" onchange="window.CVE.switchCV(this.value)"></select>
+        <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.createNewCV()" title="New CV">＋</button>
+      </div>
+    </div>
+
+    <!-- Template Switcher Pills -->
+    <div class="cve-tpl-pills">
+      <button type="button" class="cve-tpl-btn active" data-tpl="ats" onclick="window.CVE.setTemplate('ats')">ATS Pro</button>
+      <button type="button" class="cve-tpl-btn" data-tpl="novo" onclick="window.CVE.setTemplate('novo')">Novo (2-Col)</button>
+      <button type="button" class="cve-tpl-btn" data-tpl="studio" onclick="window.CVE.setTemplate('studio')">Studio (Sidebar)</button>
+    </div>
+
+    <!-- Actions & Collaboration -->
+    <div class="cve-topbar-actions">
+      <div id="presenceCluster" class="cve-presence-cluster"></div>
+
+      <button type="button" class="cve-btn ats-btn" onclick="window.CVE.openAtsModal()">
+        <span>🎯 ATS & Job Match</span>
+        <span id="atsScoreBadge" class="cve-score-pill">90%</span>
+      </button>
+
+      <button type="button" class="cve-btn collab-btn" onclick="window.CVE.openCollabModal()">
+        <span>👥 Collaborate</span>
+      </button>
+
+      <button type="button" class="cve-btn" onclick="window.CVE.openEmailModal()">
+        <span>✉️ Send via Email</span>
+      </button>
+
+      <button type="button" class="cve-btn pri" onclick="window.CVE.printPdf()">
+        <span>🖨️ PDF / Print</span>
+      </button>
+
+      <button type="button" id="userBtn" class="cve-user-btn" onclick="window.CVE.openAuthModal()">
+        <span class="cve-user-avatar">R</span>
+        <span>Account</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Studio Workspace -->
+  <main class="cve-main">
+    <!-- Left Inspector Sidebar -->
+    <aside class="cve-sidebar">
+      <div class="cve-sidebar-tabs">
+        <button type="button" class="cve-sidebar-tab active" data-tab="content" onclick="window.CVE.setTab('content')">📝 Content</button>
+        <button type="button" class="cve-sidebar-tab" data-tab="design" onclick="window.CVE.setTab('design')">🎨 Design</button>
+        <button type="button" class="cve-sidebar-tab" data-tab="vault" onclick="window.CVE.setTab('vault')">👥 Vault & Friends</button>
+      </div>
+      <div id="sidebarContent" class="cve-sidebar-content"></div>
+    </aside>
+
+    <!-- Center Canvas Stage -->
+    <section class="cve-canvas-wrap">
+      <div class="cve-canvas-toolbar">
+        <div class="cve-canvas-tool-group">
+          <div class="cve-zoom-bar">
+            <button type="button" class="cve-zoom-btn" onclick="window.CVE.setZoom(-0.1)">−</button>
+            <span id="zoomVal" class="cve-zoom-val">100%</span>
+            <button type="button" class="cve-zoom-btn" onclick="window.CVE.setZoom(0.1)">＋</button>
+            <button type="button" class="cve-zoom-btn" style="width:auto;padding:0 6px;" onclick="window.CVE.setZoom('fit')">Fit</button>
+          </div>
+          <span class="cve-inline-edit-hint">💡 Click any text directly on the sheet to edit live</span>
+        </div>
+        <div id="saveStatus" class="cve-save-status">
+          <span>✓ Saved locally</span>
+        </div>
+      </div>
+
+      <div id="canvasViewport" class="cve-canvas-viewport">
+        <div id="a4Container" class="cve-a4-sheet-container">
+          <div id="cvSheet" class="cv-stage"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= Modals ================= -->
+
+  <!-- ATS Scanner & Job Matcher Modal -->
+  <div id="atsModal" class="cve-modal-backdrop">
+    <div class="cve-modal wide">
+      <div class="cve-modal-header">
+        <div class="cve-modal-title">
+          <span>🎯 ATS Compatibility & Job Description Matcher</span>
+        </div>
+        <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('atsModal')">✕</button>
+      </div>
+      <div class="cve-modal-body">
+        <!-- Progress Rings -->
+        <div class="cve-score-rings">
+          <div class="cve-ring-card">
+            <div id="ringOverall" class="cve-circular-progress" style="--ring-pct:90;--ring-color:#10b981;">
+              <span class="cve-circular-progress-val">90%</span>
+            </div>
+            <span class="cve-ring-label">Overall Match</span>
+          </div>
+          <div class="cve-ring-card">
+            <div id="ringFormat" class="cve-circular-progress" style="--ring-pct:94;--ring-color:#10b981;">
+              <span class="cve-circular-progress-val">94%</span>
+            </div>
+            <span class="cve-ring-label">ATS Layout Score</span>
+          </div>
+          <div class="cve-ring-card">
+            <div id="ringKeywords" class="cve-circular-progress" style="--ring-pct:85;--ring-color:#f59e0b;">
+              <span class="cve-circular-progress-val">85%</span>
+            </div>
+            <span class="cve-ring-label">Job Keywords</span>
+          </div>
+        </div>
+
+        <!-- Job Scanner Input -->
+        <div class="cve-form-group">
+          <label class="cve-label">Target Job Link (LinkedIn, Company Careers, AllJobs)</label>
+          <div class="cve-job-fetch-box">
+            <input type="url" id="jobUrlInput" class="cve-input" placeholder="https://www.linkedin.com/jobs/view/...">
+            <button type="button" class="cve-btn pri" onclick="window.CVE.fetchJobFromUrlInput()">Fetch Job Ad</button>
+          </div>
+          <p id="jobFetchStatus" style="font-size:11.5px;color:var(--cve-text-muted);margin-top:3px;"></p>
+        </div>
+
+        <div class="cve-form-group">
+          <label class="cve-label">...Or Paste Job Description Text</label>
+          <textarea id="jobTextarea" rows="4" class="cve-textarea" placeholder="Paste requirements and responsibilities here to match keywords..." oninput="window.CVE.onJobTextChange(this.value)"></textarea>
+        </div>
+
+        <!-- Keywords Analysis -->
+        <div id="atsKwContainer"></div>
+
+        <!-- Format Rules Checklist -->
+        <div class="cve-kw-section" style="margin-top:10px;">
+          <span class="cve-kw-title">📋 Format & Content Audit (Harvard & Google Standards)</span>
+          <div id="atsChecklistContainer" class="cve-checklist"></div>
+        </div>
+      </div>
+      <div class="cve-modal-footer">
+        <button type="button" class="cve-btn pri" onclick="window.CVE.closeModal('atsModal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real-Time Collaboration Modal -->
+  <div id="collabModal" class="cve-modal-backdrop">
+    <div class="cve-modal">
+      <div class="cve-modal-header">
+        <div class="cve-modal-title">
+          <span>👥 Live Figma-Style Collaboration</span>
+        </div>
+        <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('collabModal')">✕</button>
+      </div>
+      <div class="cve-modal-body">
+        <p style="font-size:13px;color:var(--cve-text-muted);">
+          Share this room with friends to edit this CV together in real-time over secure peer-to-peer WebRTC:
+        </p>
+        <div class="cve-room-box">
+          <span id="collabRoomLink" class="cve-room-link">Generating room link...</span>
+          <button type="button" class="cve-btn" onclick="window.CVE.copyCollabLink()">Copy Link</button>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button type="button" class="cve-btn pri" style="flex:1;" onclick="window.CVE.inviteViaEmail()">✉️ Invite Friend via Email</button>
+          <button type="button" class="cve-btn" onclick="window.CVE.copyCollabLink()">📋 Copy URL</button>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="cve-label">How live sync works:</label>
+          <ul style="font-size:12.5px;color:var(--cve-text-muted);margin:8px 0 0 18px;line-height:1.6;">
+            <li>Anyone opening this link connects directly to your live session.</li>
+            <li>Typing on either screen synchronizes fields and bullet points instantly.</li>
+            <li>Presence badges show who is viewing or editing right now.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="cve-modal-footer">
+        <button type="button" class="cve-btn" onclick="window.CVE.closeModal('collabModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send via Email Modal -->
+  <div id="emailModal" class="cve-modal-backdrop">
+    <div class="cve-modal">
+      <div class="cve-modal-header">
+        <div class="cve-modal-title">
+          <span>✉️ Send CV via Email</span>
+        </div>
+        <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('emailModal')">✕</button>
+      </div>
+      <div class="cve-modal-body">
+        <div class="cve-form-group">
+          <label class="cve-label">Recipient Email</label>
+          <input type="email" id="emailToInput" class="cve-input" placeholder="recruiter@studio.com, friend@gmail.com">
+        </div>
+        <div class="cve-form-group">
+          <label class="cve-label">Subject</label>
+          <input type="text" id="emailSubjectInput" class="cve-input">
+        </div>
+        <div class="cve-form-group">
+          <label class="cve-label">Message Preview & Formatted CV</label>
+          <textarea id="emailBodyPreview" rows="8" class="cve-textarea"></textarea>
+        </div>
+      </div>
+      <div class="cve-modal-footer">
+        <button type="button" class="cve-btn" onclick="window.CVE.shareViaApps()">📲 Share via Phone / Apps</button>
+        <button type="button" class="cve-btn pri" onclick="window.CVE.sendEmailAction()">Open in Email Client ↗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accounts & Auth Modal -->
+  <div id="authModal" class="cve-modal-backdrop">
+    <div class="cve-modal">
+      <div class="cve-modal-header">
+        <div class="cve-modal-title">
+          <span>🔐 User Accounts & Privacy Vault</span>
+        </div>
+        <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('authModal')">✕</button>
+      </div>
+      <div class="cve-modal-body">
+        <p style="font-size:12.5px;color:var(--cve-text-muted);">
+          Each friend can create an account with email and password. Your resumes stay completely private to you and Roee.
+        </p>
+
+        <!-- Log In Section -->
+        <div class="cve-section-card" style="margin-top:6px;">
+          <div class="cve-section-header">
+            <span class="cve-section-title">Sign In to Existing Account</span>
+          </div>
+          <div class="cve-section-body">
+            <div class="cve-form-group">
+              <label class="cve-label">Email</label>
+              <input type="email" id="loginEmail" class="cve-input" placeholder="roeetal17@gmail.com or friend's email">
+            </div>
+            <div class="cve-form-group">
+              <label class="cve-label">Password</label>
+              <input type="password" id="loginPass" class="cve-input" placeholder="Password">
+            </div>
+            <button type="button" class="cve-btn pri" onclick="window.CVE.loginSubmit()">Sign In</button>
+          </div>
+        </div>
+
+        <!-- Register Section -->
+        <div class="cve-section-card" style="margin-top:12px;">
+          <div class="cve-section-header">
+            <span class="cve-section-title">Create Friend Account</span>
+          </div>
+          <div class="cve-section-body">
+            <div class="cve-form-group">
+              <label class="cve-label">Your Name</label>
+              <input type="text" id="regName" class="cve-input" placeholder="Alex Cohen">
+            </div>
+            <div class="cve-form-group">
+              <label class="cve-label">Email</label>
+              <input type="email" id="regEmail" class="cve-input" placeholder="alex@gmail.com">
+            </div>
+            <div class="cve-form-group">
+              <label class="cve-label">Choose Password</label>
+              <input type="password" id="regPass" class="cve-input" placeholder="Create a password">
+            </div>
+            <button type="button" class="cve-btn" onclick="window.CVE.registerSubmit()">Create Account & Start CV</button>
+          </div>
+        </div>
+
+        <p id="authError" style="font-size:12px;color:var(--cve-danger);margin-top:6px;font-weight:600;"></p>
+      </div>
+      <div class="cve-modal-footer">
+        <button type="button" class="cve-btn" onclick="window.CVE.closeModal('authModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Scripts -->
+  <script src="assets/cv.js"></script>
+  <script src="assets/cveditor.js"></script>
+</body>
+</html>

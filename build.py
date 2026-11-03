@@ -1236,6 +1236,19 @@ def build_cv():
     (ROOT / "cv.html").write_text(html)
     _cv_files(pub, default)
 
+def build_cveditor():
+    """Ensure CVEditor.html and CVEditor/index.html are maintained across builds."""
+    cve_path = ROOT / "CVEditor.html"
+    if not cve_path.exists():
+        return
+    cve_html = cve_path.read_text(encoding="utf-8")
+    sub_cve = ROOT / "CVEditor"
+    sub_cve.mkdir(exist_ok=True)
+    sub_cve_html = cve_html.replace('href="assets/', 'href="../assets/').replace('src="assets/', 'src="../assets/')
+    sub_cve_html = sub_cve_html.replace('href="index.html', 'href="../index.html')
+    (sub_cve / "index.html").write_text(sub_cve_html, encoding="utf-8")
+
+
 def build_tv():
     """tv.html: the Netflix-style screen for TVs (assets/tv.js builds it from the site's own pages)."""
     html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -1293,6 +1306,7 @@ if __name__ == "__main__":
         build_project(i, pj)
     build_lab()
     build_cv()
+    build_cveditor()
     build_tv()
     for i, cp in enumerate(CODE_PAGES):
         build_code_page(i, cp)
