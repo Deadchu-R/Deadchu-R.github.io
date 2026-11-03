@@ -931,189 +931,304 @@
     sec.remove();current=null;chain=[];panelOpen=false;renderPanel();place();secBars();return "removed";
   }
   /* ------------------------------------------------------------ 🌐 Web Search & Rich Knowledge Enrichment */
+  function cleanSearchQuery(text){
+    let s = (text || "").trim();
+    s = s.replace(/^\/(?:full|rich|fluffy|search|web|find|research|add(?:-section)?)\s*/i, "");
+    const noise = /(?:^|\s+)(מהרשת|מהאינטרנט|ברשת|באינטרנט|בגוגל|סקשן\s+מלא|סקשן\s+עשיר|סקשן\s+פלאפי|סקשן|סעיף|בלוק|אזור|בנה\s+לי|הוסף\s+לי|צור\s+לי|תעשה\s+לי|חפש\s+מידע|חפש\s+על|חפש\s+ברשת|חפש\s+באינטרנט|חפש|תחפש|חיפוש|הוסף|תוסיף|בנה|תבנה|הכן|תכין|צור|תיצור|תעשה|עשה|מלא\s+ופלאפי|ופלאפי|פלאפי|מלא|עשיר|מפורט|על|בנושא|from\s+the\s+web|from\s+the\s+internet|on\s+the\s+web|online|full\s+section|rich\s+section|fluffy\s+section|section|block|search\s+for|search|find|research|create|build|make|add|about|for|on)(?:\s+|$)/gi;
+    s = s.replace(noise, " ").replace(noise, " ").replace(/[\"':;?!]/g, "").trim().replace(/\s+/g, " ");
+    return s || text.trim();
+  }
+
   async function searchWeb(query){
-    const cleanQ=(query||"").trim();
-    if(!cleanQ)return {query:"",results:[],summary:"No search query specified."};
+    const cleanQ = cleanSearchQuery(query);
+    if (!cleanQ) return { query: "", results: [], summary: "No search query specified." };
     // 1. Try local Express /api/search endpoint
-    try{
-      const r=await fetchT("/api/search?q="+encodeURIComponent(cleanQ),{cache:"no-store"},6000);
-      if(r.ok){
-        const j=await r.json();
-        if(j.summary&&j.results&&j.results.length)return j;
+    try {
+      const r = await fetchT("/api/search?q=" + encodeURIComponent(cleanQ), { cache: "no-store" }, 6000);
+      if (r.ok) {
+        const j = await r.json();
+        if (j.summary && j.results && j.results.length) return j;
       }
-    }catch(e){}
-    // 2. Client-side fallback: Wikipedia search API (CORS enabled)
-    const results=[];
-    try{
-      const wikiUrl=`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ)}&utf8=&format=json&origin=*`;
-      const wr=await fetchT(wikiUrl,{},6000);
-      if(wr.ok){
-        const wj=await wr.json();
-        const hits=(wj.query&&wj.query.search)||[];
-        for(const hit of hits.slice(0,4)){
-          const cleanSnippet=(hit.snippet||"").replace(/<[^>]+>/g,"").replace(/&quot;/g,'"').replace(/&#039;/g,"'");
-          results.push({title:hit.title,snippet:cleanSnippet,source:"Wikipedia",url:`https://en.wikipedia.org/wiki/${encodeURIComponent(hit.title)}`});
+    } catch(e) {}
+    // 2. Client-side fallback: bilingual Wikipedia search & extracts
+    const isHeb = /[\u0590-\u05ff]/.test(cleanQ);
+    const wikiHost = isHeb ? "he.wikipedia.org" : "en.wikipedia.org";
+    const results = [];
+    try {
+      const wikiUrl = `https://${wikiHost}/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ)}&utf8=&format=json&origin=*`;
+      const wr = await fetchT(wikiUrl, {}, 6000);
+      if (wr.ok) {
+        const wj = await wr.json();
+        const hits = (wj.query && wj.query.search) || [];
+        const titles = hits.slice(0, 4).map(h => h.title);
+        if (titles.length) {
+          try {
+            const extUrl = `https://${wikiHost}/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=${encodeURIComponent(titles.join("|"))}&format=json&origin=*`;
+            const er = await fetchT(extUrl, {}, 5000);
+            if (er.ok) {
+              const ed = await er.json();
+              const pages = (ed.query && ed.query.pages) || {};
+              for (const pid of Object.keys(pages)) {
+                const p = pages[pid];
+                const rawExt = (p.extract || "").trim();
+                const cleanExt = rawExt.split(String.fromCharCode(10)).join(" ").slice(0, 300);
+                const original = hits.find(h => h.title === p.title);
+                const cleanSnippet = ((original && original.snippet) || cleanExt).replace(/<[^>]+>/g, "").replace(/&quot;/g, '"');
+                results.push({
+                  title: p.title,
+                  snippet: cleanSnippet,
+                  extract: cleanExt,
+                  source: isHeb ? "ויקיפדיה" : "Wikipedia",
+                  url: `https://${wikiHost}/wiki/${encodeURIComponent(p.title)}`
+                });
+              }
+            }
+          } catch(e2) {}
         }
       }
-    }catch(e){}
+    } catch(e) {}
     // 3. DuckDuckGo Instant Answer API fallback
-    try{
-      const ddgUrl=`https://api.duckduckgo.com/?q=${encodeURIComponent(cleanQ)}&format=json&origin=*`;
-      const dr=await fetchT(ddgUrl,{},5000);
-      if(dr.ok){
-        const dj=await dr.json();
-        if(dj.AbstractText){
-          results.push({title:dj.Heading||cleanQ,snippet:dj.AbstractText,source:dj.AbstractSource||"DuckDuckGo",url:dj.AbstractURL});
-        }
-        for(const t of (dj.RelatedTopics||[]).slice(0,3)){
-          if(t.Text&&!results.some(x=>x.snippet===t.Text)){
-            results.push({title:(t.Text.split(" - ")[0]||cleanQ).slice(0,50),snippet:t.Text,source:"DuckDuckGo",url:t.FirstURL});
-          }
+    try {
+      const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(cleanQ)}&format=json&origin=*`;
+      const dr = await fetchT(ddgUrl, {}, 5000);
+      if (dr.ok) {
+        const dj = await dr.json();
+        if (dj.AbstractText && !results.some(r => r.title === (dj.Heading || cleanQ))) {
+          results.push({
+            title: dj.Heading || cleanQ,
+            snippet: dj.AbstractText,
+            extract: dj.AbstractText,
+            source: dj.AbstractSource || "DuckDuckGo",
+            url: dj.AbstractURL
+          });
         }
       }
-    }catch(e){}
-    const summary=results.length
-      ? results.map(r=>`• [${r.source}: ${r.title}] ${r.snippet}`).join("\n\n")
-      : `Authoritative technical overview of ${cleanQ} in real-time engine systems, gameplay programming, and architecture.`;
-    return {query:cleanQ,results,summary};
+    } catch(e) {}
+    const summary = results.length
+      ? results.map(r => `• [${r.source}: ${r.title}] ${r.extract || r.snippet}`).join("\n\n")
+      : (isHeb ? `מידע ועובדות מהרשת על ${cleanQ}.` : `Authoritative overview of ${cleanQ}.`);
+    return { query: cleanQ, rawQuery: query, results, summary };
   }
 
   /* ------------------------------------------------------------ 🏗 Rich & Fluffy Section Builder */
-  function buildFullFluffySection(topic, prefType, webData, after){
-    if(!$("#projects .ptiles")){
-      aiSay("err",/[֐-׿]/.test(topic)?"סקשנים מתווספים בעמוד הבית בלבד (index.html).":"Sections can only be added on the main home page.");
+  async function buildFullFluffySection(topic, prefType, webData, after){
+    if (!$("#projects .ptiles")) {
+      aiSay("err", /[֐-׿]/.test(topic) ? "סקשנים מתווספים בעמוד הבית בלבד (index.html)." : "Sections can only be added on the main home page.");
       return null;
     }
-    const isHeb=/[֐-׿]/.test(topic);
-    const cleanTopic=(topic||"Gameplay Systems").replace(SECTION_DO,"").replace(SECTION_ASK,"").replace(/^(על|בנושא|about|on|for)\s+/i,"").trim()||"Gameplay Architecture";
+    const isHeb = /[֐-׿]/.test(topic);
+    const cleanTopic = cleanSearchQuery(topic) || "Highlights";
 
-    let type=prefType||"";
-    if(!type||!SEC.TYPES[type]){
-      const lower=cleanTopic.toLowerCase();
-      if(/faq|שאלות|q&a/i.test(lower))type="faq";
-      else if(/stats|מספרים|הישגים|ביצועים|numbers|metrics|fps/i.test(lower))type="stats";
-      else if(/steps|שלבים|workflow|תהליך|pipeline/i.test(lower))type="steps";
-      else if(/gallery|תמונות|צילומים|screenshots/i.test(lower))type="gallery";
-      else if(/quote|המלצה|ציטוט|testimonial/i.test(lower))type="quote";
-      else type="cards";
+    // 1. If Gemini API key is available, generate authentic LLM-crafted section from the web data!
+    const key = store.get(AI_KEY);
+    if (key && webData && webData.summary) {
+      try {
+        const model = await pickModel(key);
+        const prompt = `You are an expert web content creator.
+The user requested a full, rich section for the website on topic: "${cleanTopic}".
+REAL FACTS RETRIEVED FROM THE WEB:
+${webData.summary}
+
+Rules:
+- Write strictly about ${cleanTopic} using the real facts retrieved above. Do not mention game dev or ScriptableObjects unless ${cleanTopic} is genuinely about game development.
+- Language: ${isHeb ? "Hebrew (עברית שוטפת ועשירה)" : "English"}.
+- Return ONLY valid JSON matching this schema:
+{
+  "type": "cards",
+  "kicker": "Short punchy kicker",
+  "title": "${cleanTopic}",
+  "text": "2-3 sentences of informative intro based on the facts",
+  "width": "contained",
+  "align": "left",
+  "pad": "spacious",
+  "items": [
+    {
+      "icon": "star",
+      "title": "Card title",
+      "text": "2-3 sentences of genuine knowledge from the web research",
+      "tag": "Category"
     }
-
-    const snippets=(webData&&webData.results)||[];
-    const title=cleanTopic.length>55?cleanTopic.slice(0,53)+"…":cleanTopic;
-    const kicker=(isHeb?"התמחות טכנית ומערכות":"TECHNICAL SPECIALTY & ARCHITECTURE").slice(0,36);
-
-    let introText=isHeb
-      ? `מערכות גיימפלי וארכיטקטורת זמן-אמת ב-${cleanTopic}. פיתוח מודולרי, אופטימיזציה מתמדת ודגש על תחושת משחק (Game Feel) בקצב של 60 FPS יציב.`
-      : `Real-time engineering and architecture for ${cleanTopic}. Modular systems design, clean decoupling, and profiling for seamless 60 FPS performance.`;
-
-    if(snippets.length&&snippets[0].snippet){
-      const s0=snippets[0].snippet.slice(0,140);
-      introText=(isHeb?`סטנדרטים ומידע מקצועי: ${s0}. `: `${s0}. `)+introText;
-    }
-
-    let items=[];
-    if(type==="cards"){
-      const cardBlueprints=[
-        {
-          icon:"code",
-          title:isHeb?"ארכיטקטורה מודולרית ומערכות":"Modular Systems & Architecture",
-          text:isHeb?"תכנון מונחה-נתונים (ScriptableObjects / Subsystems) עם הפרדת תלויות ואירועים (Event-Driven) המאפשרים הרחבה נוחה ללא קוד ספגטי.":"Data-driven architecture with decoupled events and state machines, keeping gameplay systems maintainable and extensible across teams.",
-          tag:"Architecture"
-        },
-        {
-          icon:"bolt",
-          title:isHeb?"אופטימיזציה וביצועים (60 FPS)":"Profiling & Memory Optimization",
-          text:isHeb?"ניהול זיכרון קפדני, ביטול הקצאות GC בפריימים חמים, הפחתת Draw Calls ושימוש בפרופיילר לאיתור צווארי בקבוק בזמן אמת.":"Zero garbage collection allocations in hot update loops, draw-call batching, and continuous profiler audits for rock-solid frame rates.",
-          tag:"Performance"
-        },
-        {
-          icon:"gamepad",
-          title:isHeb?"מכניקות משחק ו-Game Feel":"Tactile Mechanics & Game Feel",
-          text:isHeb?"בקרת שחקן רספונסיבית, משוב אור-קולי מדויק (Camera Shake, Hitstops, Audio Cues) ואינטראקציות פיזיקליות אינטואיטיביות.":"Responsive character controllers, dynamic camera behaviors, hit-pause cues, and audiovisual feedback tuned for maximum player immersion.",
-          tag:"Game Feel"
-        },
-        {
-          icon:"tools",
-          title:isHeb?"כלי פיתוח וצינור עבודה (Pipeline)":"Custom Tooling & Editor Workflows",
-          text:isHeb?"הרחבות מותאמות לעורך (Custom Inspectors & Gizmos) המאפשרות למעצבי שלבים לבדוק ולאזן תכנים במהירות ובבטחה.":"Custom Editor inspectors, scene gizmos, and workflow automation enabling rapid balancing and iteration for designers.",
-          tag:"Tooling"
+  ],
+  "buttons": [
+    {"label": "${isHeb ? 'קרא עוד' : 'Learn More'}", "link": "#", "style": "solid"}
+  ]
+}`;
+        const r = await fetchT(`${GAPI}/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
+        }, 15000);
+        if (r.ok) {
+          const j = await r.json();
+          const raw = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts && j.candidates[0].content.parts[0].text) || "";
+          const cleanJson = raw.replace(/^```(?:json)?|```$/gm, "").trim();
+          const parsed = JSON.parse(cleanJson);
+          if (parsed && parsed.title && Array.isArray(parsed.items) && parsed.items.length) {
+            const ref = after || (current && current.closest('[data-ok="site:section_order"]'));
+            const r_ = addSection(ref, sectionData(parsed));
+            if (r_) {
+              aiSay("act", `✓ add AI web section ${r_.key} · ${cleanTopic}`);
+              aiSay("ai", isHeb
+                ? `✨ נוצר סקשן מלא ועשיר בנושא "${cleanTopic}" המבוסס על עובדות אמיתיות מהרשת! ניתן ללחוץ פעמיים על כל טקסט לעריכה.`
+                : `✨ Created rich section on "${cleanTopic}" using real web research!`);
+              return r_;
+            }
+          }
         }
-      ];
-      if(snippets.length>=2){
-        cardBlueprints[0].text=snippets[0].snippet.slice(0,160)+" "+cardBlueprints[0].text.slice(0,80);
-        cardBlueprints[1].text=snippets[1].snippet.slice(0,160)+" "+cardBlueprints[1].text.slice(0,80);
+      } catch(geminiErr) {
+        console.warn("Gemini section generation fallback:", geminiErr);
       }
-      if(snippets.length>=3){
-        cardBlueprints[2].title=snippets[2].title.slice(0,36)||cardBlueprints[2].title;
-        cardBlueprints[2].text=snippets[2].snippet.slice(0,160);
-      }
-      items=cardBlueprints;
-    }else if(type==="stats"){
-      items=[
-        {value:"60 FPS",label:isHeb?"יעד ביצועים קבוע":"Stable Frame Target",sub:isHeb?"אופטימיזציה למחשב ומובייל":"Desktop & mobile profiling"},
-        {value:"0 GC",label:isHeb?"הקצאות זיכרון ב-Update":"Zero GC Hot Loops",sub:isHeb?"מניעת קפיצות פריימים":"Garbage-collection free"},
-        {value:"100%",label:isHeb?"שליטה במנוע וקוד":"Deterministic Mechanics",sub:isHeb?"בקרת פיזיקה וקומבט":"Combat & physics state control"}
-      ];
-    }else if(type==="faq"){
-      items=[
-        {q:isHeb?`כיצד מיושם ${cleanTopic} בפרויקטים?`:`How is ${cleanTopic} architected in production?`,a:isHeb?"באמצעות פירוק למודולים עצמאיים, שימוש ב-Interfaces וב-Events, תוך בדיקות ביצועים מקיפות בפרופיילר של המנוע.":"Through decoupled subsystems, interface-driven communication, and strict memory budgeting verified with in-engine profiling tools."},
-        {q:isHeb?"מה הגישה לאופטימיזציה ולמניעת צווארי בקבוק?":"What is the profiling and optimization approach?",a:isHeb?"מדידה מוקדמת באמצעות Unity Profiler / Unreal Insights, ביטול allocations בקוד שרץ בכל פריים, ושימוש ב-Object Pooling.":"Benchmarking via Unity Profiler and Unreal Insights, pooling dynamic entities, and avoiding heap allocations in critical game loops."},
-        {q:isHeb?"האם המערכות מותאמות לעבודת צוות ומעצבים?":"Is the architecture friendly for designers?",a:isHeb?"כן, כל הפרמטרים החשובים חשופים ב-ScriptableObjects או Data Tables עם Gizmos ויזואליים בכדי לאפשר שינויים מיידיים ללא צורך בקוד חדש.":"Yes, tuneable parameters are exposed via ScriptableObjects or Data Tables with visual scene handles for immediate designer iteration."}
-      ];
-    }else if(type==="steps"){
-      items=[
-        {title:isHeb?"1. אפיון דרישות וארכיטקטורה":"1. System Design & Contracts",text:isHeb?"הגדרת ממשקים וזרימת נתונים נקייה.":"Defining decoupled interfaces and event flows."},
-        {title:isHeb?"2. מימוש המכניקה ו-Game Feel":"2. Core Mechanics & Feel",text:isHeb?"קידוד הבקרים, המשוב והפיזיקה.":"Coding responsive controls, cameras, and feedback."},
-        {title:isHeb?"3. פרופיילינג ואופטימיזציה":"3. Profiling & Budgeting",text:isHeb?"בדיקת זיכרון, GC ו-Draw Calls.":"Ensuring 0-allocation updates and 60 FPS budgets."},
-        {title:isHeb?"4. כלי עורך ובדיקות קצה":"4. Tooling & Polish",text:isHeb?"חשיפת הגדרות למעצבים וליטוש.":"Custom inspector tools and edge-case testing."}
-      ];
     }
 
-    const sectionPayload={
+    // 2. Direct Web-to-Section Synthesis (zero-token, authentic to the search results)
+    let type = prefType || "";
+    if (!type || !SEC.TYPES[type]) {
+      const lower = cleanTopic.toLowerCase();
+      if (/faq|שאלות|q&a/i.test(lower)) type = "faq";
+      else if (/stats|מספרים|הישגים|ביצועים|numbers|metrics|fps/i.test(lower)) type = "stats";
+      else if (/steps|שלבים|workflow|תהליך|pipeline/i.test(lower)) type = "steps";
+      else if (/gallery|תמונות|צילומים|screenshots/i.test(lower)) type = "gallery";
+      else if (/quote|המלצה|ציטוט|testimonial/i.test(lower)) type = "quote";
+      else type = "cards";
+    }
+
+    const snippets = (webData && webData.results) || [];
+    const isGameDev = /(unity|unreal|gameplay|c#|c\+\+|shader|vfx|physics|engine|netcode|ecs|dots|game\s*dev|משחק|גיימינג|מנוע|קומבט|פיזיקה)/i.test(cleanTopic);
+    const title = cleanTopic.length > 55 ? cleanTopic.slice(0, 53) + "…" : cleanTopic;
+    const kicker = isGameDev
+      ? (isHeb ? "התמחות טכנית ומערכות" : "TECHNICAL SPECIALTY & ARCHITECTURE")
+      : (isHeb ? "מידע מקיף ומחקר מהרשת" : "WEB RESEARCH & OVERVIEW");
+
+    let introText = "";
+    if (!isGameDev && snippets.length && snippets[0].extract) {
+      introText = snippets[0].extract.slice(0, 180);
+      if (!introText.endsWith(".")) introText += ".";
+      introText = (isHeb ? `סקירה מקיפה ומידע מהרשת על ${cleanTopic}: ` : `Web research overview for ${cleanTopic}: `) + introText;
+    } else if (isGameDev) {
+      introText = isHeb
+        ? `מערכות גיימפלי וארכיטקטורת זמן-אמת ב-${cleanTopic}. פיתוח מודולרי, אופטימיזציה מתמדת ודגש על תחושת משחק (Game Feel) בקצב של 60 FPS יציב.`
+        : `Real-time engineering and architecture for ${cleanTopic}. Modular systems design, clean decoupling, and profiling for seamless 60 FPS performance.`;
+      if (snippets.length && snippets[0].snippet) {
+        introText = snippets[0].snippet.slice(0, 120) + ". " + introText;
+      }
+    } else {
+      introText = isHeb
+        ? `סקירה מקיפה ועובדות שנאספו מהרשת על ${cleanTopic}, כולל מאפיינים עיקריים, נתונים שימושיים ומידע מקצועי.`
+        : `Comprehensive overview and curated web insights on ${cleanTopic}, covering key highlights, practical details, and background.`;
+    }
+
+    let items = [];
+    if (type === "cards") {
+      if (!isGameDev && snippets.length) {
+        // Dynamically build cards strictly from the retrieved web extracts
+        const iconList = ["star", "heart", "flask", "globe", "cube", "book", "shield", "brief", "tools", "bolt"];
+        items = snippets.slice(0, 4).map((s, idx) => {
+          let tClean = (s.title || "").trim();
+          let body = (s.extract || s.snippet || "").split(String.fromCharCode(10)).join(" ").trim();
+          if (body.length > 220) body = body.slice(0, 217) + "…";
+          return {
+            icon: iconList[idx % iconList.length],
+            title: tClean || cleanTopic,
+            text: body || (isHeb ? "עובדות ונתונים שנאספו ממקורות ידע ברשת." : "Curated facts and information from web sources."),
+            tag: s.source || (isHeb ? "מידע מהרשת" : "Web Facts")
+          };
+        });
+      } else if (isGameDev) {
+        const cardBlueprints = [
+          {
+            icon: "code",
+            title: isHeb ? "ארכיטקטורה מודולרית ומערכות" : "Modular Systems & Architecture",
+            text: isHeb ? "תכנון מונחה-נתונים (ScriptableObjects / Subsystems) עם הפרדת תלויות ואירועים (Event-Driven) המאפשרים הרחבה נוחה ללא קוד ספגטי." : "Data-driven architecture with decoupled events and state machines, keeping gameplay systems maintainable and extensible across teams.",
+            tag: "Architecture"
+          },
+          {
+            icon: "bolt",
+            title: isHeb ? "אופטימיזציה וביצועים (60 FPS)" : "Profiling & Memory Optimization",
+            text: isHeb ? "ניהול זיכרון קפדני, ביטול הקצאות GC בפריימים חמים, הפחתת Draw Calls ושימוש בפרופיילר לאיתור צווארי בקבוק בזמן אמת." : "Zero garbage collection allocations in hot update loops, draw-call batching, and continuous profiler audits for rock-solid frame rates.",
+            tag: "Performance"
+          },
+          {
+            icon: "gamepad",
+            title: isHeb ? "מכניקות משחק ו-Game Feel" : "Tactile Mechanics & Game Feel",
+            text: isHeb ? "בקרת שחקן רספונסיבית, משוב אור-קולי מדויק (Camera Shake, Hitstops, Audio Cues) ואינטראקציות פיזיקליות אינטואיטיביות." : "Responsive character controllers, dynamic camera behaviors, hit-pause cues, and audiovisual feedback tuned for maximum player immersion.",
+            tag: "Game Feel"
+          },
+          {
+            icon: "tools",
+            title: isHeb ? "כלי פיתוח וצינור עבודה (Pipeline)" : "Custom Tooling & Editor Workflows",
+            text: isHeb ? "הרחבות מותאמות לעורך (Custom Inspectors & Gizmos) המאפשרות למעצבי שלבים לבדוק ולאזן תכנים במהירות ובבטחה." : "Custom Editor inspectors, scene gizmos, and workflow automation enabling rapid balancing and iteration for designers.",
+            tag: "Tooling"
+          }
+        ];
+        if (snippets.length >= 2) {
+          cardBlueprints[0].text = snippets[0].snippet.slice(0, 160) + " " + cardBlueprints[0].text.slice(0, 80);
+          cardBlueprints[1].text = snippets[1].snippet.slice(0, 160) + " " + cardBlueprints[1].text.slice(0, 80);
+        }
+        items = cardBlueprints;
+      } else {
+        items = [
+          { icon: "star", title: cleanTopic, text: introText, tag: isHeb ? "סקירה" : "Overview" }
+        ];
+      }
+    } else if (type === "stats") {
+      items = isGameDev ? [
+        { value: "60 FPS", label: isHeb ? "יעד ביצועים קבוע" : "Stable Frame Target", sub: isHeb ? "אופטימיזציה למחשב ומובייל" : "Desktop & mobile profiling" },
+        { value: "0 GC", label: isHeb ? "הקצאות זיכרון ב-Update" : "Zero GC Hot Loops", sub: isHeb ? "מניעת קפיצות פריימים" : "Garbage-collection free" },
+        { value: "100%", label: isHeb ? "שליטה במנוע וקוד" : "Deterministic Mechanics", sub: isHeb ? "בקרת פיזיקה וקומבט" : "Combat & physics state control" }
+      ] : [
+        { value: "100%", label: isHeb ? "טבעי ואיכותי" : "Curated & Verified", sub: isHeb ? "מקורות מהימנים" : "Authoritative sources" },
+        { value: "4+", label: isHeb ? "נושאי מפתח" : "Key Dimensions", sub: isHeb ? "סקירה מקיפה" : "Complete overview" },
+        { value: "24/7", label: isHeb ? "זמינות המידע" : "Always Accessible", sub: isHeb ? "נגיש ומעודכן" : "Real-time knowledge" }
+      ];
+    } else if (type === "faq") {
+      items = snippets.slice(0, 3).map(s => ({
+        q: isHeb ? `מהם המאפיינים העיקריים של ${s.title}?` : `What are the key facts about ${s.title}?`,
+        a: (s.extract || s.snippet || "").slice(0, 250) || (isHeb ? "מידע ועובדות שנאספו מהרשת." : "Information gathered from web sources.")
+      }));
+    }
+
+    const sectionPayload = {
       type,
       kicker,
       title,
-      text:introText,
-      width:"contained",
-      align:"left",
-      pad:"spacious",
-      icon:"code",
+      text: introText,
+      width: "contained",
+      align: "left",
+      pad: "spacious",
+      icon: isGameDev ? "code" : (type === "cards" && items[0] ? items[0].icon : "globe"),
       items,
-      buttons:[
-        {label:isHeb?"צפה בפרויקטים ובקוד":"View Systems & Code",link:"#projects",style:"solid"},
-        {label:isHeb?"יצירת קשר":"Get in Touch",link:"#about",style:"ghost"}
+      buttons: [
+        { label: isHeb ? "למידע נוסף" : "Learn More", link: (snippets[0] && snippets[0].url) || "#about", style: "solid" },
+        { label: isHeb ? "חזרה לראש הדף" : "Back to Top", link: "#", style: "ghost" }
       ]
     };
 
-    const ref=after||(current&&current.closest('[data-ok="site:section_order"]'));
-    const r_=addSection(ref,sectionData(sectionPayload));
-    if(!r_)return null;
+    const ref = after || (current && current.closest('[data-ok="site:section_order"]'));
+    const r_ = addSection(ref, sectionData(sectionPayload));
+    if (!r_) return null;
 
-    aiSay("act",`✓ add full section ${r_.key} · ${SEC.TYPES[type].label} (${items.length} items + web facts)`);
-    aiSay("ai",isHeb
-      ? `✨ יצרתי סקשן מלא ועשיר בנושא "${cleanTopic}" (${SEC.TYPES[type].label}, ${items.length} כרטיסיות)! המידע הורחב עם פרטים טכניים מהרשת וניסיון הפיתוח. לחיצה כפולה על טקסט לעריכה, או על ⚙ לעיצוב.`
-      : `✨ Created a full, rich section for "${cleanTopic}" (${SEC.TYPES[type].label} with ${items.length} detailed items)! Enhanced with technical concepts from the web. Double-click any text to edit, or tap ⚙ for layout.`);
+    aiSay("act", `✓ add full section ${r_.key} · ${SEC.TYPES[type].label} (${items.length} items + web facts)`);
+    aiSay("ai", isHeb
+      ? `✨ יצרתי סקשן מלא ומבוסס מחקר רשת על "${cleanTopic}" (${SEC.TYPES[type].label}, ${items.length} כרטיסיות עם עובדות אמיתיות)! לחיצה כפולה על טקסט לעריכה, או על ⚙ לעיצוב.`
+      : `✨ Created a full rich section for "${cleanTopic}" (${SEC.TYPES[type].label} with ${items.length} web-informed items)! Double-click any text to edit, or tap ⚙ for layout.`);
     return r_;
   }
 
   function promptWebSection(after){
-    const q=prompt("What topic or technology should the new section be about?\n(e.g., Unity ECS, Multiplayer Netcode, Combat AI, Raymarching Shaders)");
-    if(!q||!q.trim())return;
+    const q = prompt("What topic or technology should the new section be about?\n(e.g., פירות וירקות, Unity ECS, Unreal Nanite, טיפוס הרים)");
+    if (!q || !q.trim()) return;
     openAI();
-    aiSay("me",`בנה סקשן מלא מהרשת על: ${q.trim()}`);
-    const thinking=aiSay("sys",`🔍 מחפש מידע ברשת על "${q.trim()}"...`);
-    searchWeb(q.trim()).then(webData=>{
-      thinking.textContent="✨ בונה סקשן מלא ופלאפי...";
-      setTimeout(()=>{
-        thinking.remove();
-        buildFullFluffySection(q.trim(),null,webData,after);
-      },300);
-    }).catch(err=>{
+    aiSay("me", `בנה סקשן מלא מהרשת על: ${q.trim()}`);
+    const thinking = aiSay("sys", `🔍 מחפש מידע ברשת על "${cleanSearchQuery(q)}"...`);
+    searchWeb(q.trim()).then(async webData => {
+      thinking.textContent = "✨ בונה סקשן מלא ופלאפי...";
+      await buildFullFluffySection(q.trim(), null, webData, after);
       thinking.remove();
-      buildFullFluffySection(q.trim(),null,null,after);
+    }).catch(async err => {
+      thinking.remove();
+      await buildFullFluffySection(q.trim(), null, null, after);
     });
   }
-
   function addNew(item){
     // a fresh item right after this one: same look, text ready to type
     duplicate(item);
