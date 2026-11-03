@@ -1,0 +1,293 @@
+/* Site style: Avraham (Cyber Space) — Inspired by avrahamisdeveloping.com.
+   Deep cyber noir (#06040d), Space Grotesk typography, ambient cyan/indigo glows, gradient text highlights, and frosted tech glass panels. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+html[data-skin=avraham] {
+  --deep: #06040d;
+  --mid: #0c091f;
+  --bg-tertiary: #13102c;
+  --accent: #06b6d4;
+  --accent-indigo: #6366f1;
+  --accent-purple: #a855f7;
+  --accent-gradient: linear-gradient(135deg, #06b6d4, #6366f1, #a855f7);
+  --accent-gradient-text: linear-gradient(135deg, #22d3ee, #818cf8, #c084fc);
+  --paper: #f8fafc;
+  --ink: #f8fafc;
+  --muted-ink: #94a3b8;
+  --glass-bg: rgba(12, 9, 31, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(99, 102, 241, 0.45);
+  --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.25);
+  --shadow-glow-cyan: 0 0 25px rgba(6, 182, 212, 0.25);
+  --font-display: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+html[data-skin=avraham] body {
+  background: #06040d !important;
+  color: var(--paper) !important;
+  font-family: var(--font-body) !important;
+  letter-spacing: -0.01em;
+  position: relative;
+}
+
+/* Ambient cosmic glow backdrop */
+html[data-skin=avraham] body::before {
+  content: "";
+  position: fixed;
+  top: -150px;
+  right: -100px;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.18), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html[data-skin=avraham] body::after {
+  content: "";
+  position: fixed;
+  bottom: 10%;
+  left: -100px;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.14), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Transitions */
+html[data-skin=avraham] :is(.ptile, .repo, .btn, .cs-card, .tool, .chip) {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Bands: Cosmic glass layout with ambient dividers */
+html[data-skin=avraham] :is(.band, .custom-sec):not(.cvdoc *) {
+  background: #06040d !important;
+  padding-block: clamp(65px, 7vw, 120px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  position: relative;
+  z-index: 1;
+}
+
+html[data-skin=avraham] :is(.band):not(.cvdoc *)::before,
+html[data-skin=avraham] :is(.band):not(.cvdoc *)::after {
+  display: none !important;
+}
+
+/* Typography & Headings: Space Grotesk with gradient clip */
+html[data-skin=avraham] :is(.sec-head h2, .band h2, .foot h2, .cs-head h2):not(.cvdoc *) {
+  font-family: var(--font-display) !important;
+  font-size: clamp(34px, 4.8vw, 56px) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.15 !important;
+  background: var(--accent-gradient-text) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  display: inline-flex;
+  align-items: center;
+}
+
+html[data-skin=avraham] .kicker:not(.cvdoc *) {
+  font-family: var(--font-display) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: var(--accent) !important;
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  border-radius: 980px;
+  margin-bottom: 12px !important;
+}
+
+html[data-skin=avraham] :is(.lead, .sec-head p, .cs-head .cs-text, .muted):not(.cvdoc *) {
+  font-family: var(--font-body) !important;
+  font-size: clamp(16px, 1.8vw, 18px) !important;
+  color: var(--muted-ink) !important;
+  line-height: 1.6 !important;
+}
+
+/* Top bar: Cyber frosted navigation */
+html[data-skin=avraham] .topbar {
+  background: rgba(6, 4, 13, 0.85) !important;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.2) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+html[data-skin=avraham] .mark:not(.cvdoc *) {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  font-size: 18px !important;
+  letter-spacing: -0.01em !important;
+  background: var(--accent-gradient-text) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+html[data-skin=avraham] .topbar nav a:not(.cvdoc *) {
+  font-family: var(--font-body) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #94a3b8 !important;
+}
+
+html[data-skin=avraham] .topbar nav a:hover:not(.cvdoc *) {
+  color: #22d3ee !important;
+}
+
+/* Hero Section: Space Glass Showcase */
+html[data-skin=avraham] .hero {
+  background: #06040d !important;
+  min-height: 85vh !important;
+}
+
+html[data-skin=avraham] .hero-panel:not(.cvdoc *) {
+  background: var(--glass-bg) !important;
+  border: 1px solid rgba(99, 102, 241, 0.25) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.15) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
+  padding: clamp(32px, 5vw, 56px) !important;
+}
+
+html[data-skin=avraham] .hero h1:not(.cvdoc *) {
+  font-family: var(--font-display) !important;
+  font-size: clamp(42px, 7.5vw, 86px) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.08 !important;
+}
+
+/* Buttons: Tech Gradient & Glow */
+html[data-skin=avraham] :is(.btn, .hero-links a, .xrow a, .copyrow .btn):not(.cvdoc *) {
+  border-radius: 12px !important;
+  font-family: var(--font-display) !important;
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  padding: 8px 24px !important;
+  min-height: 44px !important;
+  letter-spacing: 0.01em !important;
+}
+
+html[data-skin=avraham] .btn:not(.ghost):not(.cvdoc *) {
+  background: var(--accent-gradient) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35) !important;
+}
+
+html[data-skin=avraham] .btn:not(.ghost):hover:not(.cvdoc *) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 25px rgba(99, 102, 241, 0.55), 0 0 15px rgba(6, 182, 212, 0.4) !important;
+}
+
+html[data-skin=avraham] .btn.ghost:not(.cvdoc *),
+html[data-skin=avraham] .hero-links a:not(.cvdoc *) {
+  background: rgba(19, 16, 44, 0.65) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+html[data-skin=avraham] .btn.ghost:hover:not(.cvdoc *) {
+  background: rgba(99, 102, 241, 0.2) !important;
+  border-color: #22d3ee !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Projects: Cyber Glass Grid */
+html[data-skin=avraham] .ptiles {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
+  gap: 28px !important;
+}
+
+@media (max-width: 580px) {
+  html[data-skin=avraham] .ptiles {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+html[data-skin=avraham] .ptile:not(.cvdoc *) {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 18px !important;
+  padding: 28px !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+html[data-skin=avraham] .ptile:hover:not(.cvdoc *) {
+  border-color: var(--glass-border-hover) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), var(--shadow-glow) !important;
+  transform: translateY(-4px) !important;
+}
+
+html[data-skin=avraham] .ptile-img img:not(.cvdoc *) {
+  border-radius: 12px !important;
+}
+
+html[data-skin=avraham] .ptile-title:not(.cvdoc *) {
+  font-family: var(--font-display) !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em !important;
+}
+
+html[data-skin=avraham] .role-tag:not(.cvdoc *),
+html[data-skin=avraham] .ptile-tech span:not(.cvdoc *),
+html[data-skin=avraham] .chip:not(.cvdoc *) {
+  border-radius: 8px !important;
+  background: rgba(99, 102, 241, 0.14) !important;
+  border: 1px solid rgba(99, 102, 241, 0.28) !important;
+  color: #818cf8 !important;
+  font-family: var(--font-body) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 3px 10px !important;
+}
+
+/* Custom Cards / Repos */
+html[data-skin=avraham] :is(.cs-card, .repo, .about-game):not(.cvdoc *) {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 16px !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  padding: 24px !important;
+}
+
+html[data-skin=avraham] :is(.cs-card, .repo):hover:not(.cvdoc *) {
+  border-color: rgba(6, 182, 212, 0.4) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), var(--shadow-glow-cyan) !important;
+  transform: translateY(-3px) !important;
+}
+
+/* Bullet Points: Glowing Cyan/Indigo Dots */
+html[data-skin=avraham] .ticks li:not(.cvdoc *)::before {
+  border-radius: 50% !important;
+  background: var(--accent) !important;
+  box-shadow: 0 0 10px #06b6d4 !important;
+  width: 7px !important;
+  height: 7px !important;
+}
+
+/* Footer */
+html[data-skin=avraham] .foot {
+  background: #06040d !important;
+  border-top: 1px solid rgba(99, 102, 241, 0.2) !important;
+  padding-block: clamp(60px, 7vw, 100px) !important;
+}

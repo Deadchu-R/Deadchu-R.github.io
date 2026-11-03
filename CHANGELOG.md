@@ -9,6 +9,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-03
 
 ### Styles
+- **Styles:** new "Avraham (Cyber Space)" skin inspired by avrahamisdeveloping.com with Space Grotesk, ambient glows & frosted cyber glass. Added hidden standalone design preview routes (appleInspiredDesign, valleyInspiredDesign, avrahamInspiredDesign).
 - **Styles:** new "Apple (Minimal)" and "Robert Valley (Cinematic)" site styles selectable in the editor's Site style menu (⋯ › Site style), featuring airy glass cards and high-contrast widescreen graphic framing.
 
 ### Fixes
@@ -32,6 +33,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 - **TV:** CH ▲/▼ (Page Up/Down) jumps between parts of the page with an on-screen label. Instant scrolling, no autoplaying backgrounds (4b62733).
 
 ### Styles
+- **Styles:** new "Avraham (Cyber Space)" skin inspired by avrahamisdeveloping.com with Space Grotesk, ambient glows & frosted cyber glass. Added hidden standalone design preview routes (appleInspiredDesign, valleyInspiredDesign, avrahamInspiredDesign).
 - **Styles:** switchable site styles in ⋯ › Site style: Classic, Arcade (game menu + playable platformer first screen), Sketchbook (hand-made), Hobbies (climbing wall), Plain (d14ef70).
 - **Styles:** fixed unreadable parts and added the automatic readability guard. TV mode with remote-friendly arrows (a5c8cee).
 

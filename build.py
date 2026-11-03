@@ -104,7 +104,7 @@ def ver(path):
     return hashlib.md5((ROOT / path).read_bytes()).hexdigest()[:8]
 
 
-SKINS = ["classic", "arcade", "sketchbook", "hobbies", "plain", "apple", "valley"]   # site styles, picked in the editor (⋯ › Site style)
+SKINS = ["classic", "arcade", "sketchbook", "hobbies", "plain", "apple", "valley", "avraham"]   # site styles, picked in the editor (⋯ › Site style)
 SKIN = SITE_TEXT.get("skin") if SITE_TEXT.get("skin") in SKINS else "classic"
 def skin_css(p):
     """<link> for the active site style's stylesheet (assets/skins/<SKIN>.css); nothing for the Classic style."""
@@ -754,7 +754,20 @@ def build_index():
     order += [k for k in blocks if k not in order]          # anything not listed keeps its default place at the end
     html += "\n".join(blocks[k] for k in order)
     html += footer(0)
-    (ROOT / "index.html").write_text(html)
+        (ROOT / "index.html").write_text(html)
+    for folder, skin_name in [("appleInspiredDesign", "apple"), ("valleyInspiredDesign", "valley"), ("avrahamInspiredDesign", "avraham")]:
+        p_html = html.replace('data-skin="classic"', f'data-skin="{skin_name}"')
+        css_tag = f'\n<link rel="stylesheet" href="assets/skins/{skin_name}.css?v={ver("assets/skins/" + skin_name + ".css")}" id="skin-css">\n'
+        if '</head>' in p_html:
+            p_html = p_html.replace('</head>', f'{css_tag}</head>')
+        (ROOT / f"{folder}.html").write_text(p_html)
+        sub = ROOT / folder
+        sub.mkdir(exist_ok=True)
+        sub_html = p_html.replace('href="assets/', 'href="../assets/').replace('src="assets/', 'src="../assets/')
+        sub_html = sub_html.replace('href="index.html', 'href="../index.html').replace('href="gallery.html', 'href="../gallery.html')
+        sub_html = sub_html.replace('href="lab.html', 'href="../lab.html').replace('href="cv.html', 'href="../cv.html')
+        sub_html = sub_html.replace('data-edit="assets/', 'data-edit="../assets/')
+        (sub / "index.html").write_text(sub_html)
 
 
 def tbc_band(back_href, back_label):
