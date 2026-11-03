@@ -755,11 +755,28 @@ def build_index():
     html += "\n".join(blocks[k] for k in order)
     html += footer(0)
     (ROOT / "index.html").write_text(html)
-    for folder, skin_name in [("appleInspiredDesign", "apple"), ("valleyInspiredDesign", "valley"), ("avrahamInspiredDesign", "avraham")]:
+    preview_skins = [
+        ("classicDesign", "classic"),
+        ("arcadeDesign", "arcade"),
+        ("sketchbookDesign", "sketchbook"),
+        ("hobbiesDesign", "hobbies"),
+        ("plainDesign", "plain"),
+        ("appleInspiredDesign", "apple"),
+        ("valleyInspiredDesign", "valley"),
+        ("avrahamInspiredDesign", "avraham"),
+    ]
+    for folder, skin_name in preview_skins:
         p_html = html.replace('data-skin="classic"', f'data-skin="{skin_name}"')
-        css_tag = f'\n<link rel="stylesheet" href="assets/skins/{skin_name}.css?v={ver("assets/skins/" + skin_name + ".css")}" id="skin-css">\n'
-        if '</head>' in p_html:
-            p_html = p_html.replace('</head>', f'{css_tag}</head>')
+        if skin_name != "classic":
+            css_tag = f'\n<link rel="stylesheet" href="assets/skins/{skin_name}.css?v={ver("assets/skins/" + skin_name + ".css")}" id="skin-css">\n'
+            if '</head>' in p_html:
+                p_html = p_html.replace('</head>', f'{css_tag}</head>')
+            js_f = ROOT / "assets/skins" / f"{skin_name}.js"
+            js_tags = f'\n<script src="assets/skins/guard.js?v={ver("assets/skins/guard.js")}" defer></script>\n'
+            if js_f.exists():
+                js_tags += f'<script src="assets/skins/{skin_name}.js?v={ver("assets/skins/" + skin_name + ".js")}" defer></script>\n'
+            if '</body>' in p_html:
+                p_html = p_html.replace('</body>', f'{js_tags}</body>')
         (ROOT / f"{folder}.html").write_text(p_html)
         sub = ROOT / folder
         sub.mkdir(exist_ok=True)
