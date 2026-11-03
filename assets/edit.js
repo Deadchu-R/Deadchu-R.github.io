@@ -2252,9 +2252,9 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   }
   async function fetchJob(url,st){
     url=url.trim();if(!/^https?:\/\//.test(url))url="https://"+url;
-    try{const r=await fetchT(url,{},12000);if(r.ok){const t=await r.text();const d=new DOMParser().parseFromString(t,"text/html");const x=(d.body&&d.body.innerText||d.body.textContent||"").trim();if(x.length>300)return x}}catch(e){}
+    try{const r=await fetchT(url,{},12000);if(r.ok){const t=await r.text();const d=new DOMParser().parseFromString(t,"text/html");const x=(d.body&&d.body.innerText||d.body.textContent||"").trim();if(x.length>300)return cleanJobText(x)}}catch(e){}
     st.textContent="Reading the page through a reader service…";
-    try{const r=await fetchT("https://r.jina.ai/"+url,{headers:{"Accept":"text/plain"}},30000);if(r.ok){const t=(await r.text()).trim();if(t.length>300&&!/captcha|access denied|enable javascript/i.test(t.slice(0,600)))return t}}catch(e){}
+    try{const r=await fetchT("https://r.jina.ai/"+url,{headers:{"Accept":"text/plain"}},30000);if(r.ok){const t=(await r.text()).trim();if(t.length>300&&!/captcha|access denied|enable javascript/i.test(t.slice(0,600)))return cleanJobText(t)}}catch(e){}
     if(provider()==="gemini"&&store.get(AI_KEY)){st.textContent="Asking Gemini to read the page…";
       const t=await aiText("Return the full text of the job advertisement at the URL the user gives: title, company, requirements, responsibilities, nice-to-haves. Plain text only.",url,{max:2500,status:st,tools:[{url_context:{}}]});if(t&&t.length>200)return t}
     throw new Error("couldn't read that page (many job sites block it). Copy the job text and paste it in the box instead.");
