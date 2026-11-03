@@ -169,6 +169,10 @@
   .rt-msg.err{align-self:flex-start;background:#3b1414;color:#ffb3b3}
   @keyframes rtpulse{to{opacity:.3}}
   .rt-files{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}
+  .rt-chips-row{display:flex;gap:5px;overflow-x:auto;padding:5px 0 2px;scrollbar-width:none}
+  .rt-chips-row::-webkit-scrollbar{display:none}
+  .rt-chip-btn{font:500 11px system-ui,sans-serif;background:#242424;color:#ccc;border:1px solid #3e3e3e;border-radius:12px;padding:3px 8px;white-space:nowrap;cursor:pointer;flex:none}
+  .rt-chip-btn:hover{background:#333;color:#ffd23f;border-color:#ffd23f}
   .rt-chip{display:inline-flex;align-items:center;gap:4px;background:#222;border:1px solid #444;border-radius:8px;padding:3px 4px 3px 8px;font-size:12px}
   .rt-chip button{background:none;border:0;color:#aaa;cursor:pointer;font-size:14px}
   .rt-airow{display:flex;gap:6px;align-items:flex-end;margin-top:8px}
@@ -1245,7 +1249,7 @@
   let settingsOpen=false;
   function aiSettingsBlock(){
     // saved on this device only (not on the site)
-    const pv=h("select",{},h("option",{value:"app",selected:provider()==="app"},"🔌 AI app on this device (Ollama / LM Studio)"),h("option",{value:"local",selected:provider()==="local"},"📱 Inside the browser (free, private)"),h("option",{value:"gemini",selected:provider()==="gemini"},"Gemini (free key, backup)"));
+    const pv=h("select",{},h("option",{value:"hybrid",selected:provider()==="hybrid"},"⚡🤖 Hybrid: Rules first, AI backup (recommended)"),h("option",{value:"rules",selected:provider()==="rules"},"⚡ Instant Rules only: 100% Non-AI (instant, free)"),h("option",{value:"gemini",selected:provider()==="gemini"},"Gemini (free key, backup)"),h("option",{value:"local",selected:provider()==="local"},"📱 Inside the browser (free, private)"),h("option",{value:"app",selected:provider()==="app"},"🔌 AI app on this device (Ollama / LM Studio)"));
     pv.addEventListener("change",()=>{store.set(AI_PROV,pv.value);if(provBtn)provBtn.textContent=PROV_ICON[pv.value]});
     const au=h("input",{type:"text",value:appUrl(),spellcheck:"false"});au.addEventListener("change",()=>{store.set(APP_URL,au.value.trim());store.set(APP_MODEL,"");isOllama=null});
     const am=h("select",{},h("option",{value:store.get(APP_MODEL)||""},store.get(APP_MODEL)||"(first model the app offers)"));
@@ -1383,7 +1387,7 @@
   /* ------------------------------------------------------------ ✨ AI assistant (Gemini, free key from Google AI Studio)
      It reads what this page can change, then calls the same tools you use by hand. Nothing is published until you press Publish. */
   const AI_KEY="rt-gemini-key",AI_MODEL="rt-gemini-model",GAPI="https://generativelanguage.googleapis.com/v1beta";
-  const PROV_ICON={local:"📱",app:"🔌",gemini:"G"};
+  const PROV_ICON={rules:"⚡",hybrid:"⚡🤖",local:"📱",app:"🔌",gemini:"G"};
   let provBtn=null,aiBox=null,aiLog=null,aiHist=[],aiFiles=[],aiBusy=false,rec=null,aiLang="he-IL";
   function applyCustomCss(css){let st=document.getElementById("custom-css");if(!st){st=document.createElement("style");st.id="custom-css";document.head.append(st)}st.textContent=css||""}
   function fieldDef(path){
@@ -1523,7 +1527,7 @@ Rules:
   const LOCAL_MODELS=[["auto","Automatic (4B on phones, 9B on computers)"],["Qwen3.5-2B","Light · about 1.5 GB · fastest"],["Qwen3.5-4B","Balanced · about 2.5 GB"],["Qwen3.5-9B","Smartest · about 5 GB · computers"]];
   let wl=null,engine=null,engineId="",loadingP=null;
   const isPhone=()=>matchMedia("(pointer:coarse)").matches&&Math.min(screen.width,screen.height)<900;
-  const provider=()=>store.get(AI_PROV)||("gpu" in navigator?"local":"gemini");
+  const provider=()=>store.get(AI_PROV)||"hybrid";
   async function localModelId(){
     let base=store.get(AI_LOCAL)||"auto";if(base==="auto")base=isPhone()?"Qwen3.5-4B":"Qwen3.5-9B";
     let f16=false;try{const ad=await navigator.gpu.requestAdapter();f16=!!(ad&&ad.features.has("shader-f16"))}catch(e){}
@@ -1715,10 +1719,317 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       await applyJsonAnswer(res.choices[0].message.content,thinking);
     }catch(e){thinking.remove();aiSay("err","On-device AI: "+errText(e)+". You can switch to Gemini with the 📱/G button above.");if(/load|fetch|network|device/i.test(errText(e))){engine=null;engineId=""}}
   }
+
+  /* ------------------------------------------------------------ ⚡ Rule-Based Intent & Command Engine (100% Non-AI) */
+  const COLOR_MAP={
+    "כחול":"#1f5fa8","כחול בהיר":"#38bdf8","תכלת":"#38bdf8","טורקיז":"#06b6d4","ירוק":"#10b981","ירוק כהה":"#047857","ירוק בהיר":"#84cc16","ליים":"#84cc16","אדום":"#ef4444","סגול":"#8b5cf6","ארגמן":"#9333ea","ורוד":"#ec4899","מגנטה":"#d946ef","צהוב":"#eab308","כתום":"#f97316","ענבר":"#d97706","זהב":"#f59e0b","שחור":"#0a0a0a","כהה":"#111827","לבן":"#ffffff","בהיר":"#f8fafc","אפור":"#6b7280","אפור כהה":"#1f2937","אפור בהיר":"#e5e7eb",
+    "blue":"#1f5fa8","sky":"#38bdf8","cyan":"#06b6d4","teal":"#0d9488","green":"#10b981","emerald":"#059669","lime":"#84cc16","red":"#ef4444","purple":"#8b5cf6","violet":"#7c3aed","pink":"#ec4899","yellow":"#eab308","orange":"#f97316","amber":"#d97706","gold":"#f59e0b","black":"#0a0a0a","dark":"#111827","white":"#ffffff","light":"#f8fafc","gray":"#6b7280","grey":"#6b7280"
+  };
+  const SKIN_MAP={
+    "classic":"classic","קלאסי":"classic","רגיל":"classic",
+    "arcade":"arcade","ארקייד":"arcade","משחק":"arcade","משחקים":"arcade","רטרו":"arcade",
+    "sketchbook":"sketchbook","סקיצה":"sketchbook","מחברת":"sketchbook","סקצ'בוק":"sketchbook",
+    "hobbies":"hobbies","תחביבים":"hobbies","טיפוס":"hobbies",
+    "plain":"plain","פשוט":"plain","נקי":"plain","מינימלי":"plain"
+  };
+  const DEV_TEMPLATES={
+    faq:{type:"faq",kicker:"FAQ",title:"Frequently Asked Questions",items:[
+      {q:"What engines and platforms do you specialize in?",a:"Primary focus is Unity (C#) and Unreal Engine 5 (C++ & Blueprints) for PC, mobile, and interactive real-time 3D."},
+      {q:"What is your development approach?",a:"Modular, data-driven systems (ScriptableObjects), event-driven decoupling, and continuous profiling for steady 60 FPS."},
+      {q:"Are you open to full-time or project-based roles?",a:"Yes, currently open to gameplay programmer and technical designer opportunities."}
+    ]},
+    stats:{type:"stats",cols:3,kicker:"Milestones",title:"Key Highlights",items:[
+      {value:"1.5+",label:"Years Professional 3D & Unreal"},
+      {value:"6+",label:"Shipped Prototypes & Projects"},
+      {value:"60 FPS",label:"Optimized Performance Target"}
+    ]},
+    cards:{type:"cards",cols:3,kicker:"Core Skills",title:"Gameplay & Technical Specialties",items:[
+      {icon:"code",title:"Modular Architecture",text:"Clean C# architecture, ScriptableObjects, and event systems that scale without spaghetti code."},
+      {icon:"gamepad",title:"Game Feel & Mechanics",text:"Responsive player controllers, combat systems, weapon recoil, and tactile audiovisual feedback."},
+      {icon:"zap",title:"Profiling & Optimization",text:"Memory management, draw call reduction, and garbage collection profiling for stutter-free frame rates."}
+    ]},
+    quote:{type:"quote",quote:"Building responsive, tactile game mechanics with clean modular systems and rock-solid 60 FPS performance.",author:"Roee Tal",role:"Gameplay Programmer"},
+    steps:{type:"steps",kicker:"Workflow",title:"From Concept to Polished Mechanics",items:[
+      {title:"1. Rapid Prototyping",text:"Validating core game feel, controls, and fun loops with greyboxing and responsive input."},
+      {title:"2. Modular Architecture",text:"Refactoring into decoupled, data-driven ScriptableObjects and event systems for easy balancing."},
+      {title:"3. Optimization & Juice",text:"Profiling memory and render passes, tuning screen shake, audio triggers, and VFX for impact."}
+    ]},
+    cta:{type:"cta",align:"center",title:"Let's Build Something Great",text:"Looking for a gameplay programmer with strong Unity & Unreal foundations? Let's connect.",buttons:{align:"center",items:[
+      {label:"Email Me",link:"mailto:roeetal17@gmail.com",icon:"mail",style:"solid"},
+      {label:"View Résumé",link:"cv.html",icon:"file-text",style:"ghost"}
+    ]}},
+    list:{type:"list",kicker:"Practices",title:"Engineering Principles",items:[
+      {icon:"check",text:"Separation of concerns between gameplay state, animation, and UI"},
+      {icon:"check",text:"Data-driven designer-friendly configuration using ScriptableObjects"},
+      {icon:"check",text:"Rigorous profiling on target hardware before shipping"},
+      {icon:"check",text:"Maintainable Git commit workflows and documentation"}
+    ]},
+    banner:{type:"banner",width:"full",align:"center",height:"tall",overlay:60,title:"Immersive Real-Time Experiences",text:"Crafting fluid gameplay and high-performance interactive 3D worlds.",buttons:{align:"center",items:[
+      {label:"Explore Projects",link:"#projects",icon:"gamepad",style:"solid"}
+    ]}},
+    "text-media":{type:"text-media",kicker:"Focus",title:"Dedicated to Tactile Gameplay",text:"Passionate about gameplay programming where every input feels snappy, responsive, and grounded. Experienced in both C# and C++.",layout:"text"}
+  };
+
+  function parseColorVal(str){
+    if(!str)return null;
+    const s=str.trim().toLowerCase();
+    if(/^#[0-9a-f]{3,8}$/i.test(s)){
+      if(s.length===4)return "#"+s[1]+s[1]+s[2]+s[2]+s[3]+s[3];
+      return s.slice(0,7);
+    }
+    return COLOR_MAP[s]||null;
+  }
+
+  async function executeRuleCommand(raw){
+    const text=(raw||"").trim();
+    if(!text)return {handled:false};
+    const isHeb=/[֐-׿]/.test(text);
+
+    // 1. HELP / עזרה
+    if(/^(\/help|\/commands|help|commands|עזרה|פקודות|\?)$/i.test(text)){
+      const helpMsg=isHeb?
+        `⚡ מדריך פקודות ישירות (100% ללא צורך ב-AI):
+• סקין/ערכת נושא: /skin arcade (או: סקין קלאסי, סקין מחברת, סקין תחביבים, סקין פשוט)
+• צבעים: /color accent #10b981 (או: שנה צבע מבטא לירוק, צבע רקע לשחור)
+• סקשנים: /add faq (או: הוסף סקשן שאלות נפוצות, הוסף סקשן סטטיסטיקות, הוסף כרטיסים, באנר, ציטוט)
+• מחיקה: /remove cs_... (או: מחק סקשן אחרון / מחק סקשן)
+• פריסה: /width full (רוחב מלא/רגיל) | /align center (יישר למרכז)
+• טקסט: /title כותרת חדשה (או: שנה כותרת ל...) | /kicker קיקר חדש
+• עיצוב אישי: /css .custom { color: red; }
+• ביטול: /undo (איפוס שינויים שלא פורסמו)
+💡 במצב Hybrid: פקודות אלו רצות מיידית ב-0ms ללא עלות AI!` :
+        `⚡ Instant Command Guide (100% Non-AI):
+• Themes/Skins: /skin arcade (options: classic, arcade, sketchbook, hobbies, plain)
+• Colors: /color accent #10b981 (or: accent blue, bg dark, text white)
+• Sections: /add faq (or: add stats, add cards, add banner, add quote, add cta, add steps)
+• Delete: /remove cs_... (or: remove last section)
+• Layout: /width full | /width contained | /align center | /align left | /pad spacious
+• Text: /title New Title | /kicker New Kicker | /text New description
+• Custom CSS: /css selector { rule: value; }
+• Reset: /undo (revert unpublished changes)
+💡 In Hybrid mode: These execute instantly at 0ms without consuming any AI tokens!`;
+      aiSay("ai",helpMsg);
+      return {handled:true};
+    }
+
+    // 2. UNDO / RESET
+    if(/^(\/undo|\/reset|ביטול|איפוס)$/i.test(text)){
+      if(changes&&confirm(isHeb?"לבטל את כל השינויים שלא פורסמו?":"Discard all unpublished changes?")){
+        changes=0;location.reload();return {handled:true};
+      }
+      aiSay("ai",isHeb?"אין שינויים לביטול.":"No changes to undo.");
+      return {handled:true};
+    }
+
+    // 3. SKIN / THEME SWITCH
+    let skinMatch=text.match(/^\/(?:skin|theme)\s+(\w+)/i)||text.match(/(?:שנה\s+)?(?:סקין|ערכת\s+נושא|עיצוב|theme|skin)\s*(?:ל|אל|to|=)?\s*([a-zA-Z\u0590-\u05fe]+)/i);
+    if(skinMatch){
+      const rawSkin=skinMatch[1].toLowerCase();
+      const targetSkin=SKIN_MAP[rawSkin];
+      if(targetSkin&&SKIN_NAMES[targetSkin]){
+        applySkin(targetSkin);
+        aiSay("act",`✓ skin ${targetSkin} · ${SKIN_NAMES[targetSkin]}`);
+        aiSay("ai",isHeb?`הסקין הוחלף בהצלחה ל-${SKIN_NAMES[targetSkin]} (${targetSkin}).`:`Switched theme to ${SKIN_NAMES[targetSkin]}.`);
+        return {handled:true};
+      }
+    }
+
+    // 4. COLOR CHANGE (Accent, Background, Text)
+    let colorMatch=text.match(/^\/(?:color|accent|bg)\s*(accent|bg|text_color|text)?\s*(.+)/i)||
+                   text.match(/(?:שנה\s+)?(?:צבע\s+)?(מבטא|אקסנט|רקע|טקסט|accent|bg|text_color|text)\s*(?:ל|אל|to|=)?\s*(.+)/i);
+    if(colorMatch){
+      let prop=(colorMatch[1]||"").toLowerCase();
+      let valStr=colorMatch[2].trim();
+      if(!prop||prop==="מבטא"||prop==="אקסנט"||prop==="accent")prop="accent";
+      else if(prop==="רקע"||prop==="bg")prop="bg";
+      else if(prop==="טקסט"||prop==="text"||prop==="text_color")prop="text_color";
+      const parsedHex=parseColorVal(valStr);
+      if(parsedHex){
+        const sec=current&&current.closest('[data-ok="site:section_order"]');
+        let targetPath=`site:${prop}`;
+        if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_")){
+          const csBase=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}`;
+          targetPath=`${csBase}.${prop}`;
+        }
+        const res=applyValue(targetPath,parsedHex);
+        if(res==="ok"){
+          aiSay("act",`✓ set_value ${targetPath} ${parsedHex}`);
+          aiSay("ai",isHeb?`צבע ה-${prop} שונה בהצלחה ל-${parsedHex}.`:`Set ${prop} color to ${parsedHex}.`);
+          return {handled:true};
+        }
+      }
+    }
+
+    // 5. REMOVE SECTION
+    let delMatch=text.match(/^\/(?:remove|delete)(?:-section)?\s*(cs_\w+)?/i)||
+                 text.match(/(?:מחק|הסר|תמחק|תהסר)\s+(?:את\s+)?(?:ה)?(?:סקשן|סעיף|אזור|קטע)\s*(cs_\w+|נוכחי|אחרון)?/i);
+    if(delMatch){
+      let key=delMatch[1];
+      if(!key||key==="נוכחי"||key==="current"){
+        const curSec=current&&current.closest('[data-ok="site:section_order"]');
+        if(curSec&&curSec.dataset.k&&curSec.dataset.k.startsWith("cs_"))key=curSec.dataset.k;
+      }
+      if(!key||key==="אחרון"||key==="last"){
+        const allCs=$$('[data-ok="site:section_order"]').filter(x=>x.dataset.k&&x.dataset.k.startsWith("cs_"));
+        if(allCs.length)key=allCs[allCs.length-1].dataset.k;
+      }
+      if(key&&key.startsWith("cs_")){
+        const res=AI_TOOLS.remove_section({key});
+        aiSay("act",`✓ remove_section ${key}`);
+        aiSay("ai",isHeb?`הסקשן ${key} הוסר מהעמוד.`:`Removed section ${key}.`);
+        return {handled:true};
+      }
+    }
+
+    // 6. ADD SECTION (Rule-based with game developer templates)
+    let addMatch=text.match(/^\/add(?:-section)?\s*(\w+)?\s*(.*)?/i)||(wantsSection(text)?[text,"",""]:null);
+    if(addMatch){
+      const rawReq=text.toLowerCase();
+      let type=hintType(rawReq)||addMatch[1]||"";
+      if(type&&!SEC.TYPES[type]){
+        for(const [k] of TYPE_HINTS)if(rawReq.includes(k)){type=k;break;}
+      }
+      if(!SEC.TYPES[type])type="text-media";
+      const tmpl=DEV_TEMPLATES[type]||DEV_TEMPLATES["text-media"];
+      const data=JSON.parse(JSON.stringify(tmpl));
+
+      let customTitle=addMatch[2]?addMatch[2].trim().replace(/^["']|["']$/g,""):"";
+      if(!customTitle){
+        const titleM=text.match(/(?:בשם|בנושא|על|titled?|about)\s+["']?([^"'\n,]+)["']?/i);
+        if(titleM)customTitle=titleM[1].trim();
+      }
+      if(customTitle&&customTitle.length>1)data.title=customTitle.slice(0,70);
+      if(WIDE.test(text))data.width="full";
+      if(text.includes("מרכז")||text.includes("center"))data.align="center";
+
+      const after=current&&current.closest('[data-ok="site:section_order"]');
+      const r_=addSection(after,sectionData(data));
+      if(!r_){
+        aiSay("err",isHeb?"סקשנים מתווספים בעמוד הבית בלבד (index.html).":"Sections can only be added on the main home page.");
+        return {handled:true};
+      }
+      aiSay("act",`✓ add section ${r_.key} · ${SEC.TYPES[data.type].label} (Instant Rules)`);
+      aiSay("ai",isHeb?
+        `נוסף סקשן חדש מסוג ${SEC.TYPES[data.type].label} (${r_.key}) ללא שימוש ב-AI! ניתן ללחוץ פעמיים על הטקסטים לעריכה, או על ⚙ לשינוי סגנון.`:
+        `Added ${SEC.TYPES[data.type].label} section (${r_.key}) instantly without AI. Double-click text to edit; tap ⚙ for layout/styling.`);
+      return {handled:true};
+    }
+
+    // 7. WIDTH / ALIGN / PADDING (Layout settings)
+    let widthMatch=text.match(/^\/width\s+(full|contained)/i)||
+                   text.match(/(?:רוחב|width)\s*(?:ל|to|=)?\s*(מלא|רגיל|מקצה לקצה|full|contained)/i);
+    if(widthMatch){
+      const val=/מלא|מקצה לקצה|full/i.test(widthMatch[1])?"full":"contained";
+      const sec=current&&current.closest('[data-ok="site:section_order"]');
+      if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_")){
+        const p=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}.width`;
+        applyValue(p,val);
+        aiSay("act",`✓ set_value ${p} ${val}`);
+        aiSay("ai",isHeb?`רוחב הסקשן הוגדר ל-${val}.`:`Set section width to ${val}.`);
+        return {handled:true};
+      }
+    }
+
+    let alignMatch=text.match(/^\/align\s+(center|left)/i)||
+                   text.match(/(?:יישור|יישר|align)\s*(?:ל|to|=)?\s*(מרכז|שמאל|למרכז|לשמאל|center|left)/i);
+    if(alignMatch){
+      const val=/מרכז|center/i.test(alignMatch[1])?"center":"left";
+      const sec=current&&current.closest('[data-ok="site:section_order"]');
+      if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_")){
+        const p=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}.align`;
+        applyValue(p,val);
+        aiSay("act",`✓ set_value ${p} ${val}`);
+        aiSay("ai",isHeb?`יישור הסקשן הוגדר ל-${val}.`:`Set section alignment to ${val}.`);
+        return {handled:true};
+      }
+    }
+
+    // 8. TITLE / KICKER DIRECT UPDATES
+    let titleMatch=text.match(/^\/title\s+(.+)/i)||
+                   text.match(/(?:שנה\s+)?(?:כותרת|כותרת ראשית|title)\s*(?:ל|אל|to|=)?\s*["']?([^"']+)["']?$/i);
+    if(titleMatch){
+      const val=titleMatch[1].trim();
+      const sec=current&&current.closest('[data-ok="site:section_order"]');
+      let p=null;
+      if(current&&current.matches&&current.matches('[data-e$=".title"]'))p=current.dataset.e;
+      else if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_"))p=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}.title`;
+      else if($('[data-e="home:hero.title"]'))p="home:hero.title";
+      if(p){
+        applyValue(p,val);
+        aiSay("act",`✓ set_value ${p} "${val}"`);
+        aiSay("ai",isHeb?`הכותרת עודכנה ל: "${val}".`:`Title updated to: "${val}".`);
+        return {handled:true};
+      }
+    }
+
+    let kickerMatch=text.match(/^\/kicker\s+(.+)/i)||
+                    text.match(/(?:שנה\s+)?(?:קיקר|כותרת קטנה|תווית|kicker)\s*(?:ל|אל|to|=)?\s*["']?([^"']+)["']?$/i);
+    if(kickerMatch){
+      const val=kickerMatch[1].trim();
+      const sec=current&&current.closest('[data-ok="site:section_order"]');
+      let p=null;
+      if(current&&current.matches&&current.matches('[data-e$=".kicker"]'))p=current.dataset.e;
+      else if(sec&&sec.dataset.k&&sec.dataset.k.startsWith("cs_"))p=`content/site.json:custom_sections.${sec.dataset.k.slice(3)}.kicker`;
+      if(p){
+        applyValue(p,val);
+        aiSay("act",`✓ set_value ${p} "${val}"`);
+        aiSay("ai",isHeb?`הקיקר עודכן ל: "${val}".`:`Kicker updated to: "${val}".`);
+        return {handled:true};
+      }
+    }
+
+    // 9. CUSTOM CSS
+    let cssMatch=text.match(/^\/css\s+([\s\S]+)/i)||
+                 text.match(/(?:הוסף\s+)?(?:קוד\s+)?css:\s*([\s\S]+)/i);
+    if(cssMatch){
+      const newCss=cssMatch[1].trim();
+      const oldCss=get("site:custom_css")||"";
+      const combined=(oldCss?oldCss+"\n\n":"")+newCss;
+      applyValue("site:custom_css",combined);
+      aiSay("act",`✓ set_custom_css (${newCss.length} bytes)`);
+      aiSay("ai",isHeb?"Custom CSS עודכן בהצלחה לאתר.":"Custom CSS applied successfully.");
+      return {handled:true};
+    }
+
+    // 10. DIRECT FIELD SETTING: /set <path> <value>
+    let setMatch=text.match(/^\/set\s+(\S+)\s+(.+)/i);
+    if(setMatch){
+      const [,path,val]=setMatch;
+      const res=applyValue(path,val.trim());
+      if(res==="ok"){
+        aiSay("act",`✓ set_value ${path} ${val}`);
+        aiSay("ai",isHeb?`עודכן ${path} בהצלחה.`:`Updated ${path} successfully.`);
+        return {handled:true};
+      }
+    }
+
+    return {handled:false};
+  }
+
   async function aiSend(text){
     if(aiBusy||!text.trim()&&!aiFiles.length)return;
+    const cleanText=(text||"").trim();
+    aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
+    if(cleanText&&!aiFiles.length){
+      try{
+        const ruleRes=await executeRuleCommand(cleanText);
+        if(ruleRes&&ruleRes.handled){
+          aiFiles=[];renderFiles();place();secBars();
+          return;
+        }
+      }catch(err){
+        console.warn("Rule execution fallback:",err);
+      }
+    }
+    if(provider()==="rules"){
+      const isHeb=/[֐-׿]/.test(cleanText);
+      aiSay("ai",isHeb?
+        "⚡ מצב פקודות ישירות פעיל (100% ללא AI). הפקודה לא זוהתה.\n• הקלד /help או לחץ על '⚡ עזרה ופקודות' לצפייה בתחביר.\n• או לחץ על סמל ⚡ בראש החלון כדי להחליף למצב Hybrid או Gemini.":
+        "⚡ Instant Rules mode is active (100% Non-AI). Command not recognized.\n• Type /help for all supported command shortcuts.\n• Or tap ⚡ in the header to switch to Hybrid or Gemini mode.");
+      return;
+    }
     await Promise.race([guideP,new Promise(r=>setTimeout(r,4000))]);
-    if(provider()==="local"||provider()==="app"){aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
+    if(provider()==="local"||provider()==="app"){aiBusy=true;
       await (wantsSection(text)?sectionFlow(text):provider()==="app"?appSend(text):localSend(text));aiBusy=false;return}
     const key=store.get(AI_KEY);if(!key){aiKeyBox();return}
     aiBusy=true;aiSay("me",text+(aiFiles.length?`  📎×${aiFiles.length}`:""));
@@ -1797,8 +2108,8 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     setTimeout(()=>{place();secBars()},300);
     toast(`Style: ${SKIN_NAMES[k]}. Look around (👁 Preview to try it like a visitor), then Publish to make it live.`);
   }
-  function setProvider(v){store.set(AI_PROV,v);if(provBtn)provBtn.textContent=PROV_ICON[v];
-    aiSay("ai",{local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[v]);warmApp()}
+  function setProvider(v){store.set(AI_PROV,v);if(provBtn)provBtn.textContent=PROV_ICON[v]||"⚡🤖";
+    aiSay("ai",{rules:"⚡ Using Instant Rules (100% Non-AI). Site commands execute instantly without tokens or models.",hybrid:"⚡🤖 Using Hybrid mode: Direct commands execute instantly; creative requests use AI.",local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[v]||"Assistant source set.");if(v==="app")warmApp()}
   function aiMenu(){
     const pv=provider();
     const models=()=>{
@@ -1809,10 +2120,12 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
       return LOCAL_MODELS.map(([v,l])=>({label:l,def:(store.get(AI_LOCAL)||"auto")===v,fn:()=>{store.set(AI_LOCAL,v);toast("In-browser model: "+l)}}));
     };
     return {title:"AI assistant",items:[
-      {label:"AI source",hint:{app:"🔌 app",local:"📱 browser",gemini:"G Gemini"}[pv],sub:()=>[
-        {label:"🔌 AI app on this device",hint:"Ollama / LM Studio",def:pv==="app",fn:()=>setProvider("app")},
-        {label:"📱 Inside the browser",hint:"downloads a model",def:pv==="local",fn:()=>setProvider("local")},
-        {label:"G  Gemini",hint:"free key",def:pv==="gemini",fn:()=>setProvider("gemini")}]},
+      {label:"AI source",hint:{rules:"⚡ rules",hybrid:"⚡🤖 hybrid",app:"🔌 app",local:"📱 browser",gemini:"G Gemini"}[pv]||pv,sub:()=>[
+        {label:"⚡🤖  Hybrid (Rules first, AI backup)",hint:"recommended",def:pv==="hybrid",fn:()=>setProvider("hybrid")},
+        {label:"⚡  Instant Rules (100% Non-AI)",hint:"free & instant",def:pv==="rules",fn:()=>setProvider("rules")},
+        {label:"G  Gemini",hint:"free key",def:pv==="gemini",fn:()=>setProvider("gemini")},
+        {label:"📱  Inside the browser",hint:"downloads a model",def:pv==="local",fn:()=>setProvider("local")},
+        {label:"🔌  AI app on this device",hint:"Ollama / LM Studio",def:pv==="app",fn:()=>setProvider("app")}]},
       {label:"Model",sub:models},
       {label:"Voice language",hint:aiLang==="he-IL"?"עברית":"English",sub:()=>[["he-IL","עברית"],["en-US","English"]].map(([v,l])=>({label:l,def:aiLang===v,fn:()=>{aiLang=v;const lb=$("#rt-ai .rt-aibtn.sm");if(lb)lb.textContent=v==="he-IL"?"עב":"EN"}}))},
       {label:"🔑  Gemini key",fn:aiKeyBox},
@@ -1837,16 +2150,24 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     const att=h("input",{type:"file",accept:"image/*,video/*,audio/*",multiple:true,style:"display:none"});
     att.addEventListener("change",()=>{aiFiles.push(...att.files);att.value="";renderFiles()});
     filesRow=h("div",{class:"rt-files"});
+    const chipsRow=h("div",{class:"rt-chips-row"},
+      h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>aiSend("/help")}},"⚡ עזרה ופקודות"),
+      h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>{ta.value="/skin ";ta.focus()}}},"🎨 סקין"),
+      h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>{ta.value="הוסף סקשן ";ta.focus()}}},"➕ סקשן חדש"),
+      h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>{ta.value="שנה צבע מבטא ל";ta.focus()}}},"🌈 צבע מבטא"),
+      h("button",{type:"button",class:"rt-chip-btn",on:{click:()=>aiSend("רוחב מלא")}},"📐 רוחב מלא"));
     aiBox=h("div",{id:"rt-ai",class:"rt-ui"},
-      h("div",{class:"rt-head"},h("span",{},"✨ AI assistant"),h("span",{},
+      h("div",{class:"rt-head"},h("span",{},"✨ AI & Quick Rules Assistant"),h("span",{},
         h("button",{class:"rt-x",type:"button",title:"Undo everything not published yet",on:{click:()=>{if(changes&&confirm("Throw away every change that isn't published yet (yours and the AI's)?")){changes=0;location.reload()}}}},"↺"),
-        provBtn=(()=>{const b_=h("button",{class:"rt-x",type:"button",title:"AI settings (tap, or hold and slide)"},PROV_ICON[provider()]);setTimeout(()=>wireHold(b_,{menu:aiMenu}),0);return b_})(),
+        provBtn=(()=>{const b_=h("button",{class:"rt-x",type:"button",title:"AI settings (tap, or hold and slide)"},PROV_ICON[provider()]||"⚡🤖");setTimeout(()=>wireHold(b_,{menu:aiMenu}),0);return b_})(),
         h("button",{class:"rt-x",type:"button",title:"Gemini key",on:{click:aiKeyBox}},"🔑"),
         h("button",{class:"rt-x",type:"button","aria-label":"Close",on:{click:()=>{aiBox.hidden=true}}},"✕"))),
-      aiLog,filesRow,
+      aiLog,filesRow,chipsRow,
       h("div",{class:"rt-airow"},h("button",{type:"button",class:"rt-aibtn",title:"Attach image, video or sound",on:{click:()=>ui.append(att)||att.click()}},"📎"),ta,lang,mic,h("button",{type:"button",class:"rt-aibtn pri",title:"Send",on:{click:send}},"➤")));
     document.body.append(aiBox);
-    if(provider()==="app")aiSay("ai","🔌 Using the AI app at "+appUrl()+". Tip: tap the thing you mean first, then ask.");
+    if(provider()==="rules")aiSay("ai","⚡ Using Instant Rules (100% Non-AI). Site commands execute instantly with 0 tokens. Type /help for all commands or click the chips above.");
+    else if(provider()==="hybrid")aiSay("ai","⚡🤖 Hybrid Mode active: Direct commands execute instantly without AI; creative requests use AI.");
+    else if(provider()==="app")aiSay("ai","🔌 Using the AI app at "+appUrl()+". Tip: tap the thing you mean first, then ask.");
     warmApp();
     if(provider()==="local")aiSay("ai","📱 Running on this device. The first message downloads the model once (use Wi-Fi). Tip: tap the thing you mean first, then ask, e.g. \"make this purple\" or \"תעביר את הסקשן הזה למעלה\".");
     aiSay("ai","Hi! Tell me what to change on this page: text, colors, icons, layout, button styles, order, or attach a picture/video to put somewhere. Changes show up right away; Publish when you like them.");

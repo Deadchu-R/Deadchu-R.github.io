@@ -70,3 +70,22 @@ Every section is JSON. Common fields (all optional):
 - The menu at the top is `site:nav` (links, not sections). Only change it when he asks for a menu link.
 - Buttons inside a section are `…buttons.items`. Only add a button when he asks for a button or link.
 - Design changes with no setting (font sizes, animations, shapes, spacing between specific things) → custom CSS. Never hide or restyle classes starting with `rt-` (that is the editor).
+
+## Instant Commands & Non-AI Mode (⚡)
+The editor supports deterministic commands and rule-based chat parsing without invoking an LLM:
+- Commands start with `/` or natural Hebrew/English:
+  - `/skin <name>` (classic, arcade, sketchbook, hobbies, plain)
+  - `/color <accent|bg|text> <hex|color_name>`
+  - `/add <type> [title]` (faq, stats, cards, quote, steps, cta, list, banner, text-media)
+  - `/remove <key>` or "מחק סקשן"
+  - `/width full|contained`
+  - `/align center|left`
+  - `/title <text>` | `/kicker <text>`
+  - `/css <rules>`
+  - `/help`
+- Assistant Modes (⚡/G button in header):
+  - `⚡🤖 Hybrid`: Runs instant rule engine first; falls back to Gemini/AI only for creative/open-ended queries (Recommended).
+  - `⚡ Instant Rules`: 100% Non-AI; deterministic commands with zero token costs and 0ms latency.
+  - `G Gemini`: Full AI generation using Google AI Studio.
+  - `📱 In-browser`: WebLLM on-device.
+  - `🔌 AI app`: Ollama / LM Studio.
