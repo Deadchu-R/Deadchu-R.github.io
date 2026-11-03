@@ -754,7 +754,7 @@ def build_index():
     order += [k for k in blocks if k not in order]          # anything not listed keeps its default place at the end
     html += "\n".join(blocks[k] for k in order)
     html += footer(0)
-        (ROOT / "index.html").write_text(html)
+    (ROOT / "index.html").write_text(html)
     for folder, skin_name in [("appleInspiredDesign", "apple"), ("valleyInspiredDesign", "valley"), ("avrahamInspiredDesign", "avraham")]:
         p_html = html.replace('data-skin="classic"', f'data-skin="{skin_name}"')
         css_tag = f'\n<link rel="stylesheet" href="assets/skins/{skin_name}.css?v={ver("assets/skins/" + skin_name + ".css")}" id="skin-css">\n'
