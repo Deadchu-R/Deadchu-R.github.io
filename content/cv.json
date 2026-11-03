@@ -47,9 +47,9 @@
               "about": "Real-time interactive apps for real-estate companies, built in Unreal Engine",
               "label": "",
               "bullets": [
-                "Develop and integrate interactive features based on client requirements across multiple projects",
-                "Debug and optimize complex logic for stability and performance",
-                "Implement custom UI elements and functionality tailored to client needs"
+                "Develop and integrate interactive 3D architectural features across 4+ real-estate client projects in Unreal Engine 5",
+                "Debug and optimize complex Blueprint logic, maintaining steady 60 FPS real-time rendering performance",
+                "Implement custom interactive UI elements and camera controls tailored to client specifications"
               ]
             }
           ]
@@ -87,8 +87,8 @@
               "link": "https://www.roeetal.com/projects/infiltration.html",
               "link_label": "",
               "bullets": [
-                "Programmed raycast shooting with recoil, weapon pickups and a shot event that triggers sound and VFX",
-                "Built patrolling enemy AI with a detection meter: escape or shoot enemies before it fills"
+                "Programmed responsive raycast weapon systems with recoil feedback, 3 pickup types, and an event-driven architecture driving sound and VFX",
+                "Built patrolling enemy AI with detection meters across 2 stealth encounter zones in an 8-week C++ prototype"
               ]
             }
           ]
@@ -221,9 +221,9 @@
               "about": "A company that makes real time simulation interfaces for real estate companies in Unreal Engine",
               "label": "Achievements/Tasks",
               "bullets": [
-                "Debug and optimize complex logic and Blueprints across multiple projects",
-                "Develop and integrate interactive features based on client requests",
-                "Implement custom UI elements and functionalities tailored to client needs"
+                "Develop and integrate interactive 3D architectural features across 4+ client projects in Unreal Engine 5",
+                "Debug and optimize complex Blueprint logic, maintaining steady 60 FPS performance",
+                "Implement custom UI elements and interactive touch controls tailored to client specifications"
               ]
             }
           ]
@@ -344,8 +344,8 @@
               "link": "https://www.roeetal.com/projects/infiltration.html",
               "link_label": "Link to project",
               "bullets": [
-                "Programmed core FPS mechanics including raycast-based shooting, recoil feedback, and dynamic weapon pickups using C++ and Blueprints",
-                "Developed AI behavior and detection logic to support stealth mechanics and enemy patrol routes, showcasing expertise in Unreal Engine systems"
+                "Programmed core FPS mechanics with recoil feedback, 3 weapon pickups, and event-driven audio/VFX using C++ and Blueprints",
+                "Built patrolling enemy AI with detection meters across 2 stealth encounter zones in an 8-week prototype"
               ]
             }
           ]
@@ -398,9 +398,9 @@
               "about": "Real-time interactive apps for real-estate companies, built in Unreal Engine",
               "label": "",
               "bullets": [
-                "Develop and integrate interactive features based on client requirements across multiple projects",
-                "Debug and optimize complex logic for stability and performance",
-                "Implement custom UI elements and functionality tailored to client needs"
+                "Develop and integrate interactive 3D architectural features across 4+ real-estate client projects in Unreal Engine 5",
+                "Debug and optimize complex Blueprint logic, maintaining steady 60 FPS real-time rendering performance",
+                "Implement custom interactive UI elements and camera controls tailored to client specifications"
               ]
             }
           ]
@@ -438,8 +438,8 @@
               "link": "https://www.roeetal.com/projects/infiltration.html",
               "link_label": "",
               "bullets": [
-                "Programmed raycast shooting with recoil, weapon pickups and a shot event that triggers sound and VFX",
-                "Built patrolling enemy AI with a detection meter: escape or shoot enemies before it fills"
+                "Programmed responsive raycast weapon systems with recoil feedback, 3 pickup types, and an event-driven architecture driving sound and VFX",
+                "Built patrolling enemy AI with detection meters across 2 stealth encounter zones in an 8-week C++ prototype"
               ]
             }
           ]
