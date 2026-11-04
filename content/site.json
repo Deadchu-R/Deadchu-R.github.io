@@ -32,6 +32,7 @@
   "more_code_intro": "Smaller systems I built, each with a short page and real code from it.",
   "section_order": [
     "experience",
+    "cs_fruits_veggies",
     "projects",
     "more_code",
     "about",
@@ -201,6 +202,64 @@
     "click": "soft",
     "cv": 50
   },
-  "custom_sections": {},
+  "custom_sections": {
+    "fruits_veggies": {
+      "type": "cards",
+      "kicker": "Fresh produce & culinary tips",
+      "title": "Fruits & Veggies: What to Do With Them",
+      "text": "A practical kitchen guide to everyday fruits and vegetables: how to pick them, store them, and bring out their best flavors.",
+      "icon": "heart",
+      "cols": 3,
+      "width": "contained",
+      "align": "left",
+      "pad": "normal",
+      "bg": "",
+      "accent": "#4ade80",
+      "text_color": "",
+      "media": "",
+      "items": [
+        {
+          "icon": "heart",
+          "image": "",
+          "title": "Avocados",
+          "text": "Check firmness near the stem. Mash with lime juice, minced garlic, and flaky sea salt for guacamole, slice over crusty sourdough toast, or blend into creamy smoothies."
+        },
+        {
+          "icon": "star",
+          "image": "",
+          "title": "Heirloom & Cherry Tomatoes",
+          "text": "Store at room temperature to protect natural sweetness. Slow-roast cherry tomatoes with olive oil and garlic for pasta, or slice heirlooms with mozzarella and fresh basil."
+        },
+        {
+          "icon": "bolt",
+          "image": "",
+          "title": "Spinach & Leafy Greens",
+          "text": "Keep dry in the crisper drawer lined with a paper towel. Flash-sauté with garlic and chili flakes, fold into morning eggs, or toss raw into fresh grain bowls."
+        },
+        {
+          "icon": "vortex",
+          "image": "",
+          "title": "Citrus (Lemons & Oranges)",
+          "text": "Zest the peel before juicing to extract rich aromatic oils. Use the bright acidity to lift pan sauces and vinaigrettes, or slice into ice water for daily refreshment."
+        },
+        {
+          "icon": "tools",
+          "image": "",
+          "title": "Carrots & Sweet Potatoes",
+          "text": "Store in a cool, dark pantry away from moisture. Toss with olive oil, smoked paprika, and rosemary, then roast hot (400°F / 200°C) until caramelized and crispy-edged."
+        },
+        {
+          "icon": "flask",
+          "image": "",
+          "title": "Fresh Berries",
+          "text": "Rinse in cool water only right before serving to avoid mold. Spoon over morning oats and greek yogurt, bake into rustic muffins, or simmer into a quick 5-minute compote."
+        }
+      ],
+      "buttons": {
+        "align": "left",
+        "items": []
+      }
+    }
+  },
   "brand_photo": "/assets/uploads/1000136700-o7tb.jpg"
 }

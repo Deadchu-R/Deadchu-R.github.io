@@ -77,7 +77,7 @@ def icon_file(path):
     path = str(path or "")
     src = _src(path)
     if src.parent == ROOT / "assets/icons":
-        return "/" + str(src.relative_to(ROOT))
+        return "/" + src.relative_to(ROOT).as_posix()
     if not src.exists():
         return ""
     from PIL import Image, ImageSequence
@@ -97,7 +97,7 @@ def icon_file(path):
         if not out.exists():
             f = im.convert("RGBA"); f.thumbnail((128, 128)); f.save(out, optimize=True)
             print("  + icon", out.name)
-    return "/" + str(out.relative_to(ROOT))
+    return "/" + out.relative_to(ROOT).as_posix()
 
 
 def art_key(path):
@@ -271,7 +271,7 @@ def bg_video(path, tall=False):
     poster = out.with_suffix(".jpg")
     if out.exists() and not poster.exists():
         _poster(out, poster, 1, "scale='min(1280,iw)':-2")
-    return str(out.relative_to(ROOT)) if out.exists() else ""
+    return out.relative_to(ROOT).as_posix() if out.exists() else ""
 
 
 SITE_TEXT = _site
@@ -287,13 +287,13 @@ def audio_file(path):
         return ""
     src = _src(path)
     if src.parent == ROOT / "assets/audio":
-        return "/" + str(src.relative_to(ROOT))
+        return "/" + src.relative_to(ROOT).as_posix()
     out = ROOT / "assets/audio" / (_slug(path) + ".mp3")
     out.parent.mkdir(exist_ok=True)
     if not out.exists() and src.exists():
         _ffmpeg("-i", src, "-vn", "-c:a", "libmp3lame", "-b:a", "128k", out)
         print("  + sound", out.name)
-    return "/" + str(out.relative_to(ROOT)) if out.exists() else ""
+    return "/" + out.relative_to(ROOT).as_posix() if out.exists() else ""
 
 
 _snd = _site.get("sound") or {}
