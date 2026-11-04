@@ -719,7 +719,7 @@ def build_index():
   <div class="wrap">
     <ol class="timeline"{L("site:timeline")}>
       {timeline_html()}
-      <li class="tl-next">{ui("tl_next_when", "Next", cls="when")}{ui("tl_next_title", "Your team?", tag="b")}<a class="muted" href="#contact">{ui("tl_next_link", "Open to Unity and Unreal roles →")}</a></li>
+      <li class="tl-next">{ui("tl_next_when", "Next", cls="when")}{ui("tl_next_title", "What's next", tag="b")}<a class="muted" href="#contact">{ui("tl_next_link", "Get in touch →")}</a></li>
     </ol>
   </div>
 </section>

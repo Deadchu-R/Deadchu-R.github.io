@@ -16,6 +16,16 @@
   const TOKEN_KEY="rt-edit-token";
   const NEW_TOKEN="https://github.com/settings/personal-access-tokens/new?name=roeetal.com+editor&description=Visual+editor+for+roeetal.com&target_name=Deadchu-R&contents=write&actions=read";
   const store={get(k){try{return localStorage.getItem(k)||""}catch(e){return ""}},set(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}};
+  // Secrets (GitHub token, Gemini key) live only in this tab (sessionStorage): gone when the tab closes or on Exit editing.
+  // They come from assets/editor-auth.json, decrypted with the sign-in password.
+  const sec={get(k){try{return sessionStorage.getItem(k)||""}catch(e){return ""}},set(k,v){try{v?sessionStorage.setItem(k,v):sessionStorage.removeItem(k)}catch(e){}}};
+  const SECRET_KEYS=["rt-edit-token","rt-gemini-key"];
+  // Older versions kept the secrets in localStorage (they stayed on the device for good): remove them from there.
+  try{for(const k of SECRET_KEYS)localStorage.removeItem(k)}catch(e){}
+  // Forget the secrets of this tab.
+  const forgetSecrets=()=>SECRET_KEYS.forEach(k=>sec.set(k,""));
+  // Commits made by the editor use GitHub's private no-reply address, so the owner's real email isn't published in git.
+  const AUTHOR={name:"Roee Tal",email:"93131102+Deadchu-R@users.noreply.github.com"};
   const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
   const h=(tag,attrs={},...kids)=>{const el=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==="on")for(const[ev,fn]of Object.entries(v))el.addEventListener(ev,fn);else if(k==="class")el.className=v;else if(v!==false&&v!=null)el.setAttribute(k,v===true?"":v)}for(const c of kids.flat())if(c!=null&&c!==false)el.append(c.nodeType?c:document.createTextNode(c));return el};
   const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
@@ -50,7 +60,7 @@
   }
   // Call the GitHub REST API with the owner's token (decrypted at login). Throws on errors.
   async function gh(path,opt={}){
-    const r=await fetchT(API+path,{...opt,cache:"no-store",headers:{Authorization:"Bearer "+store.get(TOKEN_KEY),Accept:"application/vnd.github+json",...(opt.body?{"Content-Type":"application/json"}:{})}},opt.long?300000:25000);
+    const r=await fetchT(API+path,{...opt,cache:"no-store",headers:{Authorization:"Bearer "+sec.get(TOKEN_KEY),Accept:"application/vnd.github+json",...(opt.body?{"Content-Type":"application/json"}:{})}},opt.long?300000:25000);
     if(!r.ok){const t=await r.text().catch(()=>"");const err=new Error(r.status+" "+(t.match(/"message":"([^"]+)/)||[,t.slice(0,160)])[1]);err.status=r.status;throw err}
     return r.status===204?null:r.json();
   }
@@ -95,7 +105,7 @@
       for(const f of dirty)tree.push({path:FILES[f],mode:"100644",type:"blob",content:JSON.stringify(docs[f],null,2)+"\n"});
       const t=await gh(`/repos/${REPO}/git/trees`,{method:"POST",body:JSON.stringify({base_tree:commit.tree.sha,tree})});
       const what=[...dirty].map(f=>FILES[f].replace("content/","")).concat(uploads.size?[`${uploads.size} upload${uploads.size>1?"s":""}`]:[]).join(", ");
-      const c=await gh(`/repos/${REPO}/git/commits`,{method:"POST",body:JSON.stringify({message:"Edit on the site: "+what,tree:t.sha,parents:[head]})});
+      const c=await gh(`/repos/${REPO}/git/commits`,{method:"POST",body:JSON.stringify({message:"Edit on the site: "+what,tree:t.sha,parents:[head],author:AUTHOR,committer:AUTHOR})});
       await gh(`/repos/${REPO}/git/refs/heads/${BR}`,{method:"PATCH",body:JSON.stringify({sha:c.sha})});
       for(const f of dirty)orig[f]=canon(docs[f]);
       dirty.clear();uploads.clear();changes=0;updateBar();
@@ -353,7 +363,7 @@
   const pubBtn=h("button",{class:"rt-pub",type:"button",disabled:true,on:{click:publish}},h("i"),"Publish");
   const menu=h("div",{id:"rt-menu"});
   const item=(label,fn,cls)=>h("button",{type:"button",class:cls||"",on:{click:()=>{menu.style.display="none";fn()}}},label);
-  menu.append(item("＋  New section (main page)",()=>sectionPicker(current&&current.closest('[data-ok="site:section_order"]'),$(".rt-more"))),item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("✕  Exit editing",()=>exitEdit(),"dan"));
+  menu.append(item("＋  New section (main page)",()=>sectionPicker(current&&current.closest('[data-ok="site:section_order"]'),$(".rt-more"))),item("✨  AI assistant",()=>openAI()),item("⚙  Site settings · sound & CSS",()=>siteSettings()),item("↺  Versions / undo",()=>historyBox()),item("?  How it works",()=>help()),item("🔑  GitHub token",()=>askToken()),item("🔒  Change password",()=>changePasswordBox()),item("✕  Exit editing",()=>exitEdit(),"dan"));
   const prevBtn=h("button",{class:"rt-more rt-eye",type:"button",title:"Preview the page as visitors will see it",on:{click:e=>{e.stopPropagation();togglePreview()}}},"👁");
   // Switch between editing and a clean preview of the page (hides all editor UI).
   function togglePreview(){
@@ -368,7 +378,7 @@
     {label:"＋  New section…",sub:()=>sectionItems(current&&current.closest('[data-ok="site:section_order"]'))},
     {label:"🎨  Site style",hint:SKIN_NAMES[document.documentElement.dataset.skin||"classic"],sub:()=>Object.entries(SKIN_NAMES).map(([k,l])=>({label:l,hint:SKIN_HINT[k],def:(document.documentElement.dataset.skin||"classic")===k,fn:()=>applySkin(k)}))},
     {label:"✨  AI assistant",fn:()=>openAI()},{label:"⚙  Site settings",hint:"sound, AI, CSS",fn:()=>siteSettings()},
-    {label:"↺  Versions / undo",fn:()=>historyBox()},{label:"?  How it works",fn:()=>help()},{label:"🔑  GitHub token",fn:()=>askToken()},
+    {label:"↺  Versions / undo",fn:()=>historyBox()},{label:"?  How it works",fn:()=>help()},{label:"🔑  GitHub token",fn:()=>askToken()},{label:"🔒  Change password",hint:"+ new token",fn:()=>changePasswordBox()},
     {label:"✕  Exit editing",dan:true,fn:()=>exitEdit()}]})}),0);return mb})());
   const toastEl=h("div",{id:"rt-toast"});
   const panel=h("div",{id:"rt-panel"});
@@ -425,11 +435,11 @@
   // Ask for the GitHub token (first time: explains how to make a fine-grained token for this repo only).
   function askToken(first){
     return new Promise(done=>{
-      const inp=h("input",{type:"password",placeholder:"github_pat_…",autocomplete:"off",value:store.get(TOKEN_KEY)});
+      const inp=h("input",{type:"password",placeholder:"github_pat_…",autocomplete:"off",value:sec.get(TOKEN_KEY)});
       const err=h("p",{style:"color:#ff8a8a;margin:0"});
       const save=async()=>{
         const v=inp.value.trim();if(!v){err.textContent="Paste the token first.";return}
-        store.set(TOKEN_KEY,v);err.style.color="#aaa";err.textContent="Checking…";
+        sec.set(TOKEN_KEY,v);err.style.color="#aaa";err.textContent="Checking…";
         try{await gh(`/repos/${REPO}`);m.remove();saveTokenForLogin(true);done(true)}catch(e){err.style.color="#ff8a8a";err.textContent="That token doesn't open the site's repo ("+e.message+").";}
       };
       const m=modal(
@@ -439,9 +449,9 @@
           h("li",{},h("a",{href:NEW_TOKEN,target:"_blank",rel:"noopener"},"Open GitHub › New fine-grained token"),"."),
           h("li",{},"Repository access: ",h("b",{},"Only select repositories")," › Deadchu-R.github.io."),
           h("li",{},"Permissions: ",h("b",{},"Contents: Read and write"),". Optional: Actions: Read, so the editor can tell you when the rebuild is done."),
-          h("li",{},"Generate, copy it, paste it here.")),
+          h("li",{},"Expiration: 90 days (GitHub reminds you before it ends)."),h("li",{},"Generate, copy it, paste it here.")),
         inp,err,
-        h("p",{style:"font-size:13px;color:#999;margin:4px 0 0"},"It stays in this browser only. You can delete it on GitHub any time."),
+        h("p",{style:"font-size:13px;color:#999;margin:4px 0 0"},"It is saved encrypted with your sign-in password, and opened only in this tab while you edit. Set an expiration (e.g. 90 days); you can delete it on GitHub any time."),
         h("div",{class:"rt-row"},h("button",{class:"rt-btn",type:"button",on:{click:()=>{m.remove();done(false)}}},"Cancel"),h("button",{class:"rt-btn pri",type:"button",on:{click:save}},"Save token")));
       inp.addEventListener("keydown",e=>{if(e.key==="Enter")save()});
       setTimeout(()=>inp.focus(),50);
@@ -472,7 +482,7 @@
       const files=await gh(`/repos/${REPO}/contents/content?ref=${c.sha}`),want=Object.values(FILES);
       const tree=files.filter(f=>want.includes(f.path)).map(f=>({path:f.path,mode:"100644",type:"blob",sha:f.sha}));
       const t=await gh(`/repos/${REPO}/git/trees`,{method:"POST",body:JSON.stringify({base_tree:commit.tree.sha,tree})});
-      const nc=await gh(`/repos/${REPO}/git/commits`,{method:"POST",body:JSON.stringify({message:`Restore the version from ${when} (${c.sha.slice(0,7)})`,tree:t.sha,parents:[head]})});
+      const nc=await gh(`/repos/${REPO}/git/commits`,{method:"POST",body:JSON.stringify({message:`Restore the version from ${when} (${c.sha.slice(0,7)})`,tree:t.sha,parents:[head],author:AUTHOR,committer:AUTHOR})});
       await gh(`/repos/${REPO}/git/refs/heads/${BR}`,{method:"PATCH",body:JSON.stringify({sha:nc.sha})});
       dirty.clear();uploads.clear();changes=0;updateBar();
       watchBuild(nc.sha);
@@ -496,7 +506,7 @@
   // Leave edit mode and reload the page as a visitor sees it.
   function exitEdit(){
     if(changes&&!confirm("Leave without publishing? Your changes on this page will be lost."))return;
-    changes=0;try{sessionStorage.removeItem("rt-edit")}catch(e){}
+    changes=0;forgetSecrets();try{sessionStorage.removeItem("rt-edit")}catch(e){}
     const u=new URL(location.href);u.searchParams.delete("edit");if(u.hash==="#edit")u.hash="";location.href=u.toString();
   }
   addEventListener("beforeunload",e=>{if(changes){e.preventDefault();e.returnValue=""}});
@@ -1084,7 +1094,7 @@
     const cleanTopic = cleanSearchQuery(topic) || "Highlights";
 
     // 1. If Gemini API key is available, generate authentic LLM-crafted section from the web data!
-    const key = store.get(AI_KEY);
+    const key = sec.get(AI_KEY);
     if (key && webData && webData.summary) {
       try {
         const model = await pickModel(key);
@@ -2148,7 +2158,8 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     "hobbies":"hobbies","תחביבים":"hobbies","טיפוס":"hobbies",
     "plain":"plain","פשוט":"plain","נקי":"plain",
     "apple":"apple","אפל":"apple","מינימלי":"apple","מינימליסטי":"apple","סטודיו":"apple",
-    "valley":"valley","וואלי":"valley","רוברט":"valley","סינמטי":"valley","גרפי":"valley",`r`n    "avraham":"avraham","אברהם":"avraham","סייבר":"avraham","חלל":"avraham"
+    "valley":"valley","וואלי":"valley","רוברט":"valley","סינמטי":"valley","גרפי":"valley",
+    "avraham":"avraham","אברהם":"avraham","סייבר":"avraham","חלל":"avraham"
   };
   const DEV_TEMPLATES={
     faq:{type:"faq",kicker:"FAQ",title:"Frequently Asked Questions",items:[
@@ -2526,7 +2537,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
     await Promise.race([guideP,new Promise(r=>setTimeout(r,4000))]);
     if(provider()==="local"||provider()==="app"){aiBusy=true;
       await (wantsSection(text)?sectionFlow(text):provider()==="app"?appSend(text):localSend(text));aiBusy=false;return}
-    const key=store.get(AI_KEY);if(!key){aiKeyBox();return}
+    const key=sec.get(AI_KEY);if(!key){aiKeyBox();return}
     aiBusy=true;
     const thinking=aiSay("sys","…");
     try{
@@ -2579,13 +2590,13 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   function renderFiles(){if(filesRow)filesRow.replaceChildren(...aiFiles.map((f,i)=>h("span",{class:"rt-chip"},`${i}: ${f.name}`,h("button",{type:"button",on:{click:()=>{aiFiles.splice(i,1);renderFiles()}}},"×"))))}
   // Dialog for the Gemini API key (kept only in this browser).
   function aiKeyBox(){
-    const inp=h("input",{type:"password",placeholder:"AIza…",autocomplete:"off",value:store.get(AI_KEY)});
+    const inp=h("input",{type:"password",placeholder:"AIza…",autocomplete:"off",value:sec.get(AI_KEY)});
     const m=modal(h("h3",{},"✨ Free AI key (one time)"),
       h("ol",{},h("li",{},h("a",{href:"https://aistudio.google.com/apikey",target:"_blank",rel:"noopener"},"Open Google AI Studio › API keys"),", sign in with Google."),
         h("li",{},"Create API key (free, no credit card). Copy it."),h("li",{},"Paste it here.")),inp,
-      h("p",{style:"font-size:13px;color:#999;margin:4px 0 0"},"Stays in this browser, and is saved encrypted with your editor password so other devices get it when you sign in. On the free plan Google may use the requests to improve its products; your site is public anyway."),
+      h("p",{style:"font-size:13px;color:#999;margin:4px 0 0"},"Kept only in this tab while you edit, and saved encrypted with your editor password so other devices get it when you sign in. On the free plan Google may use the requests to improve its products; your site is public anyway."),
       h("div",{class:"rt-row"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel"),
-        h("button",{class:"rt-btn pri",type:"button",on:{click:()=>{const v=inp.value.trim();if(!v)return;store.set(AI_KEY,v);store.set(AI_MODEL,"");m.remove();saveTokenForLogin(true);openAI()}}},"Save")));
+        h("button",{class:"rt-btn pri",type:"button",on:{click:()=>{const v=inp.value.trim();if(!v)return;sec.set(AI_KEY,v);store.set(AI_MODEL,"");m.remove();saveTokenForLogin(true);openAI()}}},"Save")));
     setTimeout(()=>inp.focus(),50);
   }
   /* ---- site styles: same content, different look (assets/skins/<name>.css + optional .js) */
@@ -2609,12 +2620,12 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   }
   // Choose the AI provider (hybrid, rules, gemini, local, app) and update the button icon.
   function setProvider(v){store.set(AI_PROV,v);if(provBtn)provBtn.textContent=PROV_ICON[v]||"⚡🤖";
-    aiSay("ai",{rules:"⚡ Using Instant Rules (100% Non-AI). Site commands execute instantly without tokens or models.",hybrid:"⚡🤖 Using Hybrid mode: Direct commands execute instantly; creative requests use AI.",local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(store.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[v]||"Assistant source set.");if(v==="app")warmApp()}
+    aiSay("ai",{rules:"⚡ Using Instant Rules (100% Non-AI). Site commands execute instantly without tokens or models.",hybrid:"⚡🤖 Using Hybrid mode: Direct commands execute instantly; creative requests use AI.",local:"Using the AI inside the browser.",app:"Using the AI app on this device ("+appUrl()+").",gemini:"Using Gemini."+(sec.get(AI_KEY)?"":" Tap 🔑 to add its free key.")}[v]||"Assistant source set.");if(v==="app")warmApp()}
   // The AI provider menu (hold menu).
   function aiMenu(){
     const pv=provider();
     const models=()=>{
-      if(pv==="gemini"){const k=store.get(AI_KEY);if(!k)return [{label:"Add a Gemini key first",fn:aiKeyBox}];
+      if(pv==="gemini"){const k=sec.get(AI_KEY);if(!k)return [{label:"Add a Gemini key first",fn:aiKeyBox}];
         return rankModels(k).then(l=>[{label:"Automatic (newest Flash)",def:!store.get(AI_MODEL+"-pin"),fn:()=>{store.set(AI_MODEL+"-pin","");store.set(AI_MODEL,"");toast("Gemini: picks the best model by itself.")}}]
           .concat(l.slice(0,12).map(m=>({label:m,def:store.get(AI_MODEL+"-pin")===m,fn:()=>{store.set(AI_MODEL,m);store.set(AI_MODEL+"-pin",m);store.set(AI_MODEL+"-at",String(Date.now()+864e7));toast("Gemini model: "+m)}}))))}
       if(pv==="app")return appModels().then(l=>l.map(m=>({label:m,def:store.get(APP_MODEL)===m,fn:()=>{store.set(APP_MODEL,m);toast("AI app model: "+m);warmApp()}})));
@@ -2635,7 +2646,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   }
   // Open the AI chat window.
   function openAI(){
-    if(provider()==="gemini"&&!store.get(AI_KEY)){aiKeyBox();return}
+    if(provider()==="gemini"&&!sec.get(AI_KEY)){aiKeyBox();return}
     if(aiBox){aiBox.hidden=!aiBox.hidden;if(!aiBox.hidden)warmApp();return}
     aiLog=h("div",{class:"rt-ailog"});
     const ta=h("textarea",{rows:"2",placeholder:"מה לשנות? / What should I change?"});
@@ -2680,7 +2691,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
 
   /* ------------------------------------------------------------ sign in */
   const AUTH_PATH="assets/editor-auth.json";
-  let authKey=null,authDoc=null;
+  let authKey=null,authDoc=null,authUser="";
   const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u))),unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
   const hex=u=>[...new Uint8Array(u)].map(x=>x.toString(16).padStart(2,"0")).join("");
   // Derive the AES key that unlocks the saved token from username + password (PBKDF2).
@@ -2701,11 +2712,11 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
           authDoc=await (await fetch(new URL("editor-auth.json",ME).href+"?t="+Date.now(),{cache:"no-store"})).json();
           const d=await derive(u.value,p.value,authDoc);
           if(d.check!==authDoc.check){await new Promise(r=>setTimeout(r,700));err.style.color="#ff8a8a";err.textContent="Wrong name or password.";return}
-          authKey=d.key;
-          if(authDoc.gemini&&!store.get(AI_KEY)){try{const g=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(authDoc.gemini.iv)},authKey,unb64(authDoc.gemini.ct));store.set(AI_KEY,new TextDecoder().decode(g))}catch(e){}}
-          if(authDoc.token&&!store.get(TOKEN_KEY)){
+          authKey=d.key;authUser=u.value.trim().toLowerCase();
+          if(authDoc.gemini){try{const g=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(authDoc.gemini.iv)},authKey,unb64(authDoc.gemini.ct));sec.set(AI_KEY,new TextDecoder().decode(g))}catch(e){}}
+          if(authDoc.token){
             const tk=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(authDoc.token.iv)},authKey,unb64(authDoc.token.ct));
-            store.set(TOKEN_KEY,new TextDecoder().decode(tk));
+            sec.set(TOKEN_KEY,new TextDecoder().decode(tk));
           }
           m.remove();done(true);
         }catch(e){err.style.color="#ff8a8a";err.textContent="Couldn't sign in ("+e.message+").";}
@@ -2719,20 +2730,79 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   // Encrypt the GitHub token with the login and save it to assets/editor-auth.json.
   async function saveTokenForLogin(force){
     // store the token encrypted with the password, so signing in on another device is enough
-    if(!authKey||!authDoc||(authDoc.token&&!force)||!store.get(TOKEN_KEY))return;
+    if(!authKey||!authDoc||(authDoc.token&&!force)||!sec.get(TOKEN_KEY))return;
     try{
       const iv=crypto.getRandomValues(new Uint8Array(12));
-      const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},authKey,new TextEncoder().encode(store.get(TOKEN_KEY)));
+      const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},authKey,new TextEncoder().encode(sec.get(TOKEN_KEY)));
       const doc={...authDoc,token:{iv:b64(iv),ct:b64(ct)}};
-      if(store.get(AI_KEY)){const iv2=crypto.getRandomValues(new Uint8Array(12));const ct2=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv2},authKey,new TextEncoder().encode(store.get(AI_KEY)));doc.gemini={iv:b64(iv2),ct:b64(ct2)}}
+      if(sec.get(AI_KEY)){const iv2=crypto.getRandomValues(new Uint8Array(12));const ct2=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv2},authKey,new TextEncoder().encode(sec.get(AI_KEY)));doc.gemini={iv:b64(iv2),ct:b64(ct2)}}
       const cur=await gh(`/repos/${REPO}/contents/${AUTH_PATH}?ref=${BR}&t=${Date.now()}`);
       const body=JSON.stringify(doc,null,2)+"\n";
-      await gh(`/repos/${REPO}/contents/${AUTH_PATH}`,{method:"PUT",body:JSON.stringify({message:"Editor sign-in: keep the GitHub token encrypted",content:btoa(unescape(encodeURIComponent(body))),sha:cur.sha,branch:BR})});
+      await gh(`/repos/${REPO}/contents/${AUTH_PATH}`,{method:"PUT",body:JSON.stringify({message:"Editor sign-in: keep the GitHub token encrypted",content:btoa(unescape(encodeURIComponent(body))),sha:cur.sha,branch:BR,author:AUTHOR,committer:AUTHOR})});
       authDoc=doc;
     }catch(e){/* not critical: the token still works in this browser */}
   }
+  // Problems with a new password (empty list = strong enough). Long passphrases are the easiest strong passwords.
+  function pwProblems(pw,user){
+    const o=[],low=pw.toLowerCase(),kinds=[/[a-z]/,/[A-Z]/,/[0-9]/,/[^A-Za-z0-9]/].filter(r=>r.test(pw)).length;
+    if(pw.length<14)o.push("at least 14 characters (a sentence of 4–5 words is easiest)");
+    else if(pw.length<20&&kinds<3)o.push("mix letters, numbers and symbols, or make it 20+ characters");
+    if(user&&low.includes(user))o.push("don't put your name in it");
+    if(/(.)\1{3,}/.test(pw)||/(0123|1234|2345|3456|4567|5678|6789|abcd|qwer|asdf|password|roee|tal17|deadchu)/i.test(pw))o.push("no repeats, sequences or personal words");
+    return o;
+  }
+  // Change the sign-in name/password: everything in editor-auth.json is encrypted again with a new salt and
+  // 1,000,000 PBKDF2 rounds. Old versions of that file stay in git history, so it also offers a NEW GitHub token
+  // (and Gemini key) — then the old file only holds keys that were already deleted.
+  function changePasswordBox(){
+    if(!authKey||!authDoc){alertBox("Sign in first (exit editing and sign in again).");return}
+    const inp=(type,ph,ac)=>h("input",{type,placeholder:ph,autocomplete:ac||"off",autocapitalize:"off",spellcheck:"false"});
+    const cur=inp("password","Current password","current-password"),nu=inp("text","Name (leave empty to keep it)","username"),
+      p1=inp("password","New password","new-password"),p2=inp("password","New password again","new-password"),
+      tk=inp("password","New GitHub token (recommended) · github_pat_…"),gk=inp("password","New Gemini key (optional) · AIza…");
+    const meter=h("p",{style:"margin:0;font-size:13px;color:#aaa"}),err=h("p",{style:"color:#ff8a8a;margin:0;min-height:1.4em"});
+    const name=()=>(nu.value.trim()||authUser).toLowerCase();
+    const upd=()=>{const pr=pwProblems(p1.value,name());meter.style.color=p1.value&&!pr.length?"#7be08a":"#aaa";meter.textContent=!p1.value?"Use a long sentence only you know, not used anywhere else.":pr.length?"Needs: "+pr.join(" · "):"✓ Strong"};
+    p1.addEventListener("input",upd);nu.addEventListener("input",upd);upd();
+    const go=async()=>{
+      err.style.color="#ff8a8a";
+      try{
+        const chk=await derive(authUser,cur.value,authDoc);
+        if(chk.check!==authDoc.check){err.textContent="The current password is wrong.";return}
+        const pr=pwProblems(p1.value,name());if(pr.length){err.textContent="New password needs: "+pr.join(" · ");return}
+        if(p1.value!==p2.value){err.textContent="The two new passwords are different.";return}
+        if(p1.value===cur.value){err.textContent="Pick a password you didn't use before.";return}
+        const oldTok=sec.get(TOKEN_KEY),newTok=tk.value.trim();
+        if(newTok){err.style.color="#aaa";err.textContent="Checking the new token…";sec.set(TOKEN_KEY,newTok);
+          try{await gh(`/repos/${REPO}`)}catch(e){sec.set(TOKEN_KEY,oldTok);err.style.color="#ff8a8a";err.textContent="The new token doesn't open the site's repo ("+e.message+").";return}}
+        if(gk.value.trim())sec.set(AI_KEY,gk.value.trim());
+        err.style.color="#aaa";err.textContent="Encrypting (a few seconds)…";
+        const a={v:2,salt:b64(crypto.getRandomValues(new Uint8Array(16))),iter:1000000};
+        const d=await derive(name(),p1.value,a);a.check=d.check;
+        const enc=async t=>{const iv=crypto.getRandomValues(new Uint8Array(12));return{iv:b64(iv),ct:b64(await crypto.subtle.encrypt({name:"AES-GCM",iv},d.key,new TextEncoder().encode(t)))}};
+        a.token=await enc(sec.get(TOKEN_KEY));
+        if(sec.get(AI_KEY))a.gemini=await enc(sec.get(AI_KEY));
+        err.textContent="Saving…";
+        const curFile=await gh(`/repos/${REPO}/contents/${AUTH_PATH}?ref=${BR}&t=${Date.now()}`);
+        const body=JSON.stringify(a,null,2)+"\n";
+        await gh(`/repos/${REPO}/contents/${AUTH_PATH}`,{method:"PUT",body:JSON.stringify({message:"Editor: new sign-in password",content:btoa(unescape(encodeURIComponent(body))),sha:curFile.sha,branch:BR,author:AUTHOR,committer:AUTHOR})});
+        authDoc=a;authKey=d.key;authUser=name();m.remove();
+        const done=modal(h("h3",{},"✓ Password changed"),
+          h("p",{style:"margin:0"},"From now on sign in with the new password (on every device)."),
+          newTok?h("p",{style:"margin:0"},"Now delete the OLD GitHub token, so the old file in git history can't open anything: ",h("a",{href:"https://github.com/settings/personal-access-tokens",target:"_blank",rel:"noopener"},"GitHub › Fine-grained tokens"),". Keep the new one (the newest).")
+                :h("p",{style:"margin:0;color:#ffcf6b"},"Recommended: also make a NEW GitHub token and do this again with it, then delete the old token. Old versions of the sign-in file stay in git history, still locked with the old password."),
+          gk.value.trim()?h("p",{style:"margin:0"},"Delete the old Gemini key: ",h("a",{href:"https://aistudio.google.com/apikey",target:"_blank",rel:"noopener"},"Google AI Studio › API keys"),"."):"",
+          h("div",{class:"rt-row"},h("button",{class:"rt-btn pri",type:"button",on:{click:()=>done.remove()}},"OK")));
+      }catch(e){err.style.color="#ff8a8a";err.textContent="Couldn't change it ("+(e.message||e)+"). Nothing was changed.";}
+    };
+    const m=modal(h("h3",{},"Change sign-in password"),cur,nu,p1,meter,p2,
+      h("p",{style:"margin:6px 0 0;font-size:13px;color:#aaa"},"Recommended: replace the keys too. ",h("a",{href:NEW_TOKEN,target:"_blank",rel:"noopener"},"Make a new GitHub token")," (only this repo, Contents read/write, expiration 90 days), paste it here:"),
+      tk,gk,err,
+      h("div",{class:"rt-row"},h("button",{class:"rt-btn",type:"button",on:{click:()=>m.remove()}},"Cancel"),h("button",{class:"rt-btn pri",type:"button",on:{click:go}},"Change password")));
+    setTimeout(()=>cur.focus(),50);
+  }
   // Leave edit mode without asking (bad login, closed dialog).
-  function leaveQuietly(){try{sessionStorage.removeItem("rt-edit");sessionStorage.removeItem("rt-login")}catch(e){}
+  function leaveQuietly(){forgetSecrets();try{sessionStorage.removeItem("rt-edit");sessionStorage.removeItem("rt-login")}catch(e){}
     const u=new URL(location.href);u.searchParams.delete("edit");if(u.hash==="#edit")u.hash="";location.replace(u.toString())}
   window.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rt-pick[data-m]");if(!b||!document.documentElement.classList.contains("rt-on")||document.documentElement.classList.contains("rt-preview"))return;
     e.preventDefault();e.stopPropagation();replaceMedia(b.dataset.m,b.dataset.mk||"image",b)},true);
@@ -2905,7 +2975,7 @@ Leave out fields you don't need. items follow the type (see Section types). Writ
   async function aiText(sys,user,{max=900,status,tools}={}){
     const p=provider(),st=status||{set textContent(v){}};
     if(p==="gemini"){
-      const key=store.get(AI_KEY);if(!key)throw new Error("add a Gemini key first (🔑)");
+      const key=sec.get(AI_KEY);if(!key)throw new Error("add a Gemini key first (🔑)");
       let list=[];try{list=await rankModels(key)}catch(e){}
       const models=[...new Set([await pickModel(key),...list.slice(0,4)])];let last="";
       for(const m of models){for(let a=0;a<2;a++){
@@ -3304,14 +3374,14 @@ skills/tags {"label":"group name or empty","items":["..."]}; languages {"name","
   // Start the editor: login, load content, mark the page, wire everything.
   async function start(){
     let viaLogin=false;try{viaLogin=!!sessionStorage.getItem("rt-login")}catch(e){}
-    if(viaLogin||!store.get(TOKEN_KEY)){
+    if(viaLogin||!sec.get(TOKEN_KEY)||!authKey){
       if(!(await loginBox())){leaveQuietly();return}
       try{sessionStorage.removeItem("rt-login")}catch(e){}
     }
     if(document.body.classList.contains("gallery")||/gallery\.html$/.test(location.pathname)){
       document.body.append(h("div",{class:"rt-banner rt-ui"},"The gallery is built automatically from the project pages and the lab. Edit those, and it updates by itself."));
     }
-    if(!store.get(TOKEN_KEY)&&!(await askToken(true))){status("No token: you can look around, but not publish.",true);return}
+    if(!sec.get(TOKEN_KEY)&&!(await askToken(true))){status("No token: you can look around, but not publish.",true);return}
     status("Loading the page's content…",true);
     try{await loadDocs()}
     catch(e){status("Couldn't load the content: "+e.message+". ",true,h("button",{class:"rt-link",type:"button",on:{click:()=>start()}},"Try again"));return}

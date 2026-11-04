@@ -6,6 +6,29 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
+## 2026-11-04
+
+### Security
+- **Editor:**
+  - The GitHub token and Gemini key are kept only in the current tab (sessionStorage, cleared on Exit editing) instead of staying on the device. Old copies are removed from localStorage.
+  - Signing in always decrypts fresh.
+- **Editor:** new **⋯ › Change password**:
+  - strength check;
+  - new salt and 1,000,000 PBKDF2 rounds;
+  - optional new GitHub token / Gemini key, so the old sign-in file in git history can't unlock working keys.
+- **Editor:** commits from Publish / History / sign-in use the GitHub no-reply email instead of the owner's real address.
+- **CVEditor:**
+  - removed the built-in admin account and its password (it was written in the public code and in a placeholder);
+  - passwords are stored only as PBKDF2 hashes, and old plain-text ones are upgraded at sign-in;
+  - the remembered user no longer holds the password;
+  - no email-based admin role;
+  - unguessable collaboration room ids;
+  - honest privacy texts (everything stays on the device).
+- **Site:** the footer line "Open to Unity and Unreal developer roles" and the timeline's "Open to … roles" link were replaced with neutral contact text.
+
+### Fixes
+- **Editor / CVEditor:** two syntax errors that stopped `edit.js` and `cveditor.js` from running at all were fixed (a stray `` `r`n `` and an unquoted HTML string).
+
 ## 2026-11-03
 
 ### Styles

@@ -8,7 +8,20 @@
   "use strict";
 
   // --- Constants & Dictionaries ---
-  const DEFAULT_ADMIN_EMAIL = "roeetal17@gmail.com";
+  // Accounts here are device-only: users, passwords and résumés live in this browser (localStorage) and are never sent anywhere.
+  // Passwords are stored only as PBKDF2-SHA256 hashes (random salt), never as plain text. There is no built-in admin account.
+  const PW_ITER = 310000;
+  const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u))), unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+  const hex = u => [...new Uint8Array(u)].map(x => x.toString(16).padStart(2, "0")).join("");
+  // Hash a password for this email (new random salt unless one is given).
+  async function hashPass(email, pass, salt) {
+    salt = salt || b64(crypto.getRandomValues(new Uint8Array(16)));
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(email.trim().toLowerCase() + "\n" + pass), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: unb64(salt), iterations: PW_ITER }, key, 256);
+    return { salt, hash: hex(bits) };
+  }
+  // The signed-in user as remembered on this device: no password or hash in it.
+  const publicUser = u => ({ id: u.id, email: u.email, name: u.name, role: "friend" });
   const PEERJS_CDN = "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js";
 
   const KW = [
@@ -313,36 +326,25 @@
         state.allUsers = u ? JSON.parse(u) : [];
       } catch (e) { state.allUsers = []; }
 
-      let roee = state.allUsers.find(x => x.email.toLowerCase() === DEFAULT_ADMIN_EMAIL.toLowerCase());
-      if (!roee) {
-        roee = { id: "roee", email: DEFAULT_ADMIN_EMAIL, name: "Roee Tal", role: "admin", pass: "roee123" };
-        state.allUsers.unshift(roee);
-        this.saveUsers();
-      }
+      // Security clean-up of older versions: drop the built-in "roee" account that had a password written in the code,
+      // and everybody's admin role (every account here is a normal, device-only account).
+      const before = JSON.stringify(state.allUsers);
+      state.allUsers = state.allUsers.filter(x => !(x.id === "roee" && x.role === "admin"));
+      state.allUsers.forEach(x => { x.role = "friend"; });
+      if (JSON.stringify(state.allUsers) !== before) this.saveUsers();
 
       try {
         const v = localStorage.getItem("cve_vault");
         state.vault = v ? JSON.parse(v) : {};
       } catch (e) { state.vault = {}; }
 
-      if (!state.vault["roee"]) {
-        state.vault["roee"] = {
-          "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
-          "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
-            label: "Unreal · Novo (Two-Column)",
-            template: "novo",
-            layout_ratio: "50-50",
-            accent: "#7c3aed"
-          })
-        };
-        this.saveVault();
-      }
-
       // Check session
       let loggedInUser = null;
       try {
         const cur = sessionStorage.getItem("cve_cur_user") || localStorage.getItem("cve_cur_user");
         if (cur) loggedInUser = JSON.parse(cur);
+        if (loggedInUser && !state.allUsers.some(x => x.id === loggedInUser.id)) loggedInUser = null;   // account was removed
+        if (loggedInUser) { loggedInUser = publicUser(loggedInUser); localStorage.setItem("cve_cur_user", JSON.stringify(loggedInUser)); }  // older versions kept the password here
       } catch (e) {}
 
       if (loggedInUser) {
@@ -384,13 +386,20 @@
       showSaveIndicator();
     },
 
-    login(email, pass) {
+    // Sign in: check the password against its hash (older plain-text passwords are upgraded to a hash on the way).
+    async login(email, pass) {
       email = email.trim().toLowerCase();
       const u = state.allUsers.find(x => x.email.toLowerCase() === email);
       if (!u) throw new Error("No account found with this email. Please sign up.");
-      if (u.pass && u.pass !== pass) throw new Error("Incorrect password.");
-      state.currentUser = u;
-      localStorage.setItem("cve_cur_user", JSON.stringify(u));
+      if (u.hash) {
+        const h = await hashPass(email, pass, u.salt);
+        if (h.hash !== u.hash) { await new Promise(r => setTimeout(r, 600)); throw new Error("Incorrect password."); }
+      } else {
+        if (!u.pass || u.pass !== pass) throw new Error("Incorrect password.");
+        Object.assign(u, await hashPass(email, pass)); delete u.pass; this.saveUsers();
+      }
+      state.currentUser = publicUser(u);
+      localStorage.setItem("cve_cur_user", JSON.stringify(state.currentUser));
       state.activeOwnerId = u.id;
       const ownerCvs = state.vault[u.id] || {};
       state.activeCvId = Object.keys(ownerCvs)[0] || "my-cv";
@@ -401,27 +410,22 @@
       return u;
     },
 
-    register(email, name, pass) {
+    // New device-only account (the password is kept only as a hash).
+    async register(email, name, pass) {
       email = email.trim().toLowerCase();
       if (!email || !pass) throw new Error("Please enter email and password.");
+      if (pass.length < 8) throw new Error("Choose a password of at least 8 characters.");
       if (state.allUsers.some(x => x.email.toLowerCase() === email)) {
         throw new Error("An account with this email already exists. Please sign in.");
       }
-      const isRoee = email === DEFAULT_ADMIN_EMAIL.toLowerCase();
-      const id = "usr_" + Math.random().toString(36).substring(2, 9);
-      const newUser = {
-        id,
-        email,
-        name: name.trim() || email.split("@")[0],
-        role: isRoee ? "admin" : "friend",
-        pass
-      };
+      const id = "usr_" + hex(crypto.getRandomValues(new Uint8Array(8)));
+      const newUser = Object.assign({ id, email, name: (name || "").trim() || email.split("@")[0], role: "friend" }, await hashPass(email, pass));
       state.allUsers.push(newUser);
       this.saveUsers();
 
-      state.currentUser = newUser;
-      localStorage.setItem("cve_cur_user", JSON.stringify(newUser));
-      return newUser;
+      state.currentUser = publicUser(newUser);
+      localStorage.setItem("cve_cur_user", JSON.stringify(state.currentUser));
+      return state.currentUser;
     },
 
     logout() {
@@ -1374,7 +1378,7 @@
               <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button type="button" class="cve-btn pri" style="padding:4px 10px;font-size:12px;" onclick="window.CVE.openPhotoPicker('activeCv')">ðŸ“· Upload Photo</button>
-                  ${cv.photo ? <button type="button" class="cve-btn" style="padding:4px 8px;font-size:12px;" onclick="window.CVE.removeCurrentPhoto()">Remove</button> : ""}
+                  ${cv.photo ? `<button type="button" class="cve-btn" style="padding:4px 8px;font-size:12px;" onclick="window.CVE.removeCurrentPhoto()">Remove</button>` : ""}
                 </div>
                 <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--cve-text-muted);cursor:pointer;">
                   <input type="checkbox" id="showPhotoCb" ${cv.show_photo ? "checked" : ""} onchange="window.CVE.togglePhoto(this.checked)"> Show Photo on CV
@@ -1390,7 +1394,7 @@
 
   function renderVaultTab(body) {
     const user = state.currentUser;
-    const isRoee = user && user.role === "admin";
+    const isRoee = false;   // no admin view: every account and its résumés stay on its own device
     const myCvs = state.vault[state.activeOwnerId] || {};
 
     let html = `
@@ -1401,7 +1405,7 @@
         <div class="cve-section-body">
           <p style="font-size:13px;color:#fff;">Logged in as: <b>${esc(user ? user.name : "Guest")}</b> (${esc(user ? user.email : "Not logged in")})</p>
           <p style="font-size:12px;color:var(--cve-text-muted);">
-            ${isRoee ? "🌟 Roee Admin Mode: Full access to all your and friends' CVs." : user ? "🔒 Friend Account: Your CVs are private to you and Roee." : "⚠️ You are editing as Guest. Save and register to keep your CV permanently!"}
+            ${isRoee ? "🌟 Roee Admin Mode: Full access to all your and friends' CVs." : user ? "🔒 Your account: your résumés are saved only in this browser, on this device." : "⚠️ You are editing as Guest. Save and register to keep your CV permanently!"}
           </p>
           <div style="display:flex;gap:8px;margin-top:4px;">
             <button type="button" class="cve-btn" onclick="window.CVE.openAuthModal()">${user ? "Account Settings" : "Sign In"}</button>
@@ -1694,7 +1698,7 @@
     const script = document.createElement("script");
     script.src = PEERJS_CDN;
     script.onload = () => {
-      const myId = roomId ? null : "cve-" + Math.random().toString(36).substring(2, 9);
+      const myId = roomId ? null : "cve-" + hex(crypto.getRandomValues(new Uint8Array(12)));   // unguessable room id: anyone with it can see the résumé
       state.peer = new window.Peer(myId, { debug: 1 });
 
       state.peer.on("open", id => {
@@ -2528,7 +2532,7 @@
       }
     },
 
-    submitMandatorySave() {
+    async submitMandatorySave() {
       const email = $("#mandEmailInput").value.trim();
       const pass = $("#mandPassInput").value.trim();
       const err = $("#mandSaveError");
@@ -2549,9 +2553,9 @@
         let user;
         const existing = state.allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
         if (existing) {
-          user = Storage.login(email, pass);
+          user = await Storage.login(email, pass);
         } else {
-          user = Storage.register(email, name, pass);
+          user = await Storage.register(email, name, pass);
         }
 
         // Bind draft to newly registered user
@@ -2719,12 +2723,12 @@
       if (m) m.classList.add("open");
     },
 
-    loginSubmit() {
+    async loginSubmit() {
       const email = $("#loginEmail").value;
       const pass = $("#loginPass").value;
       const err = $("#authError");
       try {
-        Storage.login(email, pass);
+        await Storage.login(email, pass);
         if (err) err.textContent = "";
         this.closeModal("authModal");
         this.closeModal("welcomeModal");
@@ -2735,13 +2739,13 @@
       }
     },
 
-    registerSubmit() {
+    async registerSubmit() {
       const email = $("#regEmail").value;
       const name = $("#regName").value;
       const pass = $("#regPass").value;
       const err = $("#authError");
       try {
-        Storage.register(email, name, pass);
+        await Storage.register(email, name, pass);
         if (err) err.textContent = "";
         this.closeModal("authModal");
         this.closeModal("welcomeModal");

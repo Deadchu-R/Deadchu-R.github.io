@@ -44,8 +44,9 @@ assets/edit.js  ◀──── loaded only with ?edit ──── the live sit
 5. **Behavior lives in one place.** Custom sections are rendered only by `assets/sections.js`, and résumés only by `assets/cv.js`. Both build.py (through Node) and the editor use them. Change the renderer, not a copy.
 6. **Keep the editor markers in sync.** Every editable thing in the HTML carries `data-*` markers (see [docs/EDITOR.md](docs/EDITOR.md#markers)). New content needs markers, or the owner can't edit it.
 7. **Privacy of friends' résumés.** A résumé is public only when it's saved in `content/cv.json`. Device-only résumés live in the browser (`localStorage["rt-cv-local"]`) and must never be written to the repo by code.
-8. **Text for the owner:** short and plain. The UI is in English, and the AI answers in the owner's language (usually Hebrew).
-9. **Comments and docs:** every function has a one-line comment (JS) or docstring (Python). Keep it true when you change the function.
+8. **Commit email:** commit with the GitHub no-reply address (`git config user.email 93131102+Deadchu-R@users.noreply.github.com`), never the owner's real email. The repo is public and bots harvest commit emails.
+9. **Text for the owner:** short and plain. The UI is in English, and the AI answers in the owner's language (usually Hebrew).
+10. **Comments and docs:** every function has a one-line comment (JS) or docstring (Python). Keep it true when you change the function.
 
 ## 3. Quick start
 

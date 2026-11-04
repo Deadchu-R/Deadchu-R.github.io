@@ -101,11 +101,13 @@ Full definitions: [EDITOR.md › Markers](EDITOR.md#markers).
 | Key | Where | What |
 |---|---|---|
 | `rt-edit`, `rt-login` | sessionStorage | edit mode is on in this tab / signed in |
-| `rt-edit-token` | localStorage | the GitHub token, decrypted after sign-in (or pasted) on the owner's own device; used by `gh()` |
+| `rt-edit-token` | sessionStorage | the GitHub token, decrypted at sign-in; this tab only, cleared on Exit editing (older versions kept it in localStorage; it is removed from there on load) |
 | `rt-cv-local` | localStorage | device-only résumés (never published) |
 | `rt-add-last` | localStorage | last ＋ choice per place |
 | `rt-ai-provider` | localStorage | AI provider (`hybrid` default) |
-| `rt-gemini-key`, `rt-gemini-model`, `rt-gemini-model-pin` | localStorage | Gemini key and model choice (this browser only) |
+| `rt-gemini-key` | sessionStorage | Gemini key, decrypted at sign-in; this tab only |
+| `rt-gemini-model`, `rt-gemini-model-pin` | localStorage | Gemini model choice |
+| `cve_users`, `cve_vault`, `cve_cur_user`, `cve_draft_cv` | localStorage | CVEditor: device-only accounts (passwords only as PBKDF2 hashes) and their résumés |
 | `rt-ai-local-model`, `rt-ai-app-url`, `rt-ai-app-model` | localStorage | on-device / local app AI settings |
 | `rt-sound` | localStorage | visitor's sound toggle |
 | `rt-tv` / `rt-web` | localStorage / sessionStorage | force TV mode / prefer the website over the TV app |
@@ -117,5 +119,9 @@ Full definitions: [EDITOR.md › Markers](EDITOR.md#markers).
   * PBKDF2 (300k iterations, random salt) of username + password gives an AES-GCM key.
   * A separate PBKDF2 `check` value lets the login form say "wrong password" without trying to decrypt.
   * Visitors can't use it without the password.
+* Signing in is needed in every new tab: the decrypted token and Gemini key live only in sessionStorage.
+* **Change password** (⋯ menu, `changePasswordBox`) re-encrypts everything with a new salt and 1,000,000 PBKDF2 rounds, checks the new password's strength, and offers to swap in a NEW token / Gemini key. That matters because old versions of `editor-auth.json` stay in git history, locked with the old password. After swapping, delete the old token on GitHub.
+* Commits made by the editor use the GitHub no-reply address (`AUTHOR` in edit.js), so the owner's real email isn't added to git history.
 * AI keys never leave the owner's browser, except in calls to that AI provider.
+* CVEditor (`assets/cveditor.js`) accounts are device-only. There is no built-in admin account and no password in the code.
 * Device-only résumés stay in localStorage.

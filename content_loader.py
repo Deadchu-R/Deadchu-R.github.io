@@ -215,7 +215,7 @@ SITE_DEFAULTS = {
         {"label": "The lab", "link": "lab.html", "style": "ghost"},
     ],
     "footer_title": "Let's make games together",
-    "footer_text": "Open to Unity and Unreal developer roles in Israel.",
+    "footer_text": "Got a project or a question? Get in touch.",
     "footer_buttons": [
         {"label": "Email me", "link": "mailto:" + _site["email"], "style": "solid"},
         {"label": "LinkedIn", "link": _site["linkedin"], "style": "ghost"},

@@ -4,6 +4,7 @@ The owner edits the live site himself, in the browser. The editor is like Square
 
 * **Open:** add `?edit` to any page URL (e.g. `roeetal.com/?edit`). `site.js` sees it, stores `sessionStorage["rt-edit"]` (so edit mode survives page changes) and loads `edit.js`.
 * **Sign in:** username + password unlock the GitHub token stored encrypted in `assets/editor-auth.json` (`loginBox`, `derive`). The first time, the owner pastes a fine-grained token (`askToken`) and it is saved encrypted (`saveTokenForLogin`).
+* **Change password:** ⋯ › Change password. It needs the current password, and a strong new one (14+ characters, or a passphrase). You can paste a new GitHub token / Gemini key at the same time. The secrets are kept only in this tab (sessionStorage).
 * **Save:** changes are kept in memory per file and counted in the bottom bar. **Publish** (`publish`) commits all changed `content/*.json` files plus new uploads in **one** commit, through the Git Data API (blobs → tree → commit → move `main`). `watchBuild` then follows the Action until the site is live.
 * **History:** ⋯ › History lists recent content commits. Restore loads that version as new unpublished changes (`historyBox`, `restore`).
 
