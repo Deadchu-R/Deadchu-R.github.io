@@ -27,7 +27,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 - **Site:** the footer line "Open to Unity and Unreal developer roles" and the timeline's "Open to … roles" link were replaced with neutral contact text.
 
 ### Content
-- **Site:** added custom 'Fruits & Veggies: What to Do With Them' section right under the Unreal Developer (Experience) section, featuring preparation and culinary tips across 6 produce cards.
+- **Site:** updated "Fruits & Vegetables: The Fresh Kitchen Guide" custom section under Experience with 8 produce cards (including bananas, apples, berries, broccoli) and nutrition reference link.
 
 ### Fixes
 - **Editor / CVEditor:** two syntax errors that stopped `edit.js` and `cveditor.js` from running at all were fixed (a stray `` `r`n `` and an unquoted HTML string).

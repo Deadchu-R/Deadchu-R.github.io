@@ -205,24 +205,30 @@
   "custom_sections": {
     "fruits_veggies": {
       "type": "cards",
-      "kicker": "Fresh produce & culinary tips",
-      "title": "Fruits & Veggies: What to Do With Them",
-      "text": "A practical kitchen guide to everyday fruits and vegetables: how to pick them, store them, and bring out their best flavors.",
+      "kicker": "Produce & Culinary Essentials",
+      "title": "Fruits & Vegetables: The Fresh Kitchen Guide",
+      "text": "A complete everyday guide to fresh fruits and vegetables: choosing ripe produce, optimal kitchen storage, and bringing out vibrant flavors.",
       "icon": "heart",
-      "cols": 3,
+      "cols": 4,
       "width": "contained",
       "align": "left",
       "pad": "normal",
       "bg": "",
-      "accent": "#4ade80",
+      "accent": "#22c55e",
       "text_color": "",
       "media": "",
       "items": [
         {
           "icon": "heart",
           "image": "",
-          "title": "Avocados",
-          "text": "Check firmness near the stem. Mash with lime juice, minced garlic, and flaky sea salt for guacamole, slice over crusty sourdough toast, or blend into creamy smoothies."
+          "title": "Fresh Avocados",
+          "text": "Check firmness near the stem. Mash with lime juice, minced garlic, and sea salt for guacamole, slice over crusty sourdough toast, or blend into creamy smoothies."
+        },
+        {
+          "icon": "bolt",
+          "image": "",
+          "title": "Apples & Bananas",
+          "text": "Apples provide dietary fiber and vitamin C; keep chilled to stay crisp. Bananas offer potassium and quick natural energy for workouts and morning oats."
         },
         {
           "icon": "star",
@@ -231,33 +237,51 @@
           "text": "Store at room temperature to protect natural sweetness. Slow-roast cherry tomatoes with olive oil and garlic for pasta, or slice heirlooms with mozzarella and fresh basil."
         },
         {
-          "icon": "bolt",
+          "icon": "puzzle",
           "image": "",
           "title": "Spinach & Leafy Greens",
           "text": "Keep dry in the crisper drawer lined with a paper towel. Flash-sauté with garlic and chili flakes, fold into morning eggs, or toss raw into fresh grain bowls."
         },
         {
+          "icon": "heart",
+          "image": "",
+          "title": "Strawberries & Blueberries",
+          "text": "Packed with antioxidants and flavonoids. Rinse in cold water just before eating to prevent moisture spoilage. Excellent in yogurts, rustic pastries, or fresh compotes."
+        },
+        {
           "icon": "vortex",
           "image": "",
           "title": "Citrus (Lemons & Oranges)",
-          "text": "Zest the peel before juicing to extract rich aromatic oils. Use the bright acidity to lift pan sauces and vinaigrettes, or slice into ice water for daily refreshment."
+          "text": "Zest the peel before juicing to extract rich aromatic oils. Use bright acidity to balance rich sauces and vinaigrettes, or slice into ice water for daily refreshment."
         },
         {
           "icon": "tools",
           "image": "",
           "title": "Carrots & Sweet Potatoes",
-          "text": "Store in a cool, dark pantry away from moisture. Toss with olive oil, smoked paprika, and rosemary, then roast hot (400°F / 200°C) until caramelized and crispy-edged."
+          "text": "Rich in beta-carotene. Store in a cool, dark pantry away from moisture. Toss with olive oil, smoked paprika, and rosemary, then roast hot (400°F / 200°C) until caramelized."
         },
         {
           "icon": "flask",
           "image": "",
-          "title": "Fresh Berries",
-          "text": "Rinse in cool water only right before serving to avoid mold. Spoon over morning oats and greek yogurt, bake into rustic muffins, or simmer into a quick 5-minute compote."
+          "title": "Broccoli & Cruciferous Greens",
+          "text": "Loaded with vitamins C and K plus folate. Steam lightly to keep vibrant color and crunch, or roast with shaved parmesan and red pepper flakes."
         }
       ],
       "buttons": {
         "align": "left",
-        "items": []
+        "items": [
+          {
+            "label": "Quick Nutrition Reference",
+            "link": "test1.html",
+            "icon": "bolt",
+            "style": "solid",
+            "fill": "#22c55e",
+            "text_color": "#06240d",
+            "border": "#22c55e",
+            "bw": 1,
+            "glow": false
+          }
+        ]
       }
     }
   },
