@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rubik:ital,wght@0,400;0,500;0,700;1,400&family=Assistant:wght@400;600;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Lato:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap">
-  <link rel="stylesheet" href="../assets/cv.css?v=20261105_14">
-  <link rel="stylesheet" href="../assets/cveditor.css?v=20261105_14">
+  <link rel="stylesheet" href="../assets/cv.css?v=20261105_15">
+  <link rel="stylesheet" href="../assets/cveditor.css?v=20261105_15">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -624,25 +624,28 @@
   
   <!-- Google Authentication Modal for Friends & Roee -->
   <div id="googleAuthModal" class="cve-modal-backdrop">
-    <div class="cve-modal" style="max-width:440px;">
-      <div class="cve-modal-header">
-        <div class="cve-modal-title" style="display:flex;align-items:center;gap:9px;">
-          <svg width="20" height="20" viewBox="0 0 24 24">
+    <div class="cve-modal" style="max-width:440px;background:#182234;border:1px solid rgba(255,255,255,0.15);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+      <div class="cve-modal-header" style="border-bottom:1px solid rgba(255,255,255,0.08);padding:16px 20px;">
+        <div class="cve-modal-title" style="display:flex;align-items:center;gap:10px;">
+          <svg width="22" height="22" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
-          <span>Sign In with Google</span>
+          <span style="font-size:16px;font-weight:700;color:#fff;">התחבר באמצעות חשבון Google</span>
         </div>
         <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('googleAuthModal')">✕</button>
       </div>
-      <div class="cve-modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="cve-modal-body" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
         <p style="font-size:13px;color:var(--cve-text-muted);margin:0;line-height:1.5;">
-          התחבר עם חשבון Google לפתיחה ועריכה של קורות חיים אישיים משלך. כל קורות החיים שלך יישמרו ישירות בחשבון שלך ואף משתמש אחר לא יוכל לצפות בהם.
+          התחבר עם חשבון ה-Gmail שלך. קורות החיים שלך נשמרים ישירות בחשבון האישי שלך ואף משתמש אחר לא יכול לראות או לערוך אותם.
         </p>
 
         <div id="googleAuthError" style="color:#ef4444;font-size:12.5px;font-weight:600;min-height:18px;"></div>
+
+        <!-- Previous Accounts Chooser (if any) -->
+        <div id="cveGoogleAccountsList"></div>
 
         <!-- Direct Email Input Form -->
         <div class="cve-form-group">
@@ -660,8 +663,8 @@
           <input type="password" id="cveRoeePassInput" class="cve-input" placeholder="הזן את סיסמת מנהל האתר" onkeydown="if(event.key==='Enter')window.CVE.submitGoogleEmailAuth()">
         </div>
 
-        <button type="button" class="cve-btn pri" style="justify-content:center;padding:9px;font-size:13.5px;font-weight:700;" onclick="window.CVE.submitGoogleEmailAuth()">
-          <span>המשך והתחבר עם Google ➔</span>
+        <button type="button" class="cve-btn pri" style="justify-content:center;padding:10px;font-size:14px;font-weight:700;background:#1a73e8;border-color:#1a73e8;" onclick="window.CVE.submitGoogleEmailAuth()">
+          <span>המשך עם חשבון Google ➔</span>
         </button>
 
         <div style="font-size:11.5px;color:var(--cve-text-muted);text-align:center;margin-top:4px;">
@@ -758,8 +761,8 @@
   <input type="file" id="cvePhotoFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none">
 
   <!-- Core Scripts -->
-  <script src="../assets/cv.js?v=20261105_14"></script>
-  <script src="../assets/cveditor.js?v=20261105_14"></script>
+  <script src="../assets/cv.js?v=20261105_15"></script>
+  <script src="../assets/cveditor.js?v=20261105_15"></script>
   <script>
     if (window.CVE && window.CVE.init && !window._cveBooted) {
       window.CVE.init();

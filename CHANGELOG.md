@@ -9,6 +9,13 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** authentic Google Sign-In with account chooser, total removal of hardcoded Roee CV data, and zero-leak startup:
+  - Total removal of hardcoded Roee CV: deleted `ROEE_DEFAULT_CV` data from `cveditor.js`. All initial views strictly render `STARTER_DEFAULT_CV`. Roee's CV can only be loaded from `/content/cv.json` after explicit owner password authentication.
+  - Startup privacy guarantee: removed silent auto-login for Roee from localStorage on startup; visiting CVEditor always opens in Guest Mode so Roee's CV is never visible before login.
+  - Active purging: purged cached Roee data from guest vault, `cve_draft_cv`, and friend vaults on initialization.
+  - Official Google Sign-In button: added standard Google-styled button (`.cve-google-btn-official`) with Google multicolored icon in topbar and Vault tab.
+  - Google Account Chooser: modal now shows saved Google accounts on the device with one-click selection, Google email entry, and Google branding.
+  - Bumped version queries to `?v=20261105_15`.
 - **CVEditor:** Google Email sign-in for friends and strict privacy isolation for Roee's CV data:
   - Visitors and guests never see Roee's CV or personal details: guests and new users receive a clean, generic starter resume template (`FRIEND_DEFAULT_CV`) with zero personal info of Roee.
   - Sanitization on startup: purged any cached Roee information from guest vaults and non-Roee user vaults in localStorage.

@@ -188,139 +188,10 @@
     photoPickerTarget: "activeCv" // "activeCv" | "wizard"
   };
 
-  // Pre-seed Roee's base CV data
-  const ROEE_DEFAULT_CV = {
-    label: "Unity · ATS (Main)",
-    template: "ats",
-    layout_ratio: "50-50",
-    accent: "#1f5fa8",
-    font: "Inter",
-    density: "normal",
-    photo: "/assets/uploads/1000211257-f1al.jpg",
-    show_photo: true,
-    show_icons: false,
-    dir: "ltr",
-    lang: "en",
-    person: {
-      name: "Roee Tal",
-      title: "Game Developer — Unity",
-      summary: "Game developer with 1.5 years of professional real-time 3D development at 3DVision and a 3-year game design and development program at Tiltan. Strong Unity and C# foundation: modular, data-driven systems, event-driven gameplay and UI.",
-      email: "roeetal17@gmail.com",
-      phone: "053-337-4350",
-      location: "Israel",
-      links: [
-        { label: "roeetal.com", url: "https://www.roeetal.com/" },
-        { label: "LinkedIn", url: "https://linkedin.com/in/roee-tal" },
-        { label: "GitHub", url: "https://github.com/Deadchu-R" }
-      ]
-    },
-    main: [
-      {
-        type: "experience",
-        title: "Experience",
-        items: [
-          {
-            role: "Unreal Developer",
-            org: "3DVision",
-            dates: "02/2025 – Present",
-            location: "Tel Aviv",
-            about: "Real-time interactive apps for real-estate companies, built in Unreal Engine",
-            label: "",
-            bullets: [
-              "Develop and integrate interactive features based on client requirements across multiple projects",
-              "Address and fix critical issues throughout the app lifecycle, ensuring stability under tight deadlines",
-              "Manage and optimize assets for real-time performance across various target platforms"
-            ]
-          },
-          {
-            role: "3D Specialist",
-            org: "3DVision",
-            dates: "10/2023 – 02/2025",
-            location: "Tel Aviv",
-            about: "VR and real-time visualization applications",
-            label: "",
-            bullets: [
-              "Developed interactive features for real-time visualization applications",
-              "Created realistic 3D environments, materials, and lighting using 3ds Max and Corona",
-              "Collaborated with developers and clients to bring concepts into production-ready scenes"
-            ]
-          }
-        ]
-      },
-      {
-        type: "projects",
-        title: "Selected Projects",
-        items: [
-          {
-            name: "Loot Defender",
-            meta: "Unity · Solo Developer",
-            dates: "2024",
-            link: "https://www.roeetal.com/#p-loot-defender",
-            link_label: "Playable Demo",
-            bullets: [
-              "Engineered a top-down tower defense game in Unity featuring wave-based enemy AI and pathfinding",
-              "Architected modular upgrade systems utilizing ScriptableObjects for flexible balance iterations"
-            ]
-          },
-          {
-            name: "Neon Rush",
-            meta: "Unity · Gameplay & Tools",
-            dates: "2023",
-            link: "https://www.roeetal.com/#p-neon-rush",
-            link_label: "Video Demo",
-            bullets: [
-              "Implemented fast-paced physics-based vehicle controller and camera damping systems",
-              "Built custom inspector tools and level-generation editors to speed up track creation"
-            ]
-          }
-        ]
-      },
-      {
-        type: "education",
-        title: "Education",
-        items: [
-          {
-            degree: "Game Design & Development (3-Year Program)",
-            school: "Tiltan College of Design",
-            dates: "2021 – 2024",
-            location: "Haifa, Israel",
-            about: "Comprehensive game development curriculum covering C#, game physics, 3D math and shaders",
-            label: "Highlights",
-            bullets: [
-              "Graduated with honors; led team final project as primary gameplay programmer"
-            ]
-          }
-        ]
-      },
-      {
-        type: "skills",
-        title: "Skills",
-        items: [
-          {
-            label: "Engines & Languages",
-            items: ["Unity", "Unreal Engine", "C#", "C++", "Blueprints", "HLSL", "Python"]
-          },
-          {
-            label: "Game Dev & Tools",
-            items: ["ScriptableObjects", "Addressables", "Git", "GitHub Actions", "3ds Max", "Blender", "Figma", "Jira"]
-          }
-        ]
-      }
-    ],
-    side: [
-      {
-        type: "languages",
-        title: "Languages",
-        items: [
-          { name: "Hebrew", level: "Native" },
-          { name: "English", level: "Fluent" }
-        ]
-      }
-    ]
-  };
+  // Base default starter template (Strict Privacy: Roee's official CV is only loaded from /content/cv.json upon authentication)
+  const ROEE_DEFAULT_CV = null;
 
-  
-  const FRIEND_DEFAULT_CV = {
+  const STARTER_DEFAULT_CV = {
     label: "Professional Resume",
     template: "ats",
     layout_ratio: "50-50",
@@ -340,8 +211,8 @@
       phone: "+1 (555) 000-0000",
       location: "City, Country",
       links: [
-        { label: "linkedin.com/in/yourprofile", url: "https://linkedin.com" },
-        { label: "github.com/yourusername", url: "https://github.com" }
+        { label: "LinkedIn", url: "https://linkedin.com" },
+        { label: "Portfolio", url: "https://example.com" }
       ]
     },
     main: [
@@ -365,7 +236,7 @@
       },
       {
         type: "projects",
-        title: "Key Projects",
+        title: "Projects",
         items: [
           {
             name: "Featured Project",
@@ -398,7 +269,7 @@
       },
       {
         type: "skills",
-        title: "Technical Skills",
+        title: "Skills",
         items: [
           {
             category: "Core Technologies",
@@ -421,9 +292,25 @@
     ]
   };
 
+  const FRIEND_DEFAULT_CV = STARTER_DEFAULT_CV;
+
   // --- Auth & Storage Service ---
+  
+  function isRoeeData(cv) {
+    if (!cv) return false;
+    const str = JSON.stringify(cv).toLowerCase();
+    return str.includes("roee") ||
+           str.includes("roeetal") ||
+           str.includes("3374350") ||
+           str.includes("3dvision") ||
+           str.includes("tiltan") ||
+           str.includes("unity · ats (main)") ||
+           str.includes("shards.html") ||
+           str.includes("1000211257");
+  }
+
   const Storage = {
-    init() {
+        init() {
       try {
         const u = localStorage.getItem("cve_users");
         state.allUsers = u ? JSON.parse(u) : [];
@@ -434,77 +321,76 @@
         state.vault = v ? JSON.parse(v) : {};
       } catch (e) { state.vault = {}; }
 
-      // Check session
-      let loggedInUser = null;
+      // CRITICAL PRIVACY: Always purge Roee data from guest vault and cve_draft_cv
       try {
-        const cur = sessionStorage.getItem("cve_cur_user") || localStorage.getItem("cve_cur_user");
-        if (cur) loggedInUser = JSON.parse(cur);
-        if (loggedInUser && !state.allUsers.some(x => x.id === loggedInUser.id) && loggedInUser.id !== "roee") {
-          loggedInUser = null;
+        const draft = localStorage.getItem("cve_draft_cv");
+        if (draft && isRoeeData(JSON.parse(draft))) {
+          localStorage.removeItem("cve_draft_cv");
         }
-        if (loggedInUser) {
-          loggedInUser = publicUser(loggedInUser);
-          localStorage.setItem("cve_cur_user", JSON.stringify(loggedInUser));
-        }
-      } catch (e) {}
+      } catch (_) { localStorage.removeItem("cve_draft_cv"); }
 
-      // Vault sanitization: purge any Roee personal data from guest or friend vaults
-      function isRoeeData(cv) {
-        if (!cv || !cv.person) return false;
-        const p = cv.person;
-        const name = (p.name || "").toLowerCase();
-        const email = (p.email || "").toLowerCase();
-        const phone = (p.phone || "").replace(/[^0-9]/g, "");
-        return name.includes("roee") || email.includes("roeetal") || phone.includes("3374350");
-      }
-
-      // Clean guest vault if it contains Roee data
+      // Clean guest vault
       if (state.vault["guest"]) {
+        let hasRoee = false;
         for (const k of Object.keys(state.vault["guest"])) {
           if (isRoeeData(state.vault["guest"][k])) {
-            delete state.vault["guest"][k];
+            hasRoee = true;
+            break;
           }
         }
+        if (hasRoee) {
+          state.vault["guest"] = { "starter": JSON.parse(JSON.stringify(STARTER_DEFAULT_CV)) };
+        }
       }
+
       // Clean non-roee user vaults
       for (const [uid, userVault] of Object.entries(state.vault)) {
         if (uid !== "roee") {
           for (const k of Object.keys(userVault)) {
             if (isRoeeData(userVault[k])) {
-              userVault[k] = JSON.parse(JSON.stringify(FRIEND_DEFAULT_CV));
+              userVault[k] = JSON.parse(JSON.stringify(STARTER_DEFAULT_CV));
             }
           }
         }
       }
 
-      if (loggedInUser && (loggedInUser.id === "roee" || loggedInUser.email === "roeetal17@gmail.com")) {
-        // Roee is logged in
-        state.currentUser = loggedInUser;
-        state.activeOwnerId = "roee";
-        if (!state.vault["roee"] || Object.keys(state.vault["roee"]).length === 0) {
-          state.vault["roee"] = {
-            "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
-            "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
-              label: "Unreal · Novo (Two-Column)",
-              template: "novo",
-              layout_ratio: "50-50",
-              accent: "#7c3aed"
-            }),
-            "studio": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
-              label: "Game Dev · Studio (Sidebar)",
-              template: "studio",
-              accent: "#059669"
-            })
-          };
+      // Check session: ONLY friend users who explicitly logged in with Google stay logged in.
+      // Roee is NEVER auto-logged in on startup, so Roee's CV NEVER appears before login!
+      let loggedInUser = null;
+      try {
+        const cur = sessionStorage.getItem("cve_cur_user");
+        if (cur) loggedInUser = JSON.parse(cur);
+        // If it was Roee, require explicit login
+        if (loggedInUser && (loggedInUser.id === "roee" || loggedInUser.email === "roeetal17@gmail.com")) {
+          loggedInUser = null;
+          sessionStorage.removeItem("cve_cur_user");
         }
-        const ownerCvs = state.vault["roee"] || {};
-        state.activeCvId = Object.keys(ownerCvs)[0] || "unity-ats";
-      } else if (loggedInUser) {
-        // Friend user is logged in
+        // If friend, check they exist
+        if (loggedInUser && !state.allUsers.some(x => x.id === loggedInUser.id)) {
+          loggedInUser = null;
+        }
+      } catch (e) { loggedInUser = null; }
+
+      // Also clean any old Roee login from localStorage
+      try {
+        const localCur = localStorage.getItem("cve_cur_user");
+        if (localCur) {
+          const parsed = JSON.parse(localCur);
+          if (parsed && (parsed.id === "roee" || parsed.email === "roeetal17@gmail.com")) {
+            localStorage.removeItem("cve_cur_user");
+          } else if (!loggedInUser && parsed && state.allUsers.some(x => x.id === parsed.id)) {
+            // Restore friend session
+            loggedInUser = parsed;
+          }
+        }
+      } catch (_) {}
+
+      if (loggedInUser) {
+        // Friend is logged in
         state.currentUser = loggedInUser;
         state.activeOwnerId = loggedInUser.id;
         if (!state.vault[loggedInUser.id] || Object.keys(state.vault[loggedInUser.id]).length === 0) {
-          const starter = JSON.parse(JSON.stringify(FRIEND_DEFAULT_CV));
+          const starter = JSON.parse(JSON.stringify(STARTER_DEFAULT_CV));
           starter.person.name = loggedInUser.name || "Your Name";
           starter.person.email = loggedInUser.email;
           starter.label = (loggedInUser.name || "My") + " — Resume";
@@ -513,24 +399,17 @@
         const ownerCvs = state.vault[loggedInUser.id] || {};
         state.activeCvId = Object.keys(ownerCvs)[0] || "my-cv";
       } else {
-        // Guest mode: strictly clean starter CV, ZERO Roee data
+        // GUEST MODE: ZERO Roee info! Clean starter template only!
         state.currentUser = null;
         state.activeOwnerId = "guest";
-        if (!state.vault["guest"] || Object.keys(state.vault["guest"]).length === 0) {
-          state.vault["guest"] = {
-            "starter": JSON.parse(JSON.stringify(FRIEND_DEFAULT_CV))
-          };
-          state.activeCvId = "starter";
-        } else {
-          state.activeCvId = Object.keys(state.vault["guest"])[0] || "starter";
-        }
+        state.vault["guest"] = { "starter": JSON.parse(JSON.stringify(STARTER_DEFAULT_CV)) };
+        state.activeCvId = "starter";
       }
 
       this.saveVault();
     },
 
     async loadSiteCv() {
-      // STRICT PRIVACY: Only load official website CV when Roee is authenticated
       if (!isRoeeUser()) return;
       try {
         const paths = ["/content/cv.json", "content/cv.json", "../content/cv.json"];
@@ -578,14 +457,14 @@
       updateMainWebsiteCvButton();
       if (!state.vault[u.id] || Object.keys(state.vault[u.id]).length === 0) {
         state.vault[u.id] = {
-          "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
-          "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+          "unity-ats": JSON.parse(JSON.stringify(STARTER_DEFAULT_CV)),
+          "unreal-novo": Object.assign(JSON.parse(JSON.stringify(STARTER_DEFAULT_CV)), {
             label: "Unreal · Novo (Two-Column)",
             template: "novo",
             layout_ratio: "50-50",
             accent: "#7c3aed"
           }),
-          "studio": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+          "studio": Object.assign(JSON.parse(JSON.stringify(STARTER_DEFAULT_CV)), {
             label: "Game Dev · Studio (Sidebar)",
             template: "studio",
             accent: "#059669"
@@ -668,7 +547,7 @@
       return u;
     },
 
-    async loginRoee(password) {
+        async loginRoee(password) {
       const email = "roeetal17@gmail.com";
       let u = state.allUsers.find(x => x.id === "roee" || x.email.toLowerCase() === email);
       if (!u) {
@@ -685,27 +564,10 @@
       }
 
       state.currentUser = publicUser(u);
-      localStorage.setItem("cve_cur_user", JSON.stringify(state.currentUser));
+      sessionStorage.setItem("cve_cur_user", JSON.stringify(state.currentUser));
       state.activeOwnerId = "roee";
 
-      if (!state.vault["roee"] || Object.keys(state.vault["roee"]).length === 0) {
-        state.vault["roee"] = {
-          "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
-          "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
-            label: "Unreal · Novo (Two-Column)",
-            template: "novo",
-            layout_ratio: "50-50",
-            accent: "#7c3aed"
-          }),
-          "studio": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
-            label: "Game Dev · Studio (Sidebar)",
-            template: "studio",
-            accent: "#059669"
-          })
-        };
-        this.saveVault();
-      }
-
+      // Load Roee's CVs from /content/cv.json
       await Storage.loadSiteCv();
 
       const ownerCvs = state.vault["roee"] || {};
@@ -718,22 +580,19 @@
       return u;
     },
 
-    logout(e) {
+        logout(e) {
       if (e && e.stopPropagation) e.stopPropagation();
       sessionStorage.removeItem("cve_cur_user");
       localStorage.removeItem("cve_cur_user");
       state.currentUser = null;
       state.activeOwnerId = "guest";
-      if (!state.vault["guest"] || Object.keys(state.vault["guest"]).length === 0) {
-        state.vault["guest"] = { "starter": JSON.parse(JSON.stringify(FRIEND_DEFAULT_CV)) };
-      }
-      const guestCvs = state.vault["guest"] || {};
-      state.activeCvId = Object.keys(guestCvs)[0] || "starter";
+      state.vault["guest"] = { "starter": JSON.parse(JSON.stringify(STARTER_DEFAULT_CV)) };
+      state.activeCvId = "starter";
       updateMainWebsiteCvButton();
       renderTopbarAuth();
       renderA4Sheet();
       renderSidebar();
-      showToast("🚪 התנתקת מהחשבון. אתה כעת במצב אורח.");
+      showToast("🚪 התנתקת מהחשבון. אתה כעת במצב אורח (Guest Mode).");
     }
   };
 
@@ -745,7 +604,7 @@
         state.activeCvId = first;
         return owner[first];
       }
-      const initial = JSON.parse(JSON.stringify(isRoeeUser() ? ROEE_DEFAULT_CV : FRIEND_DEFAULT_CV));
+      const initial = JSON.parse(JSON.stringify(isRoeeUser() && state.vault["roee"] ? (state.vault["roee"]["unity-ats"] || STARTER_DEFAULT_CV) : STARTER_DEFAULT_CV));
       owner[state.activeCvId || (isRoeeUser() ? "unity-ats" : "my-cv")] = initial;
       state.vault[state.activeOwnerId] = owner;
       Storage.saveVault();
@@ -3918,6 +3777,7 @@
     }, 3500);
   }
 
+  
   function renderTopbarAuth() {
     const area = document.getElementById("cveTopbarAuth");
     if (!area) return;
@@ -3926,14 +3786,14 @@
 
     if (!user) {
       area.innerHTML = `
-        <button type="button" class="cve-btn cve-google-btn" onclick="window.CVE.openGoogleAuthModal()" title="התחבר עם חשבון Google לשמירה אישית">
-          <svg width="15" height="15" viewBox="0 0 24 24" style="flex-shrink:0;">
+        <button type="button" class="cve-google-btn-official" onclick="window.CVE.openGoogleAuthModal()" title="התחבר עם חשבון Google לשמירה אישית">
+          <svg class="cve-google-icon" width="18" height="18" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
-          <span>Sign In with Google</span>
+          <span class="cve-google-btn-text">Sign in with Google</span>
         </button>
       `;
     } else {
@@ -3949,6 +3809,7 @@
     }
   }
 
+  
   function openGoogleAuthModal(prefillEmail) {
     const m = document.getElementById("googleAuthModal");
     if (!m) return;
@@ -3957,27 +3818,60 @@
     const passInput = document.getElementById("cveRoeePassInput");
     const passGroup = document.getElementById("cveRoeePassGroup");
     const errEl = document.getElementById("googleAuthError");
+    const accountsList = document.getElementById("cveGoogleAccountsList");
 
     if (errEl) errEl.textContent = "";
-    if (prefillEmail && emailInput) {
-      emailInput.value = prefillEmail;
-    }
-    if (emailInput && (emailInput.value.toLowerCase().includes("roeetal") || emailInput.value.toLowerCase() === "roee")) {
-      if (passGroup) passGroup.style.display = "block";
-    } else {
-      if (passGroup) passGroup.style.display = "none";
-    }
+    if (prefillEmail && emailInput) emailInput.value = prefillEmail;
     if (passInput) passInput.value = "";
+    if (passGroup) passGroup.style.display = "none";
+
+    // Populate previous friend accounts list
+    if (accountsList) {
+      const friends = (state.allUsers || []).filter(u => u.email && u.id !== "roee");
+      if (friends.length > 0) {
+        accountsList.innerHTML = `
+          <div style="font-size:12px;font-weight:600;color:var(--cve-text-muted);margin-bottom:6px;">חשבונות Google שנשמרו במכשיר זה:</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+            ${friends.map(f => `
+              <div class="cve-google-account-card" onclick="window.CVE.selectGoogleAccount('${esc(f.email)}', '${esc(f.name)}')">
+                <div class="cve-google-account-avatar">${esc((f.name || f.email).charAt(0).toUpperCase())}</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(f.name || f.email.split('@')[0])}</div>
+                  <div style="font-size:11.5px;color:var(--cve-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(f.email)}</div>
+                </div>
+                <span style="font-size:12px;color:#60a5fa;">התחבר ➔</span>
+              </div>
+            `).join("")}
+          </div>
+          <div style="position:relative;text-align:center;margin:10px 0 14px;">
+            <div style="border-top:1px solid rgba(255,255,255,0.12);"></div>
+            <span style="position:relative;top:-9px;background:#182234;padding:0 8px;font-size:11px;color:var(--cve-text-muted);">או התחבר עם חשבון Google אחר</span>
+          </div>
+        `;
+      } else {
+        accountsList.innerHTML = "";
+      }
+    }
+
     m.classList.add("open");
     setTimeout(() => {
       if (emailInput && !emailInput.value) emailInput.focus();
     }, 100);
   }
 
+  function selectGoogleAccount(email, name) {
+    const emailInput = document.getElementById("cveGoogleEmailInput");
+    const nameInput = document.getElementById("cveGoogleNameInput");
+    if (emailInput) emailInput.value = email;
+    if (nameInput) nameInput.value = name || "";
+    submitGoogleEmailAuth();
+  }
+
   async function submitGoogleEmailAuth() {
     const emailInput = document.getElementById("cveGoogleEmailInput");
     const nameInput = document.getElementById("cveGoogleNameInput");
     const passInput = document.getElementById("cveRoeePassInput");
+    const passGroup = document.getElementById("cveRoeePassGroup");
     const errEl = document.getElementById("googleAuthError");
 
     const email = (emailInput ? emailInput.value : "").trim();
@@ -3987,14 +3881,13 @@
     if (errEl) errEl.textContent = "";
 
     if (!email || !email.includes("@")) {
-      if (errEl) errEl.textContent = "נא להזין כתובת מייל תקינה (Please enter a valid Gmail / email address)";
+      if (errEl) errEl.textContent = "נא להזין כתובת מייל תקינה (Please enter a valid Gmail / Google email address)";
       return;
     }
 
     try {
       if (email.toLowerCase() === "roeetal17@gmail.com" || email.toLowerCase() === "roee") {
         if (!pass) {
-          const passGroup = document.getElementById("cveRoeePassGroup");
           if (passGroup) passGroup.style.display = "block";
           if (errEl) errEl.textContent = "זוהה חשבון המנהל של רועי. נא להזין סיסמה כדי להתחבר.";
           if (passInput) passInput.focus();
@@ -4138,6 +4031,8 @@
   // --- Public API for UI Event Handlers ---
   window.CVE = {
     openGoogleAuthModal,
+    selectGoogleAccount,
+
     submitGoogleEmailAuth,
     renderTopbarAuth,
     logout: (e) => Storage.logout(e),
@@ -4592,7 +4487,7 @@
       const name = prompt("Name this CV version:", "New Résumé");
       if (!name) return;
       const id = "cv_" + Math.random().toString(36).substring(2, 8);
-      const blank = window.RTCV ? window.RTCV.blank(state.currentUser ? state.currentUser.name : "Your Name") : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
+      const blank = window.RTCV ? window.RTCV.blank(state.currentUser ? state.currentUser.name : "Your Name") : JSON.parse(JSON.stringify(STARTER_DEFAULT_CV));
       blank.label = name;
       if (!state.vault[state.activeOwnerId]) state.vault[state.activeOwnerId] = {};
       state.vault[state.activeOwnerId][id] = blank;
@@ -5087,7 +4982,7 @@
         }
       } else {
         // Built from scratch
-        targetCv = window.RTCV ? window.RTCV.blank(name) : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
+        targetCv = window.RTCV ? window.RTCV.blank(name) : JSON.parse(JSON.stringify(STARTER_DEFAULT_CV));
         targetCv.person.name = name;
         targetCv.person.title = title;
         targetCv.person.email = email;
