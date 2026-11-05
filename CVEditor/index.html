@@ -66,6 +66,23 @@
       </select>
     </div>
 
+    <!-- CV Background Switcher -->
+    <div class="cve-skin-bar cve-bg-bar" title="Change CV Document Background / רקע קורות חיים ממסך העריכה">
+      <label for="cveBgSelect" class="cve-skin-label">🖼️ Background:</label>
+      <select id="cveBgSelect" class="cve-skin-select" onchange="window.CVE.setBg(this.value)">
+        <option value="white">⚪ White (ATS)</option>
+        <option value="ivory">📜 Ivory Linen</option>
+        <option value="parchment">📄 Parchment</option>
+        <option value="topo">🗺️ Topo Contours (Site)</option>
+        <option value="grid">📐 Blueprint Grid</option>
+        <option value="dots">⠶ Dot Matrix</option>
+        <option value="slate">🪙 Modern Slate</option>
+        <option value="royal-blue">🌊 Royal Navy (Site)</option>
+        <option value="dark-slate">🌑 Dark Mode</option>
+        <option value="cyber">🌌 Cyber Space</option>
+      </select>
+    </div>
+
     <!-- Actions & Collaboration -->
     <div class="cve-topbar-actions">
       <div id="presenceCluster" class="cve-presence-cluster"></div>

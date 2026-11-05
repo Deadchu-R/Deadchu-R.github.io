@@ -589,6 +589,115 @@
     }
   }
 
+  // --- CV Document Backgrounds Configuration (roeetal.com Site Presets & Paper Themes) ---
+  const CV_BACKGROUNDS = [
+    {
+      id: "white",
+      name: "ATS Classic White",
+      nameHe: "לבן נקי (ATS קלאסי)",
+      desc: "100% clean white, maximum ATS parser compatibility",
+      previewStyle: "background:#ffffff;border:1px solid #e2e8f0;",
+      style: "background:#ffffff;color:var(--ink);"
+    },
+    {
+      id: "ivory",
+      name: "Warm Ivory Linen",
+      nameHe: "שנהב חם / פשתן",
+      desc: "Executive warm paper, elegant printed texture",
+      previewStyle: "background:#faf8f5;border:1px solid #e7e2d9;",
+      style: "background:#faf8f5;color:var(--ink);"
+    },
+    {
+      id: "parchment",
+      name: "Classic Parchment",
+      nameHe: "קלף אלגנטי",
+      desc: "Soft warm cream tone for traditional luxury",
+      previewStyle: "background:#f5f2eb;border:1px solid #ded7c8;",
+      style: "background:#f5f2eb;color:var(--ink);"
+    },
+    {
+      id: "topo",
+      name: "Topographic Contours (Site)",
+      nameHe: "קווים טופוגרפיים (אתר ראשי)",
+      desc: "Original contour waves from 3DVision & Unreal site section",
+      previewStyle: "background:#ffffff url('topo.svg') center/cover;border:1px solid #cbd5e1;",
+      style: "background:#ffffff url('topo.svg') repeat;background-size:600px;color:var(--ink);"
+    },
+    {
+      id: "grid",
+      name: "Blueprint Grid",
+      nameHe: "גריד הנדסי (Blueprint)",
+      desc: "Subtle 20px graph paper for game devs and engineers",
+      previewStyle: "background:#ffffff linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.06) 1px, #ffffff 1px);background-size:12px 12px;border:1px solid #cbd5e1;",
+      style: "background:#ffffff linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, #ffffff 1px);background-size:20px 20px;color:var(--ink);"
+    },
+    {
+      id: "dots",
+      name: "Dot Matrix",
+      nameHe: "מטריצת נקודות",
+      desc: "Modern subtle dot pattern for creative developers",
+      previewStyle: "background:#ffffff radial-gradient(rgba(0,0,0,0.12) 1px, transparent 1px);background-size:10px 10px;border:1px solid #cbd5e1;",
+      style: "background:#ffffff radial-gradient(rgba(0,0,0,0.08) 1.2px, transparent 1.2px);background-size:16px 16px;color:var(--ink);"
+    },
+    {
+      id: "slate",
+      name: "Minimal Slate",
+      nameHe: "אפור סלייט מודרני",
+      desc: "Soft cool gray for modern tech companies",
+      previewStyle: "background:#f1f5f9;border:1px solid #cbd5e1;",
+      style: "background:#f1f5f9;color:#1e293b;"
+    },
+    {
+      id: "royal-blue",
+      name: "Roee Tal Royal Navy",
+      nameHe: "כחול רויאל עמוק (אתר ראשי)",
+      desc: "Deep navy gradient from the roeetal.com hero section",
+      previewStyle: "background:linear-gradient(165deg, #0c2f6e 0%, #1758b0 100%);border:1px solid #1e3a8a;",
+      style: "background:linear-gradient(165deg, #0c2f6e 0%, #1758b0 100%);color:#f4f1ea;",
+      isDark: true
+    },
+    {
+      id: "dark-slate",
+      name: "Executive Dark Mode",
+      nameHe: "מצב כהה / Dark Slate",
+      desc: "Deep dark slate with bright contrast for screens",
+      previewStyle: "background:#0f172a;border:1px solid #334155;",
+      style: "background:#0f172a;color:#f8fafc;",
+      isDark: true
+    },
+    {
+      id: "cyber",
+      name: "Avraham Cyber Space",
+      nameHe: "חלל סייבר (Avraham)",
+      desc: "Deep dark background with subtle neon grid from Avraham skin",
+      previewStyle: "background:#0b0f19 url('topo.svg') center/cover;border:1px solid #00e5ff;",
+      style: "background:#0b0f19 url('topo.svg') repeat;background-size:600px;color:#f0fdfa;",
+      isDark: true
+    }
+  ];
+
+  function applyCvBackground(bgId, customVal) {
+    const k = bgId || "white";
+    const stage = $("#cvSheet");
+    if (!stage) return;
+    const doc = stage.querySelector(".cvdoc");
+    if (!doc) return;
+
+    doc.setAttribute("data-cv-bg", k);
+    if (k === "custom-color" && customVal) {
+      doc.style.background = customVal;
+      doc.style.removeProperty("background-size");
+    } else {
+      doc.style.removeProperty("background");
+    }
+
+    const bgSel = $("#cveBgSelect");
+    if (bgSel && bgSel.value !== k) {
+      bgSel.value = k;
+    }
+  }
+
+
   // --- Real-time Rendering & Live View with NovoResume Controls ---
   function renderA4Sheet() {
     const cv = getCurrentCV();
@@ -596,6 +705,7 @@
     if (!stage || !window.RTCV) return;
 
     applySkin(cv.skin || "classic");
+    applyCvBackground(cv.background || "white", cv.custom_bg);
 
     const norm = window.RTCV.normalize(cv);
     stage.innerHTML = window.RTCV.render(norm, state.activeCvId, { edit: true });
@@ -625,8 +735,8 @@
   }
 
   function clearAllDropFeedback() {
-    document.querySelectorAll(".cve-drop-target-before, .cve-drop-target-after, .cve-is-dragging, .cve-drop-zone-active")
-      .forEach(el => el.classList.remove("cve-drop-target-before", "cve-drop-target-after", "cve-is-dragging", "cve-drop-zone-active"));
+    document.querySelectorAll(".cve-drop-target-before, .cve-drop-target-after, .cve-is-dragging, .cve-drop-zone-active, .cve-item-drop-before, .cve-item-drop-after, .cve-is-dragging-item")
+      .forEach(el => el.classList.remove("cve-drop-target-before", "cve-drop-target-after", "cve-is-dragging", "cve-drop-zone-active", "cve-item-drop-before", "cve-item-drop-after", "cve-is-dragging-item"));
   }
 
   function attachSectionToolbars(stage) {
@@ -640,25 +750,50 @@
       if (idxAttr === null || isNaN(parseInt(idxAttr, 10))) return;
       const idx = parseInt(idxAttr, 10);
       const colList = cv[col] || [];
+      const secData = colList[idx] || {};
 
-      // Make the entire section box directly draggable
-      secEl.setAttribute("draggable", "true");
-      secEl.classList.add("cve-draggable-sec");
+      // 1. Direct full-width section drag bar (visible on section hover)
+      let dragBar = secEl.querySelector(":scope > .cve-sec-drag-bar");
+      if (!dragBar) {
+        dragBar = document.createElement("div");
+        dragBar.className = "cve-sec-drag-bar";
+        dragBar.setAttribute("draggable", "true");
+        dragBar.title = "⠿ לחץ וגרור כדי להזיז את הסקשן (Click & drag to reorder section)";
+        const secTitle = secData.title || "Section";
+        dragBar.innerHTML = `<span class="cve-strip-dots">⠿⠿</span><span class="cve-strip-title">${esc(secTitle)}</span><span class="cve-strip-hint">גרור להזזה ↕</span>`;
+      }
 
-      secEl.addEventListener("dragstart", (e) => {
-        // Do not drag if user is focusing an editable text field, input, or clicking a button/link
-        const interactive = e.target.closest('[contenteditable="true"], input, textarea, a, button, select');
-        if (interactive && !e.target.closest('.cve-drag-handle')) {
-          e.preventDefault();
+      // Shared section drag handler
+      const startSectionDrag = (e) => {
+        // Don't drag section if drag started on an entry inside section
+        if (e.target.closest && e.target.closest(".cv-item") && !e.target.closest(".cve-sec-drag-bar") && !e.target.closest(".cve-sec-toolbar")) {
           return;
         }
+        // If user is actively highlighting text inside a focused editable field, allow text selection
+        if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
+          return;
+        }
+        e.stopPropagation();
         state.draggingSection = { col, idx };
         secEl.classList.add("cve-is-dragging");
         if (e.dataTransfer) {
           e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx }));
+          e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx, type: "section" }));
         }
+      };
+
+      dragBar.addEventListener("dragstart", startSectionDrag);
+      dragBar.addEventListener("dragend", () => {
+        secEl.classList.remove("cve-is-dragging");
+        clearAllDropFeedback();
+        state.draggingSection = null;
       });
+
+      // 2. Direct section element dragging
+      secEl.setAttribute("draggable", "true");
+      secEl.classList.add("cve-draggable-sec");
+
+      secEl.addEventListener("dragstart", startSectionDrag);
 
       secEl.addEventListener("dragend", () => {
         secEl.classList.remove("cve-is-dragging");
@@ -666,35 +801,38 @@
         state.draggingSection = null;
       });
 
-      const existing = secEl.querySelector(":scope > .cve-sec-toolbar");
-      if (existing) existing.remove();
+      // 3. Section h2 heading direct drag
+      const h2 = secEl.querySelector(":scope > h2");
+      if (h2) {
+        h2.setAttribute("draggable", "true");
+        h2.classList.add("cve-draggable-h2");
+        h2.addEventListener("dragstart", startSectionDrag);
+        h2.addEventListener("dragend", () => {
+          secEl.classList.remove("cve-is-dragging");
+          clearAllDropFeedback();
+          state.draggingSection = null;
+        });
+      }
+
+      const existingBar = secEl.querySelector(":scope > .cve-sec-toolbar");
+      if (existingBar) existingBar.remove();
 
       const bar = document.createElement("div");
       bar.className = "cve-sec-toolbar";
 
-      // 1. Drag Handle in on-canvas toolbar (explicit button option)
+      // Drag Handle button in toolbar
       const dragBtn = document.createElement("button");
       dragBtn.type = "button";
       dragBtn.className = "cve-tool-btn cve-drag-handle";
       dragBtn.innerHTML = "⠿ Drag";
       dragBtn.title = "Drag to reorder section or move across columns";
       dragBtn.setAttribute("draggable", "true");
-
-      dragBtn.addEventListener("dragstart", (e) => {
-        state.draggingSection = { col, idx };
-        secEl.classList.add("cve-is-dragging");
-        if (e.dataTransfer) {
-          e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx }));
-        }
-      });
-
+      dragBtn.addEventListener("dragstart", startSectionDrag);
       dragBtn.addEventListener("dragend", () => {
         secEl.classList.remove("cve-is-dragging");
         clearAllDropFeedback();
         state.draggingSection = null;
       });
-
       bar.appendChild(dragBtn);
 
       const otherColLabel = col === "main" ? "Side" : "Main";
@@ -758,6 +896,7 @@
       bar.appendChild(delBtn);
 
       secEl.prepend(bar);
+      secEl.prepend(dragBar);
 
       // Section dragover & drop listeners on canvas
       secEl.addEventListener("dragover", (e) => {
@@ -800,6 +939,90 @@
         state.draggingSection = null;
         window.CVE.moveSectionPosition(dragging.col, dragging.idx, col, idx, pos);
       });
+
+      // 4. Direct Entry / Item Drag-and-Drop ("וחלק ממנו עצמו")
+      const items = secEl.querySelectorAll(".cv-item");
+      items.forEach((itemEl, k) => {
+        itemEl.setAttribute("draggable", "true");
+        itemEl.classList.add("cve-draggable-item");
+
+        let itemGrip = itemEl.querySelector(":scope > .cve-item-grip");
+        if (!itemGrip) {
+          itemGrip = document.createElement("div");
+          itemGrip.className = "cve-item-grip";
+          itemGrip.setAttribute("draggable", "true");
+          itemGrip.innerHTML = "⠿";
+          itemGrip.title = "גרור פריט זה לשינוי סדר (Drag entry to reorder)";
+          itemEl.prepend(itemGrip);
+        }
+
+        const startItemDrag = (e) => {
+          if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
+            return;
+          }
+          e.stopPropagation();
+          state.draggingItem = { col, secIdx: idx, itemIdx: k };
+          itemEl.classList.add("cve-is-dragging-item");
+          if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", JSON.stringify({ col, secIdx: idx, itemIdx: k, type: "item" }));
+          }
+        };
+
+        itemGrip.addEventListener("dragstart", startItemDrag);
+        itemEl.addEventListener("dragstart", startItemDrag);
+
+        itemEl.addEventListener("dragend", () => {
+          itemEl.classList.remove("cve-is-dragging-item");
+          clearAllDropFeedback();
+          state.draggingItem = null;
+        });
+
+        itemEl.addEventListener("dragover", (e) => {
+          if (!state.draggingItem) return;
+          const dragging = state.draggingItem;
+          if (dragging.col === col && dragging.secIdx === idx && dragging.itemIdx === k) return;
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+          const rect = itemEl.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          if (e.clientY < midY) {
+            itemEl.classList.add("cve-item-drop-before");
+            itemEl.classList.remove("cve-item-drop-after");
+          } else {
+            itemEl.classList.add("cve-item-drop-after");
+            itemEl.classList.remove("cve-item-drop-before");
+          }
+        });
+
+        itemEl.addEventListener("dragleave", (e) => {
+          if (!itemEl.contains(e.relatedTarget)) {
+            itemEl.classList.remove("cve-item-drop-before", "cve-item-drop-after");
+          }
+        });
+
+        itemEl.addEventListener("drop", (e) => {
+          if (!state.draggingItem) return;
+          const dragging = state.draggingItem;
+          if (dragging.col === col && dragging.secIdx === idx && dragging.itemIdx === k) return;
+          e.preventDefault();
+          e.stopPropagation();
+
+          const rect = itemEl.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          const pos = e.clientY < midY ? "before" : "after";
+
+          clearAllDropFeedback();
+          const fromCol = dragging.col;
+          const fromSecIdx = dragging.secIdx;
+          const fromItemIdx = dragging.itemIdx;
+          state.draggingItem = null;
+
+          window.CVE.moveItemPosition(fromCol, fromSecIdx, fromItemIdx, col, idx, k, pos);
+        });
+      });
     });
 
     // Column container drop listeners
@@ -833,8 +1056,9 @@
       });
     });
 
-    const items = stage.querySelectorAll(".cv-item");
-    items.forEach(itemEl => {
+    // Item hover toolbars for quick actions
+    const allItems = stage.querySelectorAll(".cv-item");
+    allItems.forEach(itemEl => {
       const existing = itemEl.querySelector(":scope > .cve-item-toolbar");
       if (existing) existing.remove();
 
@@ -869,430 +1093,14 @@
       delItem.title = "Delete Entry";
       delItem.onclick = (e) => {
         e.stopPropagation();
-        window.CVE.removeEntry(`${col}.${secIdx}`, itemIdx);
+        window.CVE.removeEntry(itemPath);
       };
       itemBar.appendChild(delItem);
 
-      itemEl.prepend(itemBar);
+      itemEl.appendChild(itemBar);
     });
   }
 
-  function updatePageMeter() {
-    const doc = $("#cvSheet .cvdoc");
-    const track = $("#pageMeterTrack");
-    const fill = $("#pageMeterFill");
-    const text = $("#pageMeterText");
-    const btn = $("#autofitBtn");
-    if (!doc || !fill || !text) return;
-
-    const z = state.zoom || 1;
-    const h = doc.offsetHeight || (doc.getBoundingClientRect().height / z);
-    const a4H = 1122.5;
-
-    const pct = Math.min(250, Math.round((h / a4H) * 100));
-
-    let breakLine = doc.querySelector(".cve-page-break-line");
-
-    if (h <= a4H + 6) {
-      fill.style.width = Math.min(100, pct) + "%";
-      fill.classList.remove("warn");
-      text.className = "cve-page-meter-text";
-      text.textContent = `📄 1 Page (${pct}% full)`;
-      if (btn) btn.style.display = "none";
-      if (breakLine) breakLine.remove();
-    } else {
-      fill.style.width = "100%";
-      fill.classList.add("warn");
-      text.className = "cve-page-meter-text warn";
-      text.textContent = `⚠️ 2 Pages (${pct}% - Overfull)`;
-      if (btn) btn.style.display = "inline-flex";
-
-      if (!breakLine) {
-        breakLine = document.createElement("div");
-        breakLine.className = "cve-page-break-line";
-        breakLine.innerHTML = `<span class="cve-page-break-label">Page 1 End (297mm)</span>`;
-        doc.appendChild(breakLine);
-      }
-    }
-  }
-
-
-  // --- Photo Upload & Processing Service ---
-  function initPhotoFileInput() {
-    let fi = $("#cvePhotoFileInput");
-    if (!fi) {
-      fi = document.createElement("input");
-      fi.type = "file";
-      fi.id = "cvePhotoFileInput";
-      fi.accept = "image/png,image/jpeg,image/webp,image/gif";
-      fi.style.display = "none";
-      document.body.appendChild(fi);
-    }
-    fi.onchange = (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      processUploadedImage(file, (dataUrl) => {
-        if (state.photoPickerTarget === "wizard") {
-          state.wizardDraft.photo = dataUrl;
-          state.wizardDraft.show_photo = true;
-          updateWizardPhotoUI();
-        } else {
-          const cv = getCurrentCV();
-          cv.photo = dataUrl;
-          cv.show_photo = true;
-          saveCurrentCV(cv);
-          renderA4Sheet();
-          renderSidebar();
-        }
-      });
-      fi.value = "";
-    };
-  }
-
-  function processUploadedImage(file, callback) {
-    if (!file || !file.type.startsWith("image/")) {
-      alert("אנא בחר קובץ תמונה תקין (PNG, JPG, WebP).");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const maxDim = 500;
-        let w = img.width;
-        let h = img.height;
-        if (w > maxDim || h > maxDim) {
-          if (w > h) {
-            h = Math.round((h * maxDim) / w);
-            w = maxDim;
-          } else {
-            w = Math.round((w * maxDim) / h);
-            h = maxDim;
-          }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
-        callback(dataUrl);
-      };
-      img.onerror = () => {
-        alert("שגיאה בטעינת קובץ התמונה.");
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function attachPhotoInteractions(stage) {
-    const photoEls = stage.querySelectorAll(".cv-photo, .cv-photo-add, [data-m$='.photo']");
-    photoEls.forEach(el => {
-      el.style.cursor = "pointer";
-      el.title = "📷 לחץ כאן להעלאת תמונת פרופיל / Change Photo";
-      el.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        window.CVE.openPhotoPicker("activeCv");
-      };
-    });
-  }
-
-  function updateWizardPhotoUI() {
-    const avatar = $("#wizPhotoAvatar");
-    const removeBtn = $("#wizRemovePhotoBtn");
-    const cb = $("#wizShowPhotoCb");
-    if (avatar) {
-      avatar.src = state.wizardDraft.photo || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='%2364748b'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>";
-    }
-    if (removeBtn) {
-      removeBtn.style.display = state.wizardDraft.photo ? "inline-flex" : "none";
-    }
-    if (cb) {
-      cb.checked = !!state.wizardDraft.show_photo;
-    }
-  }
-
-  // --- Intelligent Old CV Extraction & Parser ---
-  async function extractPdfText(file) {
-    if (!window.pdfjsLib) {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-        s.onload = resolve;
-        s.onerror = () => reject(new Error("לא ניתן לטעון את מפענח ה-PDF מהרשת. נסה להדביק את הטקסט."));
-        document.head.appendChild(s);
-      });
-    }
-    if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-    }
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let text = "";
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      let lastY = null;
-      for (const item of content.items) {
-        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
-          text += "\n";
-        } else if (text && !text.endsWith(" ")) {
-          text += " ";
-        }
-        text += item.str;
-        lastY = item.transform[5];
-      }
-      text += "\n\n";
-    }
-    return text;
-  }
-
-  function parseCvText(rawText) {
-    if (!rawText || typeof rawText !== "string") return null;
-
-    const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    if (!lines.length) return null;
-
-    // Detect language / direction
-    const hebrewChars = (rawText.match(/[\u0590-\u05FF]/g) || []).length;
-    const isHebrew = hebrewChars > 25 || (hebrewChars / rawText.length > 0.1);
-    const dir = isHebrew ? "rtl" : "ltr";
-    const lang = isHebrew ? "he" : "en";
-
-    const person = {
-      name: "",
-      title: "",
-      summary: "",
-      email: "",
-      phone: "",
-      location: "",
-      links: []
-    };
-
-    // 1. Email extraction
-    const emailMatch = rawText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-    if (emailMatch) person.email = emailMatch[0];
-
-    // 2. Phone extraction
-    const phoneMatch = rawText.match(/(?:(?:\+972|00972)[\s-]?)?(?:0\d{1,2}|\d{2,3})[\s-]?\d{3}[\s-]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/);
-    if (phoneMatch) person.phone = phoneMatch[0];
-
-    // 3. Links extraction
-    const urlMatches = rawText.match(/(?:https?:\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{2,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g) || [];
-    urlMatches.forEach(u => {
-      if (u.includes("@")) return;
-      const fullUrl = u.startsWith("http") ? u : "https://" + u;
-      let label = "Website";
-      if (u.includes("linkedin.com")) label = "LinkedIn";
-      else if (u.includes("github.com")) label = "GitHub";
-      else if (u.includes("portfolio") || u.includes("artstation")) label = "Portfolio";
-
-      if (!person.links.some(l => l.url === fullUrl)) {
-        person.links.push({ label, url: fullUrl });
-      }
-    });
-
-    // 4. Name & Title
-    for (let i = 0; i < Math.min(4, lines.length); i++) {
-      const l = lines[i];
-      if (l.includes("@") || l.includes("http") || l.length > 50 || /^\d/.test(l)) continue;
-      if (!person.name) {
-        person.name = l.replace(/[|•–—].*$/, "").trim();
-        continue;
-      }
-      if (!person.title && l.length < 60 && !l.toLowerCase().includes("resume") && !l.toLowerCase().includes("cv")) {
-        person.title = l;
-        break;
-      }
-    }
-    if (!person.name) person.name = isHebrew ? "שם מלא" : "Your Name";
-
-    // 5. Section segmentation
-    const SEC_PATTERNS = [
-      { key: "experience", rx: /^(?:work\s+)?experience|employment|work\s+history|career|professional\s+experience|ניסיון\s+(?:תעסוקתי|מקצועי)|ניסיון/i },
-      { key: "education", rx: /^education|academic|studies|academic\s+background|degrees|השכלה|לימודים|תארים/i },
-      { key: "skills", rx: /^skills|technical\s+skills|technologies|tools|competencies|core\s+competencies|כישורים|מיומנויות|טכנולוגיות|כלים/i },
-      { key: "summary", rx: /^summary|professional\s+summary|profile|about\s+me|objective|about|תמצית|אודות|פרופיל\s+אישי/i },
-      { key: "projects", rx: /^projects|key\s+projects|portfolio|פרויקטים/i },
-      { key: "languages", rx: /^languages|שפות/i }
-    ];
-
-    const sections = [];
-    let curSec = { key: "header", lines: [] };
-
-    lines.forEach(line => {
-      const cleanLine = line.replace(/[:_=-]+$/, "").trim();
-      if (cleanLine.length < 40) {
-        const match = SEC_PATTERNS.find(p => p.rx.test(cleanLine));
-        if (match) {
-          if (curSec.lines.length) sections.push(curSec);
-          curSec = { key: match.key, title: cleanLine, lines: [] };
-          return;
-        }
-      }
-      curSec.lines.push(line);
-    });
-    if (curSec.lines.length) sections.push(curSec);
-
-    // Parse Experience
-    const expSec = sections.find(s => s.key === "experience");
-    const parsedExpItems = [];
-    if (expSec) {
-      let curItem = null;
-      expSec.lines.forEach(l => {
-        const isBullet = /^[•\-\*▪–]\s*/.test(l);
-        const hasDate = /\b(20\d\d|19\d\d)\b|\b(present|current|כיום|היום)\b/i.test(l);
-
-        if (!isBullet && (hasDate || curItem === null || curItem.bullets.length > 0)) {
-          if (curItem) parsedExpItems.push(curItem);
-          let dates = "";
-          const dateMatch = l.match(/\b(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d\s*(?:–|-|to|עד)\s*(?:(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d|Present|Current|כיום|היום)/i);
-          if (dateMatch) {
-            dates = dateMatch[0];
-            l = l.replace(dates, "").trim();
-          }
-          const parts = l.split(/[-–|,\sat\s]+/).filter(Boolean);
-          const role = parts[0] ? parts[0].trim() : (isHebrew ? "תפקיד" : "Job Title");
-          const org = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "חברה" : "Company");
-
-          curItem = {
-            role,
-            org,
-            dates: dates || "2021 – Present",
-            location: "",
-            about: "",
-            label: "",
-            bullets: []
-          };
-        } else if (curItem) {
-          const cleanBullet = l.replace(/^[•\-\*▪–]\s*/, "").trim();
-          if (cleanBullet) curItem.bullets.push(cleanBullet);
-        }
-      });
-      if (curItem) parsedExpItems.push(curItem);
-    }
-
-    // Parse Education
-    const eduSec = sections.find(s => s.key === "education");
-    const parsedEduItems = [];
-    if (eduSec) {
-      let curItem = null;
-      eduSec.lines.forEach(l => {
-        const isBullet = /^[•\-\*▪–]\s*/.test(l);
-        const hasDate = /\b(20\d\d|19\d\d)\b/.test(l);
-        if (!isBullet && (hasDate || curItem === null)) {
-          if (curItem) parsedEduItems.push(curItem);
-          let dates = "";
-          const dMatch = l.match(/(?:19|20)\d\d\s*(?:–|-|to|עד)\s*(?:(?:19|20)\d\d|Present|כיום)/i) || l.match(/(?:19|20)\d\d/);
-          if (dMatch) {
-            dates = dMatch[0];
-            l = l.replace(dates, "").trim();
-          }
-          const parts = l.split(/[-–|,]+/).filter(Boolean);
-          const degree = parts[0] ? parts[0].trim() : (isHebrew ? "תואר / תעודה" : "Degree / Program");
-          const school = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "מוסד אקדמי" : "School");
-          curItem = {
-            degree,
-            school,
-            dates: dates || "2018 – 2021",
-            location: "",
-            about: "",
-            label: "Courses",
-            bullets: []
-          };
-        } else if (curItem) {
-          const cleanBullet = l.replace(/^[•\-\*▪–]\s*/, "").trim();
-          if (cleanBullet) curItem.bullets.push(cleanBullet);
-        }
-      });
-      if (curItem) parsedEduItems.push(curItem);
-    }
-
-    // Parse Skills
-    const skillSec = sections.find(s => s.key === "skills");
-    const parsedSkills = [];
-    if (skillSec) {
-      skillSec.lines.forEach(l => {
-        const tokens = l.split(/[,|•;/\n]+/).map(t => t.replace(/^[•\-\*▪–]\s*/, "").trim()).filter(t => t.length > 1 && t.length < 35);
-        tokens.forEach(tok => {
-          if (!parsedSkills.includes(tok)) parsedSkills.push(tok);
-        });
-      });
-    }
-
-    // Parse Summary
-    const sumSec = sections.find(s => s.key === "summary");
-    if (sumSec && sumSec.lines.length) {
-      person.summary = sumSec.lines.join(" ");
-    }
-
-    const main = [];
-    const side = [];
-
-    if (parsedExpItems.length) {
-      main.push({
-        type: "experience",
-        title: isHebrew ? "ניסיון מקצועי" : "Work Experience",
-        items: parsedExpItems
-      });
-    } else {
-      main.push(window.RTCV ? window.RTCV.newSection("experience") : {
-        type: "experience",
-        title: isHebrew ? "ניסיון מקצועי" : "Work Experience",
-        items: [{ role: isHebrew ? "תפקיד" : "Software Engineer", org: isHebrew ? "חברה" : "Tech Corp", dates: "2021 – Present", bullets: [isHebrew ? "פיתוח מערכות ליבה ושיפור ביצועים." : "Architected high-scale features."] }]
-      });
-    }
-
-    if (parsedEduItems.length) {
-      main.push({
-        type: "education",
-        title: isHebrew ? "השכלה" : "Education",
-        items: parsedEduItems
-      });
-    } else {
-      main.push(window.RTCV ? window.RTCV.newSection("education") : {
-        type: "education",
-        title: isHebrew ? "השכלה" : "Education",
-        items: [{ degree: isHebrew ? "תואר ראשון במדעי המחשב" : "B.Sc. in Computer Science", school: isHebrew ? "אוניברסיטה" : "University", dates: "2017 – 2020", bullets: [] }]
-      });
-    }
-
-    if (parsedSkills.length) {
-      side.push({
-        type: "skills",
-        title: isHebrew ? "מיומנויות וכלים" : "Skills",
-        items: [{ label: isHebrew ? "טכנולוגיות עיקריות" : "Core Skills", items: parsedSkills }]
-      });
-    } else {
-      side.push(window.RTCV ? window.RTCV.newSection("skills") : {
-        type: "skills",
-        title: isHebrew ? "מיומנויות וכלים" : "Skills",
-        items: [{ label: "", items: ["JavaScript", "Python", "React", "Git"] }]
-      });
-    }
-
-    return {
-      label: `${person.name} - RÃ©sumÃ©`,
-      template: "novo",
-      accent: "#2a8a8f",
-      font: isHebrew ? "Rubik" : "Inter",
-      density: "normal",
-      show_photo: true,
-      photo: "",
-      dir,
-      lang,
-      person,
-      main,
-      side,
-      _extractedCount: {
-        experiences: parsedExpItems.length,
-        education: parsedEduItems.length,
-        skills: parsedSkills.length
-      }
-    };
-  }
 
   function attachInlineEditors(stage) {
     const editables = stage.querySelectorAll("[data-e]");
@@ -1668,6 +1476,37 @@
 
       <div class="cve-section-card">
         <div class="cve-section-header">
+          <span class="cve-section-title">🖼️ רקעי קורות חיים (CV Document Backgrounds)</span>
+          <span class="cve-badge-pill" style="font-size:10px;background:#3b82f6;color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">10 Backgrounds</span>
+        </div>
+        <div class="cve-section-body">
+          <p style="font-size:12px;color:var(--cve-text-muted);margin-bottom:10px;line-height:1.4;">
+            בחר רקע לקורות החיים שלך ממסך העריכה של האתר — טופוגרפי, גריד הנדסי, כחול רויאל או קלאסי:
+          </p>
+          <div class="cve-bg-grid">
+            ${CV_BACKGROUNDS.map(bg => `
+              <div class="cve-bg-card ${(cv.background || "white") === bg.id ? "active" : ""}" onclick="window.CVE.setBg('${bg.id}')">
+                <div class="cve-bg-preview" style="${bg.previewStyle}">
+                  ${(cv.background || "white") === bg.id ? `<span class="cve-bg-check">✓</span>` : ""}
+                </div>
+                <div class="cve-bg-info">
+                  <div class="cve-bg-name">${esc(bg.name)}</div>
+                  <div class="cve-bg-name-he">${esc(bg.nameHe)}</div>
+                  <div class="cve-bg-desc">${esc(bg.desc)}</div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <label class="cve-label" style="margin:0;">צבע מותאם אישית (Custom Color):</label>
+            <input type="color" class="cve-color-input" style="width:48px;height:30px;padding:0;border:1px solid rgba(255,255,255,0.2);border-radius:6px;cursor:pointer;background:none;" value="${cv.custom_bg || "#ffffff"}" onchange="window.CVE.setBg('custom-color', this.value)">
+          </div>
+        </div>
+      </div>
+
+      <div class="cve-section-card">
+        <div class="cve-section-header">
           <span class="cve-section-title">📐 Layout & Column Options</span>
         </div>
         <div class="cve-section-body">
@@ -1874,6 +1713,11 @@
     const skinSel = $("#cveSkinSelect");
     if (skinSel) {
       skinSel.value = cv.skin || "classic";
+    }
+
+    const bgSel = $("#cveBgSelect");
+    if (bgSel) {
+      bgSel.value = cv.background || "white";
     }
 
     const userBtn = $("#userBtn");
@@ -2434,6 +2278,38 @@
       cv.skin = skinName || "classic";
       saveCurrentCV(cv);
       applySkin(cv.skin);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    setBg(bgId, customVal) {
+      const cv = getCurrentCV();
+      cv.background = bgId || "white";
+      if (customVal !== undefined) cv.custom_bg = customVal;
+      saveCurrentCV(cv);
+      applyCvBackground(cv.background, cv.custom_bg);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    moveItemPosition(fromCol, fromSecIdx, fromItemIdx, toCol, toSecIdx, toItemIdx, position = "before") {
+      const cv = getCurrentCV();
+      const fromSec = cv[fromCol] && cv[fromCol][fromSecIdx];
+      const toSec = cv[toCol] && cv[toCol][toSecIdx];
+      if (!fromSec || !toSec || !Array.isArray(fromSec.items) || !Array.isArray(toSec.items)) return;
+      if (fromCol === toCol && fromSecIdx === toSecIdx && fromItemIdx === toItemIdx) return;
+
+      const [item] = fromSec.items.splice(fromItemIdx, 1);
+      let insertIdx = toItemIdx;
+      if (fromCol === toCol && fromSecIdx === toSecIdx && fromItemIdx < toItemIdx) {
+        insertIdx--;
+      }
+      if (position === "after") insertIdx++;
+      if (insertIdx < 0) insertIdx = 0;
+      if (insertIdx > toSec.items.length) insertIdx = toSec.items.length;
+
+      toSec.items.splice(insertIdx, 0, item);
+      saveCurrentCV(cv);
       renderA4Sheet();
       renderSidebar();
     },

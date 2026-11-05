@@ -9,6 +9,10 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** CV category site backgrounds and full direct section & entry dragging:
+  - Added 10 CV document backgrounds from the site editor (Clean White ATS, Warm Ivory Linen, Classic Parchment, Site Topographic Contours from 3DVision section, Blueprint Grid, Dot Matrix, Slate, Royal Navy gradient, Dark Slate, Avraham Cyber Space) selectable via the topbar header and Design tab cards gallery.
+  - Fixed direct on-canvas drag-and-drop without needing precision button clicks: added full-width top drag strip (`.cve-sec-drag-bar`), draggable `<h2>` heading zone, and section card frame with glowing drop indicators and "Place Section Here" outline.
+  - Added direct entry/item dragging ("וחלק ממנו עצמו"): reorder individual experience, project, education or skill items directly with hover grip handles (`⠿`) and cyan insertion indicators.
 - **CVEditor:** site skins integration and whole-section direct drag-and-drop:
   - Integrated all 8 roeetal.com site themes (Classic, Apple Minimal, Robert Valley, Avraham Cyber, Arcade Retro, Hobbies Climbing, Sketchbook, Plain ATS) into CVEditor.
   - Added topbar style switcher and Design tab theme picker cards that dynamically apply styles to the CV sheet and studio workspace.
