@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 172 commits.
+Total: 173 commits.
 
 ## 2026-10-31
 
@@ -874,7 +874,12 @@ CVEditor: undo/redo history, sidebar accordion & toggle, 1-click delete buttons,
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cv.js, assets/cveditor.css, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, docs/COMMITS.md, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
 
-### 0c5af6e · 2026-11-05 · Roee Tal
+### f45de7b · 2026-11-05 · Roee Tal
 CVEditor: protruding arrow sidebar toggle, sidebar full-height scrolling, and per-element reordering & deletion
 
-files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js, docs/COMMITS.md
+
+### 8310e59 · 2026-11-05 · Roee Tal
+CVEditor: per-section internal scrolling, rich accordion preview, accurate arrow direction, and stable drop outlines
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.css, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html

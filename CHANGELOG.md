@@ -9,6 +9,12 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** per-section internal scrolling, rich accordion preview, accurate arrow direction, and stable drop outlines:
+  - Per-section internal scrolling: added dedicated `max-height: 480px; overflow-y: auto` to `.cve-section-body` cards, allowing effortless scrolling inside individual sections ("בחלקים") as well as across the full sidebar.
+  - Rich accordion closed state: collapsed sections now display their section icon (`💼`, `🚀`, `🎓`, `⚡`, `🌐`), bold title, item count badge, and a summary preview of their contents (`(Role @ Org)`), completely eliminating empty line ambiguity.
+  - Arrow toggle direction fixed: eliminated CSS rotation conflict so the protruding sidebar toggle arrow strictly points `◀` when open and `▶` when collapsed, and accordion arrows strictly point `▼` when open and `►` when closed.
+  - Rock-solid drop outline feedback: replaced buggy `dragleave` clearing with centralized active drop target tracking (`setActiveDropTarget`), permanently resolving outline flickering across sections, items, bullets, and skills.
+  - Cache busting: updated asset query parameters (`?v=20261105_05`) so browser caches immediately load fresh styling and logic.
 - **CVEditor:** protruding arrow sidebar toggle, sidebar full-height scrolling, and per-element reordering & deletion:
   - Protruding arrow toggle button: sleek floating pill button on sidebar right edge (`◀` / `▶`) to easily collapse and expand the sidebar.
   - Sidebar full-height scrolling: resolved flex container clipping bug; sidebar content now has persistent, styled vertical scrolling to reach every bullet and section.

@@ -890,7 +890,22 @@
     document.body.classList.remove(...modeClasses);
     const stage = document.querySelector("#cvSheet");
     if (stage) stage.classList.remove(...modeClasses);
+    state.activeDropEl = null;
     state.currentDropEl = null;
+  }
+
+  function setActiveDropTarget(el, dropClass) {
+    if (state.activeDropEl && state.activeDropEl !== el) {
+      state.activeDropEl.classList.remove(
+        "cve-drop-target-before", "cve-drop-target-after",
+        "cve-item-drop-before", "cve-item-drop-after",
+        "cve-bullet-drop-before", "cve-bullet-drop-after",
+        "cve-chip-drop-before", "cve-chip-drop-after",
+        "cve-contact-drop-before", "cve-contact-drop-after"
+      );
+    }
+    state.activeDropEl = el;
+    el.classList.add(dropClass);
   }
 
 
@@ -962,27 +977,11 @@
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
 
-        if (state.currentDropEl && state.currentDropEl !== bulEl) {
-          state.currentDropEl.classList.remove("cve-bullet-drop-before", "cve-bullet-drop-after");
-        }
-        state.currentDropEl = bulEl;
-
         const rect = bulEl.getBoundingClientRect();
         const midY = rect.top + rect.height / 2;
-        if (e.clientY < midY) {
-          bulEl.classList.add("cve-bullet-drop-before");
-          bulEl.classList.remove("cve-bullet-drop-after");
-        } else {
-          bulEl.classList.add("cve-bullet-drop-after");
-          bulEl.classList.remove("cve-bullet-drop-before");
-        }
-      });
-
-      bulEl.addEventListener("dragleave", (e) => {
-        if (e.relatedTarget && !bulEl.contains(e.relatedTarget)) {
-          bulEl.classList.remove("cve-bullet-drop-before", "cve-bullet-drop-after");
-          if (state.currentDropEl === bulEl) state.currentDropEl = null;
-        }
+        const dropClass = e.clientY < midY ? "cve-bullet-drop-before" : "cve-bullet-drop-after";
+        bulEl.classList.remove(e.clientY < midY ? "cve-bullet-drop-after" : "cve-bullet-drop-before");
+        setActiveDropTarget(bulEl, dropClass);
       });
 
       bulEl.addEventListener("drop", (e) => {
@@ -1563,19 +1562,9 @@
 
         const rect = secEl.getBoundingClientRect();
         const midY = rect.top + rect.height / 2;
-        if (e.clientY < midY) {
-          secEl.classList.add("cve-drop-target-before");
-          secEl.classList.remove("cve-drop-target-after");
-        } else {
-          secEl.classList.add("cve-drop-target-after");
-          secEl.classList.remove("cve-drop-target-before");
-        }
-      });
-
-      secEl.addEventListener("dragleave", (e) => {
-        if (!secEl.contains(e.relatedTarget)) {
-          secEl.classList.remove("cve-drop-target-before", "cve-drop-target-after");
-        }
+        const dropClass = e.clientY < midY ? "cve-drop-target-before" : "cve-drop-target-after";
+        secEl.classList.remove(e.clientY < midY ? "cve-drop-target-after" : "cve-drop-target-before");
+        setActiveDropTarget(secEl, dropClass);
       });
 
       secEl.addEventListener("drop", (e) => {
@@ -1642,19 +1631,9 @@
 
           const rect = itemEl.getBoundingClientRect();
           const midY = rect.top + rect.height / 2;
-          if (e.clientY < midY) {
-            itemEl.classList.add("cve-item-drop-before");
-            itemEl.classList.remove("cve-item-drop-after");
-          } else {
-            itemEl.classList.add("cve-item-drop-after");
-            itemEl.classList.remove("cve-item-drop-before");
-          }
-        });
-
-        itemEl.addEventListener("dragleave", (e) => {
-          if (!itemEl.contains(e.relatedTarget)) {
-            itemEl.classList.remove("cve-item-drop-before", "cve-item-drop-after");
-          }
+          const dropClass = e.clientY < midY ? "cve-item-drop-before" : "cve-item-drop-after";
+          itemEl.classList.remove(e.clientY < midY ? "cve-item-drop-after" : "cve-item-drop-before");
+          setActiveDropTarget(itemEl, dropClass);
         });
 
         itemEl.addEventListener("drop", (e) => {
@@ -2246,6 +2225,9 @@
     const cv = getCurrentCV();
     const P = cv.person || {};
 
+    const isPersonCollapsed = state.collapsedSections && state.collapsedSections["person"];
+    const personSubtitle = [P.name, P.title].filter(Boolean).join(" · ");
+
     let html = `
       <div style="display:flex;gap:8px;margin-bottom:4px;">
         <button type="button" class="cve-btn layout-btn" style="flex:1;justify-content:center;" onclick="window.CVE.openLayoutModal()">
@@ -2256,9 +2238,14 @@
         </button>
       </div>
 
-      <div class="cve-section-card">
-        <div class="cve-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
-          <span class="cve-section-title">👤 Personal Details</span>
+      <div class="cve-section-card ${isPersonCollapsed ? "collapsed" : ""}">
+        <div class="cve-section-header" onclick="window.CVE.toggleSectionCard('person')" title="Click to ${isPersonCollapsed ? "expand" : "collapse"} section">
+          <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;">
+            <span class="cve-accordion-arrow">${isPersonCollapsed ? "►" : "▼"}</span>
+            <span style="font-size:14px;line-height:1;">👤</span>
+            <span class="cve-section-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:13px;color:#fff;">Personal Details</span>
+            ${isPersonCollapsed && personSubtitle ? `<span style="font-size:11px;color:var(--cve-text-muted);font-weight:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;">(${esc(personSubtitle)})</span>` : ""}
+          </div>
         </div>
         <div class="cve-section-body">
           <div class="cve-sidebar-photo-row">
@@ -2314,19 +2301,47 @@
       const basePath = `${col}.${colIdx}`;
 
       const isCollapsed = state.collapsedSections && state.collapsedSections[basePath];
-      const itemCount = (sec.items || []).length;
+      const items = sec.items || [];
+      const itemCount = items.length;
+
+      const typeIcons = {
+        experience: "💼",
+        projects: "🚀",
+        education: "🎓",
+        skills: "⚡",
+        tags: "🏷️",
+        languages: "🌐",
+        custom: "📄"
+      };
+      const icon = typeIcons[sec.type] || "📄";
+
+      let previewText = "";
+      if (items.length > 0) {
+        if (sec.type === "experience") {
+          previewText = items.map(it => it.role || it.org).filter(Boolean).slice(0, 2).join(", ");
+        } else if (sec.type === "projects") {
+          previewText = items.map(it => it.name).filter(Boolean).slice(0, 2).join(", ");
+        } else if (sec.type === "education") {
+          previewText = items.map(it => it.degree || it.school).filter(Boolean).slice(0, 2).join(", ");
+        } else if (sec.type === "skills" || sec.type === "tags") {
+          previewText = (items[0] && items[0].items ? items[0].items.slice(0, 4).join(", ") : "");
+        } else if (sec.type === "languages") {
+          previewText = items.map(it => it.name).filter(Boolean).join(", ");
+        }
+      }
 
       html += `
         <div class="cve-section-card ${isCollapsed ? "collapsed" : ""}" data-col="${col}" data-idx="${colIdx}">
-          <div class="cve-section-header" onclick="window.CVE.toggleSectionCard('${basePath}')">
+          <div class="cve-section-header" onclick="window.CVE.toggleSectionCard('${basePath}')" title="Click to ${isCollapsed ? "expand" : "collapse"} section">
             <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;">
               <span class="cve-accordion-arrow">${isCollapsed ? "►" : "▼"}</span>
               <span class="cve-drag-handle" title="Drag to reorder section" draggable="true" onclick="event.stopPropagation()">⠿</span>
-              <span class="cve-section-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                <span style="font-size:10px;background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px;text-transform:uppercase;">${col}</span>
+              <span style="font-size:14px;line-height:1;">${icon}</span>
+              <span class="cve-section-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:13px;color:#fff;">
                 ${esc(sec.title || sec.type)}
               </span>
-              <span style="font-size:10.5px;color:var(--cve-text-muted);background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:9999px;">${itemCount}</span>
+              ${isCollapsed && previewText ? `<span style="font-size:11px;color:var(--cve-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;font-weight:normal;">(${esc(previewText)})</span>` : ""}
+              <span style="font-size:10px;color:var(--cve-text-muted);background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:9999px;flex-shrink:0;">${itemCount} ${itemCount === 1 ? "item" : "items"}</span>
             </div>
             <div class="cve-section-actions" onclick="event.stopPropagation()">
               <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.moveSectionColumn('${col}', ${colIdx})" title="Move to other column">⇄</button>
