@@ -579,14 +579,21 @@
     setTimeout(updatePageMeter, 80);
   }
 
+  function clearAllDropFeedback() {
+    document.querySelectorAll(".cve-drop-target-before, .cve-drop-target-after, .cve-is-dragging, .cve-drop-zone-active")
+      .forEach(el => el.classList.remove("cve-drop-target-before", "cve-drop-target-after", "cve-is-dragging", "cve-drop-zone-active"));
+  }
+
   function attachSectionToolbars(stage) {
     const cv = getCurrentCV();
     const secs = stage.querySelectorAll(".cv-sec");
 
     secs.forEach(secEl => {
-      const parentColEl = secEl.closest(".cv-side, .cv-main");
-      const col = parentColEl && parentColEl.classList.contains("cv-side") ? "side" : "main";
-      const idx = parseInt(secEl.getAttribute("data-i"), 10);
+      const parentColEl = secEl.closest(".cv-side, .cv-main, .cv-aside, .cv-body");
+      const col = parentColEl && (parentColEl.classList.contains("cv-side") || parentColEl.classList.contains("cv-aside")) ? "side" : "main";
+      const idxAttr = secEl.getAttribute("data-i");
+      if (idxAttr === null || isNaN(parseInt(idxAttr, 10))) return;
+      const idx = parseInt(idxAttr, 10);
       const colList = cv[col] || [];
 
       const existing = secEl.querySelector(":scope > .cve-sec-toolbar");
@@ -594,6 +601,31 @@
 
       const bar = document.createElement("div");
       bar.className = "cve-sec-toolbar";
+
+      // 1. Drag Handle in on-canvas toolbar
+      const dragBtn = document.createElement("button");
+      dragBtn.type = "button";
+      dragBtn.className = "cve-tool-btn cve-drag-handle";
+      dragBtn.innerHTML = "⠿ Drag";
+      dragBtn.title = "Drag to reorder section or move across columns";
+      dragBtn.setAttribute("draggable", "true");
+
+      dragBtn.addEventListener("dragstart", (e) => {
+        state.draggingSection = { col, idx };
+        secEl.classList.add("cve-is-dragging");
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx }));
+        }
+      });
+
+      dragBtn.addEventListener("dragend", () => {
+        secEl.classList.remove("cve-is-dragging");
+        clearAllDropFeedback();
+        state.draggingSection = null;
+      });
+
+      bar.appendChild(dragBtn);
 
       const otherColLabel = col === "main" ? "Side" : "Main";
       const switchBtn = document.createElement("button");
@@ -656,6 +688,79 @@
       bar.appendChild(delBtn);
 
       secEl.prepend(bar);
+
+      // Section dragover & drop listeners on canvas
+      secEl.addEventListener("dragover", (e) => {
+        if (!state.draggingSection) return;
+        const dragging = state.draggingSection;
+        if (dragging.col === col && dragging.idx === idx) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+        const rect = secEl.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) {
+          secEl.classList.add("cve-drop-target-before");
+          secEl.classList.remove("cve-drop-target-after");
+        } else {
+          secEl.classList.add("cve-drop-target-after");
+          secEl.classList.remove("cve-drop-target-before");
+        }
+      });
+
+      secEl.addEventListener("dragleave", (e) => {
+        if (!secEl.contains(e.relatedTarget)) {
+          secEl.classList.remove("cve-drop-target-before", "cve-drop-target-after");
+        }
+      });
+
+      secEl.addEventListener("drop", (e) => {
+        if (!state.draggingSection) return;
+        const dragging = state.draggingSection;
+        if (dragging.col === col && dragging.idx === idx) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = secEl.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const pos = e.clientY < midY ? "before" : "after";
+
+        clearAllDropFeedback();
+        state.draggingSection = null;
+        window.CVE.moveSectionPosition(dragging.col, dragging.idx, col, idx, pos);
+      });
+    });
+
+    // Column container drop listeners
+    const colContainers = stage.querySelectorAll(".cv-col, .cv-main, .cv-side, .cv-aside, .cv-body");
+    colContainers.forEach(cEl => {
+      const cCol = cEl.classList.contains("cv-side") || cEl.classList.contains("cv-aside") ? "side" : "main";
+      cEl.addEventListener("dragover", (e) => {
+        if (!state.draggingSection) return;
+        if (e.target.closest && e.target.closest(".cv-sec")) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+        cEl.classList.add("cve-drop-zone-active");
+      });
+
+      cEl.addEventListener("dragleave", (e) => {
+        if (!cEl.contains(e.relatedTarget)) {
+          cEl.classList.remove("cve-drop-zone-active");
+        }
+      });
+
+      cEl.addEventListener("drop", (e) => {
+        if (!state.draggingSection) return;
+        if (e.target.closest && e.target.closest(".cv-sec")) return;
+        e.preventDefault();
+        e.stopPropagation();
+        cEl.classList.remove("cve-drop-zone-active");
+        const dragging = state.draggingSection;
+        clearAllDropFeedback();
+        state.draggingSection = null;
+        window.CVE.moveSectionPosition(dragging.col, dragging.idx, cCol, (cv[cCol] || []).length, "after");
+      });
     });
 
     const items = stage.querySelectorAll(".cv-item");
@@ -1253,17 +1358,23 @@
       const isSide = sIdx >= (cv.main || []).length;
       const col = isSide ? "side" : "main";
       const colIdx = isSide ? sIdx - (cv.main || []).length : sIdx;
+      const colList = cv[col] || [];
       const basePath = `${col}.${colIdx}`;
 
       html += `
-        <div class="cve-section-card">
+        <div class="cve-section-card" data-col="${col}" data-idx="${colIdx}">
           <div class="cve-section-header">
-            <span class="cve-section-title">
-              <span style="font-size:10px;background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px;text-transform:uppercase;">${col}</span>
-              ${esc(sec.title || sec.type)}
-            </span>
+            <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;">
+              <span class="cve-drag-handle" title="Drag to reorder section" draggable="true">⠿</span>
+              <span class="cve-section-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                <span style="font-size:10px;background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px;text-transform:uppercase;">${col}</span>
+                ${esc(sec.title || sec.type)}
+              </span>
+            </div>
             <div class="cve-section-actions">
               <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.moveSectionColumn('${col}', ${colIdx})" title="Move to other column">⇄</button>
+              ${colIdx > 0 ? `<button type="button" class="cve-icon-btn-sm" onclick="window.CVE.reorderSection('${col}', ${colIdx}, -1)" title="Move Up">▲</button>` : ""}
+              ${colIdx < (colList.length - 1) ? `<button type="button" class="cve-icon-btn-sm" onclick="window.CVE.reorderSection('${col}', ${colIdx}, 1)" title="Move Down">▼</button>` : ""}
               <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.addEntry('${basePath}')" title="Add Item">＋</button>
               <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.removeSection('${basePath}')" title="Delete Section">✕</button>
             </div>
@@ -1358,6 +1469,73 @@
 
     body.innerHTML = html;
     attachSidebarInputs(body);
+    attachSidebarDragAndDrop(body);
+  }
+
+  function attachSidebarDragAndDrop(container) {
+    const cards = container.querySelectorAll(".cve-section-card[data-col]");
+    cards.forEach(card => {
+      const col = card.getAttribute("data-col");
+      const idx = parseInt(card.getAttribute("data-idx"), 10);
+      const handle = card.querySelector(".cve-drag-handle");
+      if (!handle) return;
+
+      handle.addEventListener("dragstart", (e) => {
+        card.classList.add("cve-is-dragging");
+        state.draggingSection = { col, idx };
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx }));
+        }
+      });
+
+      handle.addEventListener("dragend", () => {
+        card.classList.remove("cve-is-dragging");
+        clearAllDropFeedback();
+        state.draggingSection = null;
+      });
+
+      card.addEventListener("dragover", (e) => {
+        if (!state.draggingSection) return;
+        const dragging = state.draggingSection;
+        if (dragging.col === col && dragging.idx === idx) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+        const rect = card.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) {
+          card.classList.add("cve-drop-target-before");
+          card.classList.remove("cve-drop-target-after");
+        } else {
+          card.classList.add("cve-drop-target-after");
+          card.classList.remove("cve-drop-target-before");
+        }
+      });
+
+      card.addEventListener("dragleave", (e) => {
+        if (!card.contains(e.relatedTarget)) {
+          card.classList.remove("cve-drop-target-before", "cve-drop-target-after");
+        }
+      });
+
+      card.addEventListener("drop", (e) => {
+        if (!state.draggingSection) return;
+        const dragging = state.draggingSection;
+        if (dragging.col === col && dragging.idx === idx) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = card.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const pos = e.clientY < midY ? "before" : "after";
+
+        clearAllDropFeedback();
+        state.draggingSection = null;
+        window.CVE.moveSectionPosition(dragging.col, dragging.idx, col, idx, pos);
+      });
+    });
   }
 
   function renderDesignTab(body) {
@@ -1904,8 +2082,9 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;flex:1;">
             ${(cv.side || []).map((sec, idx) => `
-              <div class="cve-board-card">
-                <div class="cve-board-card-info">
+              <div class="cve-board-card" data-col="side" data-idx="${idx}">
+                <div class="cve-board-card-info" style="display:flex;align-items:center;gap:7px;">
+                  <span class="cve-drag-handle" title="Drag to reorder" draggable="true">⠿</span>
                   <span class="cve-board-card-title">${esc(sec.title || sec.type)}</span>
                   <span class="cve-board-card-badge">${(sec.items || []).length} items</span>
                 </div>
@@ -1929,8 +2108,9 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;flex:1;">
             ${(cv.main || []).map((sec, idx) => `
-              <div class="cve-board-card">
-                <div class="cve-board-card-info">
+              <div class="cve-board-card" data-col="main" data-idx="${idx}">
+                <div class="cve-board-card-info" style="display:flex;align-items:center;gap:7px;">
+                  <span class="cve-drag-handle" title="Drag to reorder" draggable="true">⠿</span>
                   <span class="cve-board-card-title">${esc(sec.title || sec.type)}</span>
                   <span class="cve-board-card-badge">${(sec.items || []).length} items</span>
                 </div>
@@ -1950,6 +2130,104 @@
     `;
 
     body.innerHTML = html;
+    attachBoardDragAndDrop(body);
+  }
+
+  function attachBoardDragAndDrop(container) {
+    const cards = container.querySelectorAll(".cve-board-card[data-col]");
+    cards.forEach(card => {
+      const col = card.getAttribute("data-col");
+      const idx = parseInt(card.getAttribute("data-idx"), 10);
+      const handle = card.querySelector(".cve-drag-handle");
+      if (!handle) return;
+
+      handle.addEventListener("dragstart", (e) => {
+        card.classList.add("cve-is-dragging");
+        state.draggingSection = { col, idx };
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx }));
+        }
+      });
+
+      handle.addEventListener("dragend", () => {
+        card.classList.remove("cve-is-dragging");
+        clearAllDropFeedback();
+        state.draggingSection = null;
+      });
+
+      card.addEventListener("dragover", (e) => {
+        if (!state.draggingSection) return;
+        const dragging = state.draggingSection;
+        if (dragging.col === col && dragging.idx === idx) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+        const rect = card.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) {
+          card.classList.add("cve-drop-target-before");
+          card.classList.remove("cve-drop-target-after");
+        } else {
+          card.classList.add("cve-drop-target-after");
+          card.classList.remove("cve-drop-target-before");
+        }
+      });
+
+      card.addEventListener("dragleave", (e) => {
+        if (!card.contains(e.relatedTarget)) {
+          card.classList.remove("cve-drop-target-before", "cve-drop-target-after");
+        }
+      });
+
+      card.addEventListener("drop", (e) => {
+        if (!state.draggingSection) return;
+        const dragging = state.draggingSection;
+        if (dragging.col === col && dragging.idx === idx) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = card.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const pos = e.clientY < midY ? "before" : "after";
+
+        clearAllDropFeedback();
+        state.draggingSection = null;
+        window.CVE.moveSectionPosition(dragging.col, dragging.idx, col, idx, pos);
+      });
+    });
+
+    const cols = container.querySelectorAll(".cve-board-col");
+    cols.forEach((colEl, cIdx) => {
+      const colName = cIdx === 0 ? "side" : "main";
+      colEl.addEventListener("dragover", (e) => {
+        if (!state.draggingSection) return;
+        if (e.target.closest && e.target.closest(".cve-board-card")) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+        colEl.classList.add("cve-drop-zone-active");
+      });
+
+      colEl.addEventListener("dragleave", (e) => {
+        if (!colEl.contains(e.relatedTarget)) {
+          colEl.classList.remove("cve-drop-zone-active");
+        }
+      });
+
+      colEl.addEventListener("drop", (e) => {
+        if (!state.draggingSection) return;
+        if (e.target.closest && e.target.closest(".cve-board-card")) return;
+        e.preventDefault();
+        e.stopPropagation();
+        colEl.classList.remove("cve-drop-zone-active");
+        const dragging = state.draggingSection;
+        clearAllDropFeedback();
+        state.draggingSection = null;
+        const cv = getCurrentCV();
+        window.CVE.moveSectionPosition(dragging.col, dragging.idx, colName, (cv[colName] || []).length, "after");
+      });
+    });
   }
 
   // --- Section Library Modal Renderer ---
@@ -2158,6 +2436,28 @@
       const temp = list[idx];
       list[idx] = list[target];
       list[target] = temp;
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+      renderLayoutModalBody();
+    },
+
+    moveSectionPosition(fromCol, fromIdx, toCol, targetIdx, position = "before") {
+      const cv = getCurrentCV();
+      if (!cv[fromCol] || cv[fromCol][fromIdx] === undefined) return;
+      if (fromCol === toCol && fromIdx === targetIdx) return;
+
+      const targetSec = cv[toCol] ? cv[toCol][targetIdx] : null;
+      const [sec] = cv[fromCol].splice(fromIdx, 1);
+      if (!cv[toCol]) cv[toCol] = [];
+
+      let insertIdx = targetSec ? cv[toCol].indexOf(targetSec) : cv[toCol].length;
+      if (position === "after" && insertIdx !== -1) {
+        insertIdx++;
+      }
+      if (insertIdx === -1) insertIdx = cv[toCol].length;
+
+      cv[toCol].splice(insertIdx, 0, sec);
       saveCurrentCV(cv);
       renderA4Sheet();
       renderSidebar();

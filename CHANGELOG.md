@@ -9,6 +9,11 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** drag-and-drop section reordering with real-time outline feedback:
+  - Added drag handles (`⠿`) and up/down arrow buttons (`▲` / `▼`) to every section in the sidebar inspector.
+  - Added on-canvas section drag handles (`⠿ Drag`) to hover toolbars on the live CV sheet.
+  - Added glowing drop-target outline and insertion line feedback to indicate exact placement before dropping.
+  - Supports reordering within columns and dragging across columns (main ⇄ side).
 - **CVEditor:** fixed startup, auth, and editing workflow:
   - Loads Roee's actual CV data and variants immediately on load instead of displaying an empty "Your Name" canvas.
   - Stopped auto-triggering the onboarding wizard modal on page load which blocked the editor.
