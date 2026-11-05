@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 185 commits.
+Total: 187 commits.
 
 ## 2026-10-31
 
@@ -941,5 +941,15 @@ files: docs/COMMITS.md
 
 ### 5dc707b · 2026-11-05 · Roee Tal
 CVEditor: Google Email sign-in for friends with personal vaults, strict Roee CV privacy isolation
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
+
+### 0d450ed · 2026-11-05 · Roee Tal
+docs: update COMMITS.md
+
+files: docs/COMMITS.md
+
+### 17acfb3 · 2026-11-05 · Roee Tal
+CVEditor: authentic Google Sign-In with account chooser, total removal of hardcoded Roee CV data
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
