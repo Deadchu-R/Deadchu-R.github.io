@@ -2794,3 +2794,421 @@ html[data-skin="plain"] {
   transform: scale(0.98);
   outline: 1.5px dashed #00f0ff !important;
 }
+
+
+/* ============================================================
+   Micro Drag-and-Drop: Bullets, Skills, Contact Items
+   ============================================================ */
+
+/* Bullet Points Dragging (Experience, Projects, Education) */
+.cvdoc .cv-bul li,
+.cvdoc .cv-inline-bullet {
+  cursor: grab !important;
+  position: relative;
+  transition: background 0.15s, outline 0.15s;
+  border-radius: 3px;
+}
+
+.cvdoc .cv-bul li:hover,
+.cvdoc .cv-inline-bullet:hover {
+  background: rgba(56, 189, 248, 0.05);
+  outline: 1px dashed rgba(56, 189, 248, 0.35);
+}
+
+.cve-bullet-grip {
+  position: absolute;
+  inset-inline-start: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 16px;
+  color: #38bdf8;
+  cursor: grab;
+  font-size: 11px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.cvdoc .cv-bul li:hover > .cve-bullet-grip {
+  display: flex;
+}
+
+.cv-bul li.cve-bullet-drop-before,
+.cv-inline-bullet.cve-bullet-drop-before {
+  position: relative;
+  outline: 2px solid #00f0ff !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5) !important;
+}
+
+.cv-bul li.cve-bullet-drop-before::before,
+.cv-inline-bullet.cve-bullet-drop-before::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #00f0ff;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #00f0ff;
+  z-index: 99;
+}
+
+.cv-bul li.cve-bullet-drop-after,
+.cv-inline-bullet.cve-bullet-drop-after {
+  position: relative;
+  outline: 2px solid #00f0ff !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5) !important;
+}
+
+.cv-bul li.cve-bullet-drop-after::after,
+.cv-inline-bullet.cve-bullet-drop-after::after {
+  content: "";
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #00f0ff;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #00f0ff;
+  z-index: 99;
+}
+
+.cve-is-dragging-bullet {
+  opacity: 0.45 !important;
+  outline: 1.5px dashed #00f0ff !important;
+}
+
+/* Skills Dragging & High-Visibility Hover State */
+.cvdoc .cv-chip {
+  cursor: grab !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  position: relative;
+  user-select: none;
+}
+
+.cvdoc .cv-chip:hover {
+  background: var(--cv-accent, #1f6feb) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--cv-accent, #1f6feb) !important;
+  box-shadow: 0 3px 12px rgba(31, 111, 235, 0.5) !important;
+  transform: translateY(-1.5px) scale(1.05) !important;
+  outline: 1.5px dashed rgba(255, 255, 255, 0.7) !important;
+  z-index: 10;
+}
+
+.cvdoc .cv-chip:active {
+  cursor: grabbing !important;
+}
+
+.cv-chip.cve-chip-drop-before {
+  position: relative;
+  outline: 2px solid #00f0ff !important;
+}
+
+.cv-chip.cve-chip-drop-before::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 4px;
+  background: #00f0ff;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #00f0ff;
+  z-index: 99;
+}
+
+.cv-chip.cve-chip-drop-after {
+  position: relative;
+  outline: 2px solid #00f0ff !important;
+}
+
+.cv-chip.cve-chip-drop-after::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -4px;
+  width: 4px;
+  background: #00f0ff;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #00f0ff;
+  z-index: 99;
+}
+
+.cve-is-dragging-skill {
+  opacity: 0.4 !important;
+  transform: scale(0.95);
+  outline: 2px dashed #00f0ff !important;
+}
+
+/* Contact Info Dragging (Email, Phone, Location, Links) */
+.cvdoc .cv-contact-item {
+  cursor: grab !important;
+  transition: all 0.15s ease !important;
+  border-radius: 4px;
+  padding: 2px 4px;
+  position: relative;
+}
+
+.cvdoc .cv-contact-item:hover {
+  background: rgba(56, 189, 248, 0.08);
+  outline: 1px dashed rgba(56, 189, 248, 0.4);
+}
+
+.cvdoc .cv-contact-item:active {
+  cursor: grabbing !important;
+}
+
+.cv-contact-item.cve-contact-drop-before {
+  position: relative;
+  outline: 2px solid #00f0ff !important;
+}
+
+.cv-contact-item.cve-contact-drop-before::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 3px;
+  background: #00f0ff;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #00f0ff;
+  z-index: 99;
+}
+
+.cv-contact-item.cve-contact-drop-after {
+  position: relative;
+  outline: 2px solid #00f0ff !important;
+}
+
+.cv-contact-item.cve-contact-drop-after::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -3px;
+  width: 3px;
+  background: #00f0ff;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #00f0ff;
+  z-index: 99;
+}
+
+.cve-is-dragging-contact {
+  opacity: 0.45 !important;
+  outline: 1.5px dashed #00f0ff !important;
+}
+
+/* ============================================================
+   Typography, Text Color & Element Sizing Variables
+   ============================================================ */
+
+.cvdoc {
+  font-size: var(--cv-base-fs, 14px) !important;
+  color: var(--cv-ink, var(--ink)) !important;
+  line-height: var(--cv-line-height, 1.42) !important;
+}
+
+.cvdoc h2 {
+  font-size: var(--cv-h2-fs, 1.35em) !important;
+}
+
+.cvdoc h3 {
+  font-size: var(--cv-h3-fs, 1.08em) !important;
+}
+
+.cvdoc .cv-when,
+.cvdoc .cv-about,
+.cvdoc .muted,
+.cvdoc .cv-loc {
+  color: var(--cv-mute, var(--mute)) !important;
+}
+
+/* Font Cards Grid in Design Tab */
+.cve-font-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.cve-font-card {
+  background: var(--cve-surface);
+  border: 1px solid var(--cve-border);
+  border-radius: var(--cve-radius-sm);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cve-font-card:hover {
+  background: var(--cve-surface-hover);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.cve-font-card.active {
+  border: 2px solid var(--cve-accent);
+  background: rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.35);
+}
+
+.cve-font-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.cve-font-preview {
+  font-size: 13.5px;
+  color: #38bdf8;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cve-font-cat {
+  font-size: 9.5px;
+  color: var(--cve-text-muted);
+}
+
+/* Sizing Control Sliders */
+.cve-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.cve-size-val {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #38bdf8;
+  min-width: 44px;
+  text-align: right;
+}
+
+.cve-range-input {
+  flex: 1;
+  accent-color: var(--cve-accent);
+  cursor: pointer;
+}
+
+.cve-size-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.cve-size-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--cve-border);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cve-size-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.cve-size-btn.active {
+  background: var(--cve-accent);
+  color: #fff;
+  border-color: var(--cve-accent);
+}
+
+/* ============================================================
+   On-Canvas Red '!' ATS Tips & Popups
+   ============================================================ */
+
+.cve-tip-badge {
+  position: absolute;
+  inset-inline-start: -12px;
+  top: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 12px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.6);
+  cursor: pointer;
+  z-index: 80;
+  animation: cveTipPulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes cveTipPulse {
+  from { transform: scale(1); box-shadow: 0 2px 8px rgba(239, 68, 68, 0.6); }
+  to { transform: scale(1.18); box-shadow: 0 4px 14px rgba(239, 68, 68, 0.9); }
+}
+
+.cve-tip-popup {
+  position: fixed;
+  z-index: 2000;
+  background: #151518;
+  color: #f1f5f9;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
+  border-radius: 12px;
+  padding: 14px;
+  max-width: 320px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  animation: cveFadeIn 0.18s ease-out;
+}
+
+.cve-tip-popup-title {
+  font-weight: 800;
+  font-size: 13.5px;
+  color: #fca5a5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.cve-tip-popup-why {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-bottom: 12px;
+}
+
+.cve-tip-popup-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Robot Plain Text Inspector Box */
+.cve-plain-text-box {
+  background: #090a0f;
+  border: 1px solid var(--cve-border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11.5px;
+  color: #94a3b8;
+  white-space: pre-wrap;
+  max-height: 220px;
+  overflow-y: auto;
+  line-height: 1.5;
+}

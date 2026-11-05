@@ -676,6 +676,88 @@
     }
   ];
 
+
+  const GOOGLE_FONTS_CATALOG = [
+    { name: "Inter", cat: "Sans-Serif", sample: "Clean Modern Tech" },
+    { name: "Rubik", cat: "Hebrew / Sans", sample: "רוביק מעוצב ונקי" },
+    { name: "Assistant", cat: "Hebrew / Minimal", sample: "אסיסטנט מודרני" },
+    { name: "Open Sans", cat: "Humanist Sans", sample: "Friendly & High Legibility" },
+    { name: "Lato", cat: "Corporate Sans", sample: "Polished & Executive" },
+    { name: "Roboto", cat: "Standard Sans", sample: "Google Industry Standard" },
+    { name: "Poppins", cat: "Geometric Sans", sample: "Clean & Contemporary" },
+    { name: "Montserrat", cat: "Architectural", sample: "Bold Editorial Presence" },
+    { name: "Source Serif 4", cat: "Serif / Print", sample: "Traditional Editorial" },
+    { name: "Merriweather", cat: "Classic Serif", sample: "Academic & Literary" },
+    { name: "Space Grotesk", cat: "Tech / Cyber", sample: "Game Dev & Cyberpunk" },
+    { name: "JetBrains Mono", cat: "Monospace", sample: "Code & Technical" }
+  ];
+
+  function applyDocumentTypography(cv) {
+    const stage = $("#cvSheet");
+    if (!stage) return;
+    const doc = stage.querySelector(".cvdoc");
+    if (!doc) return;
+
+    const font = cv.font || "Inter";
+    doc.style.setProperty("--cv-font", `'${font}', sans-serif`);
+    doc.style.setProperty("--f", `'${font}', sans-serif`);
+
+    if (cv.text_color) {
+      doc.style.setProperty("--cv-ink", cv.text_color);
+      doc.style.setProperty("--ink", cv.text_color);
+    } else {
+      doc.style.removeProperty("--cv-ink");
+    }
+
+    if (cv.mute_color) {
+      doc.style.setProperty("--cv-mute", cv.mute_color);
+      doc.style.setProperty("--mute", cv.mute_color);
+    } else {
+      doc.style.removeProperty("--cv-mute");
+    }
+
+    if (cv.body_size) {
+      doc.style.setProperty("--cv-base-fs", cv.body_size + "px");
+      doc.style.setProperty("--fs", cv.body_size + "px");
+    } else {
+      doc.style.removeProperty("--cv-base-fs");
+    }
+
+    if (cv.heading_size) {
+      doc.style.setProperty("--cv-h2-fs", cv.heading_size + "em");
+    } else {
+      doc.style.removeProperty("--cv-h2-fs");
+    }
+
+    if (cv.title_size) {
+      doc.style.setProperty("--cv-h3-fs", cv.title_size + "em");
+    } else {
+      doc.style.removeProperty("--cv-h3-fs");
+    }
+
+    if (cv.line_height) {
+      doc.style.setProperty("--cv-line-height", cv.line_height);
+    } else {
+      doc.style.removeProperty("--cv-line-height");
+    }
+
+    if (cv.gap_scale) {
+      doc.style.setProperty("--gap", cv.gap_scale);
+    } else {
+      doc.style.removeProperty("--gap");
+    }
+
+    // Ensure Google Font link is loaded in <head>
+    const fontId = "cv-font-" + font.toLowerCase().replace(/\s+/g, "-");
+    if (!$("#" + fontId)) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.id = fontId;
+      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:ital,wght@0,400;0,600;0,700;1,400&display=swap`;
+      document.head.appendChild(link);
+    }
+  }
+
   function applyCvBackground(bgId, customVal) {
     const k = bgId || "white";
     const stage = $("#cvSheet");
@@ -728,18 +810,459 @@
     attachSectionToolbars(stage);
     attachInlineEditors(stage);
     attachPhotoInteractions(stage);
+    attachMicroDraggables(stage);
+    applyDocumentTypography(cv);
     applyZoom();
     updateTopbarUI();
     updateAtsBadge();
-    setTimeout(updatePageMeter, 80);
+    setTimeout(() => {
+      updatePageMeter();
+      renderCanvasTips(stage);
+    }, 90);
   }
 
   function clearAllDropFeedback() {
-    document.querySelectorAll(".cve-drop-target-before, .cve-drop-target-after, .cve-is-dragging, .cve-drop-zone-active, .cve-item-drop-before, .cve-item-drop-after, .cve-is-dragging-item")
-      .forEach(el => el.classList.remove("cve-drop-target-before", "cve-drop-target-after", "cve-is-dragging", "cve-drop-zone-active", "cve-item-drop-before", "cve-item-drop-after", "cve-is-dragging-item"));
+    const classes = [
+      "cve-drop-target-before", "cve-drop-target-after", "cve-is-dragging", "cve-drop-zone-active",
+      "cve-item-drop-before", "cve-item-drop-after", "cve-is-dragging-item",
+      "cve-bullet-drop-before", "cve-bullet-drop-after", "cve-is-dragging-bullet",
+      "cve-chip-drop-before", "cve-chip-drop-after", "cve-is-dragging-skill",
+      "cve-contact-drop-before", "cve-contact-drop-after", "cve-is-dragging-contact"
+    ];
+    const selector = classes.map(c => "." + c).join(", ");
+    document.querySelectorAll(selector).forEach(el => el.classList.remove(...classes));
   }
 
-  function attachSectionToolbars(stage) {
+
+  // --- Micro Drag-and-Drop: Bullets, Skills, and Contact Info ---
+  function attachMicroDraggables(stage) {
+    const cv = getCurrentCV();
+
+    // 1. Bullet Points Dragging (in Experience, Projects, Education)
+    const bullets = stage.querySelectorAll("ul.cv-bul > li, .cv-inline .cv-inline-bullet");
+    bullets.forEach((bulEl, bIdx) => {
+      bulEl.setAttribute("draggable", "true");
+      bulEl.classList.add("cve-draggable-bullet");
+
+      let grip = bulEl.querySelector(":scope > .cve-bullet-grip");
+      if (!grip) {
+        grip = document.createElement("span");
+        grip.className = "cve-bullet-grip";
+        grip.innerHTML = "⠿";
+        grip.title = "Drag bullet to reorder";
+        bulEl.prepend(grip);
+      }
+
+      const parentSec = bulEl.closest(".cv-sec");
+      const parentItem = bulEl.closest(".cv-item");
+      if (!parentSec || !parentItem) return;
+
+      const parentCol = parentSec.closest(".cv-side, .cv-main, .cv-aside, .cv-body");
+      const col = parentCol && (parentCol.classList.contains("cv-side") || parentCol.classList.contains("cv-aside")) ? "side" : "main";
+      const secIdx = parseInt(parentSec.getAttribute("data-i"), 10);
+      const itemIdx = parseInt(parentItem.getAttribute("data-i"), 10);
+
+      const startBulDrag = (e) => {
+        if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
+          return;
+        }
+        e.stopPropagation();
+        state.draggingBullet = { col, secIdx, itemIdx, bulletIdx: bIdx };
+        bulEl.classList.add("cve-is-dragging-bullet");
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "bullet", col, secIdx, itemIdx, bulletIdx: bIdx }));
+        }
+      };
+
+      grip.addEventListener("dragstart", startBulDrag);
+      bulEl.addEventListener("dragstart", startBulDrag);
+
+      bulEl.addEventListener("dragend", () => {
+        bulEl.classList.remove("cve-is-dragging-bullet");
+        clearAllDropFeedback();
+        state.draggingBullet = null;
+      });
+
+      bulEl.addEventListener("dragover", (e) => {
+        if (!state.draggingBullet) return;
+        const d = state.draggingBullet;
+        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.bulletIdx === bIdx) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+        const rect = bulEl.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) {
+          bulEl.classList.add("cve-bullet-drop-before");
+          bulEl.classList.remove("cve-bullet-drop-after");
+        } else {
+          bulEl.classList.add("cve-bullet-drop-after");
+          bulEl.classList.remove("cve-bullet-drop-before");
+        }
+      });
+
+      bulEl.addEventListener("dragleave", (e) => {
+        if (!bulEl.contains(e.relatedTarget)) {
+          bulEl.classList.remove("cve-bullet-drop-before", "cve-bullet-drop-after");
+        }
+      });
+
+      bulEl.addEventListener("drop", (e) => {
+        if (!state.draggingBullet) return;
+        const d = state.draggingBullet;
+        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.bulletIdx === bIdx) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = bulEl.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const pos = e.clientY < midY ? "before" : "after";
+
+        clearAllDropFeedback();
+        const fromCol = d.col, fromSec = d.secIdx, fromItem = d.itemIdx, fromBul = d.bulletIdx;
+        state.draggingBullet = null;
+
+        window.CVE.moveBulletPosition(fromCol, fromSec, fromItem, fromBul, col, secIdx, itemIdx, bIdx, pos);
+      });
+    });
+
+    // 2. Skill Chips Dragging
+    const chips = stage.querySelectorAll(".cv-chips .cv-chip, .cv-inline .cv-chip");
+    chips.forEach((chipEl, cIdx) => {
+      chipEl.setAttribute("draggable", "true");
+      chipEl.classList.add("cve-draggable-skill");
+
+      const parentSec = chipEl.closest(".cv-sec");
+      const parentItem = chipEl.closest(".cv-item");
+      if (!parentSec || !parentItem) return;
+
+      const parentCol = parentSec.closest(".cv-side, .cv-main, .cv-aside, .cv-body");
+      const col = parentCol && (parentCol.classList.contains("cv-side") || parentCol.classList.contains("cv-aside")) ? "side" : "main";
+      const secIdx = parseInt(parentSec.getAttribute("data-i"), 10);
+      const itemIdx = parseInt(parentItem.getAttribute("data-i"), 10);
+
+      const startSkillDrag = (e) => {
+        if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
+          return;
+        }
+        e.stopPropagation();
+        state.draggingSkill = { col, secIdx, itemIdx, skillIdx: cIdx };
+        chipEl.classList.add("cve-is-dragging-skill");
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "skill", col, secIdx, itemIdx, skillIdx: cIdx }));
+        }
+      };
+
+      chipEl.addEventListener("dragstart", startSkillDrag);
+
+      chipEl.addEventListener("dragend", () => {
+        chipEl.classList.remove("cve-is-dragging-skill");
+        clearAllDropFeedback();
+        state.draggingSkill = null;
+      });
+
+      chipEl.addEventListener("dragover", (e) => {
+        if (!state.draggingSkill) return;
+        const d = state.draggingSkill;
+        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.skillIdx === cIdx) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+        const rect = chipEl.getBoundingClientRect();
+        const midX = rect.left + rect.width / 2;
+        if (e.clientX < midX) {
+          chipEl.classList.add("cve-chip-drop-before");
+          chipEl.classList.remove("cve-chip-drop-after");
+        } else {
+          chipEl.classList.add("cve-chip-drop-after");
+          chipEl.classList.remove("cve-chip-drop-before");
+        }
+      });
+
+      chipEl.addEventListener("dragleave", (e) => {
+        if (!chipEl.contains(e.relatedTarget)) {
+          chipEl.classList.remove("cve-chip-drop-before", "cve-chip-drop-after");
+        }
+      });
+
+      chipEl.addEventListener("drop", (e) => {
+        if (!state.draggingSkill) return;
+        const d = state.draggingSkill;
+        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.skillIdx === cIdx) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = chipEl.getBoundingClientRect();
+        const midX = rect.left + rect.width / 2;
+        const pos = e.clientX < midX ? "before" : "after";
+
+        clearAllDropFeedback();
+        const fromCol = d.col, fromSec = d.secIdx, fromItem = d.itemIdx, fromSkill = d.skillIdx;
+        state.draggingSkill = null;
+
+        window.CVE.moveSkillPosition(fromCol, fromSec, fromItem, fromSkill, col, secIdx, itemIdx, cIdx, pos);
+      });
+    });
+
+    // 3. Personal Info & Contact Items Dragging (email, phone, location, links)
+    const contacts = stage.querySelectorAll(".cv-contact-item, .cv-contact .cv-contact-link");
+    contacts.forEach((conEl, conIdx) => {
+      conEl.setAttribute("draggable", "true");
+      conEl.classList.add("cve-draggable-contact");
+
+      const kind = conEl.getAttribute("data-contact") || (conEl.classList.contains("contact-mail") ? "email" : conEl.classList.contains("contact-phone") ? "phone" : conEl.classList.contains("contact-loc") ? "location" : "link");
+      const linkIdx = parseInt(conEl.getAttribute("data-i") || conIdx, 10);
+
+      const startContactDrag = (e) => {
+        if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
+          return;
+        }
+        e.stopPropagation();
+        state.draggingContact = { kind, linkIdx, conIdx };
+        conEl.classList.add("cve-is-dragging-contact");
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "contact", kind, linkIdx, conIdx }));
+        }
+      };
+
+      conEl.addEventListener("dragstart", startContactDrag);
+
+      conEl.addEventListener("dragend", () => {
+        conEl.classList.remove("cve-is-dragging-contact");
+        clearAllDropFeedback();
+        state.draggingContact = null;
+      });
+
+      conEl.addEventListener("dragover", (e) => {
+        if (!state.draggingContact) return;
+        const d = state.draggingContact;
+        if (d.conIdx === conIdx) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+        const rect = conEl.getBoundingClientRect();
+        const midX = rect.left + rect.width / 2;
+        if (e.clientX < midX) {
+          conEl.classList.add("cve-contact-drop-before");
+          conEl.classList.remove("cve-contact-drop-after");
+        } else {
+          conEl.classList.add("cve-contact-drop-after");
+          conEl.classList.remove("cve-contact-drop-before");
+        }
+      });
+
+      conEl.addEventListener("dragleave", (e) => {
+        if (!conEl.contains(e.relatedTarget)) {
+          conEl.classList.remove("cve-contact-drop-before", "cve-contact-drop-after");
+        }
+      });
+
+      conEl.addEventListener("drop", (e) => {
+        if (!state.draggingContact) return;
+        const d = state.draggingContact;
+        if (d.conIdx === conIdx) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = conEl.getBoundingClientRect();
+        const midX = rect.left + rect.width / 2;
+        const pos = e.clientX < midX ? "before" : "after";
+
+        clearAllDropFeedback();
+        const fromKind = d.kind, fromLinkIdx = d.linkIdx;
+        state.draggingContact = null;
+
+        window.CVE.moveContactPosition(fromKind, fromLinkIdx, kind, linkIdx, pos);
+      });
+    });
+  }
+
+  // --- Complete ATS Rules Engine & On-Canvas '!' Tips (from site's cvLint) ---
+  function cvLint(cv) {
+    const P = cv.person || {};
+    const out = [];
+    const add = (key, selector, title, why, fixAction) => out.push({ key, selector, title, why, fixAction });
+
+    // Contact details on top
+    if (!P.email) {
+      add("email", ".cv-head", "Add your email", "Recruiters and ATS need contact details on top. Missing contact info is one of the most common mistakes (Harvard career services).", {
+        label: "＋ Add Email",
+        action: () => { if (!cv.person) cv.person = {}; cv.person.email = "your.email@gmail.com"; saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); }
+      });
+    }
+    if (!P.phone) {
+      add("phone", ".cv-head", "Add your phone number", "Contact details go at the top of the page (Harvard career services).", {
+        label: "＋ Add Phone",
+        action: () => { if (!cv.person) cv.person = {}; cv.person.phone = "(+972) 050-000-0000"; saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); }
+      });
+    }
+    if (!P.location) {
+      add("loc", ".cv-head", "Add your city / country", "Many ATS filter candidates by location; a city or country is enough.", {
+        label: "＋ Add Location",
+        action: () => { if (!cv.person) cv.person = {}; cv.person.location = "Israel"; saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); }
+      });
+    }
+
+    // Links: LinkedIn & Portfolio
+    const urls = (P.links || []).map(l => String(l.url || ""));
+    if (!urls.some(u => /linkedin/i.test(u))) {
+      add("li", ".cv-head", "Add your LinkedIn link", "Recruiters check LinkedIn right after the résumé (Google recruiters & Ladders).", {
+        label: "＋ Add LinkedIn",
+        action: () => { if (!cv.person) cv.person = {}; if (!cv.person.links) cv.person.links = []; cv.person.links.push({ label: "LinkedIn", url: "https://linkedin.com/in/" }); saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); }
+      });
+    }
+    if (!urls.some(u => /github|portfolio|itch|roeetal/i.test(u))) {
+      add("gh", ".cv-head", "Add a GitHub or Portfolio link", "Google's recruiters advise technical applicants to include GitHub and list projects prominently.", {
+        label: "＋ Add Portfolio/GitHub",
+        action: () => { if (!cv.person) cv.person = {}; if (!cv.person.links) cv.person.links = []; cv.person.links.push({ label: "GitHub", url: "https://github.com/" }); saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); }
+      });
+    }
+
+    // Summary length
+    const sum = String(P.summary || "");
+    if (sum.length > 360) {
+      add("sumlong", ".cv-summary", "Make the summary shorter", "Recruiters skim for about 7.4 seconds (Ladders eye-tracking study, 2018). 2–3 lines works best (under 320 characters).", {
+        label: "✂ Trim Summary",
+        action: () => { if (cv.person && cv.person.summary) { cv.person.summary = cv.person.summary.slice(0, 310) + "..."; saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); } }
+      });
+    }
+
+    // Section dates & strong action verbs
+    const secs = (cv.main || []).concat(cv.side || []);
+    secs.forEach((sec, sIdx) => {
+      (sec.items || []).forEach((it, iIdx) => {
+        if (["experience", "projects", "education"].includes(sec.type)) {
+          if (!String(it.dates || "").trim()) {
+            add(`dates-${sIdx}-${iIdx}`, `.cv-${sec.type} .cv-item[data-i="${iIdx}"]`, `Add dates for "${it.role || it.name || it.degree || 'entry'}"`, "ATS algorithms use dates to calculate total years of experience.", {
+              label: "＋ Set Dates",
+              action: () => { it.dates = "2023 – Present"; saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); }
+            });
+          }
+        }
+        if (["experience", "projects"].includes(sec.type)) {
+          (it.bullets || []).forEach((bul, bIdx) => {
+            const bStr = String(bul || "").trim();
+            const firstWord = (bStr.match(/^[A-Za-z]+/i) || [""])[0].toLowerCase();
+            const isVerb = VERBS[firstWord] || PAST2PRES[firstWord];
+            if (bStr && !isVerb && firstWord.length > 2) {
+              add(`verb-${sIdx}-${iIdx}-${bIdx}`, `.cv-${sec.type} .cv-item[data-i="${iIdx}"] li[data-i="${bIdx}"]`, "Start bullet with a strong action verb", `Bullets should start with an action verb (Built, Designed, Led, Shipped, Optimized). "${firstWord}" is a weak opener (Harvard career services).`, {
+                label: "⚡ Strengthen Verb",
+                action: () => { it.bullets[bIdx] = "Engineered and " + bStr.charAt(0).toLowerCase() + bStr.slice(1); saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); }
+              });
+            }
+            if (bStr && !/\d+|%|\$|fps|ms|k\b/i.test(bStr) && bStr.length > 25) {
+              add(`num-${sIdx}-${iIdx}-${bIdx}`, `.cv-${sec.type} .cv-item[data-i="${iIdx}"] li[data-i="${bIdx}"]`, "Quantify your achievement (X-Y-Z formula)", "Google recruiters recommend the X-Y-Z formula: 'Accomplished [X] measured by [Y] by doing [Z]'. Add numbers, %, team size, or performance metrics.", {
+                label: "📊 Add Metric Example",
+                action: () => { it.bullets[bIdx] = bStr + ", improving performance by 35%"; saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); }
+              });
+            }
+          });
+        }
+      });
+    });
+
+    if (cv.template !== "ats") {
+      add("colwarn", ".cvdoc", "Consider 1-column layout for ATS", "Single-column layouts (ATS Pro) parse with 99.8% reliability. Multi-column layouts can sometimes scramble text in older ATS scanners.", {
+        label: "Switch to ATS Pro",
+        action: () => { cv.template = "ats"; saveCurrentCV(cv); renderA4Sheet(); renderSidebar(); }
+      });
+    }
+
+    return out;
+  }
+
+  let activeTipPopup = null;
+
+  function renderCanvasTips(stage) {
+    const cv = getCurrentCV();
+    const tips = cvLint(cv);
+
+    // Remove existing badges & popups
+    stage.querySelectorAll(".cve-tip-badge").forEach(b => b.remove());
+    if (activeTipPopup) { activeTipPopup.remove(); activeTipPopup = null; }
+
+    // Update topbar tip counter
+    const tipCounter = $("#cveTipsCount");
+    if (tipCounter) {
+      tipCounter.textContent = tips.length ? `! ${tips.length}` : "✓ 0";
+      tipCounter.style.background = tips.length ? "#ef4444" : "#10b981";
+    }
+
+    tips.forEach(tip => {
+      const target = stage.querySelector(tip.selector);
+      if (!target) return;
+
+      const badge = document.createElement("button");
+      badge.type = "button";
+      badge.className = "cve-tip-badge";
+      badge.innerHTML = "!";
+      badge.title = tip.title;
+
+      badge.onclick = (e) => {
+        e.stopPropagation();
+        openTipPopup(tip, badge);
+      };
+
+      // Position relative to target
+      if (getComputedStyle(target).position === "static") {
+        target.style.position = "relative";
+      }
+      target.appendChild(badge);
+    });
+  }
+
+  function openTipPopup(tip, anchorEl) {
+    if (activeTipPopup) activeTipPopup.remove();
+
+    const popup = document.createElement("div");
+    popup.className = "cve-tip-popup";
+    popup.innerHTML = `
+      <div class="cve-tip-popup-title">
+        <span>⚠️ ${esc(tip.title)}</span>
+      </div>
+      <div class="cve-tip-popup-why">
+        ${esc(tip.why)}
+      </div>
+      <div class="cve-tip-popup-actions">
+        <button type="button" class="cve-btn sm" onclick="this.closest('.cve-tip-popup').remove()">Dismiss</button>
+        ${tip.fixAction ? `<button type="button" class="cve-btn sm pri" id="cveFixBtn">${esc(tip.fixAction.label || "Fix Now")}</button>` : ""}
+      </div>
+    `;
+
+    document.body.appendChild(popup);
+    activeTipPopup = popup;
+
+    const r = anchorEl.getBoundingClientRect();
+    popup.style.top = Math.max(10, r.bottom + 8) + "px";
+    popup.style.left = Math.min(window.innerWidth - 330, Math.max(10, r.left - 120)) + "px";
+
+    const fixBtn = popup.querySelector("#cveFixBtn");
+    if (fixBtn && tip.fixAction && tip.fixAction.action) {
+      fixBtn.onclick = () => {
+        popup.remove();
+        activeTipPopup = null;
+        tip.fixAction.action();
+      };
+    }
+
+    const closeHandler = (e) => {
+      if (!popup.contains(e.target) && e.target !== anchorEl) {
+        popup.remove();
+        activeTipPopup = null;
+        document.removeEventListener("pointerdown", closeHandler);
+      }
+    };
+    setTimeout(() => document.addEventListener("pointerdown", closeHandler), 50);
+  }
+
+
+    function attachSectionToolbars(stage) {
     const cv = getCurrentCV();
     const secs = stage.querySelectorAll(".cv-sec");
 
@@ -1163,6 +1686,8 @@
       renderContentTab(body);
     } else if (tab === "design") {
       renderDesignTab(body);
+    } else if (tab === "ats") {
+      renderAtsTab(body);
     } else if (tab === "vault") {
       renderVaultTab(body);
     }
@@ -1447,33 +1972,129 @@
   function renderDesignTab(body) {
     const cv = getCurrentCV();
     const colors = ["#1f5fa8", "#2a8a8f", "#1f6feb", "#0b7a4b", "#b5452a", "#7c3aed", "#c2185b", "#334155", "#d4a017"];
-    const fonts = ["Inter", "Rubik", "Assistant", "Open Sans", "Lato", "Source Serif 4"];
+    const textColors = ["#10131a", "#000000", "#1e293b", "#292524", "#0f172a", "#f8fafc"];
+    const muteColors = ["#64748b", "#78716c", "#94a3b8", "#93c5fd", "#475569"];
 
     body.innerHTML = `
+      <!-- Full Document Typography & Google Fonts -->
       <div class="cve-section-card">
         <div class="cve-section-header">
-          <span class="cve-section-title">🎨 Site Themes & Skins</span>
-          <span class="cve-badge-pill" style="font-size:10px;background:var(--cve-accent);color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">8 Styles</span>
+          <span class="cve-section-title">🔤 Document Typography (Google Fonts)</span>
+          <span class="cve-badge-pill" style="font-size:10px;background:var(--cve-accent);color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">12 Fonts</span>
         </div>
         <div class="cve-section-body">
-          <p style="font-size:12px;color:var(--cve-text-muted);margin-bottom:10px;line-height:1.4;">
-            Apply any of the 8 signature design aesthetics from roeetal.com to your CV:
+          <p style="font-size:12px;color:var(--cve-text-muted);margin-bottom:8px;line-height:1.4;">
+            בחר גופן מקצועי לכל מסמך קורות החיים (נטען ישירות מ-Google Fonts):
           </p>
-          <div class="cve-skin-grid">
-            ${SITE_SKINS.map(s => `
-              <div class="cve-skin-card ${(cv.skin || "classic") === s.id ? "active" : ""}" onclick="window.CVE.setSkin('${s.id}')">
-                <div class="cve-skin-card-header">
-                  <span class="cve-skin-icon">${s.icon}</span>
-                  <span class="cve-skin-name">${esc(s.name)}</span>
-                  <span class="cve-skin-dot" style="background:${s.accent};"></span>
-                </div>
-                <div class="cve-skin-desc">${esc(s.desc)}</div>
+          <div class="cve-font-grid">
+            ${GOOGLE_FONTS_CATALOG.map(f => `
+              <div class="cve-font-card ${(cv.font || "Inter") === f.name ? "active" : ""}" onclick="window.CVE.setFont('${f.name}')">
+                <span class="cve-font-name">${esc(f.name)}</span>
+                <span class="cve-font-cat">${esc(f.cat)}</span>
+                <span class="cve-font-preview" style="font-family:'${f.name}',sans-serif;">${esc(f.sample)}</span>
               </div>
             `).join("")}
           </div>
         </div>
       </div>
 
+      <!-- Text Color & Contrast -->
+      <div class="cve-section-card">
+        <div class="cve-section-header">
+          <span class="cve-section-title">🎨 צבעי טקסט וניגודיות (Text Colors)</span>
+        </div>
+        <div class="cve-section-body">
+          <div class="cve-form-group">
+            <label class="cve-label">Primary Text Color (צבע טקסט ראשי)</label>
+            <div class="cve-color-palette">
+              ${textColors.map(c => `
+                <div class="cve-color-swatch ${(cv.text_color || "#10131a") === c ? "active" : ""}" style="background:${c};" onclick="window.CVE.setTextColor('${c}')"></div>
+              `).join("")}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+              <input type="color" style="height:28px;width:44px;border:none;background:none;cursor:pointer;" value="${cv.text_color || "#10131a"}" onchange="window.CVE.setTextColor(this.value)">
+              <span style="font-size:12px;color:var(--cve-text-muted);">Custom Color (HEX)</span>
+            </div>
+          </div>
+
+          <div class="cve-form-group" style="margin-top:10px;">
+            <label class="cve-label">Secondary / Muted Color (תאריכים, מקומות וכותרות משנה)</label>
+            <div class="cve-color-palette">
+              ${muteColors.map(c => `
+                <div class="cve-color-swatch ${(cv.mute_color || "#64748b") === c ? "active" : ""}" style="background:${c};" onclick="window.CVE.setMuteColor('${c}')"></div>
+              `).join("")}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+              <input type="color" style="height:28px;width:44px;border:none;background:none;cursor:pointer;" value="${cv.mute_color || "#64748b"}" onchange="window.CVE.setMuteColor(this.value)">
+              <span style="font-size:12px;color:var(--cve-text-muted);">Custom Color (HEX)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Font Sizing & Scale Controls -->
+      <div class="cve-section-card">
+        <div class="cve-section-header">
+          <span class="cve-section-title">📏 גדלי טקסט וכותרות (Font & Element Sizing)</span>
+        </div>
+        <div class="cve-section-body">
+          <!-- Body Text Size -->
+          <div class="cve-form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label class="cve-label" style="margin:0;">גודל טקסט גוף (Body Font Size)</label>
+              <span class="cve-size-val">${cv.body_size || 14}px</span>
+            </div>
+            <div class="cve-size-row">
+              <input type="range" min="11" max="17" step="0.5" class="cve-range-input" value="${cv.body_size || 14}" oninput="window.CVE.setBodySize(this.value); this.closest('.cve-form-group').querySelector('.cve-size-val').textContent = this.value + 'px';">
+            </div>
+            <div class="cve-size-btn-group" style="margin-top:4px;">
+              <button type="button" class="cve-size-btn ${(cv.body_size || 14) == 12.5 ? 'active' : ''}" onclick="window.CVE.setBodySize(12.5)">Compact (12.5px)</button>
+              <button type="button" class="cve-size-btn ${(cv.body_size || 14) == 14 ? 'active' : ''}" onclick="window.CVE.setBodySize(14)">Standard (14px)</button>
+              <button type="button" class="cve-size-btn ${(cv.body_size || 14) == 15.5 ? 'active' : ''}" onclick="window.CVE.setBodySize(15.5)">Roomy (15.5px)</button>
+            </div>
+          </div>
+
+          <!-- Section Heading Size (h2) -->
+          <div class="cve-form-group" style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label class="cve-label" style="margin:0;">גודל כותרות סקשן (H2 Headings)</label>
+              <span class="cve-size-val">${cv.heading_size || 1.35}em</span>
+            </div>
+            <div class="cve-size-row">
+              <input type="range" min="1.0" max="2.0" step="0.05" class="cve-range-input" value="${cv.heading_size || 1.35}" oninput="window.CVE.setHeadingSize(this.value); this.closest('.cve-form-group').querySelector('.cve-size-val').textContent = this.value + 'em';">
+            </div>
+            <div class="cve-size-btn-group" style="margin-top:4px;">
+              <button type="button" class="cve-size-btn ${(cv.heading_size || 1.35) == 1.15 ? 'active' : ''}" onclick="window.CVE.setHeadingSize(1.15)">Small (1.15em)</button>
+              <button type="button" class="cve-size-btn ${(cv.heading_size || 1.35) == 1.35 ? 'active' : ''}" onclick="window.CVE.setHeadingSize(1.35)">Normal (1.35em)</button>
+              <button type="button" class="cve-size-btn ${(cv.heading_size || 1.35) == 1.65 ? 'active' : ''}" onclick="window.CVE.setHeadingSize(1.65)">Large (1.65em)</button>
+            </div>
+          </div>
+
+          <!-- Entry Titles Size (h3) -->
+          <div class="cve-form-group" style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label class="cve-label" style="margin:0;">גודל שמות תפקידים ופרויקטים (H3 Titles)</label>
+              <span class="cve-size-val">${cv.title_size || 1.08}em</span>
+            </div>
+            <div class="cve-size-row">
+              <input type="range" min="0.9" max="1.4" step="0.03" class="cve-range-input" value="${cv.title_size || 1.08}" oninput="window.CVE.setTitleSize(this.value); this.closest('.cve-form-group').querySelector('.cve-size-val').textContent = this.value + 'em';">
+            </div>
+          </div>
+
+          <!-- Vertical Gap Scale -->
+          <div class="cve-form-group" style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label class="cve-label" style="margin:0;">ריווח אלמנטים ומרווח אנכי (Spacing & Density)</label>
+              <span class="cve-size-val">${cv.gap_scale || 1.0}x</span>
+            </div>
+            <div class="cve-size-row">
+              <input type="range" min="0.65" max="1.35" step="0.05" class="cve-range-input" value="${cv.gap_scale || 1.0}" oninput="window.CVE.setGapScale(this.value); this.closest('.cve-form-group').querySelector('.cve-size-val').textContent = this.value + 'x';">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CV Document Backgrounds -->
       <div class="cve-section-card">
         <div class="cve-section-header">
           <span class="cve-section-title">🖼️ רקעי קורות חיים (CV Document Backgrounds)</span>
@@ -1499,12 +2120,35 @@
           </div>
 
           <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <label class="cve-label" style="margin:0;">צבע מותאם אישית (Custom Color):</label>
+            <label class="cve-label" style="margin:0;">צבע רקע מותאם אישית (Custom Color):</label>
             <input type="color" class="cve-color-input" style="width:48px;height:30px;padding:0;border:1px solid rgba(255,255,255,0.2);border-radius:6px;cursor:pointer;background:none;" value="${cv.custom_bg || "#ffffff"}" onchange="window.CVE.setBg('custom-color', this.value)">
           </div>
         </div>
       </div>
 
+      <!-- Site Themes & Skins -->
+      <div class="cve-section-card">
+        <div class="cve-section-header">
+          <span class="cve-section-title">🎨 Site Themes & Skins</span>
+          <span class="cve-badge-pill" style="font-size:10px;background:var(--cve-accent);color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">8 Styles</span>
+        </div>
+        <div class="cve-section-body">
+          <div class="cve-skin-grid">
+            ${SITE_SKINS.map(s => `
+              <div class="cve-skin-card ${(cv.skin || "classic") === s.id ? "active" : ""}" onclick="window.CVE.setSkin('${s.id}')">
+                <div class="cve-skin-card-header">
+                  <span class="cve-skin-icon">${s.icon}</span>
+                  <span class="cve-skin-name">${esc(s.name)}</span>
+                  <span class="cve-skin-dot" style="background:${s.accent};"></span>
+                </div>
+                <div class="cve-skin-desc">${esc(s.desc)}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout & Column Options -->
       <div class="cve-section-card">
         <div class="cve-section-header">
           <span class="cve-section-title">📐 Layout & Column Options</span>
@@ -1525,9 +2169,10 @@
         </div>
       </div>
 
+      <!-- Accent Color & Presets -->
       <div class="cve-section-card">
         <div class="cve-section-header">
-          <span class="cve-section-title">🖌 Styling & Appearance</span>
+          <span class="cve-section-title">🖌 Accent Color & Template Preset</span>
         </div>
         <div class="cve-section-body">
           <div class="cve-form-group">
@@ -1539,7 +2184,7 @@
             </select>
           </div>
           <div class="cve-form-group">
-            <label class="cve-label">Accent Color</label>
+            <label class="cve-label">Accent Color (כותרות, קווים והדגשות)</label>
             <div class="cve-color-palette">
               ${colors.map(c => `
                 <div class="cve-color-swatch ${cv.accent === c ? "active" : ""}" style="background:${c};" onclick="window.CVE.setAccent('${c}')"></div>
@@ -1548,40 +2193,11 @@
             <input type="color" style="margin-top:8px;height:32px;width:100%;background:none;border:none;cursor:pointer;" value="${cv.accent || "#1f5fa8"}" onchange="window.CVE.setAccent(this.value)">
           </div>
           <div class="cve-form-group">
-            <label class="cve-label">Typography / Font</label>
-            <select class="cve-select" data-bind="font" onchange="window.CVE.setFont(this.value)">
-              ${fonts.map(f => `<option value="${f}" ${cv.font === f ? "selected" : ""}>${f}</option>`).join("")}
-            </select>
-          </div>
-          <div class="cve-form-group">
-            <label class="cve-label">Density / Line Spacing</label>
-            <select class="cve-select" data-bind="density" onchange="window.CVE.setDensity(this.value)">
-              <option value="compact" ${cv.density === "compact" ? "selected" : ""}>Compact (Fit More on 1 Page)</option>
-              <option value="normal" ${cv.density === "normal" ? "selected" : ""}>Normal</option>
-              <option value="roomy" ${cv.density === "roomy" ? "selected" : ""}>Roomy (Generous Breathing Room)</option>
-            </select>
-          </div>
-          <div class="cve-form-group">
             <label class="cve-label">Text Direction (Language)</label>
             <select class="cve-select" data-bind="dir" onchange="window.CVE.setDirection(this.value)">
               <option value="ltr" ${cv.dir === "ltr" ? "selected" : ""}>Left-to-Right (English / Latin)</option>
               <option value="rtl" ${cv.dir === "rtl" ? "selected" : ""}>Right-to-Left (עברית / Hebrew)</option>
             </select>
-          </div>
-          <div class="cve-form-group">
-            <label class="cve-label">Profile Photo</label>
-            <div class="cve-sidebar-photo-row" style="margin-bottom:6px;border-bottom:none;">
-              <img src="${cv.photo || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24' fill='%2364748b'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>"}" class="cve-sidebar-avatar" alt="Photo">
-              <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                  <button type="button" class="cve-btn pri" style="padding:4px 10px;font-size:12px;" onclick="window.CVE.openPhotoPicker('activeCv')">ðŸ“· Upload Photo</button>
-                  ${cv.photo ? `<button type="button" class="cve-btn" style="padding:4px 8px;font-size:12px;" onclick="window.CVE.removeCurrentPhoto()">Remove</button>` : ""}
-                </div>
-                <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--cve-text-muted);cursor:pointer;">
-                  <input type="checkbox" id="showPhotoCb" ${cv.show_photo ? "checked" : ""} onchange="window.CVE.togglePhoto(this.checked)"> Show Photo on CV
-                </label>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -1589,7 +2205,88 @@
     attachSidebarInputs(body);
   }
 
-  function renderVaultTab(body) {
+
+    function renderAtsTab(body) {
+    const cv = getCurrentCV();
+    const tips = cvLint(cv);
+    const checks = computeAtsChecks(cv);
+    const totalW = checks.reduce((a, b) => a + b.w, 0);
+    const gotW = checks.reduce((a, b) => a + (b.ok ? b.w : 0), 0);
+    const formatScore = Math.round((gotW / totalW) * 100);
+
+    const plainText = window.RTCV ? window.RTCV.plainText(cv) : "";
+
+    body.innerHTML = `
+      <div class="cve-section-card">
+        <div class="cve-section-header">
+          <span class="cve-section-title">🎯 ATS Score & Match Overview</span>
+          <span class="cve-badge-pill" style="font-size:10px;background:${formatScore >= 80 ? '#10b981' : '#f59e0b'};color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">${formatScore}% Score</span>
+        </div>
+        <div class="cve-section-body">
+          <div class="cve-score-rings" style="margin-bottom:8px;">
+            <div class="cve-ring-card">
+              <div class="cve-circular-progress" style="--ring-pct:${formatScore};--ring-color:#10b981;">
+                <span class="cve-circular-progress-val">${formatScore}%</span>
+              </div>
+              <span class="cve-ring-label">Layout Score</span>
+            </div>
+            <div class="cve-ring-card">
+              <div class="cve-circular-progress" style="--ring-pct:${Math.max(0, 100 - tips.length * 15)};--ring-color:${tips.length ? '#f59e0b' : '#10b981'};">
+                <span class="cve-circular-progress-val">${Math.max(0, 100 - tips.length * 15)}%</span>
+              </div>
+              <span class="cve-ring-label">Content Health</span>
+            </div>
+          </div>
+          <button type="button" class="cve-btn pri" style="justify-content:center;" onclick="window.CVE.openAtsModal()">
+            🎯 Run Job Description Keyword Matcher
+          </button>
+        </div>
+      </div>
+
+      <div class="cve-section-card">
+        <div class="cve-section-header">
+          <span class="cve-section-title">💡 Active Recommendations (${tips.length})</span>
+          <span class="cve-badge-pill" style="font-size:10px;background:${tips.length ? '#ef4444' : '#10b981'};color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">${tips.length ? tips.length + ' Tips' : 'All Passed ✓'}</span>
+        </div>
+        <div class="cve-section-body">
+          ${tips.length === 0 ? `
+            <div style="text-align:center;padding:14px;color:#10b981;font-weight:600;font-size:13px;">
+              ✓ Your CV passes all Harvard & Google ATS formatting benchmarks!
+            </div>
+          ` : `
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              ${tips.map(t => `
+                <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:8px 10px;">
+                  <div style="font-weight:700;font-size:12.5px;color:#fca5a5;margin-bottom:3px;">⚠️ ${esc(t.title)}</div>
+                  <div style="font-size:11.5px;color:var(--cve-text-muted);margin-bottom:6px;line-height:1.4;">${esc(t.why)}</div>
+                  ${t.fixAction ? `
+                    <button type="button" class="cve-btn sm pri" onclick="(${t.fixAction.action.toString()})()">
+                      ${esc(t.fixAction.label || 'Fix Now')}
+                    </button>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+      </div>
+
+      <div class="cve-section-card">
+        <div class="cve-section-header">
+          <span class="cve-section-title">🤖 What the Robot Reads (Plain Text)</span>
+        </div>
+        <div class="cve-section-body">
+          <p style="font-size:11.5px;color:var(--cve-text-muted);margin-bottom:6px;">
+            This is exactly how automated screening systems (Workday, Greenhouse, Taleo) extract your text:
+          </p>
+          <div class="cve-plain-text-box" style="max-height:160px;">${esc(plainText)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+
+    function renderVaultTab(body) {
     const user = state.currentUser;
     const isRoee = false;   // no admin view: every account and its résumés stay on its own device
     const myCvs = state.vault[state.activeOwnerId] || {};
@@ -2282,7 +2979,151 @@
       renderSidebar();
     },
 
-    setBg(bgId, customVal) {
+
+    setFont(fontName) {
+      const cv = getCurrentCV();
+      cv.font = fontName;
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    setTextColor(color) {
+      const cv = getCurrentCV();
+      cv.text_color = color;
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    setMuteColor(color) {
+      const cv = getCurrentCV();
+      cv.mute_color = color;
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    setBodySize(val) {
+      const cv = getCurrentCV();
+      cv.body_size = parseFloat(val);
+      saveCurrentCV(cv);
+      applyDocumentTypography(cv);
+    },
+
+    setHeadingSize(val) {
+      const cv = getCurrentCV();
+      cv.heading_size = parseFloat(val);
+      saveCurrentCV(cv);
+      applyDocumentTypography(cv);
+    },
+
+    setTitleSize(val) {
+      const cv = getCurrentCV();
+      cv.title_size = parseFloat(val);
+      saveCurrentCV(cv);
+      applyDocumentTypography(cv);
+    },
+
+    setGapScale(val) {
+      const cv = getCurrentCV();
+      cv.gap_scale = parseFloat(val);
+      saveCurrentCV(cv);
+      applyDocumentTypography(cv);
+    },
+
+    moveBulletPosition(fromCol, fromSecIdx, fromItemIdx, fromBulIdx, toCol, toSecIdx, toItemIdx, toBulIdx, pos = "before") {
+      const cv = getCurrentCV();
+      const fromSec = cv[fromCol] && cv[fromCol][fromSecIdx];
+      const fromItem = fromSec && fromSec.items && fromSec.items[fromItemIdx];
+      const toSec = cv[toCol] && cv[toCol][toSecIdx];
+      const toItem = toSec && toSec.items && toSec.items[toItemIdx];
+      if (!fromItem || !toItem || !Array.isArray(fromItem.bullets) || !Array.isArray(toItem.bullets)) return;
+
+      const [bul] = fromItem.bullets.splice(fromBulIdx, 1);
+      let ins = toBulIdx;
+      if (fromItem === toItem && fromBulIdx < toBulIdx) ins--;
+      if (pos === "after") ins++;
+      if (ins < 0) ins = 0;
+      if (ins > toItem.bullets.length) ins = toItem.bullets.length;
+
+      toItem.bullets.splice(ins, 0, bul);
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    moveSkillPosition(fromCol, fromSecIdx, fromItemIdx, fromSkillIdx, toCol, toSecIdx, toItemIdx, toSkillIdx, pos = "before") {
+      const cv = getCurrentCV();
+      const fromSec = cv[fromCol] && cv[fromCol][fromSecIdx];
+      const fromItem = fromSec && fromSec.items && fromSec.items[fromItemIdx];
+      const toSec = cv[toCol] && cv[toCol][toSecIdx];
+      const toItem = toSec && toSec.items && toSec.items[toItemIdx];
+      if (!fromItem || !toItem || !Array.isArray(fromItem.items) || !Array.isArray(toItem.items)) return;
+
+      const [skill] = fromItem.items.splice(fromSkillIdx, 1);
+      let ins = toSkillIdx;
+      if (fromItem === toItem && fromSkillIdx < toSkillIdx) ins--;
+      if (pos === "after") ins++;
+      if (ins < 0) ins = 0;
+      if (ins > toItem.items.length) ins = toItem.items.length;
+
+      toItem.items.splice(ins, 0, skill);
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    moveContactPosition(fromKind, fromLinkIdx, toKind, toLinkIdx, pos = "before") {
+      const cv = getCurrentCV();
+      if (!cv.person) cv.person = {};
+      const P = cv.person;
+
+      if (fromKind === "link" && toKind === "link" && Array.isArray(P.links)) {
+        const [link] = P.links.splice(fromLinkIdx, 1);
+        let ins = toLinkIdx;
+        if (fromLinkIdx < toLinkIdx) ins--;
+        if (pos === "after") ins++;
+        if (ins < 0) ins = 0;
+        if (ins > P.links.length) ins = P.links.length;
+        P.links.splice(ins, 0, link);
+        saveCurrentCV(cv);
+        renderA4Sheet();
+        renderSidebar();
+        return;
+      }
+    },
+
+    openTipsModal() {
+      const cv = getCurrentCV();
+      const tips = cvLint(cv);
+      const m = $("#tipsModal");
+      const cont = $("#tipsListContainer");
+      if (cont) {
+        if (!tips.length) {
+          cont.innerHTML = `
+            <div style="text-align:center;padding:24px;color:#10b981;font-weight:700;font-size:14px;">
+              ✓ Excellent! Your CV passes all Harvard & Google ATS formatting benchmarks!
+            </div>
+          `;
+        } else {
+          cont.innerHTML = tips.map(t => `
+            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:12px;">
+              <div style="font-weight:800;font-size:13.5px;color:#fca5a5;margin-bottom:4px;">⚠️ ${esc(t.title)}</div>
+              <div style="font-size:12px;color:var(--cve-text-muted);margin-bottom:10px;line-height:1.45;">${esc(t.why)}</div>
+              ${t.fixAction ? `
+                <button type="button" class="cve-btn sm pri" onclick="window.CVE.closeModal('tipsModal'); (${t.fixAction.action.toString()})()">
+                  ${esc(t.fixAction.label || "Fix Now")}
+                </button>
+              ` : ''}
+            </div>
+          `).join('');
+        }
+      }
+      if (m) m.classList.add("open");
+    },
+
+        setBg(bgId, customVal) {
       const cv = getCurrentCV();
       cv.background = bgId || "white";
       if (customVal !== undefined) cv.custom_bg = customVal;
@@ -3020,6 +3861,10 @@
       if (m) {
         m.classList.add("open");
         runAtsJobAnalysis();
+        const pt = $("#atsPlainTextInspector");
+        if (pt && window.RTCV) {
+          pt.textContent = window.RTCV.plainText(getCurrentCV());
+        }
       }
     },
 

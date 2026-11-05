@@ -63,7 +63,7 @@
   // HTML for a list of bullet points.
   function bullets(ip,list){
     const b=Array.isArray(list)?list:[];
-    return `<ul class="cv-bul" data-l="${ip}.bullets"${b.length?"":" hidden data-edit-show"}>`+b.map((t,k)=>`<li data-i="${k}"${E(`${ip}.bullets.${k}`)}>${esc(t)}</li>`).join("")+`</ul>`;
+    return `<ul class="cv-bul" data-l="${ip}.bullets"${b.length?"":" hidden data-edit-show"}>`+b.map((t,k)=>`<li class="cv-bullet-item" data-i="${k}"${E(`${ip}.bullets.${k}`)}>${esc(t)}</li>`).join("")+`</ul>`;
   }
   // HTML for an item's link.
   function linkHTML(ip,it){const url=full(it.link);return url?`<p class="cv-link"><a href="${esc(url)}">${svg("link",11)}<span${E(ip+".link_label")}>${esc(it.link_label||pretty(url))}</span></a></p>`:""}
@@ -79,7 +79,7 @@
         `<div class="cv-row"><h3><span${E(ip+".degree")}>${esc(it.degree)}</span>${T!=="novo"?`<span class="cv-sep"> — </span>`:""}<span class="cv-org"${E(ip+".school")}>${esc(it.school)}</span></h3>`+
         `<p class="cv-when"><span${E(ip+".dates")}>${esc(it.dates)}</span>${opt("span","cv-loc",ip+".location",it.location,"city")}</p></div>`+
         opt("p","cv-about",ip+".about",it.about,"one line")+
-        (T==="ats"&&(it.bullets||[]).length?`<p class="cv-inline"><span${E(ip+".label")}>${esc(it.label||"Courses")}</span>: `+(it.bullets||[]).map((t,k)=>`<span data-i="${k}"${E(`${ip}.bullets.${k}`)}>${esc(t)}</span>`).join(", ")+`</p>`
+        (T==="ats"&&(it.bullets||[]).length?`<p class="cv-inline"><span${E(ip+".label")}>${esc(it.label||"Courses")}</span>: `+(it.bullets||[]).map((t,k)=>`<span class="cv-inline-bullet" data-i="${k}"${E(`${ip}.bullets.${k}`)}>${esc(t)}</span>`).join(", ")+`</p>`
           :opt("p","cv-lbl",ip+".label",it.label,"label above the list")+bullets(ip,it.bullets).replace('class="cv-bul"','class="cv-bul cols"'))+`</div>`;
       case "projects":{const url=full(it.link);
         return `<div class="cv-item" data-i="${i}"${X(["Link (web address)",ip+".link","text"])}>`+
@@ -122,11 +122,11 @@
   // The contact line (email, phone, place, links), with icons in designed templates.
   function contact(v,base,withIcons,edit){
     const P=v.person,pp=base+".person",rows=[];
-    const row=(ic,val,inner,href)=>`<li${val?"":" hidden data-edit-show"}>${withIcons?svg(ic):""}${href?`<a href="${esc(href)}">${inner}</a>`:inner}</li>`;
-    rows.push(row("mail",P.email,`<span${E(pp+".email","email")}>${esc(P.email)}</span>`,P.email?"mailto:"+P.email:""));
-    rows.push(row("phone",P.phone,`<span${E(pp+".phone","phone")}>${esc(P.phone)}</span>`,P.phone?"tel:"+String(P.phone).replace(/[^\d+]/g,""):""));
-    rows.push(row("pin",P.location,`<span${E(pp+".location","location")}>${esc(P.location)}</span>`));
-    (P.links||[]).forEach((l,k)=>{const u=full(l.url);rows.push(`<li data-i="${k}"${X(["Web address",`${pp}.links.${k}.url`,"text"])}>${withIcons?svg(linkIcon(u)):""}<a href="${esc(u)}"><span${E(`${pp}.links.${k}.label`)}>${esc(l.label||pretty(u))}</span></a></li>`)});
+    const row=(ic,val,inner,href,cls,extra)=>`<li class="cv-contact-item${cls?" "+cls:""}"${extra||""}${val?"":" hidden data-edit-show"}>${withIcons?svg(ic):""}${href?`<a href="${esc(href)}">${inner}</a>`:inner}</li>`;
+    rows.push(row("mail",P.email,`<span${E(pp+".email","email")}>${esc(P.email)}</span>`,P.email?"mailto:"+P.email:"","contact-mail",' data-contact="email"'));
+    rows.push(row("phone",P.phone,`<span${E(pp+".phone","phone")}>${esc(P.phone)}</span>`,P.phone?"tel:"+String(P.phone).replace(/[^\d+]/g,""):"","contact-phone",' data-contact="phone"'));
+    rows.push(row("pin",P.location,`<span${E(pp+".location","location")}>${esc(P.location)}</span>`,"","contact-loc",' data-contact="location"'));
+    (P.links||[]).forEach((l,k)=>{const u=full(l.url);rows.push(`<li class="cv-contact-item contact-link" data-contact="link" data-i="${k}"${X(["Web address",`${pp}.links.${k}.url`,"text"])}>${withIcons?svg(linkIcon(u)):""}<a href="${esc(u)}"><span${E(`${pp}.links.${k}.label`)}>${esc(l.label||pretty(u))}</span></a></li>`)});
     return rows;
   }
   // The person's photo (when the template shows one).

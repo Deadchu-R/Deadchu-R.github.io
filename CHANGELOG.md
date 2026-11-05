@@ -9,6 +9,13 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** micro-level drag-and-drop, full typography & sizing controls, and complete ATS engine:
+  - Micro-level drag-and-drop: reorder individual bullet points in experience, projects, and education courses (e.g. Tiltan courses); reorder skill chips within/between groups; reorder personal contact items (email, phone, location, links) with glowing cyan drop indicators.
+  - Skill chip hover fixed: prominent royal azure background with high-contrast white text and glowing border, eliminating washed-out white hover state.
+  - Full document typography: Google Fonts integration with 12 popular CV typefaces (Inter, Roboto, Open Sans, Lato, Montserrat, Poppins, Merriweather, Playfair Display, Fira Code, JetBrains Mono, Rubik, Assistant) with live preview cards.
+  - Text & mute colors: customizable primary ink color (--cv-ink) and secondary muted color (--cv-mute) with curated palettes and native color pickers.
+  - Sizing & element scaling: interactive sliders for base body font size, section headings (h2), entry titles (h3), line height, and section gap spacing.
+  - Complete ATS engine ported from main site: on-canvas red floating '!' badges with 1-click fix popups, 3 score rings (overall, layout, keywords), job description keyword matcher, Harvard & Google format audit checklist, 'What the Robot Reads' plain text extractor, and topbar Tips counter button.
 - **CVEditor:** CV category site backgrounds and full direct section & entry dragging:
   - Added 10 CV document backgrounds from the site editor (Clean White ATS, Warm Ivory Linen, Classic Parchment, Site Topographic Contours from 3DVision section, Blueprint Grid, Dot Matrix, Slate, Royal Navy gradient, Dark Slate, Avraham Cyber Space) selectable via the topbar header and Design tab cards gallery.
   - Fixed direct on-canvas drag-and-drop without needing precision button clicks: added full-width top drag strip (`.cve-sec-drag-bar`), draggable `<h2>` heading zone, and section card frame with glowing drop indicators and "Place Section Here" outline.

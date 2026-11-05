@@ -96,6 +96,11 @@
         <span id="atsScoreBadge" class="cve-score-pill">90%</span>
       </button>
 
+      <button type="button" id="cveTipsBtn" class="cve-btn tips-btn" onclick="window.CVE.openTipsModal()" title="View ATS Recommendations & Fixes">
+        <span>💡 Tips</span>
+        <span id="cveTipsCount" class="cve-score-pill" style="background:#ef4444;color:#fff;">! 0</span>
+      </button>
+
       <button type="button" class="cve-btn collab-btn" onclick="window.CVE.openCollabModal()">
         <span>👥 Collaborate</span>
       </button>
@@ -126,6 +131,7 @@
       <div class="cve-sidebar-tabs">
         <button type="button" class="cve-sidebar-tab active" data-tab="content" onclick="window.CVE.setTab('content')">📝 Content</button>
         <button type="button" class="cve-sidebar-tab" data-tab="design" onclick="window.CVE.setTab('design')">🎨 Design</button>
+        <button type="button" class="cve-sidebar-tab" data-tab="ats" onclick="window.CVE.setTab('ats')">🎯 ATS & Tips</button>
         <button type="button" class="cve-sidebar-tab" data-tab="vault" onclick="window.CVE.setTab('vault')">👥 Vault & Friends</button>
       </div>
       <div id="sidebarContent" class="cve-sidebar-content"></div>
@@ -501,6 +507,14 @@
           <span class="cve-kw-title">📋 Format & Content Audit (Harvard & Google Standards)</span>
           <div id="atsChecklistContainer" class="cve-checklist"></div>
         </div>
+
+        <div class="cve-kw-section" style="margin-top:12px;">
+          <span class="cve-kw-title">🤖 What the Robot Reads (ATS Plain Text Extractor)</span>
+          <p style="font-size:11.5px;color:var(--cve-text-muted);margin:4px 0 8px;">
+            This is the exact raw plain text extracted from your CV by screening bots (Greenhouse, Lever, Taleo, Workday):
+          </p>
+          <div id="atsPlainTextInspector" class="cve-plain-text-box"></div>
+        </div>
       </div>
       <div class="cve-modal-footer">
         <button type="button" class="cve-btn pri" onclick="window.CVE.closeModal('atsModal')">Done</button>
@@ -632,6 +646,27 @@
       </div>
       <div class="cve-modal-footer">
         <button type="button" class="cve-btn" onclick="window.CVE.closeModal('authModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATS Tips & Fixes Modal -->
+  <div id="tipsModal" class="cve-modal-backdrop">
+    <div class="cve-modal">
+      <div class="cve-modal-header">
+        <div class="cve-modal-title">
+          <span>💡 ATS Recommendations & Instant Fixes</span>
+        </div>
+        <button type="button" class="cve-modal-close" onclick="window.CVE.closeModal('tipsModal')">✕</button>
+      </div>
+      <div class="cve-modal-body">
+        <p style="font-size:12.5px;color:var(--cve-text-muted);margin-bottom:12px;">
+          Based on Harvard OCS, Google Recruiters, and the Ladders Eye-Tracking Study (2018). Resolve these tips to maximize recruiter response rates:
+        </p>
+        <div id="tipsListContainer" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+      <div class="cve-modal-footer">
+        <button type="button" class="cve-btn pri" onclick="window.CVE.closeModal('tipsModal')">Done</button>
       </div>
     </div>
   </div>

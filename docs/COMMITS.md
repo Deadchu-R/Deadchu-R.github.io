@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 137 commits.
+Total: 168 commits.
 
 ## 2026-10-31
 
@@ -699,3 +699,162 @@ files: assets/edit.js
 Fix web search query cleaning and build authentic topic-grounded sections
 
 files: assets/edit.js
+
+### 8401a26 · 2026-11-03 · Claude
+Docs: AGENTS.md, docs/ (architecture, content, editor, AI, glossary), changelog, comments on every function
+
+files: .gitignore, AGENTS.md, CHANGELOG.md, README.md, assets/cv-page.js, assets/cv.js, assets/edit.js, assets/sections.js, assets/site.js, assets/skins/arcade.js, assets/skins/guard.js, assets/skins/hobbies.js, assets/tv.js, build.py, content_loader.py, docs/AI.md, docs/ARCHITECTURE.md, docs/COMMITS.md, docs/CONTENT.md, docs/EDITOR.md, docs/GLOSSARY.md, tools/commit_log.py, top360.png
+
+### a860904 · 2026-11-03 · Claude
+AI rule commands: fix section paths, add /pad and /text, no doubled chat message
+
+files: CHANGELOG.md, assets/edit.js, docs/AI.md
+
+### 1f98e28 · 2026-11-03 · Deadchu-R
+feat: add fruits and vegetables section
+
+files: content/site.json
+
+### 800c6ea · 2026-11-03 · Deadchu-R
+revert: remove fruits and vegetables test section
+
+files: content/site.json
+
+### 4ca45ef · 2026-11-03 · Deadchu-R
+Styles: add Apple (Minimal) and Robert Valley (Cinematic) skins
+
+files: CHANGELOG.md, assets/edit.js, assets/skins/apple.css, assets/skins/valley.css, build.py
+
+### 41a8663 · 2026-11-03 · Deadchu-R
+Styles: add Avraham cyber skin and unlinked preview subpages
+
+files: CHANGELOG.md, appleInspiredDesign.html, appleInspiredDesign/index.html, assets/edit.js, assets/skins/avraham.css, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, build.py, valleyInspiredDesign.html, valleyInspiredDesign/index.html
+
+### a99cece · 2026-11-03 · Deadchu-R
+fix(build): fix indentation in build_index for preview pages generator
+
+files: build.py
+
+### 5c67a62 · 2026-11-03 · Deadchu-R
+feat(styles): generate standalone preview routes for all 8 site skins
+
+files: appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, build.py, classicDesign.html, classicDesign/index.html, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
+
+### 407fba7 · 2026-11-03 · Deadchu-R
+feat(styles): add interactive style switcher subsite at SiteStyles
+
+files: CHANGELOG.md, SiteStyles.html, SiteStyles/index.html, build.py
+
+### f5ae1e2 · 2026-11-03 · Deadchu-R
+feat(cveditor): add standalone collaborative CV editor subsite with auth, ATS checker and live sync
+
+files: CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js, build.py
+
+### 0d7712d · 2026-11-03 · Deadchu-R
+feat(cveditor): add NovoResume-style layout organizer, page overflow meter, and on-canvas hover toolbars
+
+files: CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
+
+### e36f110 · 2026-11-03 · Deadchu-R
+feat(cveditor): add visitor onboarding wizard and mandatory email save gate
+
+files: CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
+
+### c42ebe8 · 2026-11-03 · Deadchu-R
+feat(cveditor): add multi-step wizard, old CV extraction (PDF/text) and photo upload
+
+files: CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
+
+## 2026-11-04
+
+### c28f360 · 2026-11-04 · Roee Tal
+Security: secrets only in the tab, Change password (+ new token), no-reply commit email, CVEditor without built-in password
+
+files: AGENTS.md, CHANGELOG.md, CVEditor.html, CVEditor/index.html, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.js, assets/edit.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, build.py, classicDesign.html, classicDesign/index.html, content/site.json, content_loader.py, docs/ARCHITECTURE.md, docs/EDITOR.md, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
+
+### 4c9b85f · 2026-11-04 · Roee Tal
+Add main HTML file for hello website
+
+files: (only pages or media — before build.py these were hand-written)
+
+### 9990f99 · 2026-11-04 · Roee Tal
+Add CSS styling for hello website
+
+files: style.css
+
+### ce37174 · 2026-11-04 · Roee Tal
+Add JavaScript for interactive hello website
+
+files: script.js
+
+### 75ac0fb · 2026-11-04 · Roee Tal
+Revert to backup - remove custom website files
+
+files: (only pages or media — before build.py these were hand-written)
+
+### dbe61b6 · 2026-11-04 · Roee Tal
+Revert to backup - remove custom website files
+
+files: style.css
+
+### ae99b90 · 2026-11-04 · Roee Tal
+Revert to backup - remove custom website files
+
+files: script.js
+
+### 58b747c · 2026-11-04 · Roee Tal
+Add fruits and vegetables section after unreal developer experience
+
+files: (only pages or media — before build.py these were hand-written)
+
+### c1ab2e9 · 2026-11-04 · Roee Tal
+Add fruits and vegetables section to test1.html
+
+files: test1.html
+
+### 8d8c134 · 2026-11-04 · Roee Tal
+Site: add fruits & veggies section under experience
+
+files: .gitignore, CHANGELOG.md, content/site.json, content_loader.py
+
+## 2026-11-05
+
+### fae5f71 · 2026-11-05 · Roee Tal
+Test: add blueberries to test1.html
+
+files: test1.html
+
+### d6810b4 · 2026-11-05 · Roee Tal
+Site: add full fruits and vegetables section under experience
+
+files: CHANGELOG.md, content/site.json
+
+### 3858f35 · 2026-11-05 · Roee Tal
+Edit on the site: site.json, projects.json
+
+files: content/site.json
+
+### 42aec41 · 2026-11-05 · Roee Tal
+CVEditor: load real CVs, remove mandatory save/print gate, fix auth and inline editing
+
+files: CHANGELOG.md, assets/cveditor.js
+
+### 6fa0069 · 2026-11-05 · Roee Tal
+CVEditor: add drag-and-drop reordering with outline feedback in sidebar and canvas
+
+files: CHANGELOG.md, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.css, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
+
+### af5f05a · 2026-11-05 · Roee Tal
+CVEditor: site skins integration and whole-section direct drag-and-drop
+
+files: .gitignore, CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
+
+### 7c02dd0 · 2026-11-05 · Roee Tal
+CVEditor: CV backgrounds from site editor and direct section/item drag-and-drop
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.css, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
+
+### ca8685f · 2026-11-05 · Roee Tal
+CVEditor: micro-level drag (bullets, skills, contact), typography & sizing, and complete ATS engine
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cv.js, assets/cveditor.css, assets/cveditor.js
