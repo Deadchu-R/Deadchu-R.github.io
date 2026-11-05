@@ -9,6 +9,10 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** bullet swapping bugfix, contact info reordering, and animated dashed outline feedback:
+  - Fixed bullet dragging: resolved out-of-bounds global index bug that caused phantom/new bullets to be created; added smart adjacent neighbor swapping.
+  - Contact info reordering: added full `person.contact_order` support allowing dragging and swapping between email, phone, location, and custom links across all templates (ATS, Novo, Studio).
+  - Animated dashed outline feedback: added pulsing cyan/blue animated dashed outline (`cveMarchDashes`) when hovering over drop targets, plus subtle dashed guides on all eligible drop targets during drag mode.
 - **CVEditor:** fix initialization crash by restoring missing photo upload, page meter, and CV parser helper functions.
 - **CVEditor:** micro-level drag-and-drop, full typography & sizing controls, and complete ATS engine:
   - Micro-level drag-and-drop: reorder individual bullet points in experience, projects, and education courses (e.g. Tiltan courses); reorder skill chips within/between groups; reorder personal contact items (email, phone, location, links) with glowing cyan drop indicators.

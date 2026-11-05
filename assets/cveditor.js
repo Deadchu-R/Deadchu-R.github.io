@@ -831,6 +831,14 @@
     ];
     const selector = classes.map(c => "." + c).join(", ");
     document.querySelectorAll(selector).forEach(el => el.classList.remove(...classes));
+
+    const modeClasses = [
+      "cve-dragging-bullet-mode", "cve-dragging-skill-mode",
+      "cve-dragging-contact-mode", "cve-dragging-item-mode", "cve-dragging-sec-mode"
+    ];
+    document.body.classList.remove(...modeClasses);
+    const stage = document.querySelector("#cvSheet");
+    if (stage) stage.classList.remove(...modeClasses);
   }
 
 
@@ -840,7 +848,7 @@
 
     // 1. Bullet Points Dragging (in Experience, Projects, Education)
     const bullets = stage.querySelectorAll("ul.cv-bul > li, .cv-inline .cv-inline-bullet");
-    bullets.forEach((bulEl, bIdx) => {
+    bullets.forEach((bulEl) => {
       bulEl.setAttribute("draggable", "true");
       bulEl.classList.add("cve-draggable-bullet");
 
@@ -862,16 +870,27 @@
       const secIdx = parseInt(parentSec.getAttribute("data-i"), 10);
       const itemIdx = parseInt(parentItem.getAttribute("data-i"), 10);
 
+      // Local index in item bullets array:
+      let localBulIdx = parseInt(bulEl.getAttribute("data-i"), 10);
+      if (isNaN(localBulIdx)) {
+        const parentList = bulEl.parentElement;
+        const siblingBullets = Array.from(parentList.querySelectorAll(":scope > li, :scope > .cv-inline-bullet"));
+        localBulIdx = siblingBullets.indexOf(bulEl);
+      }
+      if (localBulIdx === -1 || isNaN(localBulIdx)) return;
+
       const startBulDrag = (e) => {
         if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
           return;
         }
         e.stopPropagation();
-        state.draggingBullet = { col, secIdx, itemIdx, bulletIdx: bIdx };
+        state.draggingBullet = { col, secIdx, itemIdx, bulletIdx: localBulIdx };
         bulEl.classList.add("cve-is-dragging-bullet");
+        stage.classList.add("cve-dragging-bullet-mode");
+        document.body.classList.add("cve-dragging-bullet-mode");
         if (e.dataTransfer) {
           e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "bullet", col, secIdx, itemIdx, bulletIdx: bIdx }));
+          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "bullet", col, secIdx, itemIdx, bulletIdx: localBulIdx }));
         }
       };
 
@@ -880,6 +899,8 @@
 
       bulEl.addEventListener("dragend", () => {
         bulEl.classList.remove("cve-is-dragging-bullet");
+        stage.classList.remove("cve-dragging-bullet-mode");
+        document.body.classList.remove("cve-dragging-bullet-mode");
         clearAllDropFeedback();
         state.draggingBullet = null;
       });
@@ -887,7 +908,7 @@
       bulEl.addEventListener("dragover", (e) => {
         if (!state.draggingBullet) return;
         const d = state.draggingBullet;
-        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.bulletIdx === bIdx) return;
+        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.bulletIdx === localBulIdx) return;
         e.preventDefault();
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
@@ -912,7 +933,7 @@
       bulEl.addEventListener("drop", (e) => {
         if (!state.draggingBullet) return;
         const d = state.draggingBullet;
-        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.bulletIdx === bIdx) return;
+        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.bulletIdx === localBulIdx) return;
         e.preventDefault();
         e.stopPropagation();
 
@@ -924,13 +945,13 @@
         const fromCol = d.col, fromSec = d.secIdx, fromItem = d.itemIdx, fromBul = d.bulletIdx;
         state.draggingBullet = null;
 
-        window.CVE.moveBulletPosition(fromCol, fromSec, fromItem, fromBul, col, secIdx, itemIdx, bIdx, pos);
+        window.CVE.moveBulletPosition(fromCol, fromSec, fromItem, fromBul, col, secIdx, itemIdx, localBulIdx, pos);
       });
     });
 
     // 2. Skill Chips Dragging
     const chips = stage.querySelectorAll(".cv-chips .cv-chip, .cv-inline .cv-chip");
-    chips.forEach((chipEl, cIdx) => {
+    chips.forEach((chipEl) => {
       chipEl.setAttribute("draggable", "true");
       chipEl.classList.add("cve-draggable-skill");
 
@@ -943,16 +964,26 @@
       const secIdx = parseInt(parentSec.getAttribute("data-i"), 10);
       const itemIdx = parseInt(parentItem.getAttribute("data-i"), 10);
 
+      let localSkillIdx = parseInt(chipEl.getAttribute("data-i"), 10);
+      if (isNaN(localSkillIdx)) {
+        const parentContainer = chipEl.parentElement;
+        const siblingChips = Array.from(parentContainer.querySelectorAll(":scope > .cv-chip"));
+        localSkillIdx = siblingChips.indexOf(chipEl);
+      }
+      if (localSkillIdx === -1 || isNaN(localSkillIdx)) return;
+
       const startSkillDrag = (e) => {
         if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
           return;
         }
         e.stopPropagation();
-        state.draggingSkill = { col, secIdx, itemIdx, skillIdx: cIdx };
+        state.draggingSkill = { col, secIdx, itemIdx, skillIdx: localSkillIdx };
         chipEl.classList.add("cve-is-dragging-skill");
+        stage.classList.add("cve-dragging-skill-mode");
+        document.body.classList.add("cve-dragging-skill-mode");
         if (e.dataTransfer) {
           e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "skill", col, secIdx, itemIdx, skillIdx: cIdx }));
+          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "skill", col, secIdx, itemIdx, skillIdx: localSkillIdx }));
         }
       };
 
@@ -960,6 +991,8 @@
 
       chipEl.addEventListener("dragend", () => {
         chipEl.classList.remove("cve-is-dragging-skill");
+        stage.classList.remove("cve-dragging-skill-mode");
+        document.body.classList.remove("cve-dragging-skill-mode");
         clearAllDropFeedback();
         state.draggingSkill = null;
       });
@@ -967,7 +1000,7 @@
       chipEl.addEventListener("dragover", (e) => {
         if (!state.draggingSkill) return;
         const d = state.draggingSkill;
-        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.skillIdx === cIdx) return;
+        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.skillIdx === localSkillIdx) return;
         e.preventDefault();
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
@@ -992,7 +1025,7 @@
       chipEl.addEventListener("drop", (e) => {
         if (!state.draggingSkill) return;
         const d = state.draggingSkill;
-        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.skillIdx === cIdx) return;
+        if (d.col === col && d.secIdx === secIdx && d.itemIdx === itemIdx && d.skillIdx === localSkillIdx) return;
         e.preventDefault();
         e.stopPropagation();
 
@@ -1004,29 +1037,35 @@
         const fromCol = d.col, fromSec = d.secIdx, fromItem = d.itemIdx, fromSkill = d.skillIdx;
         state.draggingSkill = null;
 
-        window.CVE.moveSkillPosition(fromCol, fromSec, fromItem, fromSkill, col, secIdx, itemIdx, cIdx, pos);
+        window.CVE.moveSkillPosition(fromCol, fromSec, fromItem, fromSkill, col, secIdx, itemIdx, localSkillIdx, pos);
       });
     });
 
     // 3. Personal Info & Contact Items Dragging (email, phone, location, links)
-    const contacts = stage.querySelectorAll(".cv-contact-item, .cv-contact .cv-contact-link");
-    contacts.forEach((conEl, conIdx) => {
+    const contacts = stage.querySelectorAll(".cv-contact-item");
+    contacts.forEach((conEl) => {
       conEl.setAttribute("draggable", "true");
       conEl.classList.add("cve-draggable-contact");
 
-      const kind = conEl.getAttribute("data-contact") || (conEl.classList.contains("contact-mail") ? "email" : conEl.classList.contains("contact-phone") ? "phone" : conEl.classList.contains("contact-loc") ? "location" : "link");
-      const linkIdx = parseInt(conEl.getAttribute("data-i") || conIdx, 10);
+      const contactKey = conEl.getAttribute("data-contact") || (
+        conEl.classList.contains("contact-mail") ? "email" :
+        conEl.classList.contains("contact-phone") ? "phone" :
+        conEl.classList.contains("contact-loc") ? "location" :
+        "link:" + (conEl.getAttribute("data-i") || 0)
+      );
 
       const startContactDrag = (e) => {
         if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
           return;
         }
         e.stopPropagation();
-        state.draggingContact = { kind, linkIdx, conIdx };
+        state.draggingContact = { key: contactKey };
         conEl.classList.add("cve-is-dragging-contact");
+        stage.classList.add("cve-dragging-contact-mode");
+        document.body.classList.add("cve-dragging-contact-mode");
         if (e.dataTransfer) {
           e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "contact", kind, linkIdx, conIdx }));
+          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "contact", key: contactKey }));
         }
       };
 
@@ -1034,6 +1073,8 @@
 
       conEl.addEventListener("dragend", () => {
         conEl.classList.remove("cve-is-dragging-contact");
+        stage.classList.remove("cve-dragging-contact-mode");
+        document.body.classList.remove("cve-dragging-contact-mode");
         clearAllDropFeedback();
         state.draggingContact = null;
       });
@@ -1041,14 +1082,20 @@
       conEl.addEventListener("dragover", (e) => {
         if (!state.draggingContact) return;
         const d = state.draggingContact;
-        if (d.conIdx === conIdx) return;
+        if (d.key === contactKey) return;
         e.preventDefault();
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
 
         const rect = conEl.getBoundingClientRect();
-        const midX = rect.left + rect.width / 2;
-        if (e.clientX < midX) {
+        let pos = "before";
+        if (rect.height > 26 && rect.width < 250) {
+          pos = e.clientY < (rect.top + rect.height / 2) ? "before" : "after";
+        } else {
+          pos = e.clientX < (rect.left + rect.width / 2) ? "before" : "after";
+        }
+
+        if (pos === "before") {
           conEl.classList.add("cve-contact-drop-before");
           conEl.classList.remove("cve-contact-drop-after");
         } else {
@@ -1066,19 +1113,23 @@
       conEl.addEventListener("drop", (e) => {
         if (!state.draggingContact) return;
         const d = state.draggingContact;
-        if (d.conIdx === conIdx) return;
+        if (d.key === contactKey) return;
         e.preventDefault();
         e.stopPropagation();
 
         const rect = conEl.getBoundingClientRect();
-        const midX = rect.left + rect.width / 2;
-        const pos = e.clientX < midX ? "before" : "after";
+        let pos = "before";
+        if (rect.height > 26 && rect.width < 250) {
+          pos = e.clientY < (rect.top + rect.height / 2) ? "before" : "after";
+        } else {
+          pos = e.clientX < (rect.left + rect.width / 2) ? "before" : "after";
+        }
 
+        const fromKey = d.key;
         clearAllDropFeedback();
-        const fromKind = d.kind, fromLinkIdx = d.linkIdx;
         state.draggingContact = null;
 
-        window.CVE.moveContactPosition(fromKind, fromLinkIdx, kind, linkIdx, pos);
+        window.CVE.moveContactPosition(fromKey, contactKey, pos);
       });
     });
   }
@@ -3344,6 +3395,9 @@
 
   // --- Public API for UI Event Handlers ---
   window.CVE = {
+    getCurrentCV() {
+      return getCurrentCV();
+    },
     init() {
       initPhotoFileInput();
       Storage.init();
@@ -3458,7 +3512,17 @@
       const toItem = toSec && toSec.items && toSec.items[toItemIdx];
       if (!fromItem || !toItem || !Array.isArray(fromItem.bullets) || !Array.isArray(toItem.bullets)) return;
 
+      if (fromBulIdx < 0 || fromBulIdx >= fromItem.bullets.length) return;
+
+      // Smart neighbor swap if dragging onto adjacent neighbor
+      if (fromItem === toItem) {
+        if (fromBulIdx === toBulIdx - 1 && pos === "before") pos = "after";
+        if (fromBulIdx === toBulIdx + 1 && pos === "after") pos = "before";
+      }
+
       const [bul] = fromItem.bullets.splice(fromBulIdx, 1);
+      if (bul === undefined) return;
+
       let ins = toBulIdx;
       if (fromItem === toItem && fromBulIdx < toBulIdx) ins--;
       if (pos === "after") ins++;
@@ -3479,7 +3543,17 @@
       const toItem = toSec && toSec.items && toSec.items[toItemIdx];
       if (!fromItem || !toItem || !Array.isArray(fromItem.items) || !Array.isArray(toItem.items)) return;
 
+      if (fromSkillIdx < 0 || fromSkillIdx >= fromItem.items.length) return;
+
+      // Smart neighbor swap if dragging onto adjacent neighbor
+      if (fromItem === toItem) {
+        if (fromSkillIdx === toSkillIdx - 1 && pos === "before") pos = "after";
+        if (fromSkillIdx === toSkillIdx + 1 && pos === "after") pos = "before";
+      }
+
       const [skill] = fromItem.items.splice(fromSkillIdx, 1);
+      if (skill === undefined) return;
+
       let ins = toSkillIdx;
       if (fromItem === toItem && fromSkillIdx < toSkillIdx) ins--;
       if (pos === "after") ins++;
@@ -3492,24 +3566,41 @@
       renderSidebar();
     },
 
-    moveContactPosition(fromKind, fromLinkIdx, toKind, toLinkIdx, pos = "before") {
+    moveContactPosition(fromKey, toKey, pos = "before") {
       const cv = getCurrentCV();
       if (!cv.person) cv.person = {};
       const P = cv.person;
 
-      if (fromKind === "link" && toKind === "link" && Array.isArray(P.links)) {
-        const [link] = P.links.splice(fromLinkIdx, 1);
-        let ins = toLinkIdx;
-        if (fromLinkIdx < toLinkIdx) ins--;
-        if (pos === "after") ins++;
-        if (ins < 0) ins = 0;
-        if (ins > P.links.length) ins = P.links.length;
-        P.links.splice(ins, 0, link);
-        saveCurrentCV(cv);
-        renderA4Sheet();
-        renderSidebar();
-        return;
-      }
+      const defaultKeys = ["email", "phone", "location", ...(P.links || []).map((_, k) => "link:" + k)];
+      let order = Array.isArray(P.contact_order) && P.contact_order.length
+        ? [...P.contact_order]
+        : [...defaultKeys];
+
+      // Ensure all current keys are present
+      defaultKeys.forEach(k => {
+        if (!order.includes(k)) order.push(k);
+      });
+
+      const fromIdx = order.indexOf(fromKey);
+      const toIdx = order.indexOf(toKey);
+      if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+
+      // Smart neighbor swap if dragging onto adjacent neighbor
+      if (fromIdx === toIdx - 1 && pos === "before") pos = "after";
+      if (fromIdx === toIdx + 1 && pos === "after") pos = "before";
+
+      const [item] = order.splice(fromIdx, 1);
+      let ins = order.indexOf(toKey);
+      if (pos === "after") ins++;
+      if (ins < 0) ins = 0;
+      if (ins > order.length) ins = order.length;
+
+      order.splice(ins, 0, item);
+      P.contact_order = order;
+
+      saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
     },
 
     openTipsModal() {

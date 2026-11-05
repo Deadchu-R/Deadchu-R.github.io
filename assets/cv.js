@@ -121,12 +121,17 @@
   }
   // The contact line (email, phone, place, links), with icons in designed templates.
   function contact(v,base,withIcons,edit){
-    const P=v.person,pp=base+".person",rows=[];
+    const P=v.person,pp=base+".person",items={};
     const row=(ic,val,inner,href,cls,extra)=>`<li class="cv-contact-item${cls?" "+cls:""}"${extra||""}${val?"":" hidden data-edit-show"}>${withIcons?svg(ic):""}${href?`<a href="${esc(href)}">${inner}</a>`:inner}</li>`;
-    rows.push(row("mail",P.email,`<span${E(pp+".email","email")}>${esc(P.email)}</span>`,P.email?"mailto:"+P.email:"","contact-mail",' data-contact="email"'));
-    rows.push(row("phone",P.phone,`<span${E(pp+".phone","phone")}>${esc(P.phone)}</span>`,P.phone?"tel:"+String(P.phone).replace(/[^\d+]/g,""):"","contact-phone",' data-contact="phone"'));
-    rows.push(row("pin",P.location,`<span${E(pp+".location","location")}>${esc(P.location)}</span>`,"","contact-loc",' data-contact="location"'));
-    (P.links||[]).forEach((l,k)=>{const u=full(l.url);rows.push(`<li class="cv-contact-item contact-link" data-contact="link" data-i="${k}"${X(["Web address",`${pp}.links.${k}.url`,"text"])}>${withIcons?svg(linkIcon(u)):""}<a href="${esc(u)}"><span${E(`${pp}.links.${k}.label`)}>${esc(l.label||pretty(u))}</span></a></li>`)});
+    items["email"]=row("mail",P.email,`<span${E(pp+".email","email")}>${esc(P.email)}</span>`,P.email?"mailto:"+P.email:"","contact-mail",' data-contact="email"');
+    items["phone"]=row("phone",P.phone,`<span${E(pp+".phone","phone")}>${esc(P.phone)}</span>`,P.phone?"tel:"+String(P.phone).replace(/[^\d+]/g,""):"","contact-phone",' data-contact="phone"');
+    items["location"]=row("pin",P.location,`<span${E(pp+".location","location")}>${esc(P.location)}</span>`,"","contact-loc",' data-contact="location"');
+    (P.links||[]).forEach((l,k)=>{const u=full(l.url);items["link:"+k]=`<li class="cv-contact-item contact-link" data-contact="link:${k}" data-i="${k}"${X(["Web address",`${pp}.links.${k}.url`,"text"])}>${withIcons?svg(linkIcon(u)):""}<a href="${esc(u)}"><span${E(`${pp}.links.${k}.label`)}>${esc(l.label||pretty(u))}</span></a></li>`});
+    
+    const order=Array.isArray(P.contact_order)&&P.contact_order.length?P.contact_order:["email","phone","location",...(P.links||[]).map((_,k)=>"link:"+k)];
+    const rows=[],used=new Set();
+    order.forEach(k=>{if(items[k]){rows.push(items[k]);used.add(k);}});
+    Object.keys(items).forEach(k=>{if(!used.has(k))rows.push(items[k]);});
     return rows;
   }
   // The person's photo (when the template shows one).

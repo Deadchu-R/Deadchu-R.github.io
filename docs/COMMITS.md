@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 169 commits.
+Total: 170 commits.
 
 ## 2026-10-31
 
@@ -859,7 +859,12 @@ CVEditor: micro-level drag (bullets, skills, contact), typography & sizing, and 
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cv.js, assets/cveditor.css, assets/cveditor.js, docs/COMMITS.md
 
-### 5a7fc88 · 2026-11-05 · Roee Tal
+### ef728fd · 2026-11-05 · Roee Tal
 CVEditor: fix initialization crash by restoring photo upload, page meter and parser helpers
 
-files: CHANGELOG.md, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
+files: CHANGELOG.md, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, docs/COMMITS.md, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
+
+### 8ef3a6a · 2026-11-05 · Roee Tal
+CVEditor: fix bullet swap & contact reordering, add animated dashed drop outlines
+
+files: CHANGELOG.md, assets/cv.js, assets/cveditor.css, assets/cveditor.js

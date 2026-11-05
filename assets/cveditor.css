@@ -2835,51 +2835,96 @@ html[data-skin="plain"] {
   display: flex;
 }
 
+/* Animated Dashed Outline Keyframes for Drag Targets */
+@keyframes cveMarchDashes {
+  0% {
+    outline-color: #00f0ff;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.55), inset 0 0 8px rgba(0, 240, 255, 0.15);
+  }
+  50% {
+    outline-color: #3b82f6;
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.8), inset 0 0 12px rgba(59, 130, 246, 0.3);
+  }
+  100% {
+    outline-color: #00f0ff;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.55), inset 0 0 8px rgba(0, 240, 255, 0.15);
+  }
+}
+
+/* While dragging: subtle dashed guide outline on all candidate targets */
+.cve-dragging-bullet-mode .cve-draggable-bullet:not(.cve-is-dragging-bullet) {
+  outline: 1.5px dashed rgba(6, 182, 212, 0.45) !important;
+  outline-offset: 3px !important;
+  border-radius: 4px !important;
+  cursor: copy !important;
+}
+
+.cve-dragging-skill-mode .cve-draggable-skill:not(.cve-is-dragging-skill) {
+  outline: 1.5px dashed rgba(6, 182, 212, 0.45) !important;
+  outline-offset: 3px !important;
+  border-radius: 9999px !important;
+  cursor: copy !important;
+}
+
+.cve-dragging-contact-mode .cve-draggable-contact:not(.cve-is-dragging-contact) {
+  outline: 1.5px dashed rgba(6, 182, 212, 0.5) !important;
+  outline-offset: 3px !important;
+  border-radius: 4px !important;
+  cursor: copy !important;
+}
+
+.cve-dragging-item-mode .cve-draggable-item:not(.cve-is-dragging-item) {
+  outline: 1.5px dashed rgba(6, 182, 212, 0.45) !important;
+  outline-offset: 4px !important;
+  border-radius: 6px !important;
+}
+
+/* Active drop target hover with prominent animated dashed outline */
 .cv-bul li.cve-bullet-drop-before,
-.cv-inline-bullet.cve-bullet-drop-before {
-  position: relative;
-  outline: 2px solid #00f0ff !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5) !important;
+.cv-inline-bullet.cve-bullet-drop-before,
+.cv-bul li.cve-bullet-drop-after,
+.cv-inline-bullet.cve-bullet-drop-after {
+  position: relative !important;
+  outline: 2.5px dashed #00f0ff !important;
+  outline-offset: 4px !important;
+  border-radius: 6px !important;
+  background-color: rgba(6, 182, 212, 0.12) !important;
+  animation: cveMarchDashes 0.85s infinite ease-in-out !important;
+  transition: all 0.12s ease !important;
 }
 
 .cv-bul li.cve-bullet-drop-before::before,
 .cv-inline-bullet.cve-bullet-drop-before::before {
   content: "";
   position: absolute;
-  top: -3px;
+  top: -4px;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   background: #00f0ff;
   border-radius: 2px;
-  box-shadow: 0 0 8px #00f0ff;
+  box-shadow: 0 0 10px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.6);
   z-index: 99;
-}
-
-.cv-bul li.cve-bullet-drop-after,
-.cv-inline-bullet.cve-bullet-drop-after {
-  position: relative;
-  outline: 2px solid #00f0ff !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5) !important;
 }
 
 .cv-bul li.cve-bullet-drop-after::after,
 .cv-inline-bullet.cve-bullet-drop-after::after {
   content: "";
   position: absolute;
-  bottom: -3px;
+  bottom: -4px;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   background: #00f0ff;
   border-radius: 2px;
-  box-shadow: 0 0 8px #00f0ff;
+  box-shadow: 0 0 10px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.6);
   z-index: 99;
 }
 
 .cve-is-dragging-bullet {
-  opacity: 0.45 !important;
-  outline: 1.5px dashed #00f0ff !important;
+  opacity: 0.35 !important;
+  outline: 2px dashed #00f0ff !important;
+  outline-offset: 3px !important;
 }
 
 /* Skills Dragging & High-Visibility Hover State */
@@ -2904,44 +2949,45 @@ html[data-skin="plain"] {
   cursor: grabbing !important;
 }
 
-.cv-chip.cve-chip-drop-before {
-  position: relative;
-  outline: 2px solid #00f0ff !important;
+.cv-chip.cve-chip-drop-before,
+.cv-chip.cve-chip-drop-after {
+  position: relative !important;
+  outline: 2.5px dashed #00f0ff !important;
+  outline-offset: 3px !important;
+  border-radius: 9999px !important;
+  background-color: rgba(6, 182, 212, 0.16) !important;
+  animation: cveMarchDashes 0.85s infinite ease-in-out !important;
+  transition: all 0.12s ease !important;
 }
 
 .cv-chip.cve-chip-drop-before::before {
   content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -4px;
+  top: -2px;
+  bottom: -2px;
+  left: -5px;
   width: 4px;
   background: #00f0ff;
   border-radius: 2px;
-  box-shadow: 0 0 8px #00f0ff;
+  box-shadow: 0 0 10px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.6);
   z-index: 99;
-}
-
-.cv-chip.cve-chip-drop-after {
-  position: relative;
-  outline: 2px solid #00f0ff !important;
 }
 
 .cv-chip.cve-chip-drop-after::after {
   content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  right: -4px;
+  top: -2px;
+  bottom: -2px;
+  right: -5px;
   width: 4px;
   background: #00f0ff;
   border-radius: 2px;
-  box-shadow: 0 0 8px #00f0ff;
+  box-shadow: 0 0 10px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.6);
   z-index: 99;
 }
 
 .cve-is-dragging-skill {
-  opacity: 0.4 !important;
+  opacity: 0.35 !important;
   transform: scale(0.95);
   outline: 2px dashed #00f0ff !important;
 }
@@ -2953,56 +2999,61 @@ html[data-skin="plain"] {
   border-radius: 4px;
   padding: 2px 4px;
   position: relative;
+  display: inline-flex;
+  align-items: center;
 }
 
 .cvdoc .cv-contact-item:hover {
-  background: rgba(56, 189, 248, 0.08);
-  outline: 1px dashed rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.12);
+  outline: 1.5px dashed rgba(56, 189, 248, 0.6) !important;
+  outline-offset: 2px !important;
 }
 
 .cvdoc .cv-contact-item:active {
   cursor: grabbing !important;
 }
 
-.cv-contact-item.cve-contact-drop-before {
-  position: relative;
-  outline: 2px solid #00f0ff !important;
+.cv-contact-item.cve-contact-drop-before,
+.cv-contact-item.cve-contact-drop-after {
+  position: relative !important;
+  outline: 2.5px dashed #00f0ff !important;
+  outline-offset: 4px !important;
+  border-radius: 6px !important;
+  background-color: rgba(6, 182, 212, 0.16) !important;
+  animation: cveMarchDashes 0.85s infinite ease-in-out !important;
+  transition: all 0.12s ease !important;
 }
 
 .cv-contact-item.cve-contact-drop-before::before {
   content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -3px;
-  width: 3px;
+  top: -2px;
+  bottom: -2px;
+  left: -4px;
+  width: 4px;
   background: #00f0ff;
   border-radius: 2px;
-  box-shadow: 0 0 8px #00f0ff;
+  box-shadow: 0 0 10px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.6);
   z-index: 99;
-}
-
-.cv-contact-item.cve-contact-drop-after {
-  position: relative;
-  outline: 2px solid #00f0ff !important;
 }
 
 .cv-contact-item.cve-contact-drop-after::after {
   content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  right: -3px;
-  width: 3px;
+  top: -2px;
+  bottom: -2px;
+  right: -4px;
+  width: 4px;
   background: #00f0ff;
   border-radius: 2px;
-  box-shadow: 0 0 8px #00f0ff;
+  box-shadow: 0 0 10px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.6);
   z-index: 99;
 }
 
 .cve-is-dragging-contact {
-  opacity: 0.45 !important;
-  outline: 1.5px dashed #00f0ff !important;
+  opacity: 0.35 !important;
+  outline: 2px dashed #00f0ff !important;
+  outline-offset: 2px !important;
 }
 
 /* ============================================================
