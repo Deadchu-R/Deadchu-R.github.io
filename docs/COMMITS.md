@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 177 commits.
+Total: 179 commits.
 
 ## 2026-10-31
 
@@ -903,3 +903,13 @@ files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, as
 CV: separate CV & CVEditor, remove X buttons from public CV, persistent stretch & add to main website button
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cv.js, assets/cveditor.css, assets/cveditor.js
+
+### 7f03906 · 2026-11-05 · Roee Tal
+docs: update COMMITS.md
+
+files: docs/COMMITS.md
+
+### 6e4e0b6 · 2026-11-05 · Roee Tal
+CVEditor: define isRoeeUser and addToMainWebsiteCV, fixing runtime ReferenceError
+
+files: CVEditor.html, CVEditor/index.html, assets/cveditor.js
