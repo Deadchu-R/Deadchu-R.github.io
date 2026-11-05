@@ -833,43 +833,55 @@
 
   // --- Real-time Rendering & Live View with NovoResume Controls ---
   function renderA4Sheet() {
-    const cv = getCurrentCV();
-    const stage = $("#cvSheet");
-    if (!stage || !window.RTCV) return;
+    try {
+      const cv = getCurrentCV();
+      const stage = $("#cvSheet");
+      if (!stage) {
+        console.warn("[CVEditor] #cvSheet element not found on page");
+        return;
+      }
+      if (!window.RTCV) {
+        console.warn("[CVEditor] window.RTCV not ready yet, retrying in 50ms...");
+        setTimeout(renderA4Sheet, 50);
+        return;
+      }
 
-    applySkin(cv.skin || "classic");
-    applyCvBackground(cv.background || "white", cv.custom_bg);
+      applySkin(cv.skin || "classic");
+      applyCvBackground(cv.background || "white", cv.custom_bg);
 
-    const norm = window.RTCV.normalize(cv);
-    stage.innerHTML = window.RTCV.render(norm, state.activeCvId, { edit: true });
+      const norm = window.RTCV.normalize(cv);
+      stage.innerHTML = window.RTCV.render(norm, state.activeCvId, { edit: true });
 
-    const doc = stage.querySelector(".cvdoc");
-    if (doc) {
-      doc.classList.add("ratio-" + (cv.layout_ratio || "50-50"));
-      doc.setAttribute("data-skin", cv.skin || "classic");
+      const doc = stage.querySelector(".cvdoc");
+      if (doc) {
+        doc.classList.add("ratio-" + (cv.layout_ratio || "50-50"));
+        doc.setAttribute("data-skin", cv.skin || "classic");
+      }
+
+      let fontLink = $("#cv-dynamic-font");
+      if (!fontLink) {
+        fontLink = document.createElement("link");
+        fontLink.rel = "stylesheet";
+        fontLink.id = "cv-dynamic-font";
+        document.head.appendChild(fontLink);
+      }
+      fontLink.href = window.RTCV.fontHref(norm);
+
+      try { attachSectionToolbars(stage); } catch (e) { console.error("attachSectionToolbars err:", e); }
+      try { attachInlineEditors(stage); } catch (e) { console.error("attachInlineEditors err:", e); }
+      try { attachPhotoInteractions(stage); } catch (e) { console.error("attachPhotoInteractions err:", e); }
+      try { attachMicroDraggables(stage); } catch (e) { console.error("attachMicroDraggables err:", e); }
+      try { applyDocumentTypography(cv); } catch (e) { console.error("applyDocumentTypography err:", e); }
+      try { applyZoom(); } catch (e) { console.error("applyZoom err:", e); }
+      try { updateTopbarUI(); } catch (e) { console.error("updateTopbarUI err:", e); }
+      try { updateAtsBadge(); } catch (e) { console.error("updateAtsBadge err:", e); }
+      setTimeout(() => {
+        try { updatePageMeter(); } catch (e) { console.error("updatePageMeter err:", e); }
+        try { renderCanvasTips(stage); } catch (e) { console.error("renderCanvasTips err:", e); }
+      }, 90);
+    } catch (err) {
+      console.error("[CVEditor] Fatal error in renderA4Sheet:", err);
     }
-
-    let fontLink = $("#cv-dynamic-font");
-    if (!fontLink) {
-      fontLink = document.createElement("link");
-      fontLink.rel = "stylesheet";
-      fontLink.id = "cv-dynamic-font";
-      document.head.appendChild(fontLink);
-    }
-    fontLink.href = window.RTCV.fontHref(norm);
-
-    attachSectionToolbars(stage);
-    attachInlineEditors(stage);
-    attachPhotoInteractions(stage);
-    attachMicroDraggables(stage);
-    applyDocumentTypography(cv);
-    applyZoom();
-    updateTopbarUI();
-    updateAtsBadge();
-    setTimeout(() => {
-      updatePageMeter();
-      renderCanvasTips(stage);
-    }, 90);
   }
 
   function clearAllDropFeedback() {

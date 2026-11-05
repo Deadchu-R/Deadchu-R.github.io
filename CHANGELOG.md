@@ -9,6 +9,12 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** resizable section panels, zero-gap clean collapsed cards, robust CV rendering safeguards, and personal details scroll:
+  - Resizable section cards: added vertical drag-to-resize handle (`resize: vertical`) with `min-height: 120px` and `max-height: 75vh`, enabling users to freely adjust the height of any section window.
+  - Clean collapsed state: completely eliminated empty space and rogue outline artifacts when sections are collapsed (`display: none !important; height: 0; padding: 0`), showing only the compact header with icon, title, item count badge and snippet.
+  - Personal Details scroll & resize: Personal Details card now shares the same internal scrolling and vertical resize capability as all other section cards.
+  - Bulletproof CV rendering: added self-healing retry logic and granular try-catch blocks to `renderA4Sheet` so any transient script loading timing or DOM race condition cannot result in a blank canvas.
+  - Cache busting: bumped asset query string to `?v=20261105_06` to guarantee instant browser delivery.
 - **CVEditor:** per-section internal scrolling, rich accordion preview, accurate arrow direction, and stable drop outlines:
   - Per-section internal scrolling: added dedicated `max-height: 480px; overflow-y: auto` to `.cve-section-body` cards, allowing effortless scrolling inside individual sections ("בחלקים") as well as across the full sidebar.
   - Rich accordion closed state: collapsed sections now display their section icon (`💼`, `🚀`, `🎓`, `⚡`, `🌐`), bold title, item count badge, and a summary preview of their contents (`(Role @ Org)`), completely eliminating empty line ambiguity.

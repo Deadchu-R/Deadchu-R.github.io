@@ -504,11 +504,13 @@ body.cve-body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 480px;
+  min-height: 120px;
+  max-height: 75vh;
+  resize: vertical;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   scrollbar-width: thin;
-  scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+  scrollbar-color: rgba(99, 102, 241, 0.5) transparent;
 }
 
 .cve-section-body::-webkit-scrollbar {
@@ -3580,16 +3582,26 @@ body.cve-sidebar-collapsed .cve-canvas-wrap {
 
 .cve-section-card.collapsed .cve-section-body {
   display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+  resize: none !important;
 }
 
 .cve-section-card.collapsed .cve-section-header {
   border-bottom: none !important;
-  padding: 8px 12px;
+  padding: 9px 12px;
+  background: transparent !important;
 }
 
 .cve-section-card.collapsed {
-  background: rgba(255, 255, 255, 0.02) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.025) !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  margin-bottom: 2px !important;
 }
 
 /* Undo / Redo & Sidebar Toggle */
