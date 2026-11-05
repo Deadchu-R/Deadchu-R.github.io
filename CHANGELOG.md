@@ -9,6 +9,11 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** site skins integration and whole-section direct drag-and-drop:
+  - Integrated all 8 roeetal.com site themes (Classic, Apple Minimal, Robert Valley, Avraham Cyber, Arcade Retro, Hobbies Climbing, Sketchbook, Plain ATS) into CVEditor.
+  - Added topbar style switcher and Design tab theme picker cards that dynamically apply styles to the CV sheet and studio workspace.
+  - Enabled direct whole-section dragging from anywhere on the section box or card (without requiring precision clicking on the small drag handle), while preserving seamless text editing.
+  - Added enhanced visual placement feedback with glowing cyan insertion lines, pulsing drop indicators ("Place Section Here"), and active drop zones.
 - **CVEditor:** drag-and-drop section reordering with real-time outline feedback:
   - Added drag handles (`⠿`) and up/down arrow buttons (`▲` / `▼`) to every section in the sidebar inspector.
   - Added on-canvas section drag handles (`⠿ Drag`) to hover toolbars on the live CV sheet.

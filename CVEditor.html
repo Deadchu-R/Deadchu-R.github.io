@@ -51,6 +51,21 @@
       <button type="button" class="cve-tpl-btn" data-tpl="studio" onclick="window.CVE.setTemplate('studio')">Studio (Sidebar)</button>
     </div>
 
+    <!-- Site Style / Skin Switcher -->
+    <div class="cve-skin-bar" title="Change roeetal.com site design style for this CV">
+      <label for="cveSkinSelect" class="cve-skin-label">🎨 Style:</label>
+      <select id="cveSkinSelect" class="cve-skin-select" onchange="window.CVE.setSkin(this.value)">
+        <option value="classic">🏛️ Classic</option>
+        <option value="apple">🍏 Apple (Minimal)</option>
+        <option value="valley">🎬 Robert Valley (Cinematic)</option>
+        <option value="avraham">🌌 Avraham (Cyber Space)</option>
+        <option value="arcade">🎮 Arcade (Retro)</option>
+        <option value="hobbies">🧗‍♂️ Hobbies (Climbing)</option>
+        <option value="sketchbook">📓 Sketchbook</option>
+        <option value="plain">📄 Plain</option>
+      </select>
+    </div>
+
     <!-- Actions & Collaboration -->
     <div class="cve-topbar-actions">
       <div id="presenceCluster" class="cve-presence-cluster"></div>

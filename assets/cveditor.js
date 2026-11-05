@@ -547,11 +547,55 @@
     return true;
   }
 
+  // --- Site Skins Configuration (roeetal.com) ---
+  const SITE_SKINS = [
+    { id: "classic", name: "Classic", icon: "🏛️", desc: "Original portfolio aesthetic with crisp blue accents", accent: "#1f5fa8" },
+    { id: "apple", name: "Apple Minimal", icon: "🍏", desc: "Spacious minimalist layout, glass cards, SF Pro typography", accent: "#2997ff" },
+    { id: "valley", name: "Robert Valley", icon: "🎬", desc: "Cinematic contrast, golden amber accents, Bebas Neue bold titles", accent: "#ffb830" },
+    { id: "avraham", name: "Avraham Cyber", icon: "🌌", desc: "Cyberpunk neon space, glowing cyan lines, Space Grotesk", accent: "#00f0ff" },
+    { id: "arcade", name: "Arcade Retro", icon: "🎮", desc: "8-bit retro gaming aesthetic, Press Start 2P, pixel borders", accent: "#29e7ff" },
+    { id: "hobbies", name: "Hobbies Climbing", icon: "🧗‍♂️", desc: "Outdoor climbing wall theme, earthy terracotta & forest tones", accent: "#e07a5f" },
+    { id: "sketchbook", name: "Sketchbook", icon: "📓", desc: "Handcrafted paper, Caveat handwriting, pencil sketch & highlighter", accent: "#f59e0b" },
+    { id: "plain", name: "Plain ATS", icon: "📄", desc: "Pure monochromatic B&W, ultra-clean ATS contrast, zero clutter", accent: "#000000" }
+  ];
+
+  function applySkin(skinName) {
+    const k = skinName || "classic";
+    document.documentElement.dataset.skin = k;
+    const a4 = $("#a4Container");
+    if (a4) a4.dataset.skin = k;
+    const stage = $("#cvSheet");
+    if (stage) stage.dataset.skin = k;
+
+    const isSub = location.pathname.toLowerCase().indexOf("/cveditor/") >= 0;
+    const prefix = isSub ? "../" : "";
+
+    let skinLink = $("#cve-skin-css");
+    if (k === "classic") {
+      if (skinLink) skinLink.remove();
+    } else {
+      if (!skinLink) {
+        skinLink = document.createElement("link");
+        skinLink.rel = "stylesheet";
+        skinLink.id = "cve-skin-css";
+        document.head.appendChild(skinLink);
+      }
+      skinLink.href = prefix + "assets/skins/" + k + ".css?v=" + Date.now();
+    }
+
+    const skinSel = $("#cveSkinSelect");
+    if (skinSel && skinSel.value !== k) {
+      skinSel.value = k;
+    }
+  }
+
   // --- Real-time Rendering & Live View with NovoResume Controls ---
   function renderA4Sheet() {
     const cv = getCurrentCV();
     const stage = $("#cvSheet");
     if (!stage || !window.RTCV) return;
+
+    applySkin(cv.skin || "classic");
 
     const norm = window.RTCV.normalize(cv);
     stage.innerHTML = window.RTCV.render(norm, state.activeCvId, { edit: true });
@@ -559,6 +603,7 @@
     const doc = stage.querySelector(".cvdoc");
     if (doc) {
       doc.classList.add("ratio-" + (cv.layout_ratio || "50-50"));
+      doc.setAttribute("data-skin", cv.skin || "classic");
     }
 
     let fontLink = $("#cv-dynamic-font");
@@ -596,13 +641,38 @@
       const idx = parseInt(idxAttr, 10);
       const colList = cv[col] || [];
 
+      // Make the entire section box directly draggable
+      secEl.setAttribute("draggable", "true");
+      secEl.classList.add("cve-draggable-sec");
+
+      secEl.addEventListener("dragstart", (e) => {
+        // Do not drag if user is focusing an editable text field, input, or clicking a button/link
+        const interactive = e.target.closest('[contenteditable="true"], input, textarea, a, button, select');
+        if (interactive && !e.target.closest('.cve-drag-handle')) {
+          e.preventDefault();
+          return;
+        }
+        state.draggingSection = { col, idx };
+        secEl.classList.add("cve-is-dragging");
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx }));
+        }
+      });
+
+      secEl.addEventListener("dragend", () => {
+        secEl.classList.remove("cve-is-dragging");
+        clearAllDropFeedback();
+        state.draggingSection = null;
+      });
+
       const existing = secEl.querySelector(":scope > .cve-sec-toolbar");
       if (existing) existing.remove();
 
       const bar = document.createElement("div");
       bar.className = "cve-sec-toolbar";
 
-      // 1. Drag Handle in on-canvas toolbar
+      // 1. Drag Handle in on-canvas toolbar (explicit button option)
       const dragBtn = document.createElement("button");
       dragBtn.type = "button";
       dragBtn.className = "cve-tool-btn cve-drag-handle";
@@ -1477,10 +1547,20 @@
     cards.forEach(card => {
       const col = card.getAttribute("data-col");
       const idx = parseInt(card.getAttribute("data-idx"), 10);
-      const handle = card.querySelector(".cve-drag-handle");
-      if (!handle) return;
+      const header = card.querySelector(".cve-section-header");
+      if (header) {
+        header.classList.add("cve-draggable-header");
+      }
 
-      handle.addEventListener("dragstart", (e) => {
+      // Allow dragging the whole card directly
+      card.setAttribute("draggable", "true");
+
+      card.addEventListener("dragstart", (e) => {
+        // Do not drag if user is typing in an input, textarea or clicking a button/link
+        if (e.target.closest('input, textarea, button, select, a') && !e.target.closest('.cve-drag-handle')) {
+          e.preventDefault();
+          return;
+        }
         card.classList.add("cve-is-dragging");
         state.draggingSection = { col, idx };
         if (e.dataTransfer) {
@@ -1489,11 +1569,29 @@
         }
       });
 
-      handle.addEventListener("dragend", () => {
+      card.addEventListener("dragend", () => {
         card.classList.remove("cve-is-dragging");
         clearAllDropFeedback();
         state.draggingSection = null;
       });
+
+      const handle = card.querySelector(".cve-drag-handle");
+      if (handle) {
+        handle.addEventListener("dragstart", (e) => {
+          card.classList.add("cve-is-dragging");
+          state.draggingSection = { col, idx };
+          if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx }));
+          }
+        });
+
+        handle.addEventListener("dragend", () => {
+          card.classList.remove("cve-is-dragging");
+          clearAllDropFeedback();
+          state.draggingSection = null;
+        });
+      }
 
       card.addEventListener("dragover", (e) => {
         if (!state.draggingSection) return;
@@ -1546,7 +1644,31 @@
     body.innerHTML = `
       <div class="cve-section-card">
         <div class="cve-section-header">
-          <span class="cve-section-title">🎨 Layout & Column Options</span>
+          <span class="cve-section-title">🎨 Site Themes & Skins</span>
+          <span class="cve-badge-pill" style="font-size:10px;background:var(--cve-accent);color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">8 Styles</span>
+        </div>
+        <div class="cve-section-body">
+          <p style="font-size:12px;color:var(--cve-text-muted);margin-bottom:10px;line-height:1.4;">
+            Apply any of the 8 signature design aesthetics from roeetal.com to your CV:
+          </p>
+          <div class="cve-skin-grid">
+            ${SITE_SKINS.map(s => `
+              <div class="cve-skin-card ${(cv.skin || "classic") === s.id ? "active" : ""}" onclick="window.CVE.setSkin('${s.id}')">
+                <div class="cve-skin-card-header">
+                  <span class="cve-skin-icon">${s.icon}</span>
+                  <span class="cve-skin-name">${esc(s.name)}</span>
+                  <span class="cve-skin-dot" style="background:${s.accent};"></span>
+                </div>
+                <div class="cve-skin-desc">${esc(s.desc)}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+
+      <div class="cve-section-card">
+        <div class="cve-section-header">
+          <span class="cve-section-title">📐 Layout & Column Options</span>
         </div>
         <div class="cve-section-body">
           <div class="cve-form-group">
@@ -1748,6 +1870,11 @@
     $$(".cve-tpl-btn").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-tpl") === cv.template);
     });
+
+    const skinSel = $("#cveSkinSelect");
+    if (skinSel) {
+      skinSel.value = cv.skin || "classic";
+    }
 
     const userBtn = $("#userBtn");
     if (userBtn) {
@@ -2298,6 +2425,15 @@
       const cv = getCurrentCV();
       cv.template = tpl;
       saveCurrentCV(cv);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    setSkin(skinName) {
+      const cv = getCurrentCV();
+      cv.skin = skinName || "classic";
+      saveCurrentCV(cv);
+      applySkin(cv.skin);
       renderA4Sheet();
       renderSidebar();
     },

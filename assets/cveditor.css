@@ -1017,22 +1017,69 @@ body.cve-body {
 
 /* Dragging state for item being dragged */
 .cv-sec.cve-is-dragging,
+/* Grabbable Section Feedback (Entire section box & header directly draggable) */
+.cv-sec.cve-draggable-sec {
+  cursor: grab;
+  position: relative;
+  transition: outline 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  border-radius: 6px;
+}
+
+.cv-sec.cve-draggable-sec:hover {
+  outline: 1.5px dashed rgba(56, 189, 248, 0.55);
+  outline-offset: 3px;
+  background: rgba(56, 189, 248, 0.02);
+}
+
+.cv-sec.cve-draggable-sec:active {
+  cursor: grabbing;
+}
+
+/* Preserve text editing and interaction inside sections */
+.cv-sec [contenteditable="true"] {
+  cursor: text !important;
+}
+
+.cv-sec input,
+.cv-sec textarea {
+  cursor: text !important;
+}
+
+.cv-sec button,
+.cv-sec a {
+  cursor: pointer;
+}
+
+.cv-sec .cve-drag-handle {
+  cursor: grab !important;
+}
+
+.cve-draggable-header {
+  cursor: grab !important;
+}
+
+.cve-draggable-header:active {
+  cursor: grabbing !important;
+}
+
+/* Dragging element ghost */
+.cv-sec.cve-is-dragging,
 .cve-section-card.cve-is-dragging,
 .cve-board-card.cve-is-dragging {
   opacity: 0.35 !important;
-  outline: 2px dashed #64748b !important;
-  outline-offset: 3px !important;
-  filter: grayscale(0.5);
-  transition: opacity 0.15s ease;
+  outline: 2px dashed #38bdf8 !important;
+  outline-offset: 4px !important;
+  cursor: grabbing !important;
+  filter: grayscale(0.4);
 }
 
-/* Drop target visual feedback: glowing outline and indicator insertion line */
+/* Drop target visual feedback: glowing cyan outline and indicator insertion line */
 .cv-sec.cve-drop-target-before,
 .cve-section-card.cve-drop-target-before,
 .cve-board-card.cve-drop-target-before {
   outline: 2.5px solid #38bdf8 !important;
-  outline-offset: 4px !important;
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.5) !important;
+  outline-offset: 5px !important;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.55) !important;
   position: relative !important;
   transition: outline 0.1s ease, box-shadow 0.1s ease;
 }
@@ -1042,14 +1089,33 @@ body.cve-body {
 .cve-board-card.cve-drop-target-before::before {
   content: "";
   position: absolute;
-  top: -7px;
+  top: -8px;
   left: 0;
   right: 0;
-  height: 4px;
+  height: 5px;
   background: #38bdf8;
-  border-radius: 3px;
-  box-shadow: 0 0 10px #38bdf8;
+  border-radius: 4px;
+  box-shadow: 0 0 12px #38bdf8, 0 0 24px rgba(56, 189, 248, 0.7);
   z-index: 100;
+  pointer-events: none;
+  animation: cvePulseGlow 1.2s ease-in-out infinite;
+}
+
+.cv-sec.cve-drop-target-before::after {
+  content: "▼ Place Section Here";
+  position: absolute;
+  top: -24px;
+  left: 14px;
+  background: #38bdf8;
+  color: #0b0d13;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  z-index: 101;
   pointer-events: none;
 }
 
@@ -1057,26 +1123,50 @@ body.cve-body {
 .cve-section-card.cve-drop-target-after,
 .cve-board-card.cve-drop-target-after {
   outline: 2.5px solid #38bdf8 !important;
-  outline-offset: 4px !important;
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.5) !important;
+  outline-offset: 5px !important;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.55) !important;
   position: relative !important;
   transition: outline 0.1s ease, box-shadow 0.1s ease;
 }
 
-.cv-sec.cve-drop-target-after::after,
-.cve-section-card.cve-drop-target-after::after,
-.cve-board-card.cve-drop-target-after::after {
+.cv-sec.cve-drop-target-after::before,
+.cve-section-card.cve-drop-target-after::before,
+.cve-board-card.cve-drop-target-after::before {
   content: "";
   position: absolute;
-  bottom: -7px;
+  bottom: -8px;
   left: 0;
   right: 0;
-  height: 4px;
+  height: 5px;
   background: #38bdf8;
-  border-radius: 3px;
-  box-shadow: 0 0 10px #38bdf8;
+  border-radius: 4px;
+  box-shadow: 0 0 12px #38bdf8, 0 0 24px rgba(56, 189, 248, 0.7);
   z-index: 100;
   pointer-events: none;
+  animation: cvePulseGlow 1.2s ease-in-out infinite;
+}
+
+.cv-sec.cve-drop-target-after::after {
+  content: "▲ Place Section Here";
+  position: absolute;
+  bottom: -24px;
+  left: 14px;
+  background: #38bdf8;
+  color: #0b0d13;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  z-index: 101;
+  pointer-events: none;
+}
+
+@keyframes cvePulseGlow {
+  0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 4px #38bdf8); }
+  50% { opacity: 1; filter: drop-shadow(0 0 10px #38bdf8); }
 }
 
 /* Drop zone container highlight (e.g. empty column) */
@@ -1085,9 +1175,31 @@ body.cve-body {
 .cv-main.cve-drop-zone-active,
 .cve-board-col.cve-drop-zone-active {
   outline: 2.5px dashed #38bdf8 !important;
-  outline-offset: 4px !important;
-  background: rgba(56, 189, 248, 0.08) !important;
+  outline-offset: 6px !important;
+  background: rgba(56, 189, 248, 0.12) !important;
   border-radius: 8px !important;
+  min-height: 80px;
+  position: relative;
+}
+
+.cv-col.cve-drop-zone-active::after,
+.cv-side.cve-drop-zone-active::after,
+.cv-main.cve-drop-zone-active::after,
+.cve-board-col.cve-drop-zone-active::after {
+  content: "＋ Drop Section Here";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #38bdf8;
+  color: #0b0d13;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  pointer-events: none;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Section Library Cards */
@@ -1875,4 +1987,479 @@ body.cve-body {
   outline: 3px solid #38bdf8 !important;
   box-shadow: 0 0 14px rgba(56, 189, 248, 0.5) !important;
   filter: brightness(1.08);
+}
+
+
+/* ==========================================================================
+   CVEditor Site Skins Integration
+   Brings all site themes (classic, apple, valley, avraham, arcade, hobbies, sketchbook, plain)
+   into CVEditor's Canvas, Printable Document and Studio Workspace
+   ========================================================================== */
+
+/* Topbar Skin Switcher */
+.cve-skin-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--cve-border);
+  border-radius: var(--cve-radius-full);
+  padding: 3px 10px;
+  margin: 0 4px;
+}
+
+.cve-skin-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--cve-text-muted);
+  white-space: nowrap;
+}
+
+.cve-skin-select {
+  background: var(--cve-surface);
+  color: #fff;
+  border: 1px solid var(--cve-border);
+  border-radius: var(--cve-radius-full);
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cve-skin-select:hover, .cve-skin-select:focus {
+  border-color: var(--cve-border-focus);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+.cve-skin-select option {
+  background: #0f172a;
+  color: #fff;
+}
+
+/* Design Tab: Skin Cards Grid */
+.cve-skin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.cve-skin-card {
+  background: var(--cve-surface);
+  border: 1.5px solid var(--cve-border);
+  border-radius: var(--cve-radius);
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  user-select: none;
+}
+
+.cve-skin-card:hover {
+  border-color: var(--cve-border-focus);
+  background: var(--cve-surface-hover);
+  transform: translateY(-1px);
+}
+
+.cve-skin-card.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+}
+
+.cve-skin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cve-skin-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.cve-skin-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+}
+
+.cve-skin-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.cve-skin-desc {
+  font-size: 11px;
+  color: var(--cve-text-muted);
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+   CV Document Theming per Site Skin
+   ========================================================================== */
+
+/* 1. Apple Minimal (🍏) */
+[data-skin="apple"] .cvdoc,
+.cvdoc[data-skin="apple"] {
+  --cv-font: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  letter-spacing: -0.012em;
+}
+
+[data-skin="apple"] .cvdoc h1,
+.cvdoc[data-skin="apple"] h1 {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+[data-skin="apple"] .cvdoc h2,
+.cvdoc[data-skin="apple"] h2 {
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  border-bottom: 1.5px solid rgba(41, 151, 255, 0.35);
+  padding-bottom: 3px;
+}
+
+[data-skin="apple"] .cvdoc .cv-chip,
+.cvdoc[data-skin="apple"] .cv-chip {
+  border-radius: 980px !important;
+  background: rgba(41, 151, 255, 0.08) !important;
+  color: #0071e3 !important;
+  border: 1px solid rgba(41, 151, 255, 0.25) !important;
+  font-weight: 500;
+}
+
+[data-skin="apple"] .cvdoc .cv-bul li::before,
+.cvdoc[data-skin="apple"] .cv-bul li::before {
+  background: #2997ff !important;
+  border-radius: 50%;
+  transform: none;
+  width: 4px;
+  height: 4px;
+  top: 0.6em;
+}
+
+/* 2. Robert Valley Cinematic (🎬) */
+[data-skin="valley"] .cvdoc,
+.cvdoc[data-skin="valley"] {
+  --cv-accent: #ffb830;
+}
+
+[data-skin="valley"] .cvdoc h1,
+.cvdoc[data-skin="valley"] h1 {
+  font-family: 'Bebas Neue', 'Inter', sans-serif !important;
+  letter-spacing: 0.05em;
+  font-size: 2.8em;
+  line-height: 0.95;
+}
+
+[data-skin="valley"] .cvdoc h2,
+.cvdoc[data-skin="valley"] h2 {
+  font-family: 'Bebas Neue', 'Inter', sans-serif !important;
+  letter-spacing: 0.06em;
+  font-size: 1.55em;
+  border-bottom: 2px solid #ffb830;
+  padding-bottom: 2px;
+}
+
+[data-skin="valley"] .cvdoc .cv-chip,
+.cvdoc[data-skin="valley"] .cv-chip {
+  border-radius: 3px !important;
+  background: #1c1d22 !important;
+  color: #ffb830 !important;
+  border: 1px solid #ffb830 !important;
+  font-weight: 600;
+}
+
+[data-skin="valley"] .cvdoc .cv-bul li::before,
+.cvdoc[data-skin="valley"] .cv-bul li::before {
+  background: #ffb830 !important;
+  transform: rotate(45deg);
+  width: 5px;
+  height: 5px;
+}
+
+/* 3. Avraham Cyber Space (🌌) */
+[data-skin="avraham"] .cvdoc,
+.cvdoc[data-skin="avraham"] {
+  --cv-accent: #00f0ff;
+  --cv-font: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+[data-skin="avraham"] .cvdoc h1,
+.cvdoc[data-skin="avraham"] h1 {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+[data-skin="avraham"] .cvdoc h2,
+.cvdoc[data-skin="avraham"] h2 {
+  font-weight: 700;
+  border-bottom: 2px solid #00f0ff;
+  padding-bottom: 2px;
+  position: relative;
+}
+
+[data-skin="avraham"] .cvdoc .cv-chip,
+.cvdoc[data-skin="avraham"] .cv-chip {
+  border-radius: 2px !important;
+  background: rgba(0, 240, 255, 0.08) !important;
+  color: #007788 !important;
+  border: 1px solid #00f0ff !important;
+  font-family: 'Space Grotesk', monospace;
+  font-weight: 600;
+}
+
+[data-skin="avraham"] .cvdoc .cv-bul li::before,
+.cvdoc[data-skin="avraham"] .cv-bul li::before {
+  background: #00f0ff !important;
+  box-shadow: 0 0 5px rgba(0, 240, 255, 0.8);
+  border-radius: 0;
+  width: 5px;
+  height: 5px;
+}
+
+/* 4. Arcade Retro (🎮) */
+[data-skin="arcade"] .cvdoc,
+.cvdoc[data-skin="arcade"] {
+  --cv-accent: #29e7ff;
+}
+
+[data-skin="arcade"] .cvdoc h1,
+.cvdoc[data-skin="arcade"] h1 {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 1.45em !important;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+  color: #0b0820;
+}
+
+[data-skin="arcade"] .cvdoc h2,
+.cvdoc[data-skin="arcade"] h2 {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 0.82em !important;
+  line-height: 1.6;
+  border-bottom: 3px solid #29e7ff;
+  padding-bottom: 4px;
+}
+
+[data-skin="arcade"] .cvdoc .cv-chip,
+.cvdoc[data-skin="arcade"] .cv-chip {
+  border-radius: 0 !important;
+  background: #29e7ff !important;
+  color: #000 !important;
+  border: 1.5px solid #000 !important;
+  box-shadow: 2px 2px 0 #000 !important;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65em !important;
+  padding: 3px 6px !important;
+  font-weight: 700;
+}
+
+[data-skin="arcade"] .cvdoc .cv-bul li::before,
+.cvdoc[data-skin="arcade"] .cv-bul li::before {
+  background: #ff2a85 !important;
+  border-radius: 0;
+  transform: none;
+  width: 5px;
+  height: 5px;
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* 5. Hobbies Climbing (🧗‍♂️) */
+[data-skin="hobbies"] .cvdoc,
+.cvdoc[data-skin="hobbies"] {
+  --cv-accent: #e07a5f;
+  --cv-font: 'Nunito', 'Inter', sans-serif;
+}
+
+[data-skin="hobbies"] .cvdoc h1,
+.cvdoc[data-skin="hobbies"] h1 {
+  font-family: 'Bangers', 'Nunito', sans-serif !important;
+  font-size: 2.8em !important;
+  letter-spacing: 0.04em;
+  color: #16181d;
+}
+
+[data-skin="hobbies"] .cvdoc h2,
+.cvdoc[data-skin="hobbies"] h2 {
+  font-family: 'Bangers', 'Nunito', sans-serif !important;
+  font-size: 1.5em !important;
+  letter-spacing: 0.03em;
+  border-bottom: 2.5px solid #e07a5f;
+  padding-bottom: 2px;
+}
+
+[data-skin="hobbies"] .cvdoc .cv-chip,
+.cvdoc[data-skin="hobbies"] .cv-chip {
+  border-radius: 8px !important;
+  background: #3d5a80 !important;
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 0.88em;
+}
+
+[data-skin="hobbies"] .cvdoc .cv-bul li::before,
+.cvdoc[data-skin="hobbies"] .cv-bul li::before {
+  background: #e07a5f !important;
+  border-radius: 2px;
+  width: 5px;
+  height: 5px;
+}
+
+/* 6. Sketchbook Hand-Drawn (📓) */
+[data-skin="sketchbook"] .cvdoc,
+.cvdoc[data-skin="sketchbook"] {
+  background: #fdfbf7 !important;
+  --cv-accent: #2563eb;
+  --cv-font: 'Patrick Hand', 'Inter', cursive, sans-serif;
+}
+
+[data-skin="sketchbook"] .cvdoc h1,
+.cvdoc[data-skin="sketchbook"] h1 {
+  font-family: 'Caveat', 'Patrick Hand', cursive !important;
+  font-size: 3em !important;
+  font-weight: 700;
+  color: #1e1b18;
+}
+
+[data-skin="sketchbook"] .cvdoc h2,
+.cvdoc[data-skin="sketchbook"] h2 {
+  font-family: 'Caveat', 'Patrick Hand', cursive !important;
+  font-size: 1.8em !important;
+  font-weight: 700;
+  border-bottom: 2px dashed #2a2a2a;
+  padding-bottom: 2px;
+  color: #1e1b18;
+}
+
+[data-skin="sketchbook"] .cvdoc .cv-chip,
+.cvdoc[data-skin="sketchbook"] .cv-chip {
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px !important;
+  border: 1.5px solid #2a2a2a !important;
+  background: #fffdf7 !important;
+  color: #1e1b18 !important;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.96em;
+}
+
+[data-skin="sketchbook"] .cvdoc .cv-bul li::before,
+.cvdoc[data-skin="sketchbook"] .cv-bul li::before {
+  background: #2563eb !important;
+  border-radius: 50%;
+  transform: none;
+  width: 5px;
+  height: 5px;
+}
+
+/* 7. Plain ATS (📄) */
+[data-skin="plain"] .cvdoc,
+.cvdoc[data-skin="plain"] {
+  --cv-accent: #000000;
+}
+
+[data-skin="plain"] .cvdoc h1,
+.cvdoc[data-skin="plain"] h1 {
+  font-weight: 800;
+  color: #000;
+}
+
+[data-skin="plain"] .cvdoc h2,
+.cvdoc[data-skin="plain"] h2 {
+  font-weight: 700;
+  border-bottom: 1.5px solid #000;
+  color: #000;
+}
+
+[data-skin="plain"] .cvdoc .cv-chip,
+.cvdoc[data-skin="plain"] .cv-chip {
+  border-radius: 2px !important;
+  background: none !important;
+  border: 1px solid #000 !important;
+  color: #000 !important;
+  font-weight: 600;
+}
+
+[data-skin="plain"] .cvdoc .cv-bul li::before,
+.cvdoc[data-skin="plain"] .cv-bul li::before {
+  background: #000 !important;
+  border-radius: 0;
+  transform: none;
+  width: 4px;
+  height: 4px;
+}
+
+/* 8. Classic (🏛️) */
+[data-skin="classic"] .cvdoc,
+.cvdoc[data-skin="classic"] {
+  /* Default elegant portfolio styling */
+}
+
+/* Studio Workspace Skins Theming */
+html[data-skin="apple"] {
+  --cve-bg: #000000;
+  --cve-surface: #121216;
+  --cve-surface-card: #1c1c20;
+  --cve-surface-hover: #26262c;
+  --cve-accent: #2997ff;
+}
+
+html[data-skin="arcade"] {
+  --cve-bg: #0b0820;
+  --cve-surface: #130e38;
+  --cve-surface-card: #1d1650;
+  --cve-surface-hover: #2a206c;
+  --cve-accent: #29e7ff;
+  --cve-border-focus: #ff2a85;
+}
+
+html[data-skin="valley"] {
+  --cve-bg: #121316;
+  --cve-surface: #1c1d22;
+  --cve-surface-card: #25262c;
+  --cve-surface-hover: #303138;
+  --cve-accent: #ffb830;
+  --cve-border-focus: #ffb830;
+}
+
+html[data-skin="avraham"] {
+  --cve-bg: #05060f;
+  --cve-surface: #0a0d20;
+  --cve-surface-card: #121735;
+  --cve-surface-hover: #1c2350;
+  --cve-accent: #00f0ff;
+  --cve-border-focus: #00f0ff;
+}
+
+html[data-skin="sketchbook"] {
+  --cve-bg: #1f1e1b;
+  --cve-surface: #292824;
+  --cve-surface-card: #34322d;
+  --cve-surface-hover: #403e38;
+  --cve-accent: #f59e0b;
+}
+
+html[data-skin="hobbies"] {
+  --cve-bg: #16181d;
+  --cve-surface: #222630;
+  --cve-surface-card: #2c3240;
+  --cve-surface-hover: #384052;
+  --cve-accent: #e07a5f;
+  --cve-border-focus: #e07a5f;
+}
+
+html[data-skin="plain"] {
+  --cve-bg: #0a0a0a;
+  --cve-surface: #141414;
+  --cve-surface-card: #1f1f1f;
+  --cve-surface-hover: #2a2a2a;
+  --cve-accent: #e0e0e0;
+  --cve-border-focus: #ffffff;
 }
