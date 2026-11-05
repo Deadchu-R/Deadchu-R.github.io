@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 181 commits.
+Total: 183 commits.
 
 ## 2026-10-31
 
@@ -921,5 +921,15 @@ files: docs/COMMITS.md
 
 ### f60939c · 2026-11-05 · Roee Tal
 CVEditor: resilient boot loader, ל' test button with disappearing איכסה popup
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
+
+### 08e7e36 · 2026-11-05 · Roee Tal
+docs: update COMMITS.md
+
+files: docs/COMMITS.md
+
+### 19b9cfd · 2026-11-05 · Roee Tal
+CVEditor: Windows-like section window resizing (↕ drag, 🗖 maximize, corner grip) and prominent solid collapsed titlebars
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
