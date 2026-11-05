@@ -6,6 +6,17 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
+## 2026-11-05
+
+### CVEditor
+- **CVEditor:** fixed startup, auth, and editing workflow:
+  - Loads Roee's actual CV data and variants immediately on load instead of displaying an empty "Your Name" canvas.
+  - Stopped auto-triggering the onboarding wizard modal on page load which blocked the editor.
+  - Removed mandatory registration gate on Save, PDF print, Send and Collaborate so users and visitors can freely edit, save locally, and export to PDF.
+  - Fixed account sign-in for Roee (`roeetal17@gmail.com`) so he can log in seamlessly on his devices.
+  - Fixed inline canvas editing so typing spaces does not trim or delete text while typing.
+  - Cleaned up all corrupted UTF-8 mojibake strings in the resume parser and error handlers.
+
 ## 2026-11-04
 
 ### Security

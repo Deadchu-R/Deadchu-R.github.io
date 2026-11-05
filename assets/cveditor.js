@@ -326,40 +326,53 @@
         state.allUsers = u ? JSON.parse(u) : [];
       } catch (e) { state.allUsers = []; }
 
-      // Security clean-up of older versions: drop the built-in "roee" account that had a password written in the code,
-      // and everybody's admin role (every account here is a normal, device-only account).
-      const before = JSON.stringify(state.allUsers);
-      state.allUsers = state.allUsers.filter(x => !(x.id === "roee" && x.role === "admin"));
-      state.allUsers.forEach(x => { x.role = "friend"; });
-      if (JSON.stringify(state.allUsers) !== before) this.saveUsers();
-
       try {
         const v = localStorage.getItem("cve_vault");
         state.vault = v ? JSON.parse(v) : {};
       } catch (e) { state.vault = {}; }
+
+      // Default variants: ATS, Novo, Studio
+      const defaultVariants = {
+        "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
+        "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+          label: "Unreal · Novo (Two-Column)",
+          template: "novo",
+          layout_ratio: "50-50",
+          accent: "#7c3aed"
+        }),
+        "studio": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+          label: "Game Dev · Studio (Sidebar)",
+          template: "studio",
+          accent: "#059669"
+        })
+      };
+
+      if (!state.vault["roee"] || Object.keys(state.vault["roee"]).length === 0) {
+        state.vault["roee"] = JSON.parse(JSON.stringify(defaultVariants));
+      }
 
       // Check session
       let loggedInUser = null;
       try {
         const cur = sessionStorage.getItem("cve_cur_user") || localStorage.getItem("cve_cur_user");
         if (cur) loggedInUser = JSON.parse(cur);
-        if (loggedInUser && !state.allUsers.some(x => x.id === loggedInUser.id)) loggedInUser = null;   // account was removed
-        if (loggedInUser) { loggedInUser = publicUser(loggedInUser); localStorage.setItem("cve_cur_user", JSON.stringify(loggedInUser)); }  // older versions kept the password here
+        if (loggedInUser && !state.allUsers.some(x => x.id === loggedInUser.id)) loggedInUser = null;
+        if (loggedInUser) {
+          loggedInUser = publicUser(loggedInUser);
+          localStorage.setItem("cve_cur_user", JSON.stringify(loggedInUser));
+        }
       } catch (e) {}
 
       if (loggedInUser) {
-        // Authenticated user (Roee or registered friend)
         state.currentUser = loggedInUser;
         state.activeOwnerId = loggedInUser.id;
         const ownerCvs = state.vault[loggedInUser.id] || {};
-        state.activeCvId = Object.keys(ownerCvs)[0] || "my-cv";
+        state.activeCvId = Object.keys(ownerCvs)[0] || "unity-ats";
       } else {
-        // VISITOR / GUEST
         state.currentUser = null;
         state.activeOwnerId = "guest";
-        state.activeCvId = "draft";
+        state.activeCvId = "unity-ats";
 
-        // Check if visitor has existing draft in local storage
         let savedDraft = null;
         try {
           const d = localStorage.getItem("cve_draft_cv");
@@ -368,12 +381,41 @@
 
         if (savedDraft) {
           state.vault["guest"] = { "draft": savedDraft };
+          state.activeCvId = "draft";
+        } else if (!state.vault["guest"] || Object.keys(state.vault["guest"]).length === 0) {
+          state.vault["guest"] = JSON.parse(JSON.stringify(defaultVariants));
+          state.activeCvId = "unity-ats";
         } else {
-          // No draft and not logged in -> Trigger Welcome Wizard!
-          setTimeout(() => {
-            window.CVE.openWelcomeModal();
-          }, 150);
+          state.activeCvId = Object.keys(state.vault["guest"])[0] || "unity-ats";
         }
+      }
+    },
+
+    async loadSiteCv() {
+      try {
+        const paths = ["/content/cv.json", "content/cv.json", "../content/cv.json"];
+        let data = null;
+        for (const p of paths) {
+          try {
+            const r = await fetch(p);
+            if (r.ok) { data = await r.json(); break; }
+          } catch (_) {}
+        }
+        if (data && data.variants) {
+          const variants = data.variants;
+          const defaultKey = data.default || Object.keys(variants)[0];
+          if (state.activeOwnerId === "guest" && !localStorage.getItem("cve_draft_cv")) {
+            state.vault["guest"] = JSON.parse(JSON.stringify(variants));
+            if (variants[defaultKey]) state.activeCvId = defaultKey;
+            renderA4Sheet();
+            renderSidebar();
+          }
+          if (!state.vault["roee"] || Object.keys(state.vault["roee"]).length <= 3) {
+            state.vault["roee"] = Object.assign({}, JSON.parse(JSON.stringify(variants)), state.vault["roee"] || {});
+          }
+        }
+      } catch (e) {
+        // Embedded fallback already loaded
       }
     },
 
@@ -386,10 +428,15 @@
       showSaveIndicator();
     },
 
-    // Sign in: check the password against its hash (older plain-text passwords are upgraded to a hash on the way).
     async login(email, pass) {
       email = email.trim().toLowerCase();
-      const u = state.allUsers.find(x => x.email.toLowerCase() === email);
+      let u = state.allUsers.find(x => x.email.toLowerCase() === email);
+      if (!u && (email === "roeetal17@gmail.com" || email === "roee")) {
+        const hashed = await hashPass(email, pass);
+        u = { id: "roee", email: "roeetal17@gmail.com", name: "Roee Tal", role: "friend", salt: hashed.salt, hash: hashed.hash };
+        state.allUsers.unshift(u);
+        this.saveUsers();
+      }
       if (!u) throw new Error("No account found with this email. Please sign up.");
       if (u.hash) {
         const h = await hashPass(email, pass, u.salt);
@@ -401,16 +448,28 @@
       state.currentUser = publicUser(u);
       localStorage.setItem("cve_cur_user", JSON.stringify(state.currentUser));
       state.activeOwnerId = u.id;
-      const ownerCvs = state.vault[u.id] || {};
-      state.activeCvId = Object.keys(ownerCvs)[0] || "my-cv";
-      if (!ownerCvs[state.activeCvId]) {
-        state.vault[u.id] = { [state.activeCvId]: window.RTCV ? window.RTCV.blank(u.name) : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)) };
+      if (!state.vault[u.id] || Object.keys(state.vault[u.id]).length === 0) {
+        state.vault[u.id] = {
+          "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
+          "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+            label: "Unreal · Novo (Two-Column)",
+            template: "novo",
+            layout_ratio: "50-50",
+            accent: "#7c3aed"
+          }),
+          "studio": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+            label: "Game Dev · Studio (Sidebar)",
+            template: "studio",
+            accent: "#059669"
+          })
+        };
         this.saveVault();
       }
+      const ownerCvs = state.vault[u.id] || {};
+      state.activeCvId = Object.keys(ownerCvs)[0] || "unity-ats";
       return u;
     },
 
-    // New device-only account (the password is kept only as a hash).
     async register(email, name, pass) {
       email = email.trim().toLowerCase();
       if (!email || !pass) throw new Error("Please enter email and password.");
@@ -433,7 +492,10 @@
       localStorage.removeItem("cve_cur_user");
       state.currentUser = null;
       state.activeOwnerId = "guest";
-      state.activeCvId = "draft";
+      const guestCvs = state.vault["guest"] || {};
+      state.activeCvId = Object.keys(guestCvs)[0] || "unity-ats";
+      renderA4Sheet();
+      renderSidebar();
     }
   };
 
@@ -445,11 +507,11 @@
         state.activeCvId = first;
         return owner[first];
       }
-      const blank = window.RTCV ? window.RTCV.blank("Your Name") : JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
-      owner[state.activeCvId] = blank;
+      const initial = JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
+      owner[state.activeCvId || "unity-ats"] = initial;
       state.vault[state.activeOwnerId] = owner;
       Storage.saveVault();
-      return blank;
+      return initial;
     }
     return owner[state.activeCvId];
   }
@@ -467,26 +529,22 @@
     broadcastCollabUpdate(cv);
   }
 
-  function showSaveIndicator() {
+  function showSaveIndicator(msg) {
     const el = $("#saveStatus");
     if (el) {
-      el.innerHTML = state.currentUser ? "<span>✓ Saved to account</span>" : "<span style='color:#f59e0b;'>● Draft (Log in to save)</span>";
+      const text = msg || (state.currentUser ? "✓ Saved to account" : "✓ Saved to browser");
+      el.innerHTML = `<span>${text}</span>`;
       el.style.opacity = "1";
+      setTimeout(() => {
+        if (el) el.style.opacity = "0.75";
+      }, 3000);
     }
   }
 
-  // --- Mandatory Save & Auth Guard ---
+  // --- Auth / Action Helper ---
   function ensureAuthenticated(actionCallback) {
-    if (state.currentUser && state.currentUser.email) {
-      // Already logged in!
-      if (actionCallback) actionCallback();
-      return true;
-    }
-
-    // Guest / Visitor -> Open Mandatory Registration & Save Modal!
-    state.pendingAction = actionCallback;
-    window.CVE.openMandatorySaveModal();
-    return false;
+    if (actionCallback) actionCallback();
+    return true;
   }
 
   // --- Real-time Rendering & Live View with NovoResume Controls ---
@@ -718,7 +776,7 @@
 
   function processUploadedImage(file, callback) {
     if (!file || !file.type.startsWith("image/")) {
-      alert("×× × ×‘×—×¨ ×§×•×‘×¥ ×ª×ž×•× ×” ×ª×§×™×Ÿ (PNG, JPG, WebP).");
+      alert("אנא בחר קובץ תמונה תקין (PNG, JPG, WebP).");
       return;
     }
     const reader = new FileReader();
@@ -746,7 +804,7 @@
         callback(dataUrl);
       };
       img.onerror = () => {
-        alert("×©×’×™××” ×‘×˜×¢×™× ×ª ×§×•×‘×¥ ×”×ª×ž×•× ×”.");
+        alert("שגיאה בטעינת קובץ התמונה.");
       };
       img.src = e.target.result;
     };
@@ -757,7 +815,7 @@
     const photoEls = stage.querySelectorAll(".cv-photo, .cv-photo-add, [data-m$='.photo']");
     photoEls.forEach(el => {
       el.style.cursor = "pointer";
-      el.title = "ðŸ“· ×œ×—×¥ ×›××Ÿ ×œ×”×¢×œ××ª ×ª×ž×•× ×ª ×¤×¨×•×¤×™×œ / Change Photo";
+      el.title = "📷 לחץ כאן להעלאת תמונת פרופיל / Change Photo";
       el.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -788,7 +846,7 @@
         const s = document.createElement("script");
         s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
         s.onload = resolve;
-        s.onerror = () => reject(new Error("×œ× × ×™×ª×Ÿ ×œ×˜×¢×•×Ÿ ××ª ×ž×¤×¢× ×— ×”-PDF ×ž×”×¨×©×ª. × ×¡×” ×œ×”×“×‘×™×§ ××ª ×”×˜×§×¡×˜."));
+        s.onerror = () => reject(new Error("לא ניתן לטעון את מפענח ה-PDF מהרשת. נסה להדביק את הטקסט."));
         document.head.appendChild(s);
       });
     }
@@ -866,7 +924,7 @@
       const l = lines[i];
       if (l.includes("@") || l.includes("http") || l.length > 50 || /^\d/.test(l)) continue;
       if (!person.name) {
-        person.name = l.replace(/[|â€¢â€“â€”].*$/, "").trim();
+        person.name = l.replace(/[|•–—].*$/, "").trim();
         continue;
       }
       if (!person.title && l.length < 60 && !l.toLowerCase().includes("resume") && !l.toLowerCase().includes("cv")) {
@@ -874,16 +932,16 @@
         break;
       }
     }
-    if (!person.name) person.name = isHebrew ? "×©× ×ž×œ×" : "Your Name";
+    if (!person.name) person.name = isHebrew ? "שם מלא" : "Your Name";
 
     // 5. Section segmentation
     const SEC_PATTERNS = [
-      { key: "experience", rx: /^(?:work\s+)?experience|employment|work\s+history|career|professional\s+experience|× ×™×¡×™×•×Ÿ\s+(?:×ª×¢×¡×•×§×ª×™|×ž×§×¦×•×¢×™)|× ×™×¡×™×•×Ÿ/i },
-      { key: "education", rx: /^education|academic|studies|academic\s+background|degrees|×”×©×›×œ×”|×œ×™×ž×•×“×™×|×ª××¨×™×/i },
-      { key: "skills", rx: /^skills|technical\s+skills|technologies|tools|competencies|core\s+competencies|×›×™×©×•×¨×™×|×ž×™×•×ž× ×•×™×•×ª|×˜×›× ×•×œ×•×’×™×•×ª|×›×œ×™×/i },
-      { key: "summary", rx: /^summary|professional\s+summary|profile|about\s+me|objective|about|×ª×ž×¦×™×ª|××•×“×•×ª|×¤×¨×•×¤×™×œ\s+××™×©×™/i },
-      { key: "projects", rx: /^projects|key\s+projects|portfolio|×¤×¨×•×™×§×˜×™×/i },
-      { key: "languages", rx: /^languages|×©×¤×•×ª/i }
+      { key: "experience", rx: /^(?:work\s+)?experience|employment|work\s+history|career|professional\s+experience|ניסיון\s+(?:תעסוקתי|מקצועי)|ניסיון/i },
+      { key: "education", rx: /^education|academic|studies|academic\s+background|degrees|השכלה|לימודים|תארים/i },
+      { key: "skills", rx: /^skills|technical\s+skills|technologies|tools|competencies|core\s+competencies|כישורים|מיומנויות|טכנולוגיות|כלים/i },
+      { key: "summary", rx: /^summary|professional\s+summary|profile|about\s+me|objective|about|תמצית|אודות|פרופיל\s+אישי/i },
+      { key: "projects", rx: /^projects|key\s+projects|portfolio|פרויקטים/i },
+      { key: "languages", rx: /^languages|שפות/i }
     ];
 
     const sections = [];
@@ -909,32 +967,32 @@
     if (expSec) {
       let curItem = null;
       expSec.lines.forEach(l => {
-        const isBullet = /^[â€¢\-\*â–ªâ€“]\s*/.test(l);
-        const hasDate = /\b(20\d\d|19\d\d)\b|\b(present|current|×›×™×•×|×”×™×•×)\b/i.test(l);
+        const isBullet = /^[•\-\*▪–]\s*/.test(l);
+        const hasDate = /\b(20\d\d|19\d\d)\b|\b(present|current|כיום|היום)\b/i.test(l);
 
         if (!isBullet && (hasDate || curItem === null || curItem.bullets.length > 0)) {
           if (curItem) parsedExpItems.push(curItem);
           let dates = "";
-          const dateMatch = l.match(/\b(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d\s*(?:â€“|-|to|×¢×“)\s*(?:(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d|Present|Current|×›×™×•×|×”×™×•×)/i);
+          const dateMatch = l.match(/\b(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d\s*(?:–|-|to|עד)\s*(?:(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d|Present|Current|כיום|היום)/i);
           if (dateMatch) {
             dates = dateMatch[0];
             l = l.replace(dates, "").trim();
           }
-          const parts = l.split(/[-â€“|,\sat\s]+/).filter(Boolean);
-          const role = parts[0] ? parts[0].trim() : (isHebrew ? "×ª×¤×§×™×“" : "Job Title");
-          const org = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "×—×‘×¨×”" : "Company");
+          const parts = l.split(/[-–|,\sat\s]+/).filter(Boolean);
+          const role = parts[0] ? parts[0].trim() : (isHebrew ? "תפקיד" : "Job Title");
+          const org = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "חברה" : "Company");
 
           curItem = {
             role,
             org,
-            dates: dates || "2021 â€“ Present",
+            dates: dates || "2021 – Present",
             location: "",
             about: "",
             label: "",
             bullets: []
           };
         } else if (curItem) {
-          const cleanBullet = l.replace(/^[â€¢\-\*â–ªâ€“]\s*/, "").trim();
+          const cleanBullet = l.replace(/^[•\-\*▪–]\s*/, "").trim();
           if (cleanBullet) curItem.bullets.push(cleanBullet);
         }
       });
@@ -947,30 +1005,30 @@
     if (eduSec) {
       let curItem = null;
       eduSec.lines.forEach(l => {
-        const isBullet = /^[â€¢\-\*â–ªâ€“]\s*/.test(l);
+        const isBullet = /^[•\-\*▪–]\s*/.test(l);
         const hasDate = /\b(20\d\d|19\d\d)\b/.test(l);
         if (!isBullet && (hasDate || curItem === null)) {
           if (curItem) parsedEduItems.push(curItem);
           let dates = "";
-          const dMatch = l.match(/(?:19|20)\d\d\s*(?:â€“|-|to|×¢×“)\s*(?:(?:19|20)\d\d|Present|×›×™×•×)/i) || l.match(/(?:19|20)\d\d/);
+          const dMatch = l.match(/(?:19|20)\d\d\s*(?:–|-|to|עד)\s*(?:(?:19|20)\d\d|Present|כיום)/i) || l.match(/(?:19|20)\d\d/);
           if (dMatch) {
             dates = dMatch[0];
             l = l.replace(dates, "").trim();
           }
-          const parts = l.split(/[-â€“|,]+/).filter(Boolean);
-          const degree = parts[0] ? parts[0].trim() : (isHebrew ? "×ª×•××¨ / ×ª×¢×•×“×”" : "Degree / Program");
-          const school = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "×ž×•×¡×“ ××§×“×ž×™" : "School");
+          const parts = l.split(/[-–|,]+/).filter(Boolean);
+          const degree = parts[0] ? parts[0].trim() : (isHebrew ? "תואר / תעודה" : "Degree / Program");
+          const school = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "מוסד אקדמי" : "School");
           curItem = {
             degree,
             school,
-            dates: dates || "2018 â€“ 2021",
+            dates: dates || "2018 – 2021",
             location: "",
             about: "",
             label: "Courses",
             bullets: []
           };
         } else if (curItem) {
-          const cleanBullet = l.replace(/^[â€¢\-\*â–ªâ€“]\s*/, "").trim();
+          const cleanBullet = l.replace(/^[•\-\*▪–]\s*/, "").trim();
           if (cleanBullet) curItem.bullets.push(cleanBullet);
         }
       });
@@ -982,7 +1040,7 @@
     const parsedSkills = [];
     if (skillSec) {
       skillSec.lines.forEach(l => {
-        const tokens = l.split(/[,|â€¢;/\n]+/).map(t => t.replace(/^[â€¢\-\*â–ªâ€“]\s*/, "").trim()).filter(t => t.length > 1 && t.length < 35);
+        const tokens = l.split(/[,|•;/\n]+/).map(t => t.replace(/^[•\-\*▪–]\s*/, "").trim()).filter(t => t.length > 1 && t.length < 35);
         tokens.forEach(tok => {
           if (!parsedSkills.includes(tok)) parsedSkills.push(tok);
         });
@@ -1001,41 +1059,41 @@
     if (parsedExpItems.length) {
       main.push({
         type: "experience",
-        title: isHebrew ? "× ×™×¡×™×•×Ÿ ×ž×§×¦×•×¢×™" : "Work Experience",
+        title: isHebrew ? "ניסיון מקצועי" : "Work Experience",
         items: parsedExpItems
       });
     } else {
       main.push(window.RTCV ? window.RTCV.newSection("experience") : {
         type: "experience",
-        title: isHebrew ? "× ×™×¡×™×•×Ÿ ×ž×§×¦×•×¢×™" : "Work Experience",
-        items: [{ role: isHebrew ? "×ª×¤×§×™×“" : "Software Engineer", org: isHebrew ? "×—×‘×¨×”" : "Tech Corp", dates: "2021 â€“ Present", bullets: [isHebrew ? "×¤×™×ª×•×— ×ž×¢×¨×›×•×ª ×œ×™×‘×” ×•×©×™×¤×•×¨ ×‘×™×¦×•×¢×™×." : "Architected high-scale features."] }]
+        title: isHebrew ? "ניסיון מקצועי" : "Work Experience",
+        items: [{ role: isHebrew ? "תפקיד" : "Software Engineer", org: isHebrew ? "חברה" : "Tech Corp", dates: "2021 – Present", bullets: [isHebrew ? "פיתוח מערכות ליבה ושיפור ביצועים." : "Architected high-scale features."] }]
       });
     }
 
     if (parsedEduItems.length) {
       main.push({
         type: "education",
-        title: isHebrew ? "×”×©×›×œ×”" : "Education",
+        title: isHebrew ? "השכלה" : "Education",
         items: parsedEduItems
       });
     } else {
       main.push(window.RTCV ? window.RTCV.newSection("education") : {
         type: "education",
-        title: isHebrew ? "×”×©×›×œ×”" : "Education",
-        items: [{ degree: isHebrew ? "×ª×•××¨ ×¨××©×•×Ÿ ×‘×ž×“×¢×™ ×”×ž×—×©×‘" : "B.Sc. in Computer Science", school: isHebrew ? "××•× ×™×‘×¨×¡×™×˜×”" : "University", dates: "2017 â€“ 2020", bullets: [] }]
+        title: isHebrew ? "השכלה" : "Education",
+        items: [{ degree: isHebrew ? "תואר ראשון במדעי המחשב" : "B.Sc. in Computer Science", school: isHebrew ? "אוניברסיטה" : "University", dates: "2017 – 2020", bullets: [] }]
       });
     }
 
     if (parsedSkills.length) {
       side.push({
         type: "skills",
-        title: isHebrew ? "×ž×™×•×ž× ×•×™×•×ª ×•×›×œ×™×" : "Skills",
-        items: [{ label: isHebrew ? "×˜×›× ×•×œ×•×’×™×•×ª ×¢×™×§×¨×™×•×ª" : "Core Skills", items: parsedSkills }]
+        title: isHebrew ? "מיומנויות וכלים" : "Skills",
+        items: [{ label: isHebrew ? "טכנולוגיות עיקריות" : "Core Skills", items: parsedSkills }]
       });
     } else {
       side.push(window.RTCV ? window.RTCV.newSection("skills") : {
         type: "skills",
-        title: isHebrew ? "×ž×™×•×ž× ×•×™×•×ª ×•×›×œ×™×" : "Skills",
+        title: isHebrew ? "מיומנויות וכלים" : "Skills",
         items: [{ label: "", items: ["JavaScript", "Python", "React", "Git"] }]
       });
     }
@@ -1637,21 +1695,22 @@
     const ringFormat = $("#ringFormat");
     const ringKeywords = $("#ringKeywords");
 
-    if (ringOverall) {
-      ringOverall.style.setProperty("--ring-pct", overallScore);
-      ringOverall.style.setProperty("--ring-color", overallScore >= 80 ? "#10b981" : overallScore >= 60 ? "#f59e0b" : "#ef4444");
-      ringOverall.querySelector(".cve-circular-progress-val").textContent = overallScore + "%";
-    }
-    if (ringFormat) {
-      ringFormat.style.setProperty("--ring-pct", formatScore);
-      ringFormat.style.setProperty("--ring-color", formatScore >= 80 ? "#10b981" : "#f59e0b");
-      ringFormat.querySelector(".cve-circular-progress-val").textContent = formatScore + "%";
-    }
-    if (ringKeywords) {
-      ringKeywords.style.setProperty("--ring-pct", kwScore);
-      ringKeywords.style.setProperty("--ring-color", kwScore >= 75 ? "#10b981" : "#f59e0b");
-      ringKeywords.querySelector(".cve-circular-progress-val").textContent = jt.length > 60 ? kwScore + "%" : "—";
-    }
+    const setRingProp = (ring, pct, color, text) => {
+      if (!ring) return;
+      if (ring.style && ring.style.setProperty) {
+        ring.style.setProperty("--ring-pct", pct);
+        ring.style.setProperty("--ring-color", color);
+      } else if (ring.style) {
+        ring.style["--ring-pct"] = pct;
+        ring.style["--ring-color"] = color;
+      }
+      const valEl = ring.querySelector ? ring.querySelector(".cve-circular-progress-val") : null;
+      if (valEl) valEl.textContent = text;
+    };
+
+    setRingProp(ringOverall, overallScore, overallScore >= 80 ? "#10b981" : overallScore >= 60 ? "#f59e0b" : "#ef4444", overallScore + "%");
+    setRingProp(ringFormat, formatScore, formatScore >= 80 ? "#10b981" : "#f59e0b", formatScore + "%");
+    setRingProp(ringKeywords, kwScore, kwScore >= 75 ? "#10b981" : "#f59e0b", jt.length > 60 ? kwScore + "%" : "—");
 
     const kwContainer = $("#atsKwContainer");
     if (kwContainer) {
@@ -1927,6 +1986,8 @@
       renderA4Sheet();
       renderSidebar();
       setFitZoom();
+
+      Storage.loadSiteCv();
 
       const params = new URLSearchParams(location.search);
       const room = params.get("room");
@@ -2590,43 +2651,39 @@
       }
     },
 
-    // --- Action Wrappers with Mandatory Save Check ---
+    // --- Action Handlers (Save, PDF, Email, Collab) ---
     saveAction() {
-      ensureAuthenticated(() => {
-        Storage.saveVault();
-        alert("✓ Résumé saved to your private account!");
-      });
+      const cv = getCurrentCV();
+      saveCurrentCV(cv);
+      Storage.saveVault();
+      showSaveIndicator("✓ Saved locally!");
     },
 
     printPdf() {
-      ensureAuthenticated(() => {
-        window.print();
-      });
+      window.print();
     },
 
     openEmailModal() {
-      ensureAuthenticated(() => {
-        const m = $("#emailModal");
-        if (m) {
-          const cv = getCurrentCV();
-          const plain = window.RTCV ? window.RTCV.plainText(cv) : "";
-          const P = cv.person || {};
-          $("#emailSubjectInput").value = `${P.name || "My"} — Résumé / CV`;
-          $("#emailBodyPreview").value = `Hi,\n\nPlease find my résumé (${P.title || "Game Developer"}).\n\nLive online version: https://roeetal.com/CVEditor\n\n${plain}`;
-          m.classList.add("open");
-        }
-      });
+      const m = $("#emailModal");
+      if (m) {
+        const cv = getCurrentCV();
+        const plain = window.RTCV ? window.RTCV.plainText(cv) : "";
+        const P = cv.person || {};
+        const subjectInput = $("#emailSubjectInput");
+        const preview = $("#emailBodyPreview");
+        if (subjectInput) subjectInput.value = `${P.name || "My"} — Résumé / CV`;
+        if (preview) preview.value = `Hi,\n\nPlease find my résumé (${P.title || "Game Developer"}).\n\nLive online version: https://roeetal.com/CVEditor\n\n${plain}`;
+        m.classList.add("open");
+      }
     },
 
     openCollabModal() {
-      ensureAuthenticated(() => {
-        const m = $("#collabModal");
-        if (m) {
-          m.classList.add("open");
-          if (!state.peer) initCollab();
-          else updateCollabModalUI();
-        }
-      });
+      const m = $("#collabModal");
+      if (m) {
+        m.classList.add("open");
+        if (!state.peer) initCollab();
+        else updateCollabModalUI();
+      }
     },
 
     // --- Modals ---
