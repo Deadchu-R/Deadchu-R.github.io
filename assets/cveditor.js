@@ -319,6 +319,108 @@
     ]
   };
 
+  
+  const FRIEND_DEFAULT_CV = {
+    label: "Professional Resume",
+    template: "ats",
+    layout_ratio: "50-50",
+    accent: "#1f5fa8",
+    font: "Inter",
+    density: "normal",
+    photo: "",
+    show_photo: false,
+    show_icons: false,
+    dir: "ltr",
+    lang: "en",
+    person: {
+      name: "Your Name",
+      title: "Your Professional Title",
+      summary: "Results-driven professional with experience in designing and developing impactful projects, solving complex challenges, and collaborating with cross-functional teams.",
+      email: "your.email@gmail.com",
+      phone: "+1 (555) 000-0000",
+      location: "City, Country",
+      links: [
+        { label: "linkedin.com/in/yourprofile", url: "https://linkedin.com" },
+        { label: "github.com/yourusername", url: "https://github.com" }
+      ]
+    },
+    main: [
+      {
+        type: "experience",
+        title: "Experience",
+        items: [
+          {
+            role: "Software Developer",
+            company: "Tech Company",
+            dates: "2023 – Present",
+            location: "Location",
+            summary: "Developing and maintaining core software products and client features.",
+            bullets: [
+              "Designed, implemented and tested scalable features according to product requirements.",
+              "Optimized application performance and streamlined automated workflows.",
+              "Collaborated closely with designers and teammates in agile sprint cycles."
+            ]
+          }
+        ]
+      },
+      {
+        type: "projects",
+        title: "Key Projects",
+        items: [
+          {
+            name: "Featured Project",
+            sub: "Full-Stack / Modern Web",
+            dates: "2024",
+            link: "https://example.com",
+            bullets: [
+              "Built an interactive web platform with modern frontend architecture and clean modular code.",
+              "Implemented secure state handling, responsive design, and automated testing."
+            ]
+          }
+        ]
+      }
+    ],
+    side: [
+      {
+        type: "education",
+        title: "Education",
+        items: [
+          {
+            degree: "B.Sc. in Computer Science / Relevant Degree",
+            school: "University / Academic Institution",
+            dates: "2020 – 2024",
+            location: "City",
+            bullets: [
+              "Specialized in Software Engineering, Data Structures, and Algorithms."
+            ]
+          }
+        ]
+      },
+      {
+        type: "skills",
+        title: "Technical Skills",
+        items: [
+          {
+            category: "Core Technologies",
+            skills: ["JavaScript", "TypeScript", "Python", "C#", "React", "Node.js"]
+          },
+          {
+            category: "Tools & Methodologies",
+            skills: ["Git", "Docker", "REST APIs", "Agile / Scrum"]
+          }
+        ]
+      },
+      {
+        type: "languages",
+        title: "Languages",
+        items: [
+          { language: "English", level: "Fluent / Professional" },
+          { language: "Hebrew", level: "Native" }
+        ]
+      }
+    ]
+  };
+
   // --- Auth & Storage Service ---
   const Storage = {
     init() {
@@ -332,67 +434,104 @@
         state.vault = v ? JSON.parse(v) : {};
       } catch (e) { state.vault = {}; }
 
-      // Default variants: ATS, Novo, Studio
-      const defaultVariants = {
-        "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
-        "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
-          label: "Unreal · Novo (Two-Column)",
-          template: "novo",
-          layout_ratio: "50-50",
-          accent: "#7c3aed"
-        }),
-        "studio": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
-          label: "Game Dev · Studio (Sidebar)",
-          template: "studio",
-          accent: "#059669"
-        })
-      };
-
-      if (!state.vault["roee"] || Object.keys(state.vault["roee"]).length === 0) {
-        state.vault["roee"] = JSON.parse(JSON.stringify(defaultVariants));
-      }
-
       // Check session
       let loggedInUser = null;
       try {
         const cur = sessionStorage.getItem("cve_cur_user") || localStorage.getItem("cve_cur_user");
         if (cur) loggedInUser = JSON.parse(cur);
-        if (loggedInUser && !state.allUsers.some(x => x.id === loggedInUser.id)) loggedInUser = null;
+        if (loggedInUser && !state.allUsers.some(x => x.id === loggedInUser.id) && loggedInUser.id !== "roee") {
+          loggedInUser = null;
+        }
         if (loggedInUser) {
           loggedInUser = publicUser(loggedInUser);
           localStorage.setItem("cve_cur_user", JSON.stringify(loggedInUser));
         }
       } catch (e) {}
 
-      if (loggedInUser) {
-        state.currentUser = loggedInUser;
-        state.activeOwnerId = loggedInUser.id;
-        const ownerCvs = state.vault[loggedInUser.id] || {};
-        state.activeCvId = Object.keys(ownerCvs)[0] || "unity-ats";
-      } else {
-        state.currentUser = null;
-        state.activeOwnerId = "guest";
-        state.activeCvId = "unity-ats";
+      // Vault sanitization: purge any Roee personal data from guest or friend vaults
+      function isRoeeData(cv) {
+        if (!cv || !cv.person) return false;
+        const p = cv.person;
+        const name = (p.name || "").toLowerCase();
+        const email = (p.email || "").toLowerCase();
+        const phone = (p.phone || "").replace(/[^0-9]/g, "");
+        return name.includes("roee") || email.includes("roeetal") || phone.includes("3374350");
+      }
 
-        let savedDraft = null;
-        try {
-          const d = localStorage.getItem("cve_draft_cv");
-          if (d) savedDraft = JSON.parse(d);
-        } catch (e) {}
-
-        if (savedDraft) {
-          state.vault["guest"] = { "draft": savedDraft };
-          state.activeCvId = "draft";
-        } else if (!state.vault["guest"] || Object.keys(state.vault["guest"]).length === 0) {
-          state.vault["guest"] = JSON.parse(JSON.stringify(defaultVariants));
-          state.activeCvId = "unity-ats";
-        } else {
-          state.activeCvId = Object.keys(state.vault["guest"])[0] || "unity-ats";
+      // Clean guest vault if it contains Roee data
+      if (state.vault["guest"]) {
+        for (const k of Object.keys(state.vault["guest"])) {
+          if (isRoeeData(state.vault["guest"][k])) {
+            delete state.vault["guest"][k];
+          }
         }
       }
+      // Clean non-roee user vaults
+      for (const [uid, userVault] of Object.entries(state.vault)) {
+        if (uid !== "roee") {
+          for (const k of Object.keys(userVault)) {
+            if (isRoeeData(userVault[k])) {
+              userVault[k] = JSON.parse(JSON.stringify(FRIEND_DEFAULT_CV));
+            }
+          }
+        }
+      }
+
+      if (loggedInUser && (loggedInUser.id === "roee" || loggedInUser.email === "roeetal17@gmail.com")) {
+        // Roee is logged in
+        state.currentUser = loggedInUser;
+        state.activeOwnerId = "roee";
+        if (!state.vault["roee"] || Object.keys(state.vault["roee"]).length === 0) {
+          state.vault["roee"] = {
+            "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
+            "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+              label: "Unreal · Novo (Two-Column)",
+              template: "novo",
+              layout_ratio: "50-50",
+              accent: "#7c3aed"
+            }),
+            "studio": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+              label: "Game Dev · Studio (Sidebar)",
+              template: "studio",
+              accent: "#059669"
+            })
+          };
+        }
+        const ownerCvs = state.vault["roee"] || {};
+        state.activeCvId = Object.keys(ownerCvs)[0] || "unity-ats";
+      } else if (loggedInUser) {
+        // Friend user is logged in
+        state.currentUser = loggedInUser;
+        state.activeOwnerId = loggedInUser.id;
+        if (!state.vault[loggedInUser.id] || Object.keys(state.vault[loggedInUser.id]).length === 0) {
+          const starter = JSON.parse(JSON.stringify(FRIEND_DEFAULT_CV));
+          starter.person.name = loggedInUser.name || "Your Name";
+          starter.person.email = loggedInUser.email;
+          starter.label = (loggedInUser.name || "My") + " — Resume";
+          state.vault[loggedInUser.id] = { "my-cv": starter };
+        }
+        const ownerCvs = state.vault[loggedInUser.id] || {};
+        state.activeCvId = Object.keys(ownerCvs)[0] || "my-cv";
+      } else {
+        // Guest mode: strictly clean starter CV, ZERO Roee data
+        state.currentUser = null;
+        state.activeOwnerId = "guest";
+        if (!state.vault["guest"] || Object.keys(state.vault["guest"]).length === 0) {
+          state.vault["guest"] = {
+            "starter": JSON.parse(JSON.stringify(FRIEND_DEFAULT_CV))
+          };
+          state.activeCvId = "starter";
+        } else {
+          state.activeCvId = Object.keys(state.vault["guest"])[0] || "starter";
+        }
+      }
+
+      this.saveVault();
     },
 
     async loadSiteCv() {
+      // STRICT PRIVACY: Only load official website CV when Roee is authenticated
+      if (!isRoeeUser()) return;
       try {
         const paths = ["/content/cv.json", "content/cv.json", "../content/cv.json"];
         let data = null;
@@ -405,28 +544,15 @@
         if (data && data.variants) {
           const variants = data.variants;
           const defaultKey = data.default || Object.keys(variants)[0];
-          if (state.activeOwnerId === "guest" && !localStorage.getItem("cve_draft_cv")) {
-            state.vault["guest"] = JSON.parse(JSON.stringify(variants));
-            if (variants[defaultKey]) state.activeCvId = defaultKey;
-            renderA4Sheet();
-            renderSidebar();
-          }
-          if (!state.vault["roee"] || Object.keys(state.vault["roee"]).length <= 3) {
-            state.vault["roee"] = Object.assign({}, JSON.parse(JSON.stringify(variants)), state.vault["roee"] || {});
-          }
+          state.vault["roee"] = JSON.parse(JSON.stringify(variants));
+          if (variants[defaultKey]) state.activeCvId = defaultKey;
+          this.saveVault();
+          renderA4Sheet();
+          renderSidebar();
         }
       } catch (e) {
-        // Embedded fallback already loaded
+        console.warn("Could not load /content/cv.json:", e);
       }
-    },
-
-    saveUsers() {
-      localStorage.setItem("cve_users", JSON.stringify(state.allUsers));
-    },
-
-    saveVault() {
-      localStorage.setItem("cve_vault", JSON.stringify(state.vault));
-      showSaveIndicator();
     },
 
     async login(email, pass) {
@@ -489,15 +615,125 @@
       return state.currentUser;
     },
 
-    logout() {
+    async loginWithGoogle(email, name, photoUrl) {
+      email = (email || "").trim().toLowerCase();
+      if (!email || !email.includes("@")) {
+        throw new Error("נא להזין כתובת מייל תקינה (Please enter a valid email address).");
+      }
+
+      let u = state.allUsers.find(x => x.email.toLowerCase() === email);
+      if (!u) {
+        const id = "usr_" + hex(crypto.getRandomValues(new Uint8Array(8)));
+        const derivedName = (name || "").trim() || email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        u = {
+          id,
+          email,
+          name: derivedName,
+          photo: photoUrl || "",
+          role: "friend",
+          created: new Date().toISOString()
+        };
+        state.allUsers.push(u);
+        this.saveUsers();
+      } else if (name && !u.name) {
+        u.name = name.trim();
+        this.saveUsers();
+      }
+
+      state.currentUser = publicUser(u);
+      localStorage.setItem("cve_cur_user", JSON.stringify(state.currentUser));
+      state.activeOwnerId = u.id;
+
+      // Ensure friend has their personal CV
+      if (!state.vault[u.id] || Object.keys(state.vault[u.id]).length === 0) {
+        const starter = JSON.parse(JSON.stringify(FRIEND_DEFAULT_CV));
+        starter.person.name = u.name || "Your Name";
+        starter.person.email = u.email;
+        if (photoUrl) {
+          starter.photo = photoUrl;
+          starter.show_photo = true;
+        }
+        starter.label = (u.name || "My") + " — Resume";
+        state.vault[u.id] = { "my-cv": starter };
+        this.saveVault();
+      }
+
+      const userCvs = state.vault[u.id] || {};
+      state.activeCvId = Object.keys(userCvs)[0] || "my-cv";
+
+      updateMainWebsiteCvButton();
+      renderTopbarAuth();
+      renderA4Sheet();
+      renderSidebar();
+      return u;
+    },
+
+    async loginRoee(password) {
+      const email = "roeetal17@gmail.com";
+      let u = state.allUsers.find(x => x.id === "roee" || x.email.toLowerCase() === email);
+      if (!u) {
+        const hashed = await hashPass(email, password);
+        u = { id: "roee", email: "roeetal17@gmail.com", name: "Roee Tal", role: "owner", salt: hashed.salt, hash: hashed.hash };
+        state.allUsers.unshift(u);
+        this.saveUsers();
+      } else if (u.hash) {
+        const h = await hashPass(email, password, u.salt);
+        if (h.hash !== u.hash) {
+          await new Promise(r => setTimeout(r, 600));
+          throw new Error("סיסמה שגויה (Incorrect password).");
+        }
+      }
+
+      state.currentUser = publicUser(u);
+      localStorage.setItem("cve_cur_user", JSON.stringify(state.currentUser));
+      state.activeOwnerId = "roee";
+
+      if (!state.vault["roee"] || Object.keys(state.vault["roee"]).length === 0) {
+        state.vault["roee"] = {
+          "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
+          "unreal-novo": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+            label: "Unreal · Novo (Two-Column)",
+            template: "novo",
+            layout_ratio: "50-50",
+            accent: "#7c3aed"
+          }),
+          "studio": Object.assign(JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)), {
+            label: "Game Dev · Studio (Sidebar)",
+            template: "studio",
+            accent: "#059669"
+          })
+        };
+        this.saveVault();
+      }
+
+      await Storage.loadSiteCv();
+
+      const ownerCvs = state.vault["roee"] || {};
+      state.activeCvId = Object.keys(ownerCvs)[0] || "unity-ats";
+
+      updateMainWebsiteCvButton();
+      renderTopbarAuth();
+      renderA4Sheet();
+      renderSidebar();
+      return u;
+    },
+
+    logout(e) {
+      if (e && e.stopPropagation) e.stopPropagation();
       sessionStorage.removeItem("cve_cur_user");
       localStorage.removeItem("cve_cur_user");
       state.currentUser = null;
       state.activeOwnerId = "guest";
+      if (!state.vault["guest"] || Object.keys(state.vault["guest"]).length === 0) {
+        state.vault["guest"] = { "starter": JSON.parse(JSON.stringify(FRIEND_DEFAULT_CV)) };
+      }
       const guestCvs = state.vault["guest"] || {};
-      state.activeCvId = Object.keys(guestCvs)[0] || "unity-ats";
+      state.activeCvId = Object.keys(guestCvs)[0] || "starter";
+      updateMainWebsiteCvButton();
+      renderTopbarAuth();
       renderA4Sheet();
       renderSidebar();
+      showToast("🚪 התנתקת מהחשבון. אתה כעת במצב אורח.");
     }
   };
 
@@ -509,8 +745,8 @@
         state.activeCvId = first;
         return owner[first];
       }
-      const initial = JSON.parse(JSON.stringify(ROEE_DEFAULT_CV));
-      owner[state.activeCvId || "unity-ats"] = initial;
+      const initial = JSON.parse(JSON.stringify(isRoeeUser() ? ROEE_DEFAULT_CV : FRIEND_DEFAULT_CV));
+      owner[state.activeCvId || (isRoeeUser() ? "unity-ats" : "my-cv")] = initial;
       state.vault[state.activeOwnerId] = owner;
       Storage.saveVault();
       return initial;
@@ -2221,6 +2457,7 @@
   // --- Sidebar Forms & Tabs ---
   function renderSidebar() {
     updateMainWebsiteCvButton();
+    renderTopbarAuth();
     const tab = state.activeTab;
     const body = $("#sidebarContent");
     if (!body) return;
@@ -2996,22 +3233,48 @@
 
     function renderVaultTab(body) {
     const user = state.currentUser;
-    const isRoee = false;   // no admin view: every account and its résumés stay on its own device
+    const isRoee = isRoeeUser();
     const myCvs = state.vault[state.activeOwnerId] || {};
 
     let html = `
       <div class="cve-section-card">
         <div class="cve-section-header">
-          <span class="cve-section-title">🔐 User Account & Vault</span>
+          <span class="cve-section-title">🔐 User Account & Google Vault</span>
         </div>
         <div class="cve-section-body">
-          <p style="font-size:13px;color:#fff;">Logged in as: <b>${esc(user ? user.name : "Guest")}</b> (${esc(user ? user.email : "Not logged in")})</p>
-          <p style="font-size:12px;color:var(--cve-text-muted);">
-            ${isRoee ? "🌟 Roee Admin Mode: Full access to all your and friends' CVs." : user ? "🔒 Your account: your résumés are saved only in this browser, on this device." : "⚠️ You are editing as Guest. Save and register to keep your CV permanently!"}
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;">
+              ${isRoee ? "👑" : user ? "👤" : "🔒"}
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:13.5px;color:#fff;">
+                ${esc(user ? (user.name || user.email) : "אורח (Guest Mode)")}
+              </div>
+              <div style="font-size:11.5px;color:var(--cve-text-muted);">
+                ${esc(user ? user.email : "לא מחובר")}
+              </div>
+            </div>
+          </div>
+
+          <p style="font-size:12px;color:var(--cve-text-muted);line-height:1.45;margin:4px 0 8px;">
+            ${isRoee ? "👑 חשבון מנהל (רועי): גישה מלאה לקורות החיים שלך וסנכרון לאתר הראשי roeetal.com/cv." : user ? "🔒 חשבון אישי פרטי: קורות החיים שלך שמורים אך ורק בחשבון האישי שלך בדפדפן. אף משתמש אחר לא יכול לראותם." : "⚠️ אתה כרגע במצב אורח. התחבר עם חשבון Google כדי לשמור קורות חיים אישיים משלך לצמיתות!"}
           </p>
-          <div style="display:flex;gap:8px;margin-top:4px;">
-            <button type="button" class="cve-btn" onclick="window.CVE.openAuthModal()">${user ? "Account Settings" : "Sign In"}</button>
-            <button type="button" class="cve-btn" onclick="window.CVE.exportVaultJson()">💾 Backup All (JSON)</button>
+
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${!user ? `
+              <button type="button" class="cve-btn cve-google-btn" style="flex:1;justify-content:center;padding:7px 12px;" onclick="window.CVE.openGoogleAuthModal()">
+                <svg width="15" height="15" viewBox="0 0 24 24" style="flex-shrink:0;">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>התחבר עם Google</span>
+              </button>
+            ` : `
+              <button type="button" class="cve-btn" style="flex:1;justify-content:center;" onclick="window.CVE.logout()">🚪 Sign Out (התנתק)</button>
+            `}
+            <button type="button" class="cve-btn" style="flex:1;justify-content:center;" onclick="window.CVE.exportVaultJson()">💾 Backup (JSON)</button>
           </div>
         </div>
       </div>
@@ -3640,6 +3903,119 @@
   }
 
 
+  
+  function showToast(msg) {
+    const old = document.getElementById("cveToast");
+    if (old) old.remove();
+    const t = document.createElement("div");
+    t.id = "cveToast";
+    t.textContent = msg;
+    t.style.cssText = "position:fixed;bottom:24px;right:24px;background:#1e1b4b;color:#c7d2fe;border:1px solid #6366f1;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,0.5);z-index:999999;direction:rtl;transition:opacity 0.3s ease;";
+    document.body.appendChild(t);
+    setTimeout(() => {
+      t.style.opacity = "0";
+      setTimeout(() => t.remove(), 300);
+    }, 3500);
+  }
+
+  function renderTopbarAuth() {
+    const area = document.getElementById("cveTopbarAuth");
+    if (!area) return;
+    const user = state.currentUser;
+    const isRoee = isRoeeUser();
+
+    if (!user) {
+      area.innerHTML = `
+        <button type="button" class="cve-btn cve-google-btn" onclick="window.CVE.openGoogleAuthModal()" title="התחבר עם חשבון Google לשמירה אישית">
+          <svg width="15" height="15" viewBox="0 0 24 24" style="flex-shrink:0;">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Sign In with Google</span>
+        </button>
+      `;
+    } else {
+      const displayName = user.name || user.email.split("@")[0];
+      area.innerHTML = `
+        <div class="cve-user-logged-in-pill" title="מחובר: ${esc(user.email)}">
+          <span class="cve-user-dot"></span>
+          <span class="cve-user-role-icon">${isRoee ? "👑" : "👤"}</span>
+          <span class="cve-user-display-name">${esc(displayName)}</span>
+          <button type="button" class="cve-user-logout-btn" onclick="window.CVE.logout(event)" title="Sign Out (התנתק)">🚪 Sign Out</button>
+        </div>
+      `;
+    }
+  }
+
+  function openGoogleAuthModal(prefillEmail) {
+    const m = document.getElementById("googleAuthModal");
+    if (!m) return;
+    const emailInput = document.getElementById("cveGoogleEmailInput");
+    const nameInput = document.getElementById("cveGoogleNameInput");
+    const passInput = document.getElementById("cveRoeePassInput");
+    const passGroup = document.getElementById("cveRoeePassGroup");
+    const errEl = document.getElementById("googleAuthError");
+
+    if (errEl) errEl.textContent = "";
+    if (prefillEmail && emailInput) {
+      emailInput.value = prefillEmail;
+    }
+    if (emailInput && (emailInput.value.toLowerCase().includes("roeetal") || emailInput.value.toLowerCase() === "roee")) {
+      if (passGroup) passGroup.style.display = "block";
+    } else {
+      if (passGroup) passGroup.style.display = "none";
+    }
+    if (passInput) passInput.value = "";
+    m.classList.add("open");
+    setTimeout(() => {
+      if (emailInput && !emailInput.value) emailInput.focus();
+    }, 100);
+  }
+
+  async function submitGoogleEmailAuth() {
+    const emailInput = document.getElementById("cveGoogleEmailInput");
+    const nameInput = document.getElementById("cveGoogleNameInput");
+    const passInput = document.getElementById("cveRoeePassInput");
+    const errEl = document.getElementById("googleAuthError");
+
+    const email = (emailInput ? emailInput.value : "").trim();
+    const name = (nameInput ? nameInput.value : "").trim();
+    const pass = (passInput ? passInput.value : "").trim();
+
+    if (errEl) errEl.textContent = "";
+
+    if (!email || !email.includes("@")) {
+      if (errEl) errEl.textContent = "נא להזין כתובת מייל תקינה (Please enter a valid Gmail / email address)";
+      return;
+    }
+
+    try {
+      if (email.toLowerCase() === "roeetal17@gmail.com" || email.toLowerCase() === "roee") {
+        if (!pass) {
+          const passGroup = document.getElementById("cveRoeePassGroup");
+          if (passGroup) passGroup.style.display = "block";
+          if (errEl) errEl.textContent = "זוהה חשבון המנהל של רועי. נא להזין סיסמה כדי להתחבר.";
+          if (passInput) passInput.focus();
+          return;
+        }
+        await Storage.loginRoee(pass);
+        const m = document.getElementById("googleAuthModal");
+        if (m) m.classList.remove("open");
+        showToast("👑 שלום רועי! התחברת בהצלחה לחשבון המנהל.");
+      } else {
+        await Storage.loginWithGoogle(email, name);
+        const m = document.getElementById("googleAuthModal");
+        if (m) m.classList.remove("open");
+        const displayName = name || email.split("@")[0];
+        showToast(`🎉 שלום ${displayName}! החשבון האישי שלך מחובר בהצלחה.`);
+      }
+    } catch (err) {
+      if (errEl) errEl.textContent = err.message || "שגיאה בהתחברות";
+    }
+  }
+
   function isRoeeUser() {
     return Boolean(state.currentUser && (state.currentUser.id === "roee" || state.currentUser.email === "roeetal17@gmail.com"));
   }
@@ -3761,6 +4137,10 @@
 
   // --- Public API for UI Event Handlers ---
   window.CVE = {
+    openGoogleAuthModal,
+    submitGoogleEmailAuth,
+    renderTopbarAuth,
+    logout: (e) => Storage.logout(e),
     toggleSectionMaximize,
     showIkhsa,
     isRoeeUser,
@@ -3772,6 +4152,7 @@
     init() {
       initPhotoFileInput();
       Storage.init();
+      renderTopbarAuth();
       renderA4Sheet();
       renderSidebar();
       setFitZoom();

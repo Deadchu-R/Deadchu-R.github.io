@@ -9,6 +9,13 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** Google Email sign-in for friends and strict privacy isolation for Roee's CV data:
+  - Visitors and guests never see Roee's CV or personal details: guests and new users receive a clean, generic starter resume template (`FRIEND_DEFAULT_CV`) with zero personal info of Roee.
+  - Sanitization on startup: purged any cached Roee information from guest vaults and non-Roee user vaults in localStorage.
+  - Restricted `content/cv.json` loading: Roee's official CV variants are strictly loaded only when authenticated as Roee (`roeetal17@gmail.com` / `roee`).
+  - Google Sign-In: added prominent Google Sign-In in topbar and Vault tab with support for direct Google email sign-in for friends (creating personal isolated vaults per friend), and password protection for Roee's owner account.
+  - Topbar user pill: shows user name, email, avatar, and quick Sign Out button.
+  - Bumped version queries to `?v=20261105_14`.
 - **CVEditor:** Windows-like section window resizing (↕ bottom edge drag, 🗖 maximize/fit, _ minimize, corner grip ◢) and prominent solid collapsed section headers:
   - Fixed collapsed sections: collapsed cards no longer shrink into blank lines; they render as solid dark slate titlebars (min-height 42px) with bold white title (`flex-shrink: 0`), icon, item count badge, and a dedicated `Open ▾` button.
   - Windows-style window controls: added Maximize/Fit (`🗖`) to expand sections to full height without scrolling, and Minimize (`_`) to collapse.
