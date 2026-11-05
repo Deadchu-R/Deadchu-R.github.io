@@ -3699,3 +3699,23 @@ body.cve-sidebar-collapsed .cve-canvas-wrap {
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.6) !important;
   background: linear-gradient(135deg, #047857 0%, #059669 100%) !important;
 }
+
+/* Test Button: ל' */
+.cve-l-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: #fff !important;
+  font-weight: 900 !important;
+  font-size: 15px !important;
+  padding: 4px 13px !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.45) !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.cve-l-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.6) !important;
+}

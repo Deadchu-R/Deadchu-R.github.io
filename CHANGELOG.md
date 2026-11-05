@@ -9,6 +9,10 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** resilient boot initialization, canary test button (ל'), and asset cache-buster:
+  - Added resilient boot loader with document.readyState checks and inline initialization fallback ensuring the editor always boots even if DOMContentLoaded already fired or scripts load late.
+  - Added requested ל' button in topbar that pops up animated "איכסה" badge and automatically disappears after 2 seconds.
+  - Bumped version queries to ?v=20261105_12.
 - **Résumé & CVEditor:** strict separation between public CV and CVEditor, clean visitor view, persistent section stretch, and owner publish button:
   - Fixed public CV (/cv / cv.html): guarded all bullet deletion buttons (✕), grips (⠿), inline deletes, and contact clears with env.edit, completely removing unwanted editor controls from the public website and static builds.
   - Persistent vertical stretch on CVEditor content sections: added state.sectionHeights so stretched section heights persist across typing, reordering, and re-rendering; removed whole-card draggable property to prevent drag-and-drop from blocking resize mouse interactions.

@@ -3679,8 +3679,55 @@
     alert("✅ קורות החיים עודכנו והוגדרו כקורות החיים הראשיים באתר roeetal.com/cv! (קובץ cv.json נשמר)");
   }
 
+
+  function showIkhsa() {
+    const existing = document.getElementById("cveIkhsaPopup");
+    if (existing) existing.remove();
+
+    const popup = document.createElement("div");
+    popup.id = "cveIkhsaPopup";
+    popup.innerHTML = `
+      <div style="font-size: 46px; font-weight: 900; line-height: 1.1; margin-bottom: 8px;">איכסה</div>
+      <div style="font-size: 14px; opacity: 0.85; font-weight: 600;">(בדיקת מערכת תקינה ✓)</div>
+    `;
+    popup.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.6);
+      background: rgba(15, 23, 42, 0.96);
+      color: #ff4d4f;
+      border: 3px solid #ff4d4f;
+      padding: 24px 48px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.85), 0 0 40px rgba(255, 77, 79, 0.5);
+      z-index: 9999999;
+      pointer-events: none;
+      transition: all 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      opacity: 0;
+      text-align: center;
+      direction: rtl;
+      font-family: inherit;
+    `;
+    document.body.appendChild(popup);
+
+    requestAnimationFrame(() => {
+      popup.style.opacity = "1";
+      popup.style.transform = "translate(-50%, -50%) scale(1)";
+    });
+
+    setTimeout(() => {
+      popup.style.opacity = "0";
+      popup.style.transform = "translate(-50%, -50%) scale(0.7)";
+      setTimeout(() => {
+        if (popup.parentNode) popup.parentNode.removeChild(popup);
+      }, 350);
+    }, 2200);
+  }
+
   // --- Public API for UI Event Handlers ---
   window.CVE = {
+    showIkhsa,
     isRoeeUser,
     updateMainWebsiteCvButton,
     addToMainWebsiteCV,
@@ -4953,8 +5000,21 @@
     }
   });
 
-  window.addEventListener("DOMContentLoaded", () => {
-    window.CVE.init();
-  });
+  function bootCVE() {
+    if (window._cveBooted) return;
+    window._cveBooted = true;
+    try {
+      window.CVE.init();
+    } catch (err) {
+      console.error("Error during window.CVE.init():", err);
+    }
+  }
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    setTimeout(bootCVE, 0);
+  } else {
+    document.addEventListener("DOMContentLoaded", bootCVE);
+    window.addEventListener("load", bootCVE);
+  }
 
 })(window, document);
