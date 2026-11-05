@@ -9,6 +9,13 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** undo/redo history, sidebar accordion & toggle, 1-click delete buttons, and flicker-free bullet dragging:
+  - Undo & Redo (Ctrl+Z / Ctrl+Y): full state history system with topbar Undo/Redo buttons and keyboard shortcuts, preventing lost work or accidental mistakes.
+  - Bullet dragging duplication fixed: decoupled contenteditable text span from draggable grip container (`li.cv-bullet-item`), completely eliminating empty bullet duplicates when dragging or moving to top position.
+  - Rock-solid drag feedback: resolved outline flickering using descendant pointer-event protection during drag and tracked drop target elements.
+  - 1-click delete buttons: subtle red circular `✕` delete buttons on hover for bullet points, education course items, skill chips, contact details, and sidebar section cards.
+  - Sidebar accordion & scroll: all section cards now support smooth collapsible accordions with item count badges, plus clean independent scrolling.
+  - Full-screen sidebar toggle (Ctrl+B): dedicated topbar button to hide/show the sidebar for distraction-free 100% canvas view.
 - **CVEditor:** bullet swapping bugfix, contact info reordering, and animated dashed outline feedback:
   - Fixed bullet dragging: resolved out-of-bounds global index bug that caused phantom/new bullets to be created; added smart adjacent neighbor swapping.
   - Contact info reordering: added full `person.contact_order` support allowing dragging and swapping between email, phone, location, and custom links across all templates (ATS, Novo, Studio).

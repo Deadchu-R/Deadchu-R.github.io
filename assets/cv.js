@@ -62,8 +62,8 @@
 
   // HTML for a list of bullet points.
   function bullets(ip,list){
-    const b=Array.isArray(list)?list:[];
-    return `<ul class="cv-bul" data-l="${ip}.bullets"${b.length?"":" hidden data-edit-show"}>`+b.map((t,k)=>`<li class="cv-bullet-item" data-i="${k}"${E(`${ip}.bullets.${k}`)}>${esc(t)}</li>`).join("")+`</ul>`;
+    const b=(Array.isArray(list)?list:[]).filter(x=>typeof x==="string"&&x.trim());
+    return `<ul class="cv-bul" data-l="${ip}.bullets"${b.length?"":" hidden data-edit-show"}>`+b.map((t,k)=>`<li class="cv-bullet-item" data-i="${k}"><span class="cve-bullet-grip" title="Drag to reorder" draggable="true">⠿</span><span class="cv-bullet-text"${E(`${ip}.bullets.${k}`)}>${esc(t)}</span><button type="button" class="cve-bullet-del-btn" title="Delete bullet" onclick="window.CVE&&window.CVE.removeBulletFromItem&&window.CVE.removeBulletFromItem('${ip}',${k})">✕</button></li>`).join("")+`</ul>`;
   }
   // HTML for an item's link.
   function linkHTML(ip,it){const url=full(it.link);return url?`<p class="cv-link"><a href="${esc(url)}">${svg("link",11)}<span${E(ip+".link_label")}>${esc(it.link_label||pretty(url))}</span></a></p>`:""}
@@ -79,7 +79,7 @@
         `<div class="cv-row"><h3><span${E(ip+".degree")}>${esc(it.degree)}</span>${T!=="novo"?`<span class="cv-sep"> — </span>`:""}<span class="cv-org"${E(ip+".school")}>${esc(it.school)}</span></h3>`+
         `<p class="cv-when"><span${E(ip+".dates")}>${esc(it.dates)}</span>${opt("span","cv-loc",ip+".location",it.location,"city")}</p></div>`+
         opt("p","cv-about",ip+".about",it.about,"one line")+
-        (T==="ats"&&(it.bullets||[]).length?`<p class="cv-inline"><span${E(ip+".label")}>${esc(it.label||"Courses")}</span>: `+(it.bullets||[]).map((t,k)=>`<span class="cv-inline-bullet" data-i="${k}"${E(`${ip}.bullets.${k}`)}>${esc(t)}</span>`).join(", ")+`</p>`
+        (T==="ats"&&(it.bullets||[]).length?`<p class="cv-inline"><span${E(ip+".label")}>${esc(it.label||"Courses")}</span>: `+(it.bullets||[]).filter(x=>typeof x==="string"&&x.trim()).map((t,k)=>`<span class="cv-inline-bullet" data-i="${k}"><span class="cve-bullet-grip" title="Drag to reorder" draggable="true">⠿</span><span class="cv-bullet-text"${E(`${ip}.bullets.${k}`)}>${esc(t)}</span><button type="button" class="cve-inline-del-btn" title="Delete" onclick="window.CVE&&window.CVE.removeBulletFromItem&&window.CVE.removeBulletFromItem('${ip}',${k})">✕</button></span>`).join(", ")+`</p>`
           :opt("p","cv-lbl",ip+".label",it.label,"label above the list")+bullets(ip,it.bullets).replace('class="cv-bul"','class="cv-bul cols"'))+`</div>`;
       case "projects":{const url=full(it.link);
         return `<div class="cv-item" data-i="${i}"${X(["Link (web address)",ip+".link","text"])}>`+
@@ -90,7 +90,7 @@
       case "skills":case "tags":{
         const lp=`${ip}.items`,chips=T!=="ats";
         return `<div class="cv-item cv-grp" data-i="${i}">`+(chips?opt("p","cv-glbl",ip+".label",it.label,"group name (optional)")+`<div class="cv-chips${s.type==="tags"?" outline":""}" data-l="${lp}">`+
-          (it.items||[]).map((t,k)=>`<span class="cv-chip" data-i="${k}"${E(`${lp}.${k}`)}>${esc(t)}</span>`).join("")+`</div>`
+          (it.items||[]).filter(x=>typeof x==="string"&&x.trim()).map((t,k)=>`<span class="cv-chip" data-i="${k}"${E(`${lp}.${k}`)}>${esc(t)}<button type="button" class="cve-chip-del-btn" title="Delete" onclick="window.CVE&&window.CVE.removeSkillFromItem&&window.CVE.removeSkillFromItem('${ip}',${k})">✕</button></span>`).join("")+`</div>`
           :`<p class="cv-inline"><b${E(ip+".label","group")}${it.label?"":" hidden data-edit-show"}>${esc(it.label)}</b>${it.label?": ":""}<span data-l="${lp}">`+
             (it.items||[]).map((t,k)=>`<span data-i="${k}"><span${E(`${lp}.${k}`)}>${esc(t)}</span>${k<(it.items.length-1)?", ":""}</span>`).join("")+`</span></p>`)+`</div>`}
       case "languages":return `<div class="cv-item cv-lang" data-i="${i}"><b${E(ip+".name")}>${esc(it.name)}</b>${T==="ats"?" — ":""}<span${E(ip+".level")}>${esc(it.level)}</span></div>`;
@@ -123,10 +123,10 @@
   function contact(v,base,withIcons,edit){
     const P=v.person,pp=base+".person",items={};
     const row=(ic,val,inner,href,cls,extra)=>`<li class="cv-contact-item${cls?" "+cls:""}"${extra||""}${val?"":" hidden data-edit-show"}>${withIcons?svg(ic):""}${href?`<a href="${esc(href)}">${inner}</a>`:inner}</li>`;
-    items["email"]=row("mail",P.email,`<span${E(pp+".email","email")}>${esc(P.email)}</span>`,P.email?"mailto:"+P.email:"","contact-mail",' data-contact="email"');
-    items["phone"]=row("phone",P.phone,`<span${E(pp+".phone","phone")}>${esc(P.phone)}</span>`,P.phone?"tel:"+String(P.phone).replace(/[^\d+]/g,""):"","contact-phone",' data-contact="phone"');
-    items["location"]=row("pin",P.location,`<span${E(pp+".location","location")}>${esc(P.location)}</span>`,"","contact-loc",' data-contact="location"');
-    (P.links||[]).forEach((l,k)=>{const u=full(l.url);items["link:"+k]=`<li class="cv-contact-item contact-link" data-contact="link:${k}" data-i="${k}"${X(["Web address",`${pp}.links.${k}.url`,"text"])}>${withIcons?svg(linkIcon(u)):""}<a href="${esc(u)}"><span${E(`${pp}.links.${k}.label`)}>${esc(l.label||pretty(u))}</span></a></li>`});
+    items["email"]=row("mail",P.email,`<span${E(pp+".email","email")}>${esc(P.email)}</span><button type="button" class="cve-contact-del-btn" title="Clear Email" onclick="window.CVE&&window.CVE.removeContactItem&&window.CVE.removeContactItem('email')">✕</button>`,P.email?"mailto:"+P.email:"","contact-mail",' data-contact="email"');
+    items["phone"]=row("phone",P.phone,`<span${E(pp+".phone","phone")}>${esc(P.phone)}</span><button type="button" class="cve-contact-del-btn" title="Clear Phone" onclick="window.CVE&&window.CVE.removeContactItem&&window.CVE.removeContactItem('phone')">✕</button>`,P.phone?"tel:"+String(P.phone).replace(/[^\d+]/g,""):"","contact-phone",' data-contact="phone"');
+    items["location"]=row("pin",P.location,`<span${E(pp+".location","location")}>${esc(P.location)}</span><button type="button" class="cve-contact-del-btn" title="Clear Location" onclick="window.CVE&&window.CVE.removeContactItem&&window.CVE.removeContactItem('location')">✕</button>`,"","contact-loc",' data-contact="location"');
+    (P.links||[]).forEach((l,k)=>{const u=full(l.url);items["link:"+k]=`<li class="cv-contact-item contact-link" data-contact="link:${k}" data-i="${k}"${X(["Web address",`${pp}.links.${k}.url`,"text"])}>${withIcons?svg(linkIcon(u)):""}<a href="${esc(u)}"><span${E(`${pp}.links.${k}.label`)}>${esc(l.label||pretty(u))}</span></a><button type="button" class="cve-contact-del-btn" title="Delete Link" onclick="window.CVE&&window.CVE.removeContactItem&&window.CVE.removeContactItem('link:${k}')">✕</button></li>`});
     
     const order=Array.isArray(P.contact_order)&&P.contact_order.length?P.contact_order:["email","phone","location",...(P.links||[]).map((_,k)=>"link:"+k)];
     const rows=[],used=new Set();

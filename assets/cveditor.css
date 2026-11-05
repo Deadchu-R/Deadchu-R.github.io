@@ -3263,3 +3263,240 @@ html[data-skin="plain"] {
   overflow-y: auto;
   line-height: 1.5;
 }
+
+
+/* ============================================================
+   Micro Delete Buttons (Bullets, Skills, Contact Items)
+   ============================================================ */
+.cvdoc .cv-bul li {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.cvdoc .cv-bul li .cve-bullet-grip,
+.cvdoc .cv-inline-bullet .cve-bullet-grip {
+  color: #38bdf8;
+  cursor: grab;
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  user-select: none;
+  padding-inline-end: 2px;
+}
+
+.cvdoc .cv-bul li:hover .cve-bullet-grip,
+.cvdoc .cv-inline-bullet:hover .cve-bullet-grip {
+  opacity: 0.9;
+}
+
+.cvdoc .cv-bul li .cv-bullet-text {
+  flex: 1;
+  outline: none;
+}
+
+.cvdoc .cv-bul li .cve-bullet-del-btn,
+.cvdoc .cv-inline-bullet .cve-inline-del-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, background 0.12s ease, transform 0.12s ease;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: none;
+  border-radius: 50%;
+  width: 15px;
+  height: 15px;
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-inline-start: 6px;
+  vertical-align: middle;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.cvdoc .cv-bul li:hover .cve-bullet-del-btn,
+.cvdoc .cv-inline-bullet:hover .cve-inline-del-btn {
+  opacity: 0.85;
+  pointer-events: auto;
+}
+
+.cvdoc .cv-bul li .cve-bullet-del-btn:hover,
+.cvdoc .cv-inline-bullet .cve-inline-del-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.cvdoc .cv-chip .cve-chip-del-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, background 0.12s ease;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+  border: none;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  font-size: 8.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-inline-start: 4px;
+  padding: 0;
+}
+
+.cvdoc .cv-chip:hover .cve-chip-del-btn {
+  opacity: 0.9;
+  pointer-events: auto;
+}
+
+.cvdoc .cv-chip .cve-chip-del-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  opacity: 1;
+}
+
+.cvdoc .cv-contact-item .cve-contact-del-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, background 0.12s ease;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: none;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  font-size: 8.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-inline-start: 4px;
+  padding: 0;
+}
+
+.cvdoc .cv-contact-item:hover .cve-contact-del-btn {
+  opacity: 0.85;
+  pointer-events: auto;
+}
+
+.cvdoc .cv-contact-item .cve-contact-del-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  opacity: 1;
+}
+
+/* Print guard: hide micro grips and delete buttons */
+@media print {
+  .cve-bullet-grip,
+  .cve-bullet-del-btn,
+  .cve-inline-del-btn,
+  .cve-chip-del-btn,
+  .cve-contact-del-btn {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   Flicker-Free Dragging (pointer-events guard)
+   ============================================================ */
+.cve-dragging-bullet-mode .cvdoc *,
+.cve-dragging-skill-mode .cvdoc *,
+.cve-dragging-contact-mode .cvdoc *,
+.cve-dragging-item-mode .cvdoc * {
+  pointer-events: none !important;
+}
+
+.cve-dragging-bullet-mode .cve-draggable-bullet,
+.cve-dragging-skill-mode .cve-draggable-skill,
+.cve-dragging-contact-mode .cve-draggable-contact,
+.cve-dragging-item-mode .cve-draggable-item {
+  pointer-events: auto !important;
+}
+
+/* ============================================================
+   Sidebar Accordion, Smooth Scrolling & Full-Screen Toggle
+   ============================================================ */
+.cve-sidebar {
+  transition: width 0.26s cubic-bezier(0.16, 1, 0.3, 1), margin-left 0.26s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease !important;
+}
+
+.cve-sidebar-content {
+  flex: 1;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: calc(100vh - 120px) !important;
+  padding-bottom: 40px !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.cve-sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+.cve-sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+.cve-sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Sidebar Collapsed State */
+body.cve-sidebar-collapsed .cve-sidebar {
+  width: 0 !important;
+  min-width: 0 !important;
+  margin-left: -380px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+body.cve-sidebar-collapsed .cve-canvas-wrap {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+}
+
+/* Section Card Accordion */
+.cve-section-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.cve-accordion-arrow {
+  font-size: 10px;
+  color: var(--cve-text-muted);
+  width: 12px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+  user-select: none;
+}
+
+.cve-section-card.collapsed .cve-section-body {
+  display: none !important;
+}
+
+.cve-section-card.collapsed .cve-accordion-arrow {
+  transform: rotate(-90deg);
+}
+
+/* Undo / Redo & Sidebar Toggle */
+#cveUndoBtn:disabled,
+#cveRedoBtn:disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+#cveSidebarToggleBtn.active {
+  background: var(--cve-accent, #1f6feb);
+  color: #fff;
+  border-color: var(--cve-accent, #1f6feb);
+}

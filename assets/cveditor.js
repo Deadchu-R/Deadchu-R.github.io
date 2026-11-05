@@ -516,7 +516,57 @@
     return owner[state.activeCvId];
   }
 
-  function saveCurrentCV(cv) {
+  // --- History & Undo / Redo Manager (Ctrl+Z / Ctrl+Y) ---
+  const History = {
+    undoStack: [],
+    redoStack: [],
+    max: 50,
+    push(cv) {
+      if (!cv) return;
+      this.undoStack.push(JSON.parse(JSON.stringify(cv)));
+      if (this.undoStack.length > this.max) this.undoStack.shift();
+      this.redoStack = [];
+      updateUndoRedoUI();
+    },
+    undo() {
+      if (!this.undoStack.length) return;
+      const current = getCurrentCV();
+      this.redoStack.push(JSON.parse(JSON.stringify(current)));
+      const prev = this.undoStack.pop();
+      saveCurrentCV(prev, false);
+      renderA4Sheet();
+      renderSidebar();
+      updateUndoRedoUI();
+    },
+    redo() {
+      if (!this.redoStack.length) return;
+      const current = getCurrentCV();
+      this.undoStack.push(JSON.parse(JSON.stringify(current)));
+      const next = this.redoStack.pop();
+      saveCurrentCV(next, false);
+      renderA4Sheet();
+      renderSidebar();
+      updateUndoRedoUI();
+    }
+  };
+
+  function updateUndoRedoUI() {
+    const uBtn = $("#cveUndoBtn");
+    const rBtn = $("#cveRedoBtn");
+    if (uBtn) {
+      uBtn.disabled = History.undoStack.length === 0;
+      uBtn.title = `Undo (Ctrl+Z) - ${History.undoStack.length} actions`;
+    }
+    if (rBtn) {
+      rBtn.disabled = History.redoStack.length === 0;
+      rBtn.title = `Redo (Ctrl+Y) - ${History.redoStack.length} actions`;
+    }
+  }
+
+  function saveCurrentCV(cv, recordHistory = true) {
+    if (recordHistory) {
+      History.push(getCurrentCV());
+    }
     if (!state.vault[state.activeOwnerId]) state.vault[state.activeOwnerId] = {};
     state.vault[state.activeOwnerId][state.activeCvId] = cv;
 
@@ -527,6 +577,7 @@
     }
 
     broadcastCollabUpdate(cv);
+    updateUndoRedoUI();
   }
 
   function showSaveIndicator(msg) {
@@ -839,6 +890,7 @@
     document.body.classList.remove(...modeClasses);
     const stage = document.querySelector("#cvSheet");
     if (stage) stage.classList.remove(...modeClasses);
+    state.currentDropEl = null;
   }
 
 
@@ -852,14 +904,7 @@
       bulEl.setAttribute("draggable", "true");
       bulEl.classList.add("cve-draggable-bullet");
 
-      let grip = bulEl.querySelector(":scope > .cve-bullet-grip");
-      if (!grip) {
-        grip = document.createElement("span");
-        grip.className = "cve-bullet-grip";
-        grip.innerHTML = "⠿";
-        grip.title = "Drag bullet to reorder";
-        bulEl.prepend(grip);
-      }
+      const grip = bulEl.querySelector(".cve-bullet-grip");
 
       const parentSec = bulEl.closest(".cv-sec");
       const parentItem = bulEl.closest(".cv-item");
@@ -870,7 +915,6 @@
       const secIdx = parseInt(parentSec.getAttribute("data-i"), 10);
       const itemIdx = parseInt(parentItem.getAttribute("data-i"), 10);
 
-      // Local index in item bullets array:
       let localBulIdx = parseInt(bulEl.getAttribute("data-i"), 10);
       if (isNaN(localBulIdx)) {
         const parentList = bulEl.parentElement;
@@ -881,6 +925,10 @@
 
       const startBulDrag = (e) => {
         if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
+          e.preventDefault();
+          return;
+        }
+        if (e.target.closest && e.target.closest('[contenteditable="true"]') && !e.target.closest('.cve-bullet-grip')) {
           return;
         }
         e.stopPropagation();
@@ -894,7 +942,7 @@
         }
       };
 
-      grip.addEventListener("dragstart", startBulDrag);
+      if (grip) grip.addEventListener("dragstart", startBulDrag);
       bulEl.addEventListener("dragstart", startBulDrag);
 
       bulEl.addEventListener("dragend", () => {
@@ -903,6 +951,7 @@
         document.body.classList.remove("cve-dragging-bullet-mode");
         clearAllDropFeedback();
         state.draggingBullet = null;
+        state.currentDropEl = null;
       });
 
       bulEl.addEventListener("dragover", (e) => {
@@ -912,6 +961,11 @@
         e.preventDefault();
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+        if (state.currentDropEl && state.currentDropEl !== bulEl) {
+          state.currentDropEl.classList.remove("cve-bullet-drop-before", "cve-bullet-drop-after");
+        }
+        state.currentDropEl = bulEl;
 
         const rect = bulEl.getBoundingClientRect();
         const midY = rect.top + rect.height / 2;
@@ -925,8 +979,9 @@
       });
 
       bulEl.addEventListener("dragleave", (e) => {
-        if (!bulEl.contains(e.relatedTarget)) {
+        if (e.relatedTarget && !bulEl.contains(e.relatedTarget)) {
           bulEl.classList.remove("cve-bullet-drop-before", "cve-bullet-drop-after");
+          if (state.currentDropEl === bulEl) state.currentDropEl = null;
         }
       });
 
@@ -944,6 +999,7 @@
         clearAllDropFeedback();
         const fromCol = d.col, fromSec = d.secIdx, fromItem = d.itemIdx, fromBul = d.bulletIdx;
         state.draggingBullet = null;
+        state.currentDropEl = null;
 
         window.CVE.moveBulletPosition(fromCol, fromSec, fromItem, fromBul, col, secIdx, itemIdx, localBulIdx, pos);
       });
@@ -974,6 +1030,10 @@
 
       const startSkillDrag = (e) => {
         if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
+          e.preventDefault();
+          return;
+        }
+        if (e.target.closest && e.target.closest('.cve-chip-del-btn')) {
           return;
         }
         e.stopPropagation();
@@ -995,6 +1055,7 @@
         document.body.classList.remove("cve-dragging-skill-mode");
         clearAllDropFeedback();
         state.draggingSkill = null;
+        state.currentDropEl = null;
       });
 
       chipEl.addEventListener("dragover", (e) => {
@@ -1004,6 +1065,11 @@
         e.preventDefault();
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+        if (state.currentDropEl && state.currentDropEl !== chipEl) {
+          state.currentDropEl.classList.remove("cve-chip-drop-before", "cve-chip-drop-after");
+        }
+        state.currentDropEl = chipEl;
 
         const rect = chipEl.getBoundingClientRect();
         const midX = rect.left + rect.width / 2;
@@ -1017,8 +1083,9 @@
       });
 
       chipEl.addEventListener("dragleave", (e) => {
-        if (!chipEl.contains(e.relatedTarget)) {
+        if (e.relatedTarget && !chipEl.contains(e.relatedTarget)) {
           chipEl.classList.remove("cve-chip-drop-before", "cve-chip-drop-after");
+          if (state.currentDropEl === chipEl) state.currentDropEl = null;
         }
       });
 
@@ -1036,6 +1103,7 @@
         clearAllDropFeedback();
         const fromCol = d.col, fromSec = d.secIdx, fromItem = d.itemIdx, fromSkill = d.skillIdx;
         state.draggingSkill = null;
+        state.currentDropEl = null;
 
         window.CVE.moveSkillPosition(fromCol, fromSec, fromItem, fromSkill, col, secIdx, itemIdx, localSkillIdx, pos);
       });
@@ -1056,6 +1124,10 @@
 
       const startContactDrag = (e) => {
         if (document.activeElement && document.activeElement.isContentEditable && window.getSelection && window.getSelection().toString().length > 0) {
+          e.preventDefault();
+          return;
+        }
+        if (e.target.closest && e.target.closest('.cve-contact-del-btn')) {
           return;
         }
         e.stopPropagation();
@@ -1077,6 +1149,7 @@
         document.body.classList.remove("cve-dragging-contact-mode");
         clearAllDropFeedback();
         state.draggingContact = null;
+        state.currentDropEl = null;
       });
 
       conEl.addEventListener("dragover", (e) => {
@@ -1086,6 +1159,11 @@
         e.preventDefault();
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+        if (state.currentDropEl && state.currentDropEl !== conEl) {
+          state.currentDropEl.classList.remove("cve-contact-drop-before", "cve-contact-drop-after");
+        }
+        state.currentDropEl = conEl;
 
         const rect = conEl.getBoundingClientRect();
         let pos = "before";
@@ -1105,8 +1183,9 @@
       });
 
       conEl.addEventListener("dragleave", (e) => {
-        if (!conEl.contains(e.relatedTarget)) {
+        if (e.relatedTarget && !conEl.contains(e.relatedTarget)) {
           conEl.classList.remove("cve-contact-drop-before", "cve-contact-drop-after");
+          if (state.currentDropEl === conEl) state.currentDropEl = null;
         }
       });
 
@@ -1128,6 +1207,7 @@
         const fromKey = d.key;
         clearAllDropFeedback();
         state.draggingContact = null;
+        state.currentDropEl = null;
 
         window.CVE.moveContactPosition(fromKey, contactKey, pos);
       });
@@ -2233,22 +2313,27 @@
       const colList = cv[col] || [];
       const basePath = `${col}.${colIdx}`;
 
+      const isCollapsed = state.collapsedSections && state.collapsedSections[basePath];
+      const itemCount = (sec.items || []).length;
+
       html += `
-        <div class="cve-section-card" data-col="${col}" data-idx="${colIdx}">
-          <div class="cve-section-header">
+        <div class="cve-section-card ${isCollapsed ? "collapsed" : ""}" data-col="${col}" data-idx="${colIdx}">
+          <div class="cve-section-header" onclick="window.CVE.toggleSectionCard('${basePath}')">
             <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;">
-              <span class="cve-drag-handle" title="Drag to reorder section" draggable="true">⠿</span>
+              <span class="cve-accordion-arrow">${isCollapsed ? "►" : "▼"}</span>
+              <span class="cve-drag-handle" title="Drag to reorder section" draggable="true" onclick="event.stopPropagation()">⠿</span>
               <span class="cve-section-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                 <span style="font-size:10px;background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px;text-transform:uppercase;">${col}</span>
                 ${esc(sec.title || sec.type)}
               </span>
+              <span style="font-size:10.5px;color:var(--cve-text-muted);background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:9999px;">${itemCount}</span>
             </div>
-            <div class="cve-section-actions">
+            <div class="cve-section-actions" onclick="event.stopPropagation()">
               <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.moveSectionColumn('${col}', ${colIdx})" title="Move to other column">⇄</button>
               ${colIdx > 0 ? `<button type="button" class="cve-icon-btn-sm" onclick="window.CVE.reorderSection('${col}', ${colIdx}, -1)" title="Move Up">▲</button>` : ""}
               ${colIdx < (colList.length - 1) ? `<button type="button" class="cve-icon-btn-sm" onclick="window.CVE.reorderSection('${col}', ${colIdx}, 1)" title="Move Down">▼</button>` : ""}
               <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.addEntry('${basePath}')" title="Add Item">＋</button>
-              <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.removeSection('${basePath}')" title="Delete Section">✕</button>
+              <button type="button" class="cve-icon-btn-sm danger" onclick="window.CVE.removeSection('${basePath}')" title="Delete Section">🗑️</button>
             </div>
           </div>
           <div class="cve-section-body">
@@ -3504,13 +3589,94 @@
       applyDocumentTypography(cv);
     },
 
+    undo() {
+      History.undo();
+    },
+
+    redo() {
+      History.redo();
+    },
+
+    toggleSidebar() {
+      const isCollapsed = document.body.classList.toggle("cve-sidebar-collapsed");
+      const btn = $("#cveSidebarToggleBtn");
+      if (btn) {
+        btn.classList.toggle("active", isCollapsed);
+        btn.title = isCollapsed ? "Open Sidebar (Ctrl+B)" : "Collapse Sidebar (Ctrl+B)";
+      }
+      setTimeout(() => {
+        setFitZoom();
+        updatePageMeter();
+      }, 260);
+    },
+
+    toggleSectionCard(basePath) {
+      state.collapsedSections = state.collapsedSections || {};
+      state.collapsedSections[basePath] = !state.collapsedSections[basePath];
+      renderSidebar();
+    },
+
+    removeBulletFromItem(itemPath, bulletIdx) {
+      History.push(getCurrentCV());
+      const cv = getCurrentCV();
+      const cleanPath = itemPath.replace(/^[^:]+:variants\.[^.]+\./, "");
+      const item = getByPath(cv, cleanPath);
+      if (item && Array.isArray(item.bullets)) {
+        item.bullets.splice(bulletIdx, 1);
+        item.bullets = item.bullets.filter(b => typeof b === "string" && b.trim());
+        saveCurrentCV(cv, false);
+        renderA4Sheet();
+        renderSidebar();
+      }
+    },
+
+    removeSkillFromItem(itemPath, skillIdx) {
+      History.push(getCurrentCV());
+      const cv = getCurrentCV();
+      const cleanPath = itemPath.replace(/^[^:]+:variants\.[^.]+\./, "");
+      const item = getByPath(cv, cleanPath);
+      if (item && Array.isArray(item.items)) {
+        item.items.splice(skillIdx, 1);
+        item.items = item.items.filter(s => typeof s === "string" && s.trim());
+        saveCurrentCV(cv, false);
+        renderA4Sheet();
+        renderSidebar();
+      }
+    },
+
+    removeContactItem(key) {
+      History.push(getCurrentCV());
+      const cv = getCurrentCV();
+      if (!cv.person) cv.person = {};
+      const P = cv.person;
+      if (key === "email") P.email = "";
+      else if (key === "phone") P.phone = "";
+      else if (key === "location") P.location = "";
+      else if (key.startsWith("link:")) {
+        const linkIdx = parseInt(key.replace("link:", ""), 10);
+        if (Array.isArray(P.links) && !isNaN(linkIdx)) {
+          P.links.splice(linkIdx, 1);
+        }
+      }
+      if (Array.isArray(P.contact_order)) {
+        P.contact_order = P.contact_order.filter(k => k !== key);
+      }
+      saveCurrentCV(cv, false);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
     moveBulletPosition(fromCol, fromSecIdx, fromItemIdx, fromBulIdx, toCol, toSecIdx, toItemIdx, toBulIdx, pos = "before") {
+      History.push(getCurrentCV());
       const cv = getCurrentCV();
       const fromSec = cv[fromCol] && cv[fromCol][fromSecIdx];
       const fromItem = fromSec && fromSec.items && fromSec.items[fromItemIdx];
       const toSec = cv[toCol] && cv[toCol][toSecIdx];
       const toItem = toSec && toSec.items && toSec.items[toItemIdx];
       if (!fromItem || !toItem || !Array.isArray(fromItem.bullets) || !Array.isArray(toItem.bullets)) return;
+
+      fromItem.bullets = fromItem.bullets.filter(b => typeof b === "string" && b.trim());
+      toItem.bullets = toItem.bullets.filter(b => typeof b === "string" && b.trim());
 
       if (fromBulIdx < 0 || fromBulIdx >= fromItem.bullets.length) return;
 
@@ -3530,12 +3696,15 @@
       if (ins > toItem.bullets.length) ins = toItem.bullets.length;
 
       toItem.bullets.splice(ins, 0, bul);
-      saveCurrentCV(cv);
+      toItem.bullets = toItem.bullets.filter(b => typeof b === "string" && b.trim());
+
+      saveCurrentCV(cv, false);
       renderA4Sheet();
       renderSidebar();
     },
 
     moveSkillPosition(fromCol, fromSecIdx, fromItemIdx, fromSkillIdx, toCol, toSecIdx, toItemIdx, toSkillIdx, pos = "before") {
+      History.push(getCurrentCV());
       const cv = getCurrentCV();
       const fromSec = cv[fromCol] && cv[fromCol][fromSecIdx];
       const fromItem = fromSec && fromSec.items && fromSec.items[fromItemIdx];
@@ -3543,9 +3712,11 @@
       const toItem = toSec && toSec.items && toSec.items[toItemIdx];
       if (!fromItem || !toItem || !Array.isArray(fromItem.items) || !Array.isArray(toItem.items)) return;
 
+      fromItem.items = fromItem.items.filter(s => typeof s === "string" && s.trim());
+      toItem.items = toItem.items.filter(s => typeof s === "string" && s.trim());
+
       if (fromSkillIdx < 0 || fromSkillIdx >= fromItem.items.length) return;
 
-      // Smart neighbor swap if dragging onto adjacent neighbor
       if (fromItem === toItem) {
         if (fromSkillIdx === toSkillIdx - 1 && pos === "before") pos = "after";
         if (fromSkillIdx === toSkillIdx + 1 && pos === "after") pos = "before";
@@ -3561,12 +3732,15 @@
       if (ins > toItem.items.length) ins = toItem.items.length;
 
       toItem.items.splice(ins, 0, skill);
-      saveCurrentCV(cv);
+      toItem.items = toItem.items.filter(s => typeof s === "string" && s.trim());
+
+      saveCurrentCV(cv, false);
       renderA4Sheet();
       renderSidebar();
     },
 
     moveContactPosition(fromKey, toKey, pos = "before") {
+      History.push(getCurrentCV());
       const cv = getCurrentCV();
       if (!cv.person) cv.person = {};
       const P = cv.person;
@@ -3576,7 +3750,6 @@
         ? [...P.contact_order]
         : [...defaultKeys];
 
-      // Ensure all current keys are present
       defaultKeys.forEach(k => {
         if (!order.includes(k)) order.push(k);
       });
@@ -3585,7 +3758,6 @@
       const toIdx = order.indexOf(toKey);
       if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
 
-      // Smart neighbor swap if dragging onto adjacent neighbor
       if (fromIdx === toIdx - 1 && pos === "before") pos = "after";
       if (fromIdx === toIdx + 1 && pos === "after") pos = "before";
 
@@ -3598,7 +3770,7 @@
       order.splice(ins, 0, item);
       P.contact_order = order;
 
-      saveCurrentCV(cv);
+      saveCurrentCV(cv, false);
       renderA4Sheet();
       renderSidebar();
     },
@@ -4492,6 +4664,25 @@
       if (m) m.classList.remove("open");
     }
   };
+
+  // Global Hotkeys (Ctrl+Z, Ctrl+Y, Ctrl+B)
+  window.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+      if (e.shiftKey) {
+        e.preventDefault();
+        window.CVE.redo();
+      } else {
+        e.preventDefault();
+        window.CVE.undo();
+      }
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+      e.preventDefault();
+      window.CVE.redo();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+      e.preventDefault();
+      window.CVE.toggleSidebar();
+    }
+  });
 
   window.addEventListener("DOMContentLoaded", () => {
     window.CVE.init();

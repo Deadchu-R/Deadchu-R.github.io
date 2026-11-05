@@ -87,6 +87,21 @@
     <div class="cve-topbar-actions">
       <div id="presenceCluster" class="cve-presence-cluster"></div>
 
+      <!-- Sidebar Toggle -->
+      <button type="button" id="cveSidebarToggleBtn" class="cve-btn" onclick="window.CVE.toggleSidebar()" title="Toggle Sidebar (Ctrl+B)">
+        <span>◨ Sidebar</span>
+      </button>
+
+      <!-- History Undo / Redo -->
+      <div class="cve-history-group" style="display:inline-flex;gap:3px;">
+        <button type="button" id="cveUndoBtn" class="cve-btn icon-only" onclick="window.CVE.undo()" title="Undo (Ctrl+Z)" disabled>
+          <span>↶ Undo</span>
+        </button>
+        <button type="button" id="cveRedoBtn" class="cve-btn icon-only" onclick="window.CVE.redo()" title="Redo (Ctrl+Y)" disabled>
+          <span>↷ Redo</span>
+        </button>
+      </div>
+
       <button type="button" class="cve-btn layout-btn" onclick="window.CVE.openLayoutModal()" title="Arrange columns and layouts">
         <span>📐 Layout & Columns</span>
       </button>

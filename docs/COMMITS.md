@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 170 commits.
+Total: 171 commits.
 
 ## 2026-10-31
 
@@ -864,7 +864,12 @@ CVEditor: fix initialization crash by restoring photo upload, page meter and par
 
 files: CHANGELOG.md, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, docs/COMMITS.md, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
 
-### 8ef3a6a · 2026-11-05 · Roee Tal
+### ec47fe8 · 2026-11-05 · Roee Tal
 CVEditor: fix bullet swap & contact reordering, add animated dashed drop outlines
 
-files: CHANGELOG.md, assets/cv.js, assets/cveditor.css, assets/cveditor.js
+files: CHANGELOG.md, assets/cv.js, assets/cveditor.css, assets/cveditor.js, docs/COMMITS.md
+
+### 4378143 · 2026-11-05 · Roee Tal
+CVEditor: undo/redo history, sidebar accordion & toggle, 1-click delete buttons, and flicker-free bullet dragging
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cv.js, assets/cveditor.css, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, docs/COMMITS.md, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
