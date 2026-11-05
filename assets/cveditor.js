@@ -165,7 +165,8 @@
     activeCvId: "my-cv",     // ID of CV currently shown/edited
     activeOwnerId: "guest",  // Owner of the active CV
     zoom: 1.0,
-    activeTab: "content",    // "content" | "design" | "vault"
+    activeTab: "content",
+    sectionHeights: {},    // "content" | "design" | "vault"
     isCollabHost: false,
     collabRoomId: null,
     peer: null,
@@ -448,6 +449,7 @@
       state.currentUser = publicUser(u);
       localStorage.setItem("cve_cur_user", JSON.stringify(state.currentUser));
       state.activeOwnerId = u.id;
+      updateMainWebsiteCvButton();
       if (!state.vault[u.id] || Object.keys(state.vault[u.id]).length === 0) {
         state.vault[u.id] = {
           "unity-ats": JSON.parse(JSON.stringify(ROEE_DEFAULT_CV)),
@@ -2218,6 +2220,7 @@
 
   // --- Sidebar Forms & Tabs ---
   function renderSidebar() {
+    updateMainWebsiteCvButton();
     const tab = state.activeTab;
     const body = $("#sidebarContent");
     if (!body) return;
@@ -2239,6 +2242,8 @@
 
     const isPersonCollapsed = state.collapsedSections && state.collapsedSections["person"];
     const personSubtitle = [P.name, P.title].filter(Boolean).join(" · ");
+    const personHeight = state.sectionHeights && state.sectionHeights["person"];
+    const personStyle = personHeight ? `style="height:${personHeight}px;max-height:${personHeight}px;"` : "";
 
     let html = `
       <div style="display:flex;gap:8px;margin-bottom:4px;">
@@ -2259,7 +2264,7 @@
             ${isPersonCollapsed && personSubtitle ? `<span style="font-size:11px;color:var(--cve-text-muted);font-weight:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;">(${esc(personSubtitle)})</span>` : ""}
           </div>
         </div>
-        <div class="cve-section-body">
+        <div class="cve-section-body" ${personStyle}>
           <div class="cve-sidebar-photo-row">
             <img src="${cv.photo || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24' fill='%2364748b'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>"}" class="cve-sidebar-avatar" alt="Photo">
             <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
@@ -2320,6 +2325,8 @@
       const basePath = `${col}.${colIdx}`;
 
       const isCollapsed = state.collapsedSections && state.collapsedSections[basePath];
+      const secHeight = state.sectionHeights && state.sectionHeights[basePath];
+      const secStyle = secHeight ? `style="height:${secHeight}px;max-height:${secHeight}px;"` : "";
       const items = sec.items || [];
       const itemCount = items.length;
 
@@ -2370,7 +2377,7 @@
               <button type="button" class="cve-icon-btn-sm danger" onclick="window.CVE.removeSection('${basePath}')" title="Delete Section">🗑️</button>
             </div>
           </div>
-          <div class="cve-section-body">
+          <div class="cve-section-body" ${secStyle}>
             <div class="cve-form-group">
               <label class="cve-label">Section Title</label>
               <input type="text" class="cve-input" data-bind="${basePath}.title" value="${esc(sec.title || "")}">
@@ -2528,34 +2535,35 @@
   function attachSectionResizers(container) {
     const resizers = container.querySelectorAll(".cve-section-resizer");
     resizers.forEach(resizer => {
+      const card = resizer.closest(".cve-section-card");
+      if (!card) return;
+      const bodyEl = card.querySelector(".cve-section-body");
+      if (!bodyEl) return;
+      const basePath = resizer.getAttribute("data-resizer-for");
+
       function startResize(e) {
         e.preventDefault();
         e.stopPropagation();
-
-        const card = resizer.closest(".cve-section-card");
-        if (!card) return;
-        const bodyEl = card.querySelector(".cve-section-body");
-        if (!bodyEl) return;
 
         const startY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
         const startH = bodyEl.getBoundingClientRect().height || bodyEl.offsetHeight;
 
         resizer.classList.add("is-resizing");
-        card.setAttribute("draggable", "false");
         document.body.style.cursor = "ns-resize";
         document.body.style.userSelect = "none";
 
         function onPointerMove(ev) {
           const currentY = (ev.touches && ev.touches[0] ? ev.touches[0].clientY : ev.clientY);
           const deltaY = currentY - startY;
-          const newH = Math.max(60, Math.min(window.innerHeight * 0.88, Math.round(startH + deltaY)));
+          const newH = Math.max(80, Math.min(window.innerHeight * 0.88, Math.round(startH + deltaY)));
           bodyEl.style.setProperty("height", newH + "px", "important");
           bodyEl.style.setProperty("max-height", newH + "px", "important");
+          if (!state.sectionHeights) state.sectionHeights = {};
+          if (basePath) state.sectionHeights[basePath] = newH;
         }
 
         function onPointerUp() {
           resizer.classList.remove("is-resizing");
-          card.setAttribute("draggable", "true");
           document.body.style.removeProperty("cursor");
           document.body.style.removeProperty("user-select");
           window.removeEventListener("mousemove", onPointerMove);
@@ -2585,28 +2593,8 @@
         header.classList.add("cve-draggable-header");
       }
 
-      // Allow dragging the whole card directly
-      card.setAttribute("draggable", "true");
-
-      card.addEventListener("dragstart", (e) => {
-        // Do not drag if user is typing in an input, textarea or clicking a button/link
-        if (e.target.closest('input, textarea, button, select, a, .cve-section-resizer') && !e.target.closest('.cve-drag-handle')) {
-          e.preventDefault();
-          return;
-        }
-        card.classList.add("cve-is-dragging");
-        state.draggingSection = { col, idx };
-        if (e.dataTransfer) {
-          e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx }));
-        }
-      });
-
-      card.addEventListener("dragend", () => {
-        card.classList.remove("cve-is-dragging");
-        clearAllDropFeedback();
-        state.draggingSection = null;
-      });
+      // Card itself is not draggable to avoid intercepting resizer and text inputs
+      card.removeAttribute("draggable");
 
       const handle = card.querySelector(".cve-drag-handle");
       if (handle) {
@@ -3029,6 +3017,13 @@
               </div>
             `).join("")}
           </div>
+          ${isRoeeUser() ? `
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);">
+              <button type="button" class="cve-btn cve-publish-main-btn" style="width:100%;justify-content:center;padding:7px 12px;font-size:12.5px;" onclick="window.CVE.addToMainWebsiteCV()">
+                <span>🌐 Add / Publish to main website CV (roeetal.com/cv)</span>
+              </button>
+            </div>
+          ` : ""}
         </div>
       </div>
     `;
@@ -3626,6 +3621,9 @@
 
   // --- Public API for UI Event Handlers ---
   window.CVE = {
+    isRoeeUser,
+    updateMainWebsiteCvButton,
+    addToMainWebsiteCV,
     getCurrentCV() {
       return getCurrentCV();
     },

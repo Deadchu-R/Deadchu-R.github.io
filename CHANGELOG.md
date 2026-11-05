@@ -9,6 +9,11 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **Résumé & CVEditor:** strict separation between public CV and CVEditor, clean visitor view, persistent section stretch, and owner publish button:
+  - Fixed public CV (/cv / cv.html): guarded all bullet deletion buttons (✕), grips (⠿), inline deletes, and contact clears with env.edit, completely removing unwanted editor controls from the public website and static builds.
+  - Persistent vertical stretch on CVEditor content sections: added state.sectionHeights so stretched section heights persist across typing, reordering, and re-rendering; removed whole-card draggable property to prevent drag-and-drop from blocking resize mouse interactions.
+  - Added exclusive "Add to main website CV" bridge: added a dedicated button (🌐 Add to main website CV) in the topbar and Vault tab that is only visible when Roee is logged into his account, allowing Roee to sync and publish his active CV to roeetal.com/cv while keeping all other visitor/friend resumes completely isolated.
+  - Bumped asset version strings to ?v=20261105_10.
 - **CVEditor:** prominent resize drag-bar with arrows on content sidebar sections:
   - Redesigned stretch handle (`.cve-section-resizer`) with prominent height (22px), high-contrast surface, pill handle, and bidirectional arrows (`▲` / `▼`) matching the user cursor request.
   - Added full drag exclusion (`e.target.closest('.cve-section-resizer')`) to prevent native card reordering from capturing the resize mousedown.
