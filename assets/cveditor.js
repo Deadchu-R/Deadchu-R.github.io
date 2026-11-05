@@ -2301,6 +2301,9 @@
             <textarea rows="3" class="cve-textarea" data-bind="person.summary" placeholder="2-3 sentences about your expertise, achievements and passions...">${esc(P.summary || "")}</textarea>
           </div>
         </div>
+        <div class="cve-section-resizer" title="גרור למעלה/למטה למתיחה ושינוי גודל החלון (Drag to resize height)">
+          <div class="cve-section-resizer-line"></div>
+        </div>
       </div>
     `;
 
@@ -2501,12 +2504,58 @@
           </div>
         `;
       });
-      html += `</div></div>`;
+      html += `</div>
+        <div class="cve-section-resizer" title="גרור למעלה/למטה למתיחה ושינוי גודל החלון (Drag to resize height)">
+          <div class="cve-section-resizer-line"></div>
+        </div>
+      </div>`;
     });
 
     body.innerHTML = html;
     attachSidebarInputs(body);
     attachSidebarDragAndDrop(body);
+    attachSectionResizers(body);
+  }
+
+  function attachSectionResizers(container) {
+    const resizers = container.querySelectorAll(".cve-section-resizer");
+    resizers.forEach(resizer => {
+      resizer.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const card = resizer.closest(".cve-section-card");
+        if (!card) return;
+        const bodyEl = card.querySelector(".cve-section-body");
+        if (!bodyEl) return;
+
+        const startY = e.clientY;
+        const startH = bodyEl.offsetHeight;
+
+        resizer.classList.add("is-resizing");
+        document.body.style.cursor = "ns-resize";
+        document.body.style.userSelect = "none";
+
+        function onMouseMove(ev) {
+          ev.preventDefault();
+          const deltaY = ev.clientY - startY;
+          const newH = Math.max(70, Math.min(window.innerHeight * 0.85, startH + deltaY));
+          bodyEl.style.height = newH + "px";
+          bodyEl.style.maxHeight = newH + "px";
+        }
+
+        function onMouseUp() {
+          resizer.classList.remove("is-resizing");
+          document.body.style.removeProperty("cursor");
+          document.body.style.removeProperty("user-select");
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onMouseUp);
+        }
+
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      });
+    });
   }
 
   function attachSidebarDragAndDrop(container) {

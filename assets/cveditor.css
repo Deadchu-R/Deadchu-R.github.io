@@ -504,13 +504,13 @@ body.cve-body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 120px;
-  max-height: 75vh;
-  resize: vertical;
+  min-height: 80px;
+  max-height: 80vh;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   scrollbar-width: thin;
   scrollbar-color: rgba(99, 102, 241, 0.5) transparent;
+  transition: height 0.05s ease;
 }
 
 .cve-section-body::-webkit-scrollbar {
@@ -3616,4 +3616,46 @@ body.cve-sidebar-collapsed .cve-canvas-wrap {
   background: var(--cve-accent, #1f6feb);
   color: #fff;
   border-color: var(--cve-accent, #1f6feb);
+}
+
+/* Dedicated interactive vertical stretch / resize handle on section cards */
+.cve-section-resizer {
+  height: 14px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize !important;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  user-select: none;
+  touch-action: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.cve-section-resizer:hover,
+.cve-section-resizer.is-resizing {
+  background: rgba(99, 102, 241, 0.2) !important;
+  border-top-color: rgba(99, 102, 241, 0.6) !important;
+}
+
+.cve-section-resizer-line {
+  width: 36px;
+  height: 3px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.25);
+  transition: width 0.15s ease, background 0.15s ease;
+  pointer-events: none;
+}
+
+.cve-section-resizer:hover .cve-section-resizer-line,
+.cve-section-resizer.is-resizing .cve-section-resizer-line {
+  width: 56px;
+  background: #6366f1 !important;
+}
+
+.cve-section-card.collapsed .cve-section-resizer {
+  display: none !important;
 }

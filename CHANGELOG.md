@@ -9,6 +9,10 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** interactive vertical resize handle on sidebar cards:
+  - Added dedicated bottom stretch handle (`.cve-section-resizer`) with dual-direction resize cursor (`ns-resize`), visual drag pill, and smooth mouse-tracking height adjustment on every section card (including Personal Details).
+  - Cleanly hidden when a section card is collapsed to maintain a compact accordion view.
+  - Bumped asset cache buster to `?v=20261105_07`.
 - **CVEditor:** resizable section panels, zero-gap clean collapsed cards, robust CV rendering safeguards, and personal details scroll:
   - Resizable section cards: added vertical drag-to-resize handle (`resize: vertical`) with `min-height: 120px` and `max-height: 75vh`, enabling users to freely adjust the height of any section window.
   - Clean collapsed state: completely eliminated empty space and rogue outline artifacts when sections are collapsed (`display: none !important; height: 0; padding: 0`), showing only the compact header with icon, title, item count badge and snippet.

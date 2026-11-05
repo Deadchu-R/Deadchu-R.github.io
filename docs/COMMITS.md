@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 174 commits.
+Total: 175 commits.
 
 ## 2026-10-31
 
@@ -884,7 +884,12 @@ CVEditor: per-section internal scrolling, rich accordion preview, accurate arrow
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.css, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, docs/COMMITS.md, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
 
-### 4acd6bf · 2026-11-05 · Roee Tal
+### cdc8915 · 2026-11-05 · Roee Tal
 CVEditor: resizable section panels, zero-gap collapsed cards, rendering safeguards, and personal details scrolling
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js, docs/COMMITS.md
+
+### f23711f · 2026-11-05 · Roee Tal
+CVEditor: interactive vertical stretch handle with ns-resize cursor for sidebar section cards
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
