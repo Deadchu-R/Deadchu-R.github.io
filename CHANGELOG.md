@@ -9,6 +9,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** fix initialization crash by restoring missing photo upload, page meter, and CV parser helper functions.
 - **CVEditor:** micro-level drag-and-drop, full typography & sizing controls, and complete ATS engine:
   - Micro-level drag-and-drop: reorder individual bullet points in experience, projects, and education courses (e.g. Tiltan courses); reorder skill chips within/between groups; reorder personal contact items (email, phone, location, links) with glowing cyan drop indicators.
   - Skill chip hover fixed: prominent royal azure background with high-contrast white text and glowing border, eliminating washed-out white hover state.

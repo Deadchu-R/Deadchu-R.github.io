@@ -1625,6 +1625,424 @@
   }
 
 
+  function updatePageMeter() {
+    const doc = $("#cvSheet .cvdoc");
+    const track = $("#pageMeterTrack");
+    const fill = $("#pageMeterFill");
+    const text = $("#pageMeterText");
+    const btn = $("#autofitBtn");
+    if (!doc || !fill || !text) return;
+
+    const z = state.zoom || 1;
+    const h = doc.offsetHeight || (doc.getBoundingClientRect().height / z);
+    const a4H = 1122.5;
+
+    const pct = Math.min(250, Math.round((h / a4H) * 100));
+
+    let breakLine = doc.querySelector(".cve-page-break-line");
+
+    if (h <= a4H + 6) {
+      fill.style.width = Math.min(100, pct) + "%";
+      fill.classList.remove("warn");
+      text.className = "cve-page-meter-text";
+      text.textContent = `≡ƒôä 1 Page (${pct}% full)`;
+      if (btn) btn.style.display = "none";
+      if (breakLine) breakLine.remove();
+    } else {
+      fill.style.width = "100%";
+      fill.classList.add("warn");
+      text.className = "cve-page-meter-text warn";
+      text.textContent = `ΓÜá∩╕Å 2 Pages (${pct}% - Overfull)`;
+      if (btn) btn.style.display = "inline-flex";
+
+      if (!breakLine) {
+        breakLine = document.createElement("div");
+        breakLine.className = "cve-page-break-line";
+        breakLine.innerHTML = `<span class="cve-page-break-label">Page 1 End (297mm)</span>`;
+        doc.appendChild(breakLine);
+      }
+    }
+  }
+
+
+  // --- Photo Upload & Processing Service ---
+  function initPhotoFileInput() {
+    let fi = $("#cvePhotoFileInput");
+    if (!fi) {
+      fi = document.createElement("input");
+      fi.type = "file";
+      fi.id = "cvePhotoFileInput";
+      fi.accept = "image/png,image/jpeg,image/webp,image/gif";
+      fi.style.display = "none";
+      document.body.appendChild(fi);
+    }
+    fi.onchange = (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      processUploadedImage(file, (dataUrl) => {
+        if (state.photoPickerTarget === "wizard") {
+          state.wizardDraft.photo = dataUrl;
+          state.wizardDraft.show_photo = true;
+          updateWizardPhotoUI();
+        } else {
+          const cv = getCurrentCV();
+          cv.photo = dataUrl;
+          cv.show_photo = true;
+          saveCurrentCV(cv);
+          renderA4Sheet();
+          renderSidebar();
+        }
+      });
+      fi.value = "";
+    };
+  }
+
+  function processUploadedImage(file, callback) {
+    if (!file || !file.type.startsWith("image/")) {
+      alert("╫É╫á╫É ╫æ╫ù╫¿ ╫º╫ò╫æ╫Ñ ╫¬╫₧╫ò╫á╫ö ╫¬╫º╫Ö╫ƒ (PNG, JPG, WebP).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 500;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
+        callback(dataUrl);
+      };
+      img.onerror = () => {
+        alert("╫⌐╫Æ╫Ö╫É╫ö ╫æ╫ÿ╫ó╫Ö╫á╫¬ ╫º╫ò╫æ╫Ñ ╫ö╫¬╫₧╫ò╫á╫ö.");
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function attachPhotoInteractions(stage) {
+    const photoEls = stage.querySelectorAll(".cv-photo, .cv-photo-add, [data-m$='.photo']");
+    photoEls.forEach(el => {
+      el.style.cursor = "pointer";
+      el.title = "≡ƒô╖ ╫£╫ù╫Ñ ╫¢╫É╫ƒ ╫£╫ö╫ó╫£╫É╫¬ ╫¬╫₧╫ò╫á╫¬ ╫ñ╫¿╫ò╫ñ╫Ö╫£ / Change Photo";
+      el.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.CVE.openPhotoPicker("activeCv");
+      };
+    });
+  }
+
+  function updateWizardPhotoUI() {
+    const avatar = $("#wizPhotoAvatar");
+    const removeBtn = $("#wizRemovePhotoBtn");
+    const cb = $("#wizShowPhotoCb");
+    if (avatar) {
+      avatar.src = state.wizardDraft.photo || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='%2364748b'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>";
+    }
+    if (removeBtn) {
+      removeBtn.style.display = state.wizardDraft.photo ? "inline-flex" : "none";
+    }
+    if (cb) {
+      cb.checked = !!state.wizardDraft.show_photo;
+    }
+  }
+
+  // --- Intelligent Old CV Extraction & Parser ---
+  async function extractPdfText(file) {
+    if (!window.pdfjsLib) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("╫£╫É ╫á╫Ö╫¬╫ƒ ╫£╫ÿ╫ó╫ò╫ƒ ╫É╫¬ ╫₧╫ñ╫ó╫á╫ù ╫ö-PDF ╫₧╫ö╫¿╫⌐╫¬. ╫á╫í╫ö ╫£╫ö╫ô╫æ╫Ö╫º ╫É╫¬ ╫ö╫ÿ╫º╫í╫ÿ."));
+        document.head.appendChild(s);
+      });
+    }
+    if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      let lastY = null;
+      for (const item of content.items) {
+        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+          text += "\n";
+        } else if (text && !text.endsWith(" ")) {
+          text += " ";
+        }
+        text += item.str;
+        lastY = item.transform[5];
+      }
+      text += "\n\n";
+    }
+    return text;
+  }
+
+  function parseCvText(rawText) {
+    if (!rawText || typeof rawText !== "string") return null;
+
+    const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return null;
+
+    // Detect language / direction
+    const hebrewChars = (rawText.match(/[\u0590-\u05FF]/g) || []).length;
+    const isHebrew = hebrewChars > 25 || (hebrewChars / rawText.length > 0.1);
+    const dir = isHebrew ? "rtl" : "ltr";
+    const lang = isHebrew ? "he" : "en";
+
+    const person = {
+      name: "",
+      title: "",
+      summary: "",
+      email: "",
+      phone: "",
+      location: "",
+      links: []
+    };
+
+    // 1. Email extraction
+    const emailMatch = rawText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    if (emailMatch) person.email = emailMatch[0];
+
+    // 2. Phone extraction
+    const phoneMatch = rawText.match(/(?:(?:\+972|00972)[\s-]?)?(?:0\d{1,2}|\d{2,3})[\s-]?\d{3}[\s-]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/);
+    if (phoneMatch) person.phone = phoneMatch[0];
+
+    // 3. Links extraction
+    const urlMatches = rawText.match(/(?:https?:\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{2,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g) || [];
+    urlMatches.forEach(u => {
+      if (u.includes("@")) return;
+      const fullUrl = u.startsWith("http") ? u : "https://" + u;
+      let label = "Website";
+      if (u.includes("linkedin.com")) label = "LinkedIn";
+      else if (u.includes("github.com")) label = "GitHub";
+      else if (u.includes("portfolio") || u.includes("artstation")) label = "Portfolio";
+
+      if (!person.links.some(l => l.url === fullUrl)) {
+        person.links.push({ label, url: fullUrl });
+      }
+    });
+
+    // 4. Name & Title
+    for (let i = 0; i < Math.min(4, lines.length); i++) {
+      const l = lines[i];
+      if (l.includes("@") || l.includes("http") || l.length > 50 || /^\d/.test(l)) continue;
+      if (!person.name) {
+        person.name = l.replace(/[|ΓÇóΓÇôΓÇö].*$/, "").trim();
+        continue;
+      }
+      if (!person.title && l.length < 60 && !l.toLowerCase().includes("resume") && !l.toLowerCase().includes("cv")) {
+        person.title = l;
+        break;
+      }
+    }
+    if (!person.name) person.name = isHebrew ? "╫⌐╫¥ ╫₧╫£╫É" : "Your Name";
+
+    // 5. Section segmentation
+    const SEC_PATTERNS = [
+      { key: "experience", rx: /^(?:work\s+)?experience|employment|work\s+history|career|professional\s+experience|╫á╫Ö╫í╫Ö╫ò╫ƒ\s+(?:╫¬╫ó╫í╫ò╫º╫¬╫Ö|╫₧╫º╫ª╫ò╫ó╫Ö)|╫á╫Ö╫í╫Ö╫ò╫ƒ/i },
+      { key: "education", rx: /^education|academic|studies|academic\s+background|degrees|╫ö╫⌐╫¢╫£╫ö|╫£╫Ö╫₧╫ò╫ô╫Ö╫¥|╫¬╫É╫¿╫Ö╫¥/i },
+      { key: "skills", rx: /^skills|technical\s+skills|technologies|tools|competencies|core\s+competencies|╫¢╫Ö╫⌐╫ò╫¿╫Ö╫¥|╫₧╫Ö╫ò╫₧╫á╫ò╫Ö╫ò╫¬|╫ÿ╫¢╫á╫ò╫£╫ò╫Æ╫Ö╫ò╫¬|╫¢╫£╫Ö╫¥/i },
+      { key: "summary", rx: /^summary|professional\s+summary|profile|about\s+me|objective|about|╫¬╫₧╫ª╫Ö╫¬|╫É╫ò╫ô╫ò╫¬|╫ñ╫¿╫ò╫ñ╫Ö╫£\s+╫É╫Ö╫⌐╫Ö/i },
+      { key: "projects", rx: /^projects|key\s+projects|portfolio|╫ñ╫¿╫ò╫Ö╫º╫ÿ╫Ö╫¥/i },
+      { key: "languages", rx: /^languages|╫⌐╫ñ╫ò╫¬/i }
+    ];
+
+    const sections = [];
+    let curSec = { key: "header", lines: [] };
+
+    lines.forEach(line => {
+      const cleanLine = line.replace(/[:_=-]+$/, "").trim();
+      if (cleanLine.length < 40) {
+        const match = SEC_PATTERNS.find(p => p.rx.test(cleanLine));
+        if (match) {
+          if (curSec.lines.length) sections.push(curSec);
+          curSec = { key: match.key, title: cleanLine, lines: [] };
+          return;
+        }
+      }
+      curSec.lines.push(line);
+    });
+    if (curSec.lines.length) sections.push(curSec);
+
+    // Parse Experience
+    const expSec = sections.find(s => s.key === "experience");
+    const parsedExpItems = [];
+    if (expSec) {
+      let curItem = null;
+      expSec.lines.forEach(l => {
+        const isBullet = /^[ΓÇó\-\*Γû¬ΓÇô]\s*/.test(l);
+        const hasDate = /\b(20\d\d|19\d\d)\b|\b(present|current|╫¢╫Ö╫ò╫¥|╫ö╫Ö╫ò╫¥)\b/i.test(l);
+
+        if (!isBullet && (hasDate || curItem === null || curItem.bullets.length > 0)) {
+          if (curItem) parsedExpItems.push(curItem);
+          let dates = "";
+          const dateMatch = l.match(/\b(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d\s*(?:ΓÇô|-|to|╫ó╫ô)\s*(?:(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d|Present|Current|╫¢╫Ö╫ò╫¥|╫ö╫Ö╫ò╫¥)/i);
+          if (dateMatch) {
+            dates = dateMatch[0];
+            l = l.replace(dates, "").trim();
+          }
+          const parts = l.split(/[-ΓÇô|,\sat\s]+/).filter(Boolean);
+          const role = parts[0] ? parts[0].trim() : (isHebrew ? "╫¬╫ñ╫º╫Ö╫ô" : "Job Title");
+          const org = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "╫ù╫æ╫¿╫ö" : "Company");
+
+          curItem = {
+            role,
+            org,
+            dates: dates || "2021 ΓÇô Present",
+            location: "",
+            about: "",
+            label: "",
+            bullets: []
+          };
+        } else if (curItem) {
+          const cleanBullet = l.replace(/^[ΓÇó\-\*Γû¬ΓÇô]\s*/, "").trim();
+          if (cleanBullet) curItem.bullets.push(cleanBullet);
+        }
+      });
+      if (curItem) parsedExpItems.push(curItem);
+    }
+
+    // Parse Education
+    const eduSec = sections.find(s => s.key === "education");
+    const parsedEduItems = [];
+    if (eduSec) {
+      let curItem = null;
+      eduSec.lines.forEach(l => {
+        const isBullet = /^[ΓÇó\-\*Γû¬ΓÇô]\s*/.test(l);
+        const hasDate = /\b(20\d\d|19\d\d)\b/.test(l);
+        if (!isBullet && (hasDate || curItem === null)) {
+          if (curItem) parsedEduItems.push(curItem);
+          let dates = "";
+          const dMatch = l.match(/(?:19|20)\d\d\s*(?:ΓÇô|-|to|╫ó╫ô)\s*(?:(?:19|20)\d\d|Present|╫¢╫Ö╫ò╫¥)/i) || l.match(/(?:19|20)\d\d/);
+          if (dMatch) {
+            dates = dMatch[0];
+            l = l.replace(dates, "").trim();
+          }
+          const parts = l.split(/[-ΓÇô|,]+/).filter(Boolean);
+          const degree = parts[0] ? parts[0].trim() : (isHebrew ? "╫¬╫ò╫É╫¿ / ╫¬╫ó╫ò╫ô╫ö" : "Degree / Program");
+          const school = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "╫₧╫ò╫í╫ô ╫É╫º╫ô╫₧╫Ö" : "School");
+          curItem = {
+            degree,
+            school,
+            dates: dates || "2018 ΓÇô 2021",
+            location: "",
+            about: "",
+            label: "Courses",
+            bullets: []
+          };
+        } else if (curItem) {
+          const cleanBullet = l.replace(/^[ΓÇó\-\*Γû¬ΓÇô]\s*/, "").trim();
+          if (cleanBullet) curItem.bullets.push(cleanBullet);
+        }
+      });
+      if (curItem) parsedEduItems.push(curItem);
+    }
+
+    // Parse Skills
+    const skillSec = sections.find(s => s.key === "skills");
+    const parsedSkills = [];
+    if (skillSec) {
+      skillSec.lines.forEach(l => {
+        const tokens = l.split(/[,|ΓÇó;/\n]+/).map(t => t.replace(/^[ΓÇó\-\*Γû¬ΓÇô]\s*/, "").trim()).filter(t => t.length > 1 && t.length < 35);
+        tokens.forEach(tok => {
+          if (!parsedSkills.includes(tok)) parsedSkills.push(tok);
+        });
+      });
+    }
+
+    // Parse Summary
+    const sumSec = sections.find(s => s.key === "summary");
+    if (sumSec && sumSec.lines.length) {
+      person.summary = sumSec.lines.join(" ");
+    }
+
+    const main = [];
+    const side = [];
+
+    if (parsedExpItems.length) {
+      main.push({
+        type: "experience",
+        title: isHebrew ? "╫á╫Ö╫í╫Ö╫ò╫ƒ ╫₧╫º╫ª╫ò╫ó╫Ö" : "Work Experience",
+        items: parsedExpItems
+      });
+    } else {
+      main.push(window.RTCV ? window.RTCV.newSection("experience") : {
+        type: "experience",
+        title: isHebrew ? "╫á╫Ö╫í╫Ö╫ò╫ƒ ╫₧╫º╫ª╫ò╫ó╫Ö" : "Work Experience",
+        items: [{ role: isHebrew ? "╫¬╫ñ╫º╫Ö╫ô" : "Software Engineer", org: isHebrew ? "╫ù╫æ╫¿╫ö" : "Tech Corp", dates: "2021 ΓÇô Present", bullets: [isHebrew ? "╫ñ╫Ö╫¬╫ò╫ù ╫₧╫ó╫¿╫¢╫ò╫¬ ╫£╫Ö╫æ╫ö ╫ò╫⌐╫Ö╫ñ╫ò╫¿ ╫æ╫Ö╫ª╫ò╫ó╫Ö╫¥." : "Architected high-scale features."] }]
+      });
+    }
+
+    if (parsedEduItems.length) {
+      main.push({
+        type: "education",
+        title: isHebrew ? "╫ö╫⌐╫¢╫£╫ö" : "Education",
+        items: parsedEduItems
+      });
+    } else {
+      main.push(window.RTCV ? window.RTCV.newSection("education") : {
+        type: "education",
+        title: isHebrew ? "╫ö╫⌐╫¢╫£╫ö" : "Education",
+        items: [{ degree: isHebrew ? "╫¬╫ò╫É╫¿ ╫¿╫É╫⌐╫ò╫ƒ ╫æ╫₧╫ô╫ó╫Ö ╫ö╫₧╫ù╫⌐╫æ" : "B.Sc. in Computer Science", school: isHebrew ? "╫É╫ò╫á╫Ö╫æ╫¿╫í╫Ö╫ÿ╫ö" : "University", dates: "2017 ΓÇô 2020", bullets: [] }]
+      });
+    }
+
+    if (parsedSkills.length) {
+      side.push({
+        type: "skills",
+        title: isHebrew ? "╫₧╫Ö╫ò╫₧╫á╫ò╫Ö╫ò╫¬ ╫ò╫¢╫£╫Ö╫¥" : "Skills",
+        items: [{ label: isHebrew ? "╫ÿ╫¢╫á╫ò╫£╫ò╫Æ╫Ö╫ò╫¬ ╫ó╫Ö╫º╫¿╫Ö╫ò╫¬" : "Core Skills", items: parsedSkills }]
+      });
+    } else {
+      side.push(window.RTCV ? window.RTCV.newSection("skills") : {
+        type: "skills",
+        title: isHebrew ? "╫₧╫Ö╫ò╫₧╫á╫ò╫Ö╫ò╫¬ ╫ò╫¢╫£╫Ö╫¥" : "Skills",
+        items: [{ label: "", items: ["JavaScript", "Python", "React", "Git"] }]
+      });
+    }
+
+    return {
+      label: `${person.name} - R├â┬⌐sum├â┬⌐`,
+      template: "novo",
+      accent: "#2a8a8f",
+      font: isHebrew ? "Rubik" : "Inter",
+      density: "normal",
+      show_photo: true,
+      photo: "",
+      dir,
+      lang,
+      person,
+      main,
+      side,
+      _extractedCount: {
+        experiences: parsedExpItems.length,
+        education: parsedEduItems.length,
+        skills: parsedSkills.length
+      }
+    };
+  }
+
+
   function attachInlineEditors(stage) {
     const editables = stage.querySelectorAll("[data-e]");
     editables.forEach(el => {

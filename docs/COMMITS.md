@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 168 commits.
+Total: 169 commits.
 
 ## 2026-10-31
 
@@ -854,7 +854,12 @@ CVEditor: CV backgrounds from site editor and direct section/item drag-and-drop
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.css, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
 
-### ca8685f · 2026-11-05 · Roee Tal
+### 278d8eb · 2026-11-05 · Roee Tal
 CVEditor: micro-level drag (bullets, skills, contact), typography & sizing, and complete ATS engine
 
-files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cv.js, assets/cveditor.css, assets/cveditor.js
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cv.js, assets/cveditor.css, assets/cveditor.js, docs/COMMITS.md
+
+### 5a7fc88 · 2026-11-05 · Roee Tal
+CVEditor: fix initialization crash by restoring photo upload, page meter and parser helpers
+
+files: CHANGELOG.md, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
