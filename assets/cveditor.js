@@ -3619,6 +3619,66 @@
     body.innerHTML = html;
   }
 
+
+  function isRoeeUser() {
+    return Boolean(state.currentUser && (state.currentUser.id === "roee" || state.currentUser.email === "roeetal17@gmail.com"));
+  }
+
+  function updateMainWebsiteCvButton() {
+    const btn = $("#cvePublishMainBtn");
+    if (!btn) return;
+    if (isRoeeUser()) {
+      btn.style.display = "inline-flex";
+    } else {
+      btn.style.display = "none";
+    }
+  }
+
+  async function addToMainWebsiteCV() {
+    if (!isRoeeUser()) {
+      alert("🔒 פעולה זו זמינה רק כאשר רועי מחובר לחשבון שלו.");
+      return;
+    }
+
+    const cv = getCurrentCV();
+    const confirmed = confirm(
+      "🌐 האם להוסיף ולעדכן את קורות החיים הנוכחיים כקורות החיים הראשיים באתר roeetal.com/cv?\n\nקורות חיים אלו יהיו קורות החיים הרשמיים שכל המבקרים באתר רואים."
+    );
+    if (!confirmed) return;
+
+    // Clean CV variant conforming to content/cv.json
+    const pubVariant = {
+      label: cv.label || "Roee Tal — Resume",
+      template: cv.template || "ats",
+      accent: cv.accent || "#1f5fa8",
+      font: cv.font || "Inter",
+      density: cv.density || "normal",
+      photo: cv.photo || "/assets/uploads/1000211257-f1al.jpg",
+      show_photo: Boolean(cv.show_photo),
+      dir: cv.dir || "ltr",
+      lang: cv.lang || "en",
+      public: true,
+      person: JSON.parse(JSON.stringify(cv.person || {})),
+      main: JSON.parse(JSON.stringify(cv.main || [])),
+      side: JSON.parse(JSON.stringify(cv.side || []))
+    };
+
+    localStorage.setItem("cve_main_site_published_cv", JSON.stringify(pubVariant));
+
+    // Offer instant cv.json file download as backup
+    const jsonStr = JSON.stringify({ default: "unity-ats", variants: { "unity-ats": pubVariant } }, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "cv.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    showSaveIndicator("✓ קורות החיים הראשיים עודכנו!");
+    alert("✅ קורות החיים עודכנו והוגדרו כקורות החיים הראשיים באתר roeetal.com/cv! (קובץ cv.json נשמר)");
+  }
+
   // --- Public API for UI Event Handlers ---
   window.CVE = {
     isRoeeUser,
