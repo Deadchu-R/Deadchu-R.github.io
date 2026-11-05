@@ -2345,7 +2345,22 @@
 
       (sec.items || []).forEach((item, iIdx) => {
         const itemPath = `${basePath}.items.${iIdx}`;
-        html += `<div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:8px;">`;
+        const itemTitle = item.role || item.name || item.degree || item.label || `Entry ${iIdx + 1}`;
+
+        html += `
+          <div class="cve-sidebar-entry-card" style="background:rgba(0,0,0,0.22);padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:8px;position:relative;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:2px;">
+              <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--cve-text);min-width:0;flex:1;">
+                <span style="font-size:10px;color:var(--cve-text-muted);background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;">#${iIdx + 1}</span>
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--cve-text);max-width:180px;">${esc(itemTitle)}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
+                <button type="button" class="cve-icon-btn-sm" ${iIdx === 0 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderEntry('${basePath}', ${iIdx}, -1)" title="Move Entry Up">▲</button>
+                <button type="button" class="cve-icon-btn-sm" ${iIdx >= sec.items.length - 1 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderEntry('${basePath}', ${iIdx}, 1)" title="Move Entry Down">▼</button>
+                <button type="button" class="cve-icon-btn-sm danger" onclick="window.CVE.removeEntry('${basePath}', ${iIdx})" title="Delete Entry">🗑️</button>
+              </div>
+            </div>
+        `;
 
         if (sec.type === "experience") {
           html += `
@@ -2361,9 +2376,14 @@
             <label class="cve-label">Bullet Points (Action verbs & metrics)</label>
             <div class="cve-bullet-list">
               ${(item.bullets || []).map((b, bIdx) => `
-                <div class="cve-bullet-item">
-                  <textarea rows="2" class="cve-bullet-input" data-bind="${itemPath}.bullets.${bIdx}" placeholder="Accomplished [X] by implementing [Y]...">${esc(b)}</textarea>
-                  <button type="button" class="cve-bullet-del" onclick="window.CVE.removeBullet('${itemPath}', ${bIdx})">✕</button>
+                <div class="cve-sidebar-bullet-row" style="display:flex;gap:6px;align-items:flex-start;margin-bottom:6px;">
+                  <span style="font-size:10px;font-weight:bold;color:var(--cve-text-muted);margin-top:7px;min-width:18px;">•${bIdx + 1}</span>
+                  <textarea rows="2" class="cve-bullet-input" style="flex:1;" data-bind="${itemPath}.bullets.${bIdx}" placeholder="Accomplished [X] by implementing [Y]...">${esc(b)}</textarea>
+                  <div style="display:flex;flex-direction:column;gap:2px;">
+                    <button type="button" class="cve-icon-btn-sm" style="height:20px;width:22px;padding:0;font-size:9px;" ${bIdx === 0 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderBullet('${itemPath}', ${bIdx}, -1)" title="Move Bullet Up">▲</button>
+                    <button type="button" class="cve-icon-btn-sm" style="height:20px;width:22px;padding:0;font-size:9px;" ${bIdx >= (item.bullets || []).length - 1 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderBullet('${itemPath}', ${bIdx}, 1)" title="Move Bullet Down">▼</button>
+                    <button type="button" class="cve-icon-btn-sm danger" style="height:20px;width:22px;padding:0;font-size:9px;" onclick="window.CVE.removeBullet('${itemPath}', ${bIdx})" title="Delete Bullet">✕</button>
+                  </div>
                 </div>
               `).join("")}
               <button type="button" class="cve-btn" style="margin-top:4px;" onclick="window.CVE.addBullet('${itemPath}')">＋ Add Bullet</button>
@@ -2381,9 +2401,14 @@
             </div>
             <div class="cve-bullet-list">
               ${(item.bullets || []).map((b, bIdx) => `
-                <div class="cve-bullet-item">
-                  <textarea rows="2" class="cve-bullet-input" data-bind="${itemPath}.bullets.${bIdx}">${esc(b)}</textarea>
-                  <button type="button" class="cve-bullet-del" onclick="window.CVE.removeBullet('${itemPath}', ${bIdx})">✕</button>
+                <div class="cve-sidebar-bullet-row" style="display:flex;gap:6px;align-items:flex-start;margin-bottom:6px;">
+                  <span style="font-size:10px;font-weight:bold;color:var(--cve-text-muted);margin-top:7px;min-width:18px;">•${bIdx + 1}</span>
+                  <textarea rows="2" class="cve-bullet-input" style="flex:1;" data-bind="${itemPath}.bullets.${bIdx}">${esc(b)}</textarea>
+                  <div style="display:flex;flex-direction:column;gap:2px;">
+                    <button type="button" class="cve-icon-btn-sm" style="height:20px;width:22px;padding:0;font-size:9px;" ${bIdx === 0 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderBullet('${itemPath}', ${bIdx}, -1)" title="Move Bullet Up">▲</button>
+                    <button type="button" class="cve-icon-btn-sm" style="height:20px;width:22px;padding:0;font-size:9px;" ${bIdx >= (item.bullets || []).length - 1 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderBullet('${itemPath}', ${bIdx}, 1)" title="Move Bullet Down">▼</button>
+                    <button type="button" class="cve-icon-btn-sm danger" style="height:20px;width:22px;padding:0;font-size:9px;" onclick="window.CVE.removeBullet('${itemPath}', ${bIdx})" title="Delete Bullet">✕</button>
+                  </div>
                 </div>
               `).join("")}
               <button type="button" class="cve-btn" style="margin-top:4px;" onclick="window.CVE.addBullet('${itemPath}')">＋ Add Bullet</button>
@@ -2392,7 +2417,18 @@
         } else if (sec.type === "skills" || sec.type === "tags") {
           html += `
             <input type="text" class="cve-input" data-bind="${itemPath}.label" value="${esc(item.label || "")}" placeholder="Category (e.g. Languages, Tools)">
-            <label class="cve-label">Skills (separated by comma)</label>
+            <label class="cve-label">Skills</label>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+              ${(item.items || []).map((sk, sIdx) => `
+                <span class="cve-sidebar-skill-chip" style="display:inline-flex;align-items:center;gap:4px;background:rgba(37,99,235,0.25);border:1px solid rgba(59,130,246,0.4);color:#fff;padding:2px 7px;border-radius:4px;font-size:11.5px;">
+                  <span>${esc(sk)}</span>
+                  <button type="button" style="background:none;border:none;color:var(--cve-text-muted);cursor:pointer;padding:0 2px;font-size:9px;" ${sIdx === 0 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderSkillChip('${itemPath}', ${sIdx}, -1)" title="Move Left">◀</button>
+                  <button type="button" style="background:none;border:none;color:var(--cve-text-muted);cursor:pointer;padding:0 2px;font-size:9px;" ${sIdx >= (item.items || []).length - 1 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderSkillChip('${itemPath}', ${sIdx}, 1)" title="Move Right">▶</button>
+                  <button type="button" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:0 2px;font-size:11px;font-weight:bold;" onclick="window.CVE.removeSkillChip('${itemPath}', ${sIdx})" title="Delete Skill">✕</button>
+                </span>
+              `).join("")}
+            </div>
+            <label class="cve-label" style="font-size:10.5px;color:var(--cve-text-muted);">Edit as Comma-Separated List</label>
             <input type="text" class="cve-input" value="${esc((item.items || []).join(", "))}" onchange="window.CVE.updateSkillChips('${itemPath}', this.value)" placeholder="Unity, C#, Shader Graph, Git">
           `;
         } else if (sec.type === "education") {
@@ -2405,6 +2441,25 @@
               <input type="text" class="cve-input" data-bind="${itemPath}.dates" value="${esc(item.dates || "")}" placeholder="YYYY – YYYY">
               <input type="text" class="cve-input" data-bind="${itemPath}.location" value="${esc(item.location || "")}" placeholder="Location">
             </div>
+            <div class="cve-row-2">
+              <input type="text" class="cve-input" data-bind="${itemPath}.label" value="${esc(item.label || "Courses")}" placeholder="Label (e.g. Courses, Honors)">
+              <input type="text" class="cve-input" data-bind="${itemPath}.about" value="${esc(item.about || "")}" placeholder="Additional notes...">
+            </div>
+            <label class="cve-label">Courses / Bullet Points</label>
+            <div class="cve-bullet-list">
+              ${(item.bullets || []).map((b, bIdx) => `
+                <div class="cve-sidebar-bullet-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                  <span style="font-size:10px;font-weight:bold;color:var(--cve-text-muted);min-width:18px;">•${bIdx + 1}</span>
+                  <input type="text" class="cve-input" style="flex:1;" data-bind="${itemPath}.bullets.${bIdx}" value="${esc(b)}" placeholder="Course name">
+                  <div style="display:flex;gap:2px;">
+                    <button type="button" class="cve-icon-btn-sm" ${bIdx === 0 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderBullet('${itemPath}', ${bIdx}, -1)" title="Move Course Up">▲</button>
+                    <button type="button" class="cve-icon-btn-sm" ${bIdx >= (item.bullets || []).length - 1 ? "disabled style='opacity:0.3;cursor:not-allowed;'" : ""} onclick="window.CVE.reorderBullet('${itemPath}', ${bIdx}, 1)" title="Move Course Down">▼</button>
+                    <button type="button" class="cve-icon-btn-sm danger" onclick="window.CVE.removeBullet('${itemPath}', ${bIdx})" title="Delete Course">✕</button>
+                  </div>
+                </div>
+              `).join("")}
+              <button type="button" class="cve-btn" style="margin-top:4px;" onclick="window.CVE.addBullet('${itemPath}')">＋ Add Course / Bullet</button>
+            </div>
           `;
         } else if (sec.type === "languages") {
           html += `
@@ -2416,11 +2471,9 @@
         }
 
         html += `
-            <button type="button" class="cve-btn" style="align-self:flex-start;font-size:11.5px;padding:3px 8px;margin-top:4px;" onclick="window.CVE.removeEntry('${basePath}', ${iIdx})">Remove Entry</button>
           </div>
         `;
       });
-
       html += `</div></div>`;
     });
 
@@ -3604,6 +3657,14 @@
         btn.classList.toggle("active", isCollapsed);
         btn.title = isCollapsed ? "Open Sidebar (Ctrl+B)" : "Collapse Sidebar (Ctrl+B)";
       }
+      const arrow = $("#cveSidebarArrowIcon");
+      if (arrow) {
+        arrow.textContent = isCollapsed ? "▶" : "◀";
+      }
+      const protBtn = $("#cveSidebarToggleProtruding");
+      if (protBtn) {
+        protBtn.title = isCollapsed ? "Open Sidebar (Ctrl+B)" : "Collapse Sidebar (Ctrl+B)";
+      }
       setTimeout(() => {
         setFitZoom();
         updatePageMeter();
@@ -4031,48 +4092,105 @@
     },
 
     addEntry(secPath) {
+      History.push(getCurrentCV());
       const cv = getCurrentCV();
       const sec = getByPath(cv, secPath);
       if (!sec) return;
       if (!sec.items) sec.items = [];
       const tpl = window.RTCV && window.RTCV.SECTION_TYPES[sec.type] ? window.RTCV.SECTION_TYPES[sec.type].item : {};
       sec.items.unshift(JSON.parse(JSON.stringify(tpl)));
-      saveCurrentCV(cv);
+      saveCurrentCV(cv, false);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    reorderEntry(secPath, idx, dir) {
+      History.push(getCurrentCV());
+      const cv = getCurrentCV();
+      const sec = getByPath(cv, secPath);
+      if (!sec || !Array.isArray(sec.items)) return;
+      const target = idx + dir;
+      if (target < 0 || target >= sec.items.length) return;
+      const [item] = sec.items.splice(idx, 1);
+      sec.items.splice(target, 0, item);
+      saveCurrentCV(cv, false);
       renderA4Sheet();
       renderSidebar();
     },
 
     removeEntry(secPath, idx) {
+      History.push(getCurrentCV());
       const cv = getCurrentCV();
       const sec = getByPath(cv, secPath);
       if (sec && sec.items) {
         sec.items.splice(idx, 1);
-        saveCurrentCV(cv);
+        saveCurrentCV(cv, false);
         renderA4Sheet();
         renderSidebar();
       }
     },
 
     addBullet(itemPath) {
+      History.push(getCurrentCV());
       const cv = getCurrentCV();
       const item = getByPath(cv, itemPath);
       if (!item) return;
       if (!item.bullets) item.bullets = [];
       item.bullets.push("Accomplished [X] by implementing [Y], resulting in [Z].");
-      saveCurrentCV(cv);
+      saveCurrentCV(cv, false);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    reorderBullet(itemPath, idx, dir) {
+      History.push(getCurrentCV());
+      const cv = getCurrentCV();
+      const item = getByPath(cv, itemPath);
+      if (!item || !Array.isArray(item.bullets)) return;
+      const target = idx + dir;
+      if (target < 0 || target >= item.bullets.length) return;
+      const [bul] = item.bullets.splice(idx, 1);
+      item.bullets.splice(target, 0, bul);
+      saveCurrentCV(cv, false);
       renderA4Sheet();
       renderSidebar();
     },
 
     removeBullet(itemPath, idx) {
+      History.push(getCurrentCV());
       const cv = getCurrentCV();
       const item = getByPath(cv, itemPath);
       if (item && item.bullets) {
         item.bullets.splice(idx, 1);
-        saveCurrentCV(cv);
+        saveCurrentCV(cv, false);
         renderA4Sheet();
         renderSidebar();
       }
+    },
+
+    reorderSkillChip(itemPath, idx, dir) {
+      History.push(getCurrentCV());
+      const cv = getCurrentCV();
+      const item = getByPath(cv, itemPath);
+      if (!item || !Array.isArray(item.items)) return;
+      const target = idx + dir;
+      if (target < 0 || target >= item.items.length) return;
+      const [sk] = item.items.splice(idx, 1);
+      item.items.splice(target, 0, sk);
+      saveCurrentCV(cv, false);
+      renderA4Sheet();
+      renderSidebar();
+    },
+
+    removeSkillChip(itemPath, idx) {
+      History.push(getCurrentCV());
+      const cv = getCurrentCV();
+      const item = getByPath(cv, itemPath);
+      if (!item || !Array.isArray(item.items)) return;
+      item.items.splice(idx, 1);
+      saveCurrentCV(cv, false);
+      renderA4Sheet();
+      renderSidebar();
     },
 
     updateSkillChips(itemPath, text) {

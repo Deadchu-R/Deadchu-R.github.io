@@ -142,7 +142,12 @@
   <!-- Main Studio Workspace -->
   <main class="cve-main">
     <!-- Left Inspector Sidebar -->
-    <aside class="cve-sidebar">
+    <aside class="cve-sidebar" id="cveSidebar">
+      <!-- Protruding Arrow Toggle Button attached to sidebar edge -->
+      <button type="button" id="cveSidebarToggleProtruding" class="cve-sidebar-protruding-btn" onclick="window.CVE.toggleSidebar()" title="Collapse / Expand Sidebar (Ctrl+B)">
+        <span class="cve-sidebar-arrow-icon" id="cveSidebarArrowIcon">◀</span>
+      </button>
+
       <div class="cve-sidebar-tabs">
         <button type="button" class="cve-sidebar-tab active" data-tab="content" onclick="window.CVE.setTab('content')">📝 Content</button>
         <button type="button" class="cve-sidebar-tab" data-tab="design" onclick="window.CVE.setTab('design')">🎨 Design</button>

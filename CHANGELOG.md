@@ -9,6 +9,13 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** protruding arrow sidebar toggle, sidebar full-height scrolling, and per-element reordering & deletion:
+  - Protruding arrow toggle button: sleek floating pill button on sidebar right edge (`◀` / `▶`) to easily collapse and expand the sidebar.
+  - Sidebar full-height scrolling: resolved flex container clipping bug; sidebar content now has persistent, styled vertical scrolling to reach every bullet and section.
+  - Per-entry move & delete: added entry headers with item numbers, `▲` Move Up, `▼` Move Down, and `🗑️` Delete Entry across all sections.
+  - Per-bullet move & delete in sidebar: added individual `▲` Move Up, `▼` Move Down, and `🗑️` Delete Bullet controls next to every bullet textarea.
+  - Bullet delete button on canvas: made `✕` delete button visible at rest (`opacity: 0.55`) next to every bullet point on the CV sheet for instant discovery.
+  - Education & skills sidebar enhancements: added course bullet lists in education with reorder/delete, and interactive chip controls for skills.
 - **CVEditor:** undo/redo history, sidebar accordion & toggle, 1-click delete buttons, and flicker-free bullet dragging:
   - Undo & Redo (Ctrl+Z / Ctrl+Y): full state history system with topbar Undo/Redo buttons and keyboard shortcuts, preventing lost work or accidental mistakes.
   - Bullet dragging duplication fixed: decoupled contenteditable text span from draggable grip container (`li.cv-bullet-item`), completely eliminating empty bullet duplicates when dragging or moving to top position.

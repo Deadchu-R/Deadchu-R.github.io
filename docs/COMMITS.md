@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 171 commits.
+Total: 172 commits.
 
 ## 2026-10-31
 
@@ -869,7 +869,12 @@ CVEditor: fix bullet swap & contact reordering, add animated dashed drop outline
 
 files: CHANGELOG.md, assets/cv.js, assets/cveditor.css, assets/cveditor.js, docs/COMMITS.md
 
-### 4378143 · 2026-11-05 · Roee Tal
+### e579db1 · 2026-11-05 · Roee Tal
 CVEditor: undo/redo history, sidebar accordion & toggle, 1-click delete buttons, and flicker-free bullet dragging
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, SiteStyles.html, SiteStyles/index.html, appleInspiredDesign.html, appleInspiredDesign/index.html, arcadeDesign.html, arcadeDesign/index.html, assets/cv.js, assets/cveditor.css, assets/cveditor.js, avrahamInspiredDesign.html, avrahamInspiredDesign/index.html, classicDesign.html, classicDesign/index.html, docs/COMMITS.md, hobbiesDesign.html, hobbiesDesign/index.html, plainDesign.html, plainDesign/index.html, sketchbookDesign.html, sketchbookDesign/index.html, valleyInspiredDesign.html, valleyInspiredDesign/index.html
+
+### 0c5af6e · 2026-11-05 · Roee Tal
+CVEditor: protruding arrow sidebar toggle, sidebar full-height scrolling, and per-element reordering & deletion
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
