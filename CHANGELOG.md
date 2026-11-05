@@ -9,6 +9,12 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** Windows-like section window resizing (↕ bottom edge drag, 🗖 maximize/fit, _ minimize, corner grip ◢) and prominent solid collapsed section headers:
+  - Fixed collapsed sections: collapsed cards no longer shrink into blank lines; they render as solid dark slate titlebars (min-height 42px) with bold white title (`flex-shrink: 0`), icon, item count badge, and a dedicated `Open ▾` button.
+  - Windows-style window controls: added Maximize/Fit (`🗖`) to expand sections to full height without scrolling, and Minimize (`_`) to collapse.
+  - Windows-like bottom drag and corner grip: bottom resizer bar with Windows `↕` (`ns-resize`) cursor and corner grip (`◢`, `se-resize`) allowing intuitive vertical stretching.
+  - Added `flex-shrink: 0 !important` on section cards to prevent flexbox from crushing open cards to 80px when multiple sections are open.
+  - Bumped version queries to `?v=20261105_13`.
 - **CVEditor:** resilient boot initialization, canary test button (ל'), and asset cache-buster:
   - Added resilient boot loader with document.readyState checks and inline initialization fallback ensuring the editor always boots even if DOMContentLoaded already fired or scripts load late.
   - Added requested ל' button in topbar that pops up animated "איכסה" badge and automatically disappears after 2 seconds.

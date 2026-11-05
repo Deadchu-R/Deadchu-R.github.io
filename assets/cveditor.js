@@ -2257,11 +2257,21 @@
 
       <div class="cve-section-card ${isPersonCollapsed ? "collapsed" : ""}">
         <div class="cve-section-header" onclick="window.CVE.toggleSectionCard('person')" title="Click to ${isPersonCollapsed ? "expand" : "collapse"} section">
-          <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
             <span class="cve-accordion-arrow">${isPersonCollapsed ? "►" : "▼"}</span>
-            <span style="font-size:14px;line-height:1;">👤</span>
-            <span class="cve-section-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:13px;color:#fff;">Personal Details</span>
-            ${isPersonCollapsed && personSubtitle ? `<span style="font-size:11px;color:var(--cve-text-muted);font-weight:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;">(${esc(personSubtitle)})</span>` : ""}
+            <span style="font-size:15px;line-height:1;">👤</span>
+            <span class="cve-section-title" style="font-weight:700;font-size:13.5px;color:#fff;flex-shrink:0;">Personal Details</span>
+            ${isPersonCollapsed && personSubtitle ? `<span style="font-size:11px;color:var(--cve-text-muted);font-weight:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">(${esc(personSubtitle)})</span>` : ""}
+          </div>
+          <div class="cve-section-actions" onclick="event.stopPropagation()">
+            ${!isPersonCollapsed ? `
+              <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.toggleSectionMaximize('person')" title="Maximize / Restore window (🗖)">🗖</button>
+              <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.toggleSectionCard('person')" title="Minimize section (_)">_</button>
+            ` : `
+              <button type="button" class="cve-btn cve-expand-badge-btn" onclick="window.CVE.toggleSectionCard('person')" title="Open section">
+                <span>Open ▾</span>
+              </button>
+            `}
           </div>
         </div>
         <div class="cve-section-body" ${personStyle}>
@@ -2312,6 +2322,7 @@
             <div class="cve-section-resizer-line"></div>
             <span class="cve-section-resizer-arrow">▼</span>
           </div>
+          <div class="cve-section-resizer-corner" title="גרור פינה לשינוי גובה">◢</div>
         </div>
       </div>
     `;
@@ -2362,18 +2373,26 @@
             <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;">
               <span class="cve-accordion-arrow">${isCollapsed ? "►" : "▼"}</span>
               <span class="cve-drag-handle" title="Drag to reorder section" draggable="true" onclick="event.stopPropagation()">⠿</span>
-              <span style="font-size:14px;line-height:1;">${icon}</span>
-              <span class="cve-section-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:13px;color:#fff;">
+              <span style="font-size:15px;line-height:1;">${icon}</span>
+              <span class="cve-section-title" style="font-weight:700;font-size:13.5px;color:#fff;flex-shrink:0;">
                 ${esc(sec.title || sec.type)}
               </span>
-              ${isCollapsed && previewText ? `<span style="font-size:11px;color:var(--cve-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;font-weight:normal;">(${esc(previewText)})</span>` : ""}
+              ${isCollapsed && previewText ? `<span style="font-size:11px;color:var(--cve-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;font-weight:normal;">(${esc(previewText)})</span>` : ""}
               <span style="font-size:10px;color:var(--cve-text-muted);background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:9999px;flex-shrink:0;">${itemCount} ${itemCount === 1 ? "item" : "items"}</span>
             </div>
             <div class="cve-section-actions" onclick="event.stopPropagation()">
-              <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.moveSectionColumn('${col}', ${colIdx})" title="Move to other column">⇄</button>
-              ${colIdx > 0 ? `<button type="button" class="cve-icon-btn-sm" onclick="window.CVE.reorderSection('${col}', ${colIdx}, -1)" title="Move Up">▲</button>` : ""}
-              ${colIdx < (colList.length - 1) ? `<button type="button" class="cve-icon-btn-sm" onclick="window.CVE.reorderSection('${col}', ${colIdx}, 1)" title="Move Down">▼</button>` : ""}
-              <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.addEntry('${basePath}')" title="Add Item">＋</button>
+              ${!isCollapsed ? `
+                <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.toggleSectionMaximize('${basePath}')" title="Maximize / Fit (🗖)">🗖</button>
+                <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.moveSectionColumn('${col}', ${colIdx})" title="Move to other column">⇄</button>
+                ${colIdx > 0 ? `<button type="button" class="cve-icon-btn-sm" onclick="window.CVE.reorderSection('${col}', ${colIdx}, -1)" title="Move Up">▲</button>` : ""}
+                ${colIdx < (colList.length - 1) ? `<button type="button" class="cve-icon-btn-sm" onclick="window.CVE.reorderSection('${col}', ${colIdx}, 1)" title="Move Down">▼</button>` : ""}
+                <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.addEntry('${basePath}')" title="Add Item">＋</button>
+                <button type="button" class="cve-icon-btn-sm" onclick="window.CVE.toggleSectionCard('${basePath}')" title="Minimize section (_)">_</button>
+              ` : `
+                <button type="button" class="cve-btn cve-expand-badge-btn" onclick="window.CVE.toggleSectionCard('${basePath}')" title="Open section">
+                  <span>Open ▾</span>
+                </button>
+              `}
               <button type="button" class="cve-icon-btn-sm danger" onclick="window.CVE.removeSection('${basePath}')" title="Delete Section">🗑️</button>
             </div>
           </div>
@@ -2522,6 +2541,7 @@
             <div class="cve-section-resizer-line"></div>
             <span class="cve-section-resizer-arrow">▼</span>
           </div>
+          <div class="cve-section-resizer-corner" title="גרור פינה לשינוי גובה">◢</div>
         </div>
       </div>`;
     });
@@ -3680,6 +3700,20 @@
   }
 
 
+  
+  function toggleSectionMaximize(basePath) {
+    state.sectionMaximized = state.sectionMaximized || {};
+    state.sectionMaximized[basePath] = !state.sectionMaximized[basePath];
+    if (state.sectionMaximized[basePath]) {
+      if (!state.sectionHeights) state.sectionHeights = {};
+      state.sectionHeights[basePath] = 600;
+    } else {
+      if (!state.sectionHeights) state.sectionHeights = {};
+      state.sectionHeights[basePath] = 260;
+    }
+    renderSidebar();
+  }
+
   function showIkhsa() {
     const existing = document.getElementById("cveIkhsaPopup");
     if (existing) existing.remove();
@@ -3727,6 +3761,7 @@
 
   // --- Public API for UI Event Handlers ---
   window.CVE = {
+    toggleSectionMaximize,
     showIkhsa,
     isRoeeUser,
     updateMainWebsiteCvButton,
