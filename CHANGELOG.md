@@ -9,6 +9,11 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 ## 2026-11-05
 
 ### CVEditor
+- **CVEditor:** prominent resize drag-bar with arrows on content sidebar sections:
+  - Redesigned stretch handle (`.cve-section-resizer`) with prominent height (22px), high-contrast surface, pill handle, and bidirectional arrows (`▲` / `▼`) matching the user cursor request.
+  - Added full drag exclusion (`e.target.closest('.cve-section-resizer')`) to prevent native card reordering from capturing the resize mousedown.
+  - Added touch and pointer tracking with `!important` height styling and high z-index (5) for smooth dragging.
+  - Bumped asset cache buster to `?v=20261105_08`.
 - **CVEditor:** interactive vertical resize handle on sidebar cards:
   - Added dedicated bottom stretch handle (`.cve-section-resizer`) with dual-direction resize cursor (`ns-resize`), visual drag pill, and smooth mouse-tracking height adjustment on every section card (including Personal Details).
   - Cleanly hidden when a section card is collapsed to maintain a compact accordion view.

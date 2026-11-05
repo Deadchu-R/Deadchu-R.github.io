@@ -2301,8 +2301,12 @@
             <textarea rows="3" class="cve-textarea" data-bind="person.summary" placeholder="2-3 sentences about your expertise, achievements and passions...">${esc(P.summary || "")}</textarea>
           </div>
         </div>
-        <div class="cve-section-resizer" title="גרור למעלה/למטה למתיחה ושינוי גודל החלון (Drag to resize height)">
-          <div class="cve-section-resizer-line"></div>
+        <div class="cve-section-resizer" data-resizer-for="person" title="גרור למעלה/למטה למתיחה ושינוי גודל החלון (Drag to resize height)">
+          <div class="cve-section-resizer-handle">
+            <span class="cve-section-resizer-arrow">▲</span>
+            <div class="cve-section-resizer-line"></div>
+            <span class="cve-section-resizer-arrow">▼</span>
+          </div>
         </div>
       </div>
     `;
@@ -2505,8 +2509,12 @@
         `;
       });
       html += `</div>
-        <div class="cve-section-resizer" title="גרור למעלה/למטה למתיחה ושינוי גודל החלון (Drag to resize height)">
-          <div class="cve-section-resizer-line"></div>
+        <div class="cve-section-resizer" data-resizer-for="${basePath}" title="גרור למעלה/למטה למתיחה ושינוי גודל החלון (Drag to resize height)">
+          <div class="cve-section-resizer-handle">
+            <span class="cve-section-resizer-arrow">▲</span>
+            <div class="cve-section-resizer-line"></div>
+            <span class="cve-section-resizer-arrow">▼</span>
+          </div>
         </div>
       </div>`;
     });
@@ -2520,7 +2528,7 @@
   function attachSectionResizers(container) {
     const resizers = container.querySelectorAll(".cve-section-resizer");
     resizers.forEach(resizer => {
-      resizer.addEventListener("mousedown", (e) => {
+      function startResize(e) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -2529,32 +2537,41 @@
         const bodyEl = card.querySelector(".cve-section-body");
         if (!bodyEl) return;
 
-        const startY = e.clientY;
-        const startH = bodyEl.offsetHeight;
+        const startY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
+        const startH = bodyEl.getBoundingClientRect().height || bodyEl.offsetHeight;
 
         resizer.classList.add("is-resizing");
+        card.setAttribute("draggable", "false");
         document.body.style.cursor = "ns-resize";
         document.body.style.userSelect = "none";
 
-        function onMouseMove(ev) {
-          ev.preventDefault();
-          const deltaY = ev.clientY - startY;
-          const newH = Math.max(70, Math.min(window.innerHeight * 0.85, startH + deltaY));
-          bodyEl.style.height = newH + "px";
-          bodyEl.style.maxHeight = newH + "px";
+        function onPointerMove(ev) {
+          const currentY = (ev.touches && ev.touches[0] ? ev.touches[0].clientY : ev.clientY);
+          const deltaY = currentY - startY;
+          const newH = Math.max(60, Math.min(window.innerHeight * 0.88, Math.round(startH + deltaY)));
+          bodyEl.style.setProperty("height", newH + "px", "important");
+          bodyEl.style.setProperty("max-height", newH + "px", "important");
         }
 
-        function onMouseUp() {
+        function onPointerUp() {
           resizer.classList.remove("is-resizing");
+          card.setAttribute("draggable", "true");
           document.body.style.removeProperty("cursor");
           document.body.style.removeProperty("user-select");
-          window.removeEventListener("mousemove", onMouseMove);
-          window.removeEventListener("mouseup", onMouseUp);
+          window.removeEventListener("mousemove", onPointerMove);
+          window.removeEventListener("mouseup", onPointerUp);
+          window.removeEventListener("touchmove", onPointerMove);
+          window.removeEventListener("touchend", onPointerUp);
         }
 
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
-      });
+        window.addEventListener("mousemove", onPointerMove, { passive: false });
+        window.addEventListener("mouseup", onPointerUp);
+        window.addEventListener("touchmove", onPointerMove, { passive: false });
+        window.addEventListener("touchend", onPointerUp);
+      }
+
+      resizer.addEventListener("mousedown", startResize);
+      resizer.addEventListener("touchstart", startResize, { passive: false });
     });
   }
 
@@ -2573,7 +2590,7 @@
 
       card.addEventListener("dragstart", (e) => {
         // Do not drag if user is typing in an input, textarea or clicking a button/link
-        if (e.target.closest('input, textarea, button, select, a') && !e.target.closest('.cve-drag-handle')) {
+        if (e.target.closest('input, textarea, button, select, a, .cve-section-resizer') && !e.target.closest('.cve-drag-handle')) {
           e.preventDefault();
           return;
         }

@@ -3620,40 +3620,60 @@ body.cve-sidebar-collapsed .cve-canvas-wrap {
 
 /* Dedicated interactive vertical stretch / resize handle on section cards */
 .cve-section-resizer {
-  height: 14px;
+  height: 22px;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: ns-resize !important;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.7);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   user-select: none;
   touch-action: none;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.18s ease, border-color 0.18s ease;
   position: relative;
-  z-index: 2;
+  z-index: 5;
 }
 
 .cve-section-resizer:hover,
 .cve-section-resizer.is-resizing {
-  background: rgba(99, 102, 241, 0.2) !important;
-  border-top-color: rgba(99, 102, 241, 0.6) !important;
+  background: rgba(99, 102, 241, 0.28) !important;
+  border-top-color: rgba(99, 102, 241, 0.8) !important;
+}
+
+.cve-section-resizer-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.cve-section-resizer-arrow {
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1;
+  user-select: none;
 }
 
 .cve-section-resizer-line {
-  width: 36px;
-  height: 3px;
+  width: 44px;
+  height: 4px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.25);
-  transition: width 0.15s ease, background 0.15s ease;
-  pointer-events: none;
+  background: rgba(255, 255, 255, 0.35);
+  transition: width 0.18s ease, background 0.18s ease;
 }
 
 .cve-section-resizer:hover .cve-section-resizer-line,
 .cve-section-resizer.is-resizing .cve-section-resizer-line {
-  width: 56px;
+  width: 64px;
   background: #6366f1 !important;
+}
+
+.cve-section-resizer:hover .cve-section-resizer-arrow,
+.cve-section-resizer.is-resizing .cve-section-resizer-arrow {
+  color: #a5b4fc !important;
 }
 
 .cve-section-card.collapsed .cve-section-resizer {
