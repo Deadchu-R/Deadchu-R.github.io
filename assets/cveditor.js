@@ -191,8 +191,9 @@
   // Base default starter template (Strict Privacy: Roee's official CV is only loaded from /content/cv.json upon authentication)
   const ROEE_DEFAULT_CV = null;
 
+  // The résumé everyone sees before logging in: a made-up example person, never the owner's real data.
   const STARTER_DEFAULT_CV = {
-    label: "Professional Resume",
+    label: "Example — John Doe",
     template: "ats",
     layout_ratio: "50-50",
     accent: "#1f5fa8",
@@ -204,16 +205,13 @@
     dir: "ltr",
     lang: "en",
     person: {
-      name: "Your Name",
-      title: "Your Professional Title",
-      summary: "Results-driven professional with experience in designing and developing impactful projects, solving complex challenges, and collaborating with cross-functional teams.",
-      email: "your.email@gmail.com",
-      phone: "+1 (555) 000-0000",
-      location: "City, Country",
-      links: [
-        { label: "LinkedIn", url: "https://linkedin.com" },
-        { label: "Portfolio", url: "https://example.com" }
-      ]
+      name: "John Doe",
+      title: "IT Support & Systems Specialist",
+      summary: "IT specialist with 4 years of hands-on experience supporting 300+ users, running Microsoft 365 and Active Directory, and automating routine work with PowerShell. B.A. in Information Systems from the University of Haifa.",
+      email: "john.doe@example.com",
+      phone: "050-000-0000",
+      location: "Haifa, Israel",
+      links: [{ label: "LinkedIn", url: "https://www.linkedin.com/in/john-doe-example" }]
     },
     main: [
       {
@@ -221,31 +219,17 @@
         title: "Experience",
         items: [
           {
-            role: "Software Developer",
-            company: "Tech Company",
-            dates: "2023 – Present",
-            location: "Location",
-            summary: "Developing and maintaining core software products and client features.",
+            role: "IT Systems Specialist", org: "Example Tech Ltd.", dates: "2023 – Present", location: "Haifa", about: "", label: "",
             bullets: [
-              "Designed, implemented and tested scalable features according to product requirements.",
-              "Optimized application performance and streamlined automated workflows.",
-              "Collaborated closely with designers and teammates in agile sprint cycles."
+              "Support 300+ employees on Windows, Microsoft 365 and VPN, closing 95% of tickets within one working day.",
+              "Cut new-employee setup time from 2 days to 3 hours by automating account creation with PowerShell."
             ]
-          }
-        ]
-      },
-      {
-        type: "projects",
-        title: "Projects",
-        items: [
+          },
           {
-            name: "Featured Project",
-            sub: "Full-Stack / Modern Web",
-            dates: "2024",
-            link: "https://example.com",
+            role: "Help Desk Technician", org: "Example Services", dates: "2021 – 2023", location: "Haifa", about: "", label: "",
             bullets: [
-              "Built an interactive web platform with modern frontend architecture and clean modular code.",
-              "Implemented secure state handling, responsive design, and automated testing."
+              "Handled 40+ daily support calls for hardware, printers and network issues.",
+              "Wrote a troubleshooting knowledge base that reduced repeat tickets by 20%."
             ]
           }
         ]
@@ -255,39 +239,21 @@
       {
         type: "education",
         title: "Education",
-        items: [
-          {
-            degree: "B.Sc. in Computer Science / Relevant Degree",
-            school: "University / Academic Institution",
-            dates: "2020 – 2024",
-            location: "City",
-            bullets: [
-              "Specialized in Software Engineering, Data Structures, and Algorithms."
-            ]
-          }
-        ]
+        items: [{ degree: "B.A. in Information Systems", school: "University of Haifa", dates: "2017 – 2021", location: "Haifa", about: "", label: "", bullets: [] }]
       },
       {
         type: "skills",
         title: "Skills",
         items: [
-          {
-            category: "Core Technologies",
-            skills: ["JavaScript", "TypeScript", "Python", "C#", "React", "Node.js"]
-          },
-          {
-            category: "Tools & Methodologies",
-            skills: ["Git", "Docker", "REST APIs", "Agile / Scrum"]
-          }
+          { label: "Systems", items: ["Windows Server", "Active Directory", "Microsoft 365", "Intune"] },
+          { label: "Networking", items: ["TCP/IP", "DNS / DHCP", "VPN", "Firewalls"] },
+          { label: "Scripting", items: ["PowerShell", "Bash", "Python"] }
         ]
       },
       {
         type: "languages",
         title: "Languages",
-        items: [
-          { language: "English", level: "Fluent / Professional" },
-          { language: "Hebrew", level: "Native" }
-        ]
+        items: [{ name: "Hebrew", level: "Native" }, { name: "English", level: "Fluent" }]
       }
     ]
   };
@@ -357,8 +323,9 @@
       // Check session: ONLY friend users who explicitly logged in with Google stay logged in.
       // Roee is NEVER auto-logged in on startup, so Roee's CV NEVER appears before login!
       let loggedInUser = null;
+      try { sessionStorage.removeItem("cve_cur_user"); localStorage.removeItem("cve_cur_user"); } catch (_) {}   // sign-in is Google only now
       try {
-        const cur = sessionStorage.getItem("cve_cur_user");
+        const cur = null;
         if (cur) loggedInUser = JSON.parse(cur);
         // If it was Roee, require explicit login
         if (loggedInUser && (loggedInUser.id === "roee" || loggedInUser.email === "roeetal17@gmail.com")) {
@@ -373,7 +340,7 @@
 
       // Also clean any old Roee login from localStorage
       try {
-        const localCur = localStorage.getItem("cve_cur_user");
+        const localCur = null;
         if (localCur) {
           const parsed = JSON.parse(localCur);
           if (parsed && (parsed.id === "roee" || parsed.email === "roeetal17@gmail.com")) {
@@ -407,6 +374,27 @@
       }
 
       this.saveVault();
+    },
+
+    // Device-only accounts (older versions) — kept so their data is not lost; sign-in now uses Google.
+    saveUsers() {
+      try { localStorage.setItem("cve_users", JSON.stringify(state.allUsers)); } catch (e) {}
+    },
+
+    // Save: a Google user's résumés go to their private cloud vault; nothing of theirs is left on this device.
+    saveVault() {
+      const local = {};
+      for (const [k, v] of Object.entries(state.vault)) if (!k.startsWith("g_")) local[k] = v;
+      try { localStorage.setItem("cve_vault", JSON.stringify(local)); } catch (e) {}
+      const u = state.currentUser;
+      if (u && u.cloud && window.RTCloud) {
+        showSaveIndicator("☁ Saving…");
+        window.RTCloud.save(u.uid, state.vault[u.id] || {})
+          .then(() => showSaveIndicator("✓ Saved to your account"))
+          .catch(e => showSaveIndicator("⚠ Not saved: " + (e.message || e)));
+      } else {
+        showSaveIndicator();
+      }
     },
 
     async loadSiteCv() {
@@ -582,6 +570,8 @@
 
         logout(e) {
       if (e && e.stopPropagation) e.stopPropagation();
+      const was = state.currentUser;
+      if (was && was.cloud) { delete state.vault[was.id]; if (window.RTCloud) window.RTCloud.signOut().catch(() => {}); }
       sessionStorage.removeItem("cve_cur_user");
       localStorage.removeItem("cve_cur_user");
       state.currentUser = null;
@@ -1864,14 +1854,14 @@
       fill.style.width = Math.min(100, pct) + "%";
       fill.classList.remove("warn");
       text.className = "cve-page-meter-text";
-      text.textContent = `≡ƒôä 1 Page (${pct}% full)`;
+      text.textContent = `📄 1 Page (${pct}% full)`;
       if (btn) btn.style.display = "none";
       if (breakLine) breakLine.remove();
     } else {
       fill.style.width = "100%";
       fill.classList.add("warn");
       text.className = "cve-page-meter-text warn";
-      text.textContent = `ΓÜá∩╕Å 2 Pages (${pct}% - Overfull)`;
+      text.textContent = `⚠️ 2 Pages (${pct}% - Overfull)`;
       if (btn) btn.style.display = "inline-flex";
 
       if (!breakLine) {
@@ -1918,7 +1908,7 @@
 
   function processUploadedImage(file, callback) {
     if (!file || !file.type.startsWith("image/")) {
-      alert("╫É╫á╫É ╫æ╫ù╫¿ ╫º╫ò╫æ╫Ñ ╫¬╫₧╫ò╫á╫ö ╫¬╫º╫Ö╫ƒ (PNG, JPG, WebP).");
+      alert("אנא בחר קובץ תמונה תקין (PNG, JPG, WebP).");
       return;
     }
     const reader = new FileReader();
@@ -1946,7 +1936,7 @@
         callback(dataUrl);
       };
       img.onerror = () => {
-        alert("╫⌐╫Æ╫Ö╫É╫ö ╫æ╫ÿ╫ó╫Ö╫á╫¬ ╫º╫ò╫æ╫Ñ ╫ö╫¬╫₧╫ò╫á╫ö.");
+        alert("שגיאה בטעינת קובץ התמונה.");
       };
       img.src = e.target.result;
     };
@@ -1957,7 +1947,7 @@
     const photoEls = stage.querySelectorAll(".cv-photo, .cv-photo-add, [data-m$='.photo']");
     photoEls.forEach(el => {
       el.style.cursor = "pointer";
-      el.title = "≡ƒô╖ ╫£╫ù╫Ñ ╫¢╫É╫ƒ ╫£╫ö╫ó╫£╫É╫¬ ╫¬╫₧╫ò╫á╫¬ ╫ñ╫¿╫ò╫ñ╫Ö╫£ / Change Photo";
+      el.title = "📷 לחץ כאן להעלאת תמונת פרופיל / Change Photo";
       el.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1988,7 +1978,7 @@
         const s = document.createElement("script");
         s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
         s.onload = resolve;
-        s.onerror = () => reject(new Error("╫£╫É ╫á╫Ö╫¬╫ƒ ╫£╫ÿ╫ó╫ò╫ƒ ╫É╫¬ ╫₧╫ñ╫ó╫á╫ù ╫ö-PDF ╫₧╫ö╫¿╫⌐╫¬. ╫á╫í╫ö ╫£╫ö╫ô╫æ╫Ö╫º ╫É╫¬ ╫ö╫ÿ╫º╫í╫ÿ."));
+        s.onerror = () => reject(new Error("לא ניתן לטעון את מפענח ה-PDF מהרשת. נסה להדביק את הטקסט."));
         document.head.appendChild(s);
       });
     }
@@ -2066,7 +2056,7 @@
       const l = lines[i];
       if (l.includes("@") || l.includes("http") || l.length > 50 || /^\d/.test(l)) continue;
       if (!person.name) {
-        person.name = l.replace(/[|ΓÇóΓÇôΓÇö].*$/, "").trim();
+        person.name = l.replace(/[|•–—].*$/, "").trim();
         continue;
       }
       if (!person.title && l.length < 60 && !l.toLowerCase().includes("resume") && !l.toLowerCase().includes("cv")) {
@@ -2074,16 +2064,16 @@
         break;
       }
     }
-    if (!person.name) person.name = isHebrew ? "╫⌐╫¥ ╫₧╫£╫É" : "Your Name";
+    if (!person.name) person.name = isHebrew ? "שם מלא" : "Your Name";
 
     // 5. Section segmentation
     const SEC_PATTERNS = [
-      { key: "experience", rx: /^(?:work\s+)?experience|employment|work\s+history|career|professional\s+experience|╫á╫Ö╫í╫Ö╫ò╫ƒ\s+(?:╫¬╫ó╫í╫ò╫º╫¬╫Ö|╫₧╫º╫ª╫ò╫ó╫Ö)|╫á╫Ö╫í╫Ö╫ò╫ƒ/i },
-      { key: "education", rx: /^education|academic|studies|academic\s+background|degrees|╫ö╫⌐╫¢╫£╫ö|╫£╫Ö╫₧╫ò╫ô╫Ö╫¥|╫¬╫É╫¿╫Ö╫¥/i },
-      { key: "skills", rx: /^skills|technical\s+skills|technologies|tools|competencies|core\s+competencies|╫¢╫Ö╫⌐╫ò╫¿╫Ö╫¥|╫₧╫Ö╫ò╫₧╫á╫ò╫Ö╫ò╫¬|╫ÿ╫¢╫á╫ò╫£╫ò╫Æ╫Ö╫ò╫¬|╫¢╫£╫Ö╫¥/i },
-      { key: "summary", rx: /^summary|professional\s+summary|profile|about\s+me|objective|about|╫¬╫₧╫ª╫Ö╫¬|╫É╫ò╫ô╫ò╫¬|╫ñ╫¿╫ò╫ñ╫Ö╫£\s+╫É╫Ö╫⌐╫Ö/i },
-      { key: "projects", rx: /^projects|key\s+projects|portfolio|╫ñ╫¿╫ò╫Ö╫º╫ÿ╫Ö╫¥/i },
-      { key: "languages", rx: /^languages|╫⌐╫ñ╫ò╫¬/i }
+      { key: "experience", rx: /^(?:work\s+)?experience|employment|work\s+history|career|professional\s+experience|ניסיון\s+(?:תעסוקתי|מקצועי)|ניסיון/i },
+      { key: "education", rx: /^education|academic|studies|academic\s+background|degrees|השכלה|לימודים|תארים/i },
+      { key: "skills", rx: /^skills|technical\s+skills|technologies|tools|competencies|core\s+competencies|כישורים|מיומנויות|טכנולוגיות|כלים/i },
+      { key: "summary", rx: /^summary|professional\s+summary|profile|about\s+me|objective|about|תמצית|אודות|פרופיל\s+אישי/i },
+      { key: "projects", rx: /^projects|key\s+projects|portfolio|פרויקטים/i },
+      { key: "languages", rx: /^languages|שפות/i }
     ];
 
     const sections = [];
@@ -2109,32 +2099,32 @@
     if (expSec) {
       let curItem = null;
       expSec.lines.forEach(l => {
-        const isBullet = /^[ΓÇó\-\*Γû¬ΓÇô]\s*/.test(l);
-        const hasDate = /\b(20\d\d|19\d\d)\b|\b(present|current|╫¢╫Ö╫ò╫¥|╫ö╫Ö╫ò╫¥)\b/i.test(l);
+        const isBullet = /^[•\-\*▪–]\s*/.test(l);
+        const hasDate = /\b(20\d\d|19\d\d)\b|\b(present|current|כיום|היום)\b/i.test(l);
 
         if (!isBullet && (hasDate || curItem === null || curItem.bullets.length > 0)) {
           if (curItem) parsedExpItems.push(curItem);
           let dates = "";
-          const dateMatch = l.match(/\b(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d\s*(?:ΓÇô|-|to|╫ó╫ô)\s*(?:(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d|Present|Current|╫¢╫Ö╫ò╫¥|╫ö╫Ö╫ò╫¥)/i);
+          const dateMatch = l.match(/\b(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d\s*(?:–|-|to|עד)\s*(?:(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:19|20)\d\d|Present|Current|כיום|היום)/i);
           if (dateMatch) {
             dates = dateMatch[0];
             l = l.replace(dates, "").trim();
           }
-          const parts = l.split(/[-ΓÇô|,\sat\s]+/).filter(Boolean);
-          const role = parts[0] ? parts[0].trim() : (isHebrew ? "╫¬╫ñ╫º╫Ö╫ô" : "Job Title");
-          const org = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "╫ù╫æ╫¿╫ö" : "Company");
+          const parts = l.split(/[-–|,\sat\s]+/).filter(Boolean);
+          const role = parts[0] ? parts[0].trim() : (isHebrew ? "תפקיד" : "Job Title");
+          const org = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "חברה" : "Company");
 
           curItem = {
             role,
             org,
-            dates: dates || "2021 ΓÇô Present",
+            dates: dates || "2021 – Present",
             location: "",
             about: "",
             label: "",
             bullets: []
           };
         } else if (curItem) {
-          const cleanBullet = l.replace(/^[ΓÇó\-\*Γû¬ΓÇô]\s*/, "").trim();
+          const cleanBullet = l.replace(/^[•\-\*▪–]\s*/, "").trim();
           if (cleanBullet) curItem.bullets.push(cleanBullet);
         }
       });
@@ -2147,30 +2137,30 @@
     if (eduSec) {
       let curItem = null;
       eduSec.lines.forEach(l => {
-        const isBullet = /^[ΓÇó\-\*Γû¬ΓÇô]\s*/.test(l);
+        const isBullet = /^[•\-\*▪–]\s*/.test(l);
         const hasDate = /\b(20\d\d|19\d\d)\b/.test(l);
         if (!isBullet && (hasDate || curItem === null)) {
           if (curItem) parsedEduItems.push(curItem);
           let dates = "";
-          const dMatch = l.match(/(?:19|20)\d\d\s*(?:ΓÇô|-|to|╫ó╫ô)\s*(?:(?:19|20)\d\d|Present|╫¢╫Ö╫ò╫¥)/i) || l.match(/(?:19|20)\d\d/);
+          const dMatch = l.match(/(?:19|20)\d\d\s*(?:–|-|to|עד)\s*(?:(?:19|20)\d\d|Present|כיום)/i) || l.match(/(?:19|20)\d\d/);
           if (dMatch) {
             dates = dMatch[0];
             l = l.replace(dates, "").trim();
           }
-          const parts = l.split(/[-ΓÇô|,]+/).filter(Boolean);
-          const degree = parts[0] ? parts[0].trim() : (isHebrew ? "╫¬╫ò╫É╫¿ / ╫¬╫ó╫ò╫ô╫ö" : "Degree / Program");
-          const school = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "╫₧╫ò╫í╫ô ╫É╫º╫ô╫₧╫Ö" : "School");
+          const parts = l.split(/[-–|,]+/).filter(Boolean);
+          const degree = parts[0] ? parts[0].trim() : (isHebrew ? "תואר / תעודה" : "Degree / Program");
+          const school = parts[1] ? parts.slice(1).join(" ").trim() : (isHebrew ? "מוסד אקדמי" : "School");
           curItem = {
             degree,
             school,
-            dates: dates || "2018 ΓÇô 2021",
+            dates: dates || "2018 – 2021",
             location: "",
             about: "",
             label: "Courses",
             bullets: []
           };
         } else if (curItem) {
-          const cleanBullet = l.replace(/^[ΓÇó\-\*Γû¬ΓÇô]\s*/, "").trim();
+          const cleanBullet = l.replace(/^[•\-\*▪–]\s*/, "").trim();
           if (cleanBullet) curItem.bullets.push(cleanBullet);
         }
       });
@@ -2182,7 +2172,7 @@
     const parsedSkills = [];
     if (skillSec) {
       skillSec.lines.forEach(l => {
-        const tokens = l.split(/[,|ΓÇó;/\n]+/).map(t => t.replace(/^[ΓÇó\-\*Γû¬ΓÇô]\s*/, "").trim()).filter(t => t.length > 1 && t.length < 35);
+        const tokens = l.split(/[,|•;/\n]+/).map(t => t.replace(/^[•\-\*▪–]\s*/, "").trim()).filter(t => t.length > 1 && t.length < 35);
         tokens.forEach(tok => {
           if (!parsedSkills.includes(tok)) parsedSkills.push(tok);
         });
@@ -2201,41 +2191,41 @@
     if (parsedExpItems.length) {
       main.push({
         type: "experience",
-        title: isHebrew ? "╫á╫Ö╫í╫Ö╫ò╫ƒ ╫₧╫º╫ª╫ò╫ó╫Ö" : "Work Experience",
+        title: isHebrew ? "ניסיון מקצועי" : "Work Experience",
         items: parsedExpItems
       });
     } else {
       main.push(window.RTCV ? window.RTCV.newSection("experience") : {
         type: "experience",
-        title: isHebrew ? "╫á╫Ö╫í╫Ö╫ò╫ƒ ╫₧╫º╫ª╫ò╫ó╫Ö" : "Work Experience",
-        items: [{ role: isHebrew ? "╫¬╫ñ╫º╫Ö╫ô" : "Software Engineer", org: isHebrew ? "╫ù╫æ╫¿╫ö" : "Tech Corp", dates: "2021 ΓÇô Present", bullets: [isHebrew ? "╫ñ╫Ö╫¬╫ò╫ù ╫₧╫ó╫¿╫¢╫ò╫¬ ╫£╫Ö╫æ╫ö ╫ò╫⌐╫Ö╫ñ╫ò╫¿ ╫æ╫Ö╫ª╫ò╫ó╫Ö╫¥." : "Architected high-scale features."] }]
+        title: isHebrew ? "ניסיון מקצועי" : "Work Experience",
+        items: [{ role: isHebrew ? "תפקיד" : "Software Engineer", org: isHebrew ? "חברה" : "Tech Corp", dates: "2021 – Present", bullets: [isHebrew ? "פיתוח מערכות ליבה ושיפור ביצועים." : "Architected high-scale features."] }]
       });
     }
 
     if (parsedEduItems.length) {
       main.push({
         type: "education",
-        title: isHebrew ? "╫ö╫⌐╫¢╫£╫ö" : "Education",
+        title: isHebrew ? "השכלה" : "Education",
         items: parsedEduItems
       });
     } else {
       main.push(window.RTCV ? window.RTCV.newSection("education") : {
         type: "education",
-        title: isHebrew ? "╫ö╫⌐╫¢╫£╫ö" : "Education",
-        items: [{ degree: isHebrew ? "╫¬╫ò╫É╫¿ ╫¿╫É╫⌐╫ò╫ƒ ╫æ╫₧╫ô╫ó╫Ö ╫ö╫₧╫ù╫⌐╫æ" : "B.Sc. in Computer Science", school: isHebrew ? "╫É╫ò╫á╫Ö╫æ╫¿╫í╫Ö╫ÿ╫ö" : "University", dates: "2017 ΓÇô 2020", bullets: [] }]
+        title: isHebrew ? "השכלה" : "Education",
+        items: [{ degree: isHebrew ? "תואר ראשון במדעי המחשב" : "B.Sc. in Computer Science", school: isHebrew ? "אוניברסיטה" : "University", dates: "2017 – 2020", bullets: [] }]
       });
     }
 
     if (parsedSkills.length) {
       side.push({
         type: "skills",
-        title: isHebrew ? "╫₧╫Ö╫ò╫₧╫á╫ò╫Ö╫ò╫¬ ╫ò╫¢╫£╫Ö╫¥" : "Skills",
-        items: [{ label: isHebrew ? "╫ÿ╫¢╫á╫ò╫£╫ò╫Æ╫Ö╫ò╫¬ ╫ó╫Ö╫º╫¿╫Ö╫ò╫¬" : "Core Skills", items: parsedSkills }]
+        title: isHebrew ? "מיומנויות וכלים" : "Skills",
+        items: [{ label: isHebrew ? "טכנולוגיות עיקריות" : "Core Skills", items: parsedSkills }]
       });
     } else {
       side.push(window.RTCV ? window.RTCV.newSection("skills") : {
         type: "skills",
-        title: isHebrew ? "╫₧╫Ö╫ò╫₧╫á╫ò╫Ö╫ò╫¬ ╫ò╫¢╫£╫Ö╫¥" : "Skills",
+        title: isHebrew ? "מיומנויות וכלים" : "Skills",
         items: [{ label: "", items: ["JavaScript", "Python", "React", "Git"] }]
       });
     }
@@ -3171,7 +3161,7 @@
     `;
 
     if (isRoee) {
-      const friends = state.allUsers.filter(u => u.id !== "roee");
+      const friends = [];   // nobody (the owner included) can open other people's résumés
       html += `
         <div class="cve-section-card" style="border-color:rgba(124,58,237,0.4);">
           <div class="cve-section-header" style="background:rgba(124,58,237,0.12);">
@@ -3778,86 +3768,109 @@
   }
 
   
+  const GOOGLE_G = `<svg class="cve-google-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+    </svg>`;
+  // The account box at the top of the side menu: "Log in" with a big Google button (like GOG's), or who is signed in + Sign out.
+  // (The name stays renderTopbarAuth because many places call it.)
   function renderTopbarAuth() {
-    const area = document.getElementById("cveTopbarAuth");
+    const top = document.getElementById("cveTopbarAuth"); if (top) top.innerHTML = "";
+    const oldBtn = document.getElementById("userBtn"); if (oldBtn) oldBtn.style.display = "none";
+    const area = document.getElementById("cveSidebarAuth");
     if (!area) return;
     const user = state.currentUser;
-    const isRoee = isRoeeUser();
-
     if (!user) {
       area.innerHTML = `
-        <button type="button" class="cve-google-btn-official" onclick="window.CVE.openGoogleAuthModal()" title="התחבר עם חשבון Google לשמירה אישית">
-          <svg class="cve-google-icon" width="18" height="18" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-          </svg>
-          <span class="cve-google-btn-text">Sign in with Google</span>
-        </button>
-      `;
+        <div class="cve-login-card">
+          <div class="cve-login-head"><span class="cve-login-title">Log in</span><span class="cve-login-sub">to save your résumés</span></div>
+          <button type="button" class="cve-login-google" onclick="window.CVE.openGoogleAuthModal()">${GOOGLE_G}<span>Google</span></button>
+          <p class="cve-login-note">🔒 Saved to your account — only you can open your résumés. Until you log in, you're editing an example.</p>
+        </div>`;
     } else {
       const displayName = user.name || user.email.split("@")[0];
+      const pic = user.photo ? `<img src="${esc(user.photo)}" alt="" referrerpolicy="no-referrer">` : `<span>${esc(displayName.charAt(0).toUpperCase())}</span>`;
       area.innerHTML = `
-        <div class="cve-user-logged-in-pill" title="מחובר: ${esc(user.email)}">
-          <span class="cve-user-dot"></span>
-          <span class="cve-user-role-icon">${isRoee ? "👑" : "👤"}</span>
-          <span class="cve-user-display-name">${esc(displayName)}</span>
-          <button type="button" class="cve-user-logout-btn" onclick="window.CVE.logout(event)" title="Sign Out (התנתק)">🚪 Sign Out</button>
-        </div>
-      `;
+        <div class="cve-login-card in">
+          <div class="cve-login-user">
+            <div class="cve-login-avatar">${pic}</div>
+            <div class="cve-login-who"><b>${esc(displayName)}${isRoeeUser() ? " 👑" : ""}</b><small>${esc(user.email)}</small></div>
+            <button type="button" class="cve-login-out" onclick="window.CVE.logout(event)">Sign out</button>
+          </div>
+        </div>`;
     }
   }
+
 
   
-  function openGoogleAuthModal(prefillEmail) {
-    const m = document.getElementById("googleAuthModal");
-    if (!m) return;
-    const emailInput = document.getElementById("cveGoogleEmailInput");
-    const nameInput = document.getElementById("cveGoogleNameInput");
-    const passInput = document.getElementById("cveRoeePassInput");
-    const passGroup = document.getElementById("cveRoeePassGroup");
-    const errEl = document.getElementById("googleAuthError");
-    const accountsList = document.getElementById("cveGoogleAccountsList");
-
-    if (errEl) errEl.textContent = "";
-    if (prefillEmail && emailInput) emailInput.value = prefillEmail;
-    if (passInput) passInput.value = "";
-    if (passGroup) passGroup.style.display = "none";
-
-    // Populate previous friend accounts list
-    if (accountsList) {
-      const friends = (state.allUsers || []).filter(u => u.email && u.id !== "roee");
-      if (friends.length > 0) {
-        accountsList.innerHTML = `
-          <div style="font-size:12px;font-weight:600;color:var(--cve-text-muted);margin-bottom:6px;">חשבונות Google שנשמרו במכשיר זה:</div>
-          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
-            ${friends.map(f => `
-              <div class="cve-google-account-card" onclick="window.CVE.selectGoogleAccount('${esc(f.email)}', '${esc(f.name)}')">
-                <div class="cve-google-account-avatar">${esc((f.name || f.email).charAt(0).toUpperCase())}</div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:600;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(f.name || f.email.split('@')[0])}</div>
-                  <div style="font-size:11.5px;color:var(--cve-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(f.email)}</div>
-                </div>
-                <span style="font-size:12px;color:#60a5fa;">התחבר ➔</span>
-              </div>
-            `).join("")}
-          </div>
-          <div style="position:relative;text-align:center;margin:10px 0 14px;">
-            <div style="border-top:1px solid rgba(255,255,255,0.12);"></div>
-            <span style="position:relative;top:-9px;background:#182234;padding:0 8px;font-size:11px;color:var(--cve-text-muted);">או התחבר עם חשבון Google אחר</span>
-          </div>
-        `;
-      } else {
-        accountsList.innerHTML = "";
-      }
-    }
-
-    m.classList.add("open");
-    setTimeout(() => {
-      if (emailInput && !emailInput.value) emailInput.focus();
-    }, 100);
+  // Sign in with Google (a real Google account, through Firebase). Until it is set up, say so instead of faking it.
+  async function openGoogleAuthModal() {
+    if (!window.RTCloud) { showToast("Google sign-in isn't available right now."); return; }
+    await window.RTCloud.ready;
+    if (!window.RTCloud.configured) { showToast("🔧 Google sign-in isn't switched on yet. Until then your work stays in this browser."); return; }
+    try { await window.RTCloud.signIn(); }
+    catch (e) { showToast("Couldn't sign in with Google: " + (e.message || e)); }
   }
+
+  // The site's own résumés (content/cv.json), for the owner's first sign-in.
+  async function fetchSiteCvs() {
+    for (const p of ["/content/cv.json", "../content/cv.json", "content/cv.json"]) {
+      try { const r = await fetch(p, { cache: "no-cache" }); if (r.ok) { const d = await r.json(); if (d && d.variants) return JSON.parse(JSON.stringify(d.variants)); } } catch (e) {}
+    }
+    return {};
+  }
+
+  // A Google user signed in (or out): show only their own résumés, loaded from their private vault.
+  async function onCloudUser(gu) {
+    if (!gu) {
+      const was = state.currentUser;
+      if (was && was.cloud) {
+        delete state.vault[was.id];
+        state.currentUser = null; state.activeOwnerId = "guest";
+        state.vault["guest"] = { "starter": JSON.parse(JSON.stringify(STARTER_DEFAULT_CV)) }; state.activeCvId = "starter";
+        updateMainWebsiteCvButton(); renderTopbarAuth(); renderA4Sheet(); renderSidebar();
+      }
+      return;
+    }
+    const id = "g_" + gu.uid;
+    const guestCv = state.vault["guest"] && state.vault["guest"]["starter"];
+    const guestEdited = !!guestCv && JSON.stringify(guestCv) !== JSON.stringify(STARTER_DEFAULT_CV);
+    state.currentUser = { id, uid: gu.uid, email: gu.email, name: gu.name || gu.email.split("@")[0], photo: gu.photo, verified: gu.verified, role: "friend", cloud: true };
+    renderTopbarAuth();
+    showSaveIndicator("☁ Loading your résumés…");
+    let cvs = {};
+    try { cvs = await window.RTCloud.load(gu.uid); }
+    catch (e) { showToast("Couldn't load your résumés: " + (e.message || e)); }
+    if (!Object.keys(cvs).length) {
+      // first sign-in: the owner starts from the site's résumés; others keep what they made here, or start from the example
+      if (isRoeeUser()) cvs = await fetchSiteCvs();
+      const old = state.allUsers.find(x => (x.email || "").toLowerCase() === gu.email);
+      const oldCvs = old && state.vault[old.id];
+      if (!Object.keys(cvs).length && oldCvs && Object.keys(oldCvs).length) cvs = JSON.parse(JSON.stringify(oldCvs));
+      if (!Object.keys(cvs).length) {
+        const first = JSON.parse(JSON.stringify(guestEdited ? guestCv : STARTER_DEFAULT_CV));
+        if (!guestEdited) {
+          first.person.name = state.currentUser.name; first.person.email = gu.email;
+          first.label = (state.currentUser.name || "My") + " — Résumé";
+        }
+        cvs = { "my-cv": first };
+      }
+      state.vault[id] = cvs;
+      window.RTCloud.save(gu.uid, cvs).catch(e => showToast("Couldn't save: " + (e.message || e)));
+    } else {
+      state.vault[id] = cvs;
+    }
+    state.activeOwnerId = id;
+    state.activeCvId = Object.keys(cvs)[0];
+    state.vault["guest"] = { "starter": JSON.parse(JSON.stringify(STARTER_DEFAULT_CV)) };
+    try { localStorage.removeItem("cve_draft_cv"); } catch (e) {}
+    Storage.saveVault();
+    updateMainWebsiteCvButton(); renderTopbarAuth(); renderA4Sheet(); renderSidebar();
+    showToast(`👋 Hi ${state.currentUser.name}! Your résumés are saved to your account.`);
+  }
+
 
   function selectGoogleAccount(email, name) {
     const emailInput = document.getElementById("cveGoogleEmailInput");
@@ -3909,8 +3922,12 @@
     }
   }
 
+  // The site owner: signed in with Google (verified) as the owner's address. This only changes what the UI offers;
+  // the data itself is protected by the Firestore rules (each user can open only their own vault).
+  const OWNER_EMAIL = "roeetal17@gmail.com";
   function isRoeeUser() {
-    return Boolean(state.currentUser && (state.currentUser.id === "roee" || state.currentUser.email === "roeetal17@gmail.com"));
+    const u = state.currentUser;
+    return Boolean(u && u.cloud && u.verified && u.email === OWNER_EMAIL);
   }
 
   function updateMainWebsiteCvButton() {
@@ -4053,6 +4070,7 @@
       setFitZoom();
 
       Storage.loadSiteCv();
+      if (window.RTCloud) window.RTCloud.onUser(u => { onCloudUser(u).catch(e => console.error(e)); });
 
       const params = new URLSearchParams(location.search);
       const room = params.get("room");
@@ -5240,9 +5258,9 @@
       }
     },
 
+    // The old email/password box is gone: accounts are Google accounts.
     openAuthModal() {
-      const m = $("#authModal");
-      if (m) m.classList.add("open");
+      openGoogleAuthModal();
     },
 
     async loginSubmit() {

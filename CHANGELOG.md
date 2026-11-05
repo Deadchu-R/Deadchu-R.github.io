@@ -107,6 +107,21 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
   - Fixed inline canvas editing so typing spaces does not trim or delete text while typing.
   - Cleaned up all corrupted UTF-8 mojibake strings in the resume parser and error handlers.
 
+## 2026-11-05
+
+### CVEditor
+- **Accounts:** real **Sign in with Google** (Firebase Auth) in a GOG-style account box at the top of the side menu (removed from the top bar).
+  - Each user's résumés are in a private cloud vault (`vaults/<uid>`) that only they can open (`firestore.rules`).
+  - Nothing of a signed-in user is left in the device's storage.
+  - The old "type any email" fake Google login, the device-only email/password accounts and the first-login-sets-the-owner-password flow are no longer used.
+  - Setup: [docs/CVEDITOR-ACCOUNTS.md](docs/CVEDITOR-ACCOUNTS.md). Until `assets/cveditor-firebase.json` is filled, the button says sign-in isn't switched on yet.
+- **Logged out:** the editor shows an example résumé (John Doe, IT specialist, University of Haifa) in the real résumé schema, so all its fields show and it fits one page. The owner's data never appears.
+- **Drag & drop:** one solid-blue feedback everywhere (sections, items, bullets, skills, contacts), with no dashed or marching outlines.
+- **Fixes:**
+  - restored `Storage.saveVault` / `saveUsers`, which had been deleted and broke saving;
+  - repaired garbled text (mojibake) in 38 lines, such as the page meter and Hebrew placeholders;
+  - removed the unused Google GSI script.
+
 ## 2026-11-04
 
 ### Security

@@ -3931,3 +3931,76 @@ body.cve-sidebar-collapsed .cve-canvas-wrap {
   justify-content: center;
   font-size: 14px;
 }
+
+/* ==========================================================================
+   Account box at the top of the side menu ("Log in" + big Google button, like GOG's log-in)
+   ========================================================================== */
+.cve-sidebar-auth { padding: 12px 12px 4px; }
+.cve-login-card { background: var(--cve-surface-card); border: 1px solid var(--cve-border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.cve-login-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.cve-login-title { font-size: 20px; font-weight: 800; color: var(--cve-text); }
+.cve-login-sub { font-size: 12.5px; color: var(--cve-text-muted); }
+.cve-login-google { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 48px; padding: 10px 16px;
+  background: #f5f5f5; color: #1f1f1f; border: 1px solid #dadce0; border-radius: 6px; font: 700 17px/1 "Inter", system-ui, sans-serif;
+  cursor: pointer; transition: background .15s, box-shadow .15s, transform .05s; }
+.cve-login-google:hover { background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .35); }
+.cve-login-google:active { transform: translateY(1px); }
+.cve-login-google:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+.cve-login-note { margin: 0; font-size: 11.5px; line-height: 1.45; color: var(--cve-text-muted); }
+.cve-login-card.in { padding: 10px 12px; }
+.cve-login-user { display: flex; align-items: center; gap: 10px; }
+.cve-login-avatar { width: 34px; height: 34px; flex: none; border-radius: 50%; overflow: hidden; background: #2563eb; color: #fff; display: grid; place-items: center; font-weight: 800; }
+.cve-login-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.cve-login-who { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+.cve-login-who b { font-size: 13.5px; color: var(--cve-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cve-login-who small { font-size: 11.5px; color: var(--cve-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cve-login-out { flex: none; background: transparent; color: var(--cve-text-muted); border: 1px solid var(--cve-border); border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+.cve-login-out:hover { color: #fff; border-color: #ef4444; background: rgba(239, 68, 68, .15); }
+.cve-sidebar-collapsed .cve-sidebar-auth { display: none; }
+#userBtn { display: none !important; }
+
+/* ==========================================================================
+   One drag & drop look everywhere: solid blue (no dashed / marching outlines).
+   Sections, items, bullets, skill chips and contact items all use the same feedback:
+   the dragged thing fades, the place it will go gets a solid blue outline and a solid insertion bar.
+   ========================================================================== */
+:root { --cve-drop: #38bdf8; --cve-drop-soft: rgba(56, 189, 248, .14); --cve-drop-glow: 0 0 16px rgba(56, 189, 248, .45); }
+
+/* while dragging: no guide outlines on every candidate (that was the dashed look) */
+.cve-dragging-bullet-mode .cve-draggable-bullet:not(.cve-is-dragging-bullet),
+.cve-dragging-skill-mode .cve-draggable-skill:not(.cve-is-dragging-skill),
+.cve-dragging-contact-mode .cve-draggable-contact:not(.cve-is-dragging-contact),
+.cve-dragging-item-mode .cve-draggable-item:not(.cve-is-dragging-item) { outline: none !important; }
+
+/* hovering something you can drag: a light solid outline */
+.cv-sec.cve-draggable-sec:hover,
+.cvdoc .cv-contact-item:hover { outline: 1.5px solid rgba(56, 189, 248, .55) !important; }
+
+/* the thing being dragged */
+.cv-sec.cve-is-dragging, .cve-section-card.cve-is-dragging, .cve-board-card.cve-is-dragging,
+.cve-is-dragging-item, .cve-is-dragging-bullet, .cve-is-dragging-skill, .cve-is-dragging-contact {
+  opacity: .35 !important; outline: 2px solid var(--cve-drop) !important; outline-offset: 3px !important; animation: none !important; }
+
+/* where it will land */
+.cv-sec.cve-drop-target-before, .cv-sec.cve-drop-target-after,
+.cve-section-card.cve-drop-target-before, .cve-section-card.cve-drop-target-after,
+.cve-board-card.cve-drop-target-before, .cve-board-card.cve-drop-target-after,
+.cv-item.cve-item-drop-before, .cv-item.cve-item-drop-after,
+.cv-bul li.cve-bullet-drop-before, .cv-bul li.cve-bullet-drop-after,
+.cv-inline-bullet.cve-bullet-drop-before, .cv-inline-bullet.cve-bullet-drop-after,
+.cv-chip.cve-chip-drop-before, .cv-chip.cve-chip-drop-after,
+.cv-contact-item.cve-contact-drop-before, .cv-contact-item.cve-contact-drop-after {
+  outline: 2.5px solid var(--cve-drop) !important; outline-offset: 4px !important;
+  background-color: var(--cve-drop-soft) !important; box-shadow: var(--cve-drop-glow) !important; animation: none !important; }
+
+/* empty column you can drop into */
+.cv-col.cve-drop-zone-active, .cv-side.cve-drop-zone-active, .cv-main.cve-drop-zone-active, .cve-board-col.cve-drop-zone-active {
+  outline: 2.5px solid var(--cve-drop) !important; background: var(--cve-drop-soft) !important; }
+
+/* the insertion bar: same solid blue everywhere */
+.cv-item.cve-item-drop-before::before, .cv-item.cve-item-drop-after::after,
+.cv-bul li.cve-bullet-drop-before::before, .cv-inline-bullet.cve-bullet-drop-before::before,
+.cv-bul li.cve-bullet-drop-after::after, .cv-inline-bullet.cve-bullet-drop-after::after,
+.cv-chip.cve-chip-drop-before::before, .cv-chip.cve-chip-drop-after::after,
+.cv-contact-item.cve-contact-drop-before::before, .cv-contact-item.cve-contact-drop-after::after {
+  background: var(--cve-drop) !important; box-shadow: 0 0 10px var(--cve-drop) !important; }
