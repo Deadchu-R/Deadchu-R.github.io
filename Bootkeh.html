@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="assets/bootkeh.css?v=20261106_10">
-  <link rel="stylesheet" href="assets/bootkeh-medieval.css?v=20261106_10">
+  <link rel="stylesheet" href="assets/bootkeh.css?v=20261106_20">
+  <link rel="stylesheet" href="assets/bootkeh-medieval.css?v=20261106_20">
 </head>
 <body class="bootkeh-body">
 
@@ -24,16 +24,15 @@
       <div class="bootkeh-logo-wrap">
         <span class="bootkeh-logo-icon">🕰️</span>
         <span class="bootkeh-title">Bootkeh</span>
-        <span class="bootkeh-badge">Clocktower Generator</span>
       </div>
     </div>
 
     <div class="bootkeh-topbar-actions">
       <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSavedPlayersModal()">
-        <span>👥 שחקנים שמורים</span>
+        <span>שחקנים שמורים</span>
       </button>
       <button type="button" class="bk-btn sm" onclick="window.Bootkeh.toggleLanguage()" id="langToggleBtn">
-        <span>English 🇬🇧</span>
+        <span>English</span>
       </button>
     </div>
   </header>
@@ -41,16 +40,16 @@
   <!-- Navigation Tabs -->
   <nav class="bootkeh-nav-tabs bootkeh-print-hide">
     <button type="button" class="bootkeh-tab-btn active" data-tab="setup" onclick="window.Bootkeh.setTab('setup')">
-      <span>🎲 הגדרות ויצירת משחק</span>
+      <span class="bk-tab-ic" aria-hidden="true">✦</span><span>הכנת משחק</span>
     </button>
     <button type="button" class="bootkeh-tab-btn" data-tab="board" onclick="window.Bootkeh.setTab('board')">
-      <span>⭕ מעגל ישיבה וגרימואר</span>
+      <span class="bk-tab-ic" aria-hidden="true">◯</span><span>מעגל הישיבה</span>
     </button>
     <button type="button" class="bootkeh-tab-btn" data-tab="sheet" onclick="window.Bootkeh.setTab('sheet')">
-      <span>📜 דף תפקידים (Script Sheet)</span>
+      <span class="bk-tab-ic" aria-hidden="true">❡</span><span>דף תפקידים</span>
     </button>
     <button type="button" class="bootkeh-tab-btn" data-tab="cards" onclick="window.Bootkeh.setTab('cards')">
-      <span>🃏 קלפי שחקנים ו-WhatsApp</span>
+      <span class="bk-tab-ic" aria-hidden="true">✉</span><span>שליחה לשחקנים</span>
     </button>
   </nav>
 
@@ -62,11 +61,10 @@
       <div class="bk-card">
         <div class="bk-card-header">
           <div class="bk-card-title">
-            <span>🎲</span>
-            <span>יצירת משחק "דם על מגדל השעון"</span>
+            <span>משחק חדש</span>
           </div>
           <button type="button" class="bk-btn pri" onclick="window.Bootkeh.generateGame()">
-            <span>⚡ ג'נרט משחק והושב שחקנים!</span>
+            <span>חלק תפקידים</span>
           </button>
         </div>
 
@@ -74,7 +72,7 @@
           <!-- Left Column: Players & Roles Distribution -->
           <div>
             <div class="bk-form-group">
-              <label class="bk-label">מספר שחקנים (5 עד 15 שחקנים):</label>
+              <label class="bk-label">מספר שחקנים</label>
               <div class="bk-player-count-wrap">
                 <input type="range" id="playerCountSlider" class="bk-range-slider" min="5" max="15" value="8">
                 <span id="playerCountBadge" class="bk-player-count-badge">8</span>
@@ -83,17 +81,20 @@
             </div>
 
             <div class="bk-form-group">
-              <label class="bk-label">סט תפקידים (Script / Edition):</label>
+              <label class="bk-label">סט תפקידים</label>
               <select id="scriptSelect" class="bk-select">
-                <option value="crimson_guard">🩸 שובו של משמר הארגמן (Return of the Crimson Guard)</option>
-                <option value="trouble_brewing">🍺 הצרות מתבשלות (Trouble Brewing - הקלאסי)</option>
-                <option value="sects_and_violets">🔮 כתות וסיגליות (Sects & Violets)</option>
-                <option value="custom">🛠️ סט מותאם אישית (Custom Roles Matrix)</option>
+                <option value="crimson_guard">שובו של משמר הארגמן</option>
+                <option value="trouble_brewing">הצרות מתבשלות (הקלאסי)</option>
+                <option value="sects_and_violets">כתות וסיגליות</option>
+                <option value="custom">מותאם אישית</option>
               </select>
             </div>
 
+            <!-- saved custom games (renderPresets in bootkeh.js) -->
+            <div id="bkPresets" class="bk-form-group"></div>
+
             <div class="bk-form-group">
-              <label class="bk-label">שם מספר הסיפורים (Storyteller):</label>
+              <label class="bk-label">מספר הסיפורים</label>
               <input type="text" id="storytellerInput" class="bk-input" value="רועי / Sit" placeholder="שם מספר הסיפורים">
             </div>
           </div>
@@ -102,12 +103,12 @@
           <div>
             <div class="bk-form-group">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                <label class="bk-label" style="margin:0;">עולם המשחק והתמה (Thematic Flavor):</label>
+                <label class="bk-label" style="margin:0;">עולם המשחק</label>
                 <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.generateRandomTheme()">
-                  <span>🎲 חולל תמה אקראית!</span>
+                  <span>עולם אקראי</span>
                 </button>
               </div>
-              <input type="text" id="customThemeInput" class="bk-input" placeholder="או הקלד עולם חופשי משלך (למשל: ספינת פיראטים טרופה 1690)..." oninput="window.Bootkeh.setCustomTheme(this.value)" style="margin-bottom:10px;">
+              <input type="text" id="customThemeInput" class="bk-input" placeholder="או כתוב עולם משלך, למשל: ספינת פיראטים, 1690" oninput="window.Bootkeh.setCustomTheme(this.value)" style="margin-bottom:10px;">
               <!-- Theme generator: history / movies / RPG (assets/bootkeh-themes.js) -->
               <div id="bkThemeGen" class="bk-themegen" style="margin:10px 0 12px;"></div>
               <div id="themeGrid" class="bk-theme-grid"></div>
@@ -118,22 +119,23 @@
         <!-- Advanced Role Matrix Dropdown with Search & Filters -->
         <details style="margin-top:16px;" class="bk-form-group">
           <summary class="bk-label" style="cursor:pointer;padding:8px 0;user-select:none;">
-            <span>⚙️ הגדרות מתקדמות: חיפוש ובחירת כל התפקידים שנוצרו למשחק (96 תפקידים!) ▾</span>
+            <span>הגדרות מתקדמות — בחירת תפקידים ידנית</span>
           </summary>
           <div style="padding-top:14px;">
             <div class="bk-role-search-wrap">
-              <input type="text" id="roleSearchInput" class="bk-input" placeholder="🔍 חפש תפקיד או יכולת (למשל: רוצח, מורעל, Demon, Poisoner, להרוג)..." oninput="window.Bootkeh.onRoleSearch(this.value)" style="flex:1;">
-              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.selectAllRoles()">✓ בחר הכל (96)</button>
-              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.deselectAllRoles()">✕ נקה הכל</button>
+              <input type="text" id="roleSearchInput" class="bk-input" placeholder="חיפוש תפקיד או יכולת (למשל: מורעל, Poisoner)" oninput="window.Bootkeh.onRoleSearch(this.value)" style="flex:1;">
+              <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.randomizeRoles()">תפקידים אקראיים</button>
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.selectAllRoles()">בחר הכל</button>
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.deselectAllRoles()">נקה</button>
             </div>
             <div class="bk-role-filter-chips">
               <button type="button" class="bk-role-filter-chip active" id="chip-filter-all" onclick="window.Bootkeh.setRoleFilterCat('all')">הכל</button>
-              <button type="button" class="bk-role-filter-chip" id="chip-filter-townsfolk" onclick="window.Bootkeh.setRoleFilterCat('townsfolk')">תושבי העיירה 💙</button>
-              <button type="button" class="bk-role-filter-chip" id="chip-filter-outsider" onclick="window.Bootkeh.setRoleFilterCat('outsider')">אאוטסיידרים 🏮</button>
-              <button type="button" class="bk-role-filter-chip" id="chip-filter-minion" onclick="window.Bootkeh.setRoleFilterCat('minion')">משרתים 👺</button>
-              <button type="button" class="bk-role-filter-chip" id="chip-filter-demon" onclick="window.Bootkeh.setRoleFilterCat('demon')">שדים 😈</button>
-              <button type="button" class="bk-role-filter-chip" id="chip-filter-traveller" onclick="window.Bootkeh.setRoleFilterCat('traveller')">נוסעים 🧳</button>
-              <button type="button" class="bk-role-filter-chip" id="chip-filter-fabled" onclick="window.Bootkeh.setRoleFilterCat('fabled')">אגדיים ✨</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-townsfolk" onclick="window.Bootkeh.setRoleFilterCat('townsfolk')">תושבים</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-outsider" onclick="window.Bootkeh.setRoleFilterCat('outsider')">אאוטסיידרים</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-minion" onclick="window.Bootkeh.setRoleFilterCat('minion')">משרתים</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-demon" onclick="window.Bootkeh.setRoleFilterCat('demon')">שדים</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-traveller" onclick="window.Bootkeh.setRoleFilterCat('traveller')">נוסעים</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-fabled" onclick="window.Bootkeh.setRoleFilterCat('fabled')">אגדיים</button>
             </div>
             <div id="customRolesMatrix"></div>
           </div>
@@ -143,20 +145,20 @@
         <div style="margin-top:24px;border-top:1px solid rgba(212,175,55,0.25);padding-top:20px;">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
             <div>
-              <label class="bk-label" style="margin:0;font-size:15px;">📜 שמות השחקנים ומספרי WhatsApp לכל המושבים במעגל:</label>
+              <label class="bk-label" style="margin:0;font-size:15px;">שחקנים וטלפונים</label>
               <div id="rosterCountSummary" style="font-size:12px;color:var(--bk-text-muted);margin-top:3px;">
-                מוגדר עבור <b id="rosterCountVal" style="color:var(--bk-gold-light);">8</b> שחקנים (1 עד 8) — כל שחקן יקבל הודעת WhatsApp סודית אישית.
+                <b id="rosterCountVal" style="color:var(--bk-gold-light);">8</b> מושבים. הטלפון משמש לשליחת התפקיד ב־WhatsApp.
               </div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button type="button" class="bk-btn sm" onclick="window.Bootkeh.autoFillRosterFromSaved()">
-                <span>🪄 שבוץ אוטומטי מרשימה שמורה</span>
+                <span>מלא מהרשימה השמורה</span>
               </button>
               <button type="button" class="bk-btn sm" onclick="window.Bootkeh.clearRoster()">
-                <span>🧹 נקה שמות</span>
+                <span>נקה שמות</span>
               </button>
               <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSavedPlayersModal()">
-                <span>👥 נהל שחקנים שמורים</span>
+                <span>רשימת שחקנים</span>
               </button>
             </div>
           </div>
@@ -167,7 +169,7 @@
 
         <div style="margin-top:26px;display:flex;justify-content:center;">
           <button type="button" class="bk-btn pri" style="padding:14px 34px;font-size:16px;font-weight:800;letter-spacing:0.5px;" onclick="window.Bootkeh.generateGame()">
-            <span>⚡ ג'נרט משחק, פזר תפקידים והושב במעגל!</span>
+            <span>חלק תפקידים והושב</span>
           </button>
         </div>
       </div>
@@ -179,22 +181,22 @@
       <div class="bootkeh-phase-bar">
         <div>
           <div id="phaseTitle" style="font-family:var(--bk-font-serif);font-size:18px;font-weight:700;color:#fff;">
-            ☀️ שלב היום (דיון חופשי) · יום 1
+            יום 1 · דיון
           </div>
           <div style="font-size:12px;color:var(--bk-text-muted);">
-            השתמש בטיימר אוטומטי להרצת שלבי הדיון וההוצאות להורג
+            טיימר לשלבי היום
           </div>
         </div>
 
         <div style="display:flex;align-items:center;gap:16px;">
           <div id="timerDisplay" class="bootkeh-timer-display">05:00</div>
           <div style="display:flex;gap:6px;">
-            <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.startTimer()">▶ הפעל</button>
-            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.pauseTimer()">⏸ השהה</button>
-            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.resetTimer()">↺ איפוס</button>
-            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.addMinute()">＋1 דקה</button>
+            <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.startTimer()" aria-label="הפעל">▶</button>
+            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.pauseTimer()" aria-label="השהה">❚❚</button>
+            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.resetTimer()" aria-label="איפוס">↺</button>
+            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.addMinute()">+1′</button>
           </div>
-          <button type="button" class="bk-btn sm gold" onclick="window.Bootkeh.advancePhase()">עבור לשלב הבא ➔</button>
+          <button type="button" class="bk-btn sm gold" onclick="window.Bootkeh.advancePhase()">השלב הבא</button>
         </div>
       </div>
 
@@ -204,10 +206,11 @@
           <button type="button" id="toggleViewBtn" class="bk-btn sm" onclick="window.Bootkeh.toggleStorytellerView()">
             עין מספר הסיפורים (הצג תפקידים)
           </button>
-          <div style="font-size:12px;color:var(--bk-text-muted);display:flex;align-items:center;gap:12px;">
-            <span>🟢 טובים</span>
-            <span>🔴 רעים</span>
-            <span>💀 לחץ על מושב כדי לסמן חי / מת</span>
+          <button type="button" class="bk-btn sm" onclick="window.Bootkeh.redeal()">חלק מחדש</button>
+          <div class="bk-legend">
+            <span><i class="good"></i>טובים</span>
+            <span><i class="evil"></i>רעים</span>
+            <span>לחיצה על כס: חי / מת</span>
           </div>
         </div>
 
@@ -219,11 +222,11 @@
     <section id="view-sheet" class="bootkeh-view">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;" class="bootkeh-print-hide">
         <div>
-          <h2 style="font-family:var(--bk-font-serif);font-size:20px;color:#fff;">דף תפקידים (Character Script Sheet)</h2>
+          <h2 style="font-family:var(--bk-font-serif);font-size:20px;color:#fff;">דף תפקידים</h2>
           <p style="font-size:12.5px;color:var(--bk-text-muted);">דף תפקידים מעוצב להדפסה, חלוקה לשחקנים ושמירה ב-PDF בדיוק כמו בגרסה הרשמית של המשחק</p>
         </div>
         <button type="button" class="bk-btn pri" onclick="window.Bootkeh.printSheet()">
-          <span>🖨️ הדפס דף תפקידים (Print / PDF)</span>
+          <span>הדפסה / PDF</span>
         </button>
       </div>
 
@@ -239,13 +242,12 @@
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
           <div>
             <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:24px;">💬</span>
               <h2 style="font-family:var(--bk-font-serif);font-size:20px;font-weight:800;color:#fff;margin:0;">
-                מרכז שליחת הודעות WhatsApp סודיות לשחקנים
+                שליחת התפקידים
               </h2>
             </div>
             <p style="font-size:12.5px;color:var(--bk-text-muted);margin-top:4px;">
-              שלח לכל שחקן את התפקיד הסודי שלו, ההסבר והמידע האישי ללילה הראשון ישירות למכשיר שלו בלחיצה אחת!
+              כל שחקן מקבל ב־WhatsApp את התפקיד שלו, ההסבר והמידע ללילה הראשון.
             </p>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
@@ -270,12 +272,12 @@
   <div id="savedPlayersModal" class="bootkeh-modal-backdrop">
     <div class="bootkeh-modal">
       <div class="bootkeh-modal-header">
-        <div style="font-weight:700;font-size:15px;color:#fff;">👥 ספר השחקנים השמורים (WhatsApp)</div>
+        <div style="font-weight:700;font-size:15px;color:#fff;">השחקנים השמורים</div>
         <button type="button" class="bootkeh-modal-close" onclick="window.Bootkeh.closeSavedPlayersModal()">✕</button>
       </div>
       <div class="bootkeh-modal-body">
         <p style="font-size:12.5px;color:var(--bk-text-muted);margin-bottom:14px;">
-          שמור את החברים שלך בקבוצת המשחק כדי להושיב אותם במהירות ולשלוח להם הודעות WhatsApp סודיות בכל משחק חדש.
+          החברים שמשחקים איתך, כדי להושיב אותם מהר בכל משחק.
         </p>
 
         <!-- Add Player Form -->
@@ -333,10 +335,10 @@
   </div>
 
   <!-- Scripts -->
-  <script src="assets/bootkeh-data.js?v=20261106_10"></script>
-  <script src="assets/bootkeh-roles-extra.js?v=20261106_10"></script>
-  <script src="assets/bootkeh-themes.js?v=20261106_10"></script>
-  <script src="assets/bootkeh-cloud.js?v=20261106_10"></script>
-  <script src="assets/bootkeh.js?v=20261106_10"></script>
+  <script src="assets/bootkeh-data.js?v=20261106_20"></script>
+  <script src="assets/bootkeh-roles-extra.js?v=20261106_20"></script>
+  <script src="assets/bootkeh-themes.js?v=20261106_20"></script>
+  <script src="assets/bootkeh-cloud.js?v=20261106_20"></script>
+  <script src="assets/bootkeh.js?v=20261106_20"></script>
 </body>
 </html>

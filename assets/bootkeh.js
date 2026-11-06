@@ -36,12 +36,12 @@
   const T = {
     he: {
       siteTitle: "בוטקה — דם על מגדל השעון",
-      tabSetup: "🎲 יצירת משחק",
-      tabBoard: "⭕ מעגל ישיבה וגרימואר",
-      tabSheet: "📜 דף תפקידים (Script Sheet)",
-      tabCards: "🃏 קלפי שחקנים ו-WhatsApp",
-      savedPlayersBtn: "👥 שחקנים שמורים",
-      langToggle: "English 🇬🇧",
+      tabSetup: "הכנת משחק",
+      tabBoard: "מעגל הישיבה",
+      tabSheet: "דף תפקידים",
+      tabCards: "שליחה לשחקנים",
+      savedPlayersBtn: "שחקנים שמורים",
+      langToggle: "English",
       setupTitle: "הגדרות משחק חדש",
       playerCountLabel: "מספר שחקנים:",
       distribution: "חלוקת תפקידים:",
@@ -53,32 +53,32 @@
       themeLabel: "תמה ועולם המשחק (Thematic Flavor):",
       customThemeLabel: "או תמה חופשית משלך:",
       storytellerLabel: "שם מספר הסיפורים (Storyteller):",
-      advancedSettings: "⚙️ הגדרות מתקדמות — בחירת תפקידים מדויקת",
+      advancedSettings: "הגדרות מתקדמות — בחירת תפקידים ידנית",
       playerRosterLabel: "שמות השחקנים וטלפון (להודעות WhatsApp):",
-      generateBtn: "⚡ ג'נרט משחק והושב שחקנים!",
-      seatToggleStoryteller: "עין מספר הסיפורים (הצג תפקידים)",
-      seatToggleSpectator: "מצב שחקנים (הסתר ספוילרים למסך)",
-      timerDay: "☀️ שלב היום (דיון חופשי)",
-      timerNomination: "⚖️ שלב הוצאות להורג",
-      timerNight: "🌙 שלב הלילה (כולם עוצמים עיניים)",
+      generateBtn: "חלק תפקידים",
+      seatToggleStoryteller: "הצג תפקידים",
+      seatToggleSpectator: "הסתר תפקידים",
+      timerDay: "דיון",
+      timerNomination: "מינויים והוצאה להורג",
+      timerNight: "לילה",
       timerStart: "▶ הפעל טיימר",
       timerPause: "⏸ השהה",
       timerReset: "↺ איפוס",
       timerAddMin: "＋ 1 דקה",
-      nextPhase: "עבור לשלב הבא ➔",
-      printSheet: "🖨️ הדפס דף תפקידים (PDF / Print)",
-      shareWhatsapp: "📱 שלח תפקיד ב-WhatsApp",
-      copySecret: "📋 העתק טקסט סודי",
+      nextPhase: "השלב הבא",
+      printSheet: "הדפסה / PDF",
+      shareWhatsapp: "שלח ב־WhatsApp",
+      copySecret: "העתק",
       secretRevealed: "לחץ להסתרת התפקיד",
-      secretHidden: "👁️ לחץ לחשיפת התפקיד הסודי",
+      secretHidden: "לחץ לחשיפת התפקיד",
       firstNightTitle: "מידע התחלתי ללילה ראשון:",
       abilityTitle: "יכולת הדמות:",
       alive: "חי",
       dead: "מת",
       ghostVote: "קול רפאים זמין",
-      savePlayerSuccess: "השחקן נשמר בהצלחה!",
-      whatsappSent: "נפתח חלון WhatsApp לשליחה!",
-      copySuccess: "המידע הועתק ללוח!",
+      savePlayerSuccess: "השחקן נשמר",
+      whatsappSent: "WhatsApp נפתח",
+      copySuccess: "הועתק",
       addSavedPlayer: "＋ הוסף שחקן שמור",
       savedPlayersTitle: "ספר השחקנים השמורים (לשליחה מהירה ב-WhatsApp)",
       namePlaceholder: "שם שחקן",
@@ -86,12 +86,12 @@
     },
     en: {
       siteTitle: "Bootkeh — Blood on the Clocktower",
-      tabSetup: "🎲 Game Setup",
-      tabBoard: "⭕ Seating & Grimoire",
-      tabSheet: "📜 Character Sheet",
-      tabCards: "🃏 Player Cards & WhatsApp",
-      savedPlayersBtn: "👥 Saved Players",
-      langToggle: "עברית 🇮🇱",
+      tabSetup: "Setup",
+      tabBoard: "Seating",
+      tabSheet: "Character sheet",
+      tabCards: "Send to players",
+      savedPlayersBtn: "Saved players",
+      langToggle: "עברית",
       setupTitle: "New Game Setup",
       playerCountLabel: "Player Count:",
       distribution: "Character Distribution:",
@@ -103,32 +103,32 @@
       themeLabel: "Thematic Flavor / Setting:",
       customThemeLabel: "Or Enter Custom Setting:",
       storytellerLabel: "Storyteller Name:",
-      advancedSettings: "⚙️ Advanced Settings — Exact Role Selection",
+      advancedSettings: "Advanced — pick roles by hand",
       playerRosterLabel: "Player Names & Phone (for WhatsApp sharing):",
-      generateBtn: "⚡ Generate Game & Seat Players!",
-      seatToggleStoryteller: "Storyteller Eye (Show Roles)",
-      seatToggleSpectator: "Spectator Mode (Hide Spoilers for TV)",
-      timerDay: "☀️ Day Phase (Town Discussion)",
-      timerNomination: "⚖️ Executions & Nominations",
-      timerNight: "🌙 Night Phase (Eyes Closed)",
+      generateBtn: "Deal roles",
+      seatToggleStoryteller: "Show roles",
+      seatToggleSpectator: "Hide roles",
+      timerDay: "Discussion",
+      timerNomination: "Nominations",
+      timerNight: "Night",
       timerStart: "▶ Start Timer",
       timerPause: "⏸ Pause",
       timerReset: "↺ Reset",
       timerAddMin: "＋ 1 Min",
-      nextPhase: "Advance Phase ➔",
-      printSheet: "🖨️ Print Character Sheet (PDF)",
-      shareWhatsapp: "📱 Send via WhatsApp",
-      copySecret: "📋 Copy Secret Info",
+      nextPhase: "Next phase",
+      printSheet: "Print / PDF",
+      shareWhatsapp: "Send on WhatsApp",
+      copySecret: "Copy",
       secretRevealed: "Click to hide secret role",
-      secretHidden: "👁️ Click to reveal secret role",
+      secretHidden: "Click to reveal the role",
       firstNightTitle: "First Night Starting Info:",
       abilityTitle: "Character Ability:",
       alive: "Alive",
       dead: "Dead",
       ghostVote: "Ghost vote available",
-      savePlayerSuccess: "Player saved successfully!",
-      whatsappSent: "WhatsApp chat opened!",
-      copySuccess: "Secret info copied to clipboard!",
+      savePlayerSuccess: "Player saved",
+      whatsappSent: "WhatsApp opened",
+      copySuccess: "Copied",
       addSavedPlayer: "＋ Add Saved Player",
       savedPlayersTitle: "Saved Players Directory (Fast WhatsApp Sharing)",
       namePlaceholder: "Player Name",
@@ -303,6 +303,7 @@
     renderSetupView();
     renderRosterInputs();
     renderThemeGen();
+    renderPresets();
     attachEventListeners();
     generateGame(false); // prepare initial game data silently
     // a live game made on this device is still running: bring back that exact deal (same seats, roles and links)
@@ -426,9 +427,9 @@
     const summaryEl = $("#rosterCountSummary");
     if (summaryEl) {
       if (state.lang === "he") {
-        summaryEl.innerHTML = `מוגדר עבור <b style="color:var(--bk-gold-light);">${count}</b> שחקנים (מושבים 1 עד ${count}) — כל ${count} השחקנים יוכלו לקבל הודעת WhatsApp אישית.`;
+        summaryEl.innerHTML = `<b style="color:var(--bk-gold-light);">${count}</b> מושבים. הטלפון משמש לשליחת התפקיד ב־WhatsApp.`;
       } else {
-        summaryEl.innerHTML = `Configured for <b style="color:var(--bk-gold-light);">${count}</b> players (Seats 1 to ${count}) — all ${count} players will get secret WhatsApp info.`;
+        summaryEl.innerHTML = `<b style="color:var(--bk-gold-light);">${count}</b> seats. The phone is used to send the role on WhatsApp.`;
       }
     }
 
@@ -696,10 +697,10 @@
   function renderThemeGen() {
     const box = document.getElementById("bkThemeGen"); if (!box || !window.BKThemes) return;
     const he = state.lang === "he", fam = state.themeFam || "any", g = state.genTheme, L = g ? (he ? g.he : g.en) : null;
-    const cats = [["any", he ? "🎲 הכול" : "🎲 Any"], ["history", he ? "📜 היסטוריה" : "📜 History"], ["movies", he ? "🎬 סרטים" : "🎬 Movies"], ["rpg", he ? "🐉 משחקי תפקידים" : "🐉 RPG"]];
+    const cats = [["any", he ? "הכול" : "Any"], ["history", he ? "היסטוריה" : "History"], ["movies", he ? "סרטים" : "Movies"], ["rpg", he ? "משחקי תפקידים" : "RPG"]];
     box.innerHTML = `
       <div class="bk-themegen-cats">${cats.map(([k, t]) => `<button type="button" class="bk-themegen-cat${fam === k ? " on" : ""}" onclick="window.Bootkeh.setThemeFam('${k}')">${t}</button>`).join("")}
-        <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.genTheme()">✨ ${he ? "צור תמה" : "Generate theme"}</button></div>
+        <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.genTheme()">${he ? "צור עולם" : "Create world"}</button></div>
       ${L ? `<div class="bk-scroll">
         <div class="bk-scroll-sub">${esc(he ? g.familyLabel.he : g.familyLabel.en)}</div>
         <h3>${g.icon} ${esc(L.title)}</h3>
@@ -707,9 +708,9 @@
         <dl><dt>${he ? "העיירה" : "The town"}</dt><dd>${esc(L.town)}</dd><dt>${he ? "השד" : "The Demon"}</dt><dd>${esc(L.demon)}</dd><dt>${he ? "המשרתים" : "Minions"}</dt><dd>${esc(L.minions)}</dd></dl>
         <p><i>“${esc(L.opening)}”</i></p>
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-          <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.useGenTheme()">🏰 ${he ? "השתמש בתמה הזאת" : "Use this theme"}</button>
-          <button type="button" class="bk-btn sm" onclick="window.Bootkeh.genTheme()">🔄 ${he ? "אחרת" : "Another"}</button>
-          ${"speechSynthesis" in window ? `<button type="button" class="bk-btn sm" onclick="window.Bootkeh.readOpening()">🔊 ${he ? "הקרא פתיחה" : "Read the opening"}</button>` : ""}
+          <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.useGenTheme()">${he ? "השתמש בעולם הזה" : "Use this world"}</button>
+          <button type="button" class="bk-btn sm" onclick="window.Bootkeh.genTheme()">${he ? "אחר" : "Another"}</button>
+          ${"speechSynthesis" in window ? `<button type="button" class="bk-btn sm" onclick="window.Bootkeh.readOpening()">${he ? "הקרא פתיחה" : "Read aloud"}</button>` : ""}
         </div></div>` : `<div style="font-size:12.5px;color:var(--bk-text-muted);">${he ? `${window.BKThemes.count} עולמות: אירועים היסטוריים, ז'אנרים של סרטים ומשחקי תפקידים — עם פתיחה להקראה.` : `${window.BKThemes.count} worlds from history, film genres and RPGs — with an opening to read aloud.`}</div>`}`;
   }
   function setThemeFam(f) { state.themeFam = f; renderThemeGen(); }
@@ -956,10 +957,8 @@
     const N = state.players.length;
     if (N === 0) return;
 
-    // Radius of circular seating
-    const R = 280;
-    const centerX = 340;
-    const centerY = 340;
+    // Seats around the table, in % of the table size so it scales on phones
+    const R = N > 12 ? 41 : 39;
 
     let html = `
       <div class="bootkeh-circle-center">
@@ -972,8 +971,8 @@
     state.players.forEach((p, idx) => {
       // Angle around circle (starts at top -PI/2)
       const angle = (idx / N) * 2 * Math.PI - (Math.PI / 2);
-      const x = Math.round(centerX + R * Math.cos(angle));
-      const y = Math.round(centerY + R * Math.sin(angle));
+      const x = (50 + R * Math.cos(angle)).toFixed(2);
+      const y = (50 + R * Math.sin(angle)).toFixed(2);
 
       const isRevealed = state.isStorytellerView;
       const roleName = isRevealed ? (state.lang === "he" ? p.role.name_he : p.role.name_en) : (state.lang === "he" ? "מושב" : "Seat");
@@ -983,7 +982,7 @@
 
       html += `
         <div class="bootkeh-seat-node bk-throne-seat ${alignClass} ${statusClass}" 
-             style="left:${x}px;top:${y}px;" 
+             style="left:${x}%;top:${y}%;" 
              onclick="window.Bootkeh.openPlayerDetailsModal('${p.id}')"
              title="${esc(p.name)} (${esc(roleName)})">
           ${THRONE_SVG}
@@ -1141,14 +1140,14 @@
               <div class="bootkeh-secret-info-title">📜 ${t.firstNightTitle}</div>
               <textarea id="bkInfo-${p.id}" class="bk-info-edit">${esc(p.firstNightInfo)}</textarea>
               <div style="display:flex;gap:6px;margin-top:6px;align-items:center;">
-                <button type="button" id="bkInfoBtn-${p.id}" class="bk-btn sm" onclick="window.Bootkeh.pushInfo('${p.id}')">${live ? (state.lang === "he" ? "📤 עדכן בדף שלו" : "📤 Update their page") : (state.lang === "he" ? "💾 שמור" : "💾 Save")}</button>
+                <button type="button" id="bkInfoBtn-${p.id}" class="bk-btn sm" onclick="window.Bootkeh.pushInfo('${p.id}')">${live ? (state.lang === "he" ? "עדכן בדף שלו" : "Update their page") : (state.lang === "he" ? "שמור" : "Save")}</button>
                 ${live ? `<button type="button" id="bkCopy-${p.seat}" class="bk-btn sm" title="${state.lang === "he" ? "העתק קישור פרטי" : "Copy private link"}" onclick="window.Bootkeh.copyLiveLink(${p.seat})">🔗</button>` : ""}
               </div>
             </div>
 
             <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;">
               <button type="button" class="bk-btn whatsapp sm" style="flex:1;justify-content:center;" onclick="window.Bootkeh.sendWhatsapp('${p.id}')">
-                <span>💬 ${t.shareWhatsapp}</span>
+                <span>${t.shareWhatsapp}</span>
               </button>
               <button type="button" class="bk-btn sm" style="padding:6px 10px;" onclick="window.Bootkeh.sendSms('${p.id}')" title="שלח ב-SMS">
                 <span>📱</span>
@@ -1246,6 +1245,87 @@
     window.open(url, "_blank");
   }
 
+  // ---- Saved custom games ("our versions"): roles, player count and theme, kept on this device ----
+  function presets() { try { return JSON.parse(localStorage.getItem("bk_presets") || "[]"); } catch (e) { return []; } }
+  function storePresets(list) { try { localStorage.setItem("bk_presets", JSON.stringify(list)); } catch (e) {} }
+  // Save what is set up now as a named game.
+  function savePreset() {
+    const he = state.lang === "he";
+    const name = prompt(he ? "שם למשחק השמור (למשל: הגרסה של שישי):" : "Name for this saved game:", state.customThemeTitle || getScriptTitle());
+    if (!name) return;
+    const list = presets().filter(x => x.name !== name);
+    list.unshift({ id: "p" + Date.now(), name: name.slice(0, 60), playerCount: state.playerCount, scriptId: state.scriptId, customRoles: state.customRoles.slice(),
+      themeId: state.themeId, customThemeTitle: state.customThemeTitle, customThemeDesc: state.customThemeDesc, saved: Date.now() });
+    storePresets(list.slice(0, 30)); renderPresets();
+  }
+  // Load a saved game into the setup.
+  function loadPreset(id) {
+    const x = presets().find(p => p.id === id); if (!x) return;
+    Object.assign(state, { playerCount: x.playerCount || 8, scriptId: x.scriptId || "custom", customRoles: (x.customRoles || []).slice(), themeId: x.themeId || state.themeId,
+      customThemeTitle: x.customThemeTitle || "", customThemeDesc: x.customThemeDesc || "" });
+    const sl = $("#playerCountSlider"); if (sl) sl.value = state.playerCount;
+    const sc = $("#scriptSelect"); if (sc) sc.value = state.scriptId;
+    const ti = $("#customThemeInput"); if (ti) ti.value = state.customThemeTitle || "";
+    renderRosterInputs(); initCustomRolesMatrix(); updateCustomRoleChips && updateCustomRoleChips(); renderSetupView(); renderPresets();
+    generateGame(false); renderBoardView();
+  }
+  function deletePreset(id) { storePresets(presets().filter(p => p.id !== id)); renderPresets(); }
+  function renderPresets() {
+    const box = document.getElementById("bkPresets"); if (!box) return;
+    const he = state.lang === "he", list = presets();
+    box.innerHTML = `<div class="bk-presets-head"><span class="bk-label" style="margin:0;">${he ? "משחקים שמורים" : "Saved games"}</span>
+        <button type="button" class="bk-btn sm" onclick="window.Bootkeh.savePreset()">${he ? "שמור את ההגדרה הנוכחית" : "Save current setup"}</button></div>
+      ${list.length ? `<div class="bk-presets">${list.map(x => `<span class="bk-preset"><button type="button" onclick="window.Bootkeh.loadPreset('${x.id}')" title="${esc(x.name)}">
+          <b>${esc(x.name)}</b><small>${x.playerCount} ${he ? "שחקנים" : "players"} · ${x.scriptId === "custom" ? `${(x.customRoles || []).length} ${he ? "תפקידים" : "roles"}` : esc((getScript(x.scriptId) || {})[he ? "title_he" : "title_en"] || x.scriptId)}</small></button>
+          <button type="button" class="bk-preset-x" onclick="window.Bootkeh.deletePreset('${x.id}')" aria-label="${he ? "מחק" : "Delete"}">×</button></span>`).join("")}</div>`
+        : `<div class="bk-muted-note">${he ? "עוד אין משחקים שמורים. בנה משחק (גם עם תפקידים מותאמים) ולחץ \"שמור\"." : "No saved games yet. Set one up (custom roles too) and press Save."}</div>`}`;
+  }
+
+  // ---- Random roles: pick a balanced random set of characters for the current player count ----
+  function randomizeRoles() {
+    const n = parseInt(state.playerCount, 10) || 8;
+    const d = (window.BOOTKEH_PLAYER_DISTRIBUTION || {})[String(n)] || { townsfolk: 5, outsiders: 1, minions: 1, demons: 1 };
+    const all = window.BOOTKEH_ROLES || [], sh = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const take = (type, k) => sh(all.filter(r => r.type === type)).slice(0, k).map(r => r.id);
+    // a few more than needed of each kind, so the deal still varies and bluffs exist
+    state.customRoles = [...take("townsfolk", d.townsfolk + 4), ...take("outsider", d.outsiders + 2), ...take("minion", d.minions + 2), ...take("demon", Math.max(2, d.demons + 1))];
+    state.scriptId = "custom";
+    const sc = $("#scriptSelect"); if (sc) sc.value = "custom";
+    initCustomRolesMatrix(); if (typeof updateCustomRoleChips === "function") updateCustomRoleChips(); renderSetupView();
+    generateGame(false); renderBoardView(); renderCardsView();
+  }
+
+  // Deal the roles again to the same players (new random seats/roles from the current set).
+  function redeal() {
+    const tab = state.activeTab;
+    generateGame(false); renderBoardView(); renderCardsView(); renderSheetView();
+    if (tab) setTab(tab);
+  }
+
+  // ---- Send to everyone: WhatsApp only lets a person press Send for each chat, so this opens the chats one after
+  // another from one panel — one tap per player, no searching. ----
+  function sendAllWhatsapp() {
+    const he = state.lang === "he";
+    let ov = document.getElementById("bkSendAll");
+    if (!ov) { ov = document.createElement("div"); ov.id = "bkSendAll"; ov.className = "bk-sendall"; document.body.appendChild(ov); }
+    const draw = () => {
+      const left = state.players.filter(p => !p.isSent), next = left[0], done = state.players.length - left.length;
+      ov.innerHTML = `<div class="bk-sendall-card" role="dialog" aria-label="${he ? "שליחה לכולם" : "Send to all"}">
+        <div class="bk-sendall-top"><b>${he ? "שליחה לכל השחקנים" : "Send to every player"}</b><button type="button" class="bk-sendall-x" aria-label="${he ? "סגור" : "Close"}">×</button></div>
+        <div class="bk-sendall-bar"><i style="width:${Math.round(done / Math.max(1, state.players.length) * 100)}%"></i></div>
+        <div class="bk-sendall-count">${done} / ${state.players.length}</div>
+        ${next ? `<button type="button" class="bk-btn pri bk-sendall-go">${he ? "שלח ל" : "Send to "}${esc(next.name)} · ${he ? "מושב" : "seat"} ${next.seat}</button>
+          <p class="bk-muted-note">${he ? "WhatsApp ייפתח עם ההודעה מוכנה — לוחצים שם “שלח” וחוזרים לכאן לבא בתור." : "WhatsApp opens with the message ready — tap Send there and come back for the next one."}</p>
+          ${!liveGame() ? `<p class="bk-muted-note" style="color:#fcd34d;">${he ? "טיפ: צור קודם “דפים פרטיים” כדי שכל שחקן יקבל גם קישור שמתעדכן." : "Tip: create private pages first so each player also gets a live link."}</p>` : ""}`
+        : `<p style="font-size:16px;margin:10px 0;">✓ ${he ? "כולם קיבלו את ההודעה" : "Everyone has their message"}</p>`}
+        <div class="bk-sendall-list">${state.players.map(p => `<span class="${p.isSent ? "on" : ""}">${p.seat}. ${esc(p.name)}</span>`).join("")}</div>
+      </div>`;
+      ov.querySelector(".bk-sendall-x").onclick = () => ov.remove();
+      const go = ov.querySelector(".bk-sendall-go"); if (go) go.onclick = () => { sendWhatsapp(next.id); draw(); };
+    };
+    draw();
+  }
+
   // Phone number for WhatsApp links: digits only, international format (Israeli 05x… → 9725x…).
   function waPhone(raw) {
     let d = String(raw || "").replace(/[^0-9+]/g, "");
@@ -1321,7 +1401,7 @@
     const until = g ? new Date(g.expiresAt).toLocaleTimeString(he ? "he-IL" : "en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
     return `<div class="bk-card bk-live" style="margin-bottom:16px;">
       <div class="bk-live-row">
-        <b style="font-family:var(--bk-font-serif);color:var(--bk-gold-light);font-size:16px;">🏰 ${he ? "דפים פרטיים זמניים לשחקנים" : "Temporary private player pages"}</b>
+        <b style="font-family:var(--bk-font-serif);color:var(--bk-gold-light);font-size:16px;">${he ? "דפים פרטיים לשחקנים" : "Private player pages"}</b>
         <span class="bk-live-pill ${g ? "" : "off"}">${g ? (he ? `פעיל עד ${until}` : `Live until ${until}`) : (he ? "לא פעיל" : "Not live")}</span>
       </div>
       <div style="font-size:12.5px;color:var(--bk-text-muted);line-height:1.5;">${he
@@ -1330,9 +1410,10 @@
       <div class="bk-live-row">
         <label style="font-size:13px;color:#f1dfb5;">${he ? "נמחק אחרי" : "Expires after"}
           <select id="bkLiveHours" style="margin-inline-start:6px;"><option value="3">3 ${he ? "שעות" : "hours"}</option><option value="6" selected>6 ${he ? "שעות" : "hours"}</option><option value="12">12 ${he ? "שעות" : "hours"}</option></select></label>
-        <button type="button" class="bk-btn pri sm" onclick="window.Bootkeh.createLiveGame()">🔗 ${g ? (he ? "צור מחדש" : "Recreate") : (he ? "צור דפים פרטיים" : "Create private pages")}</button>
-        <button type="button" class="bk-btn sm whatsapp" onclick="window.Bootkeh.sendNextWhatsapp()">💬 ${he ? "שלח לבא בתור ב־WhatsApp" : "WhatsApp the next player"}</button>
-        ${g ? `<button type="button" class="bk-btn sm" onclick="window.Bootkeh.endLiveGame()">🏁 ${he ? "סיים משחק ומחק דפים" : "End game & delete pages"}</button>` : ""}
+        <button type="button" class="bk-btn pri sm" onclick="window.Bootkeh.createLiveGame()">${g ? (he ? "צור מחדש" : "Recreate") : (he ? "צור דפים פרטיים" : "Create private pages")}</button>
+        <button type="button" class="bk-btn sm whatsapp" onclick="window.Bootkeh.sendAllWhatsapp()">${he ? "שלח לכולם ב־WhatsApp" : "Send to everyone on WhatsApp"}</button>
+        <button type="button" class="bk-btn sm" onclick="window.Bootkeh.redeal()">${he ? "חלק תפקידים מחדש" : "Re-deal roles"}</button>
+        ${g ? `<button type="button" class="bk-btn sm" onclick="window.Bootkeh.endLiveGame()">${he ? "סיים משחק ומחק דפים" : "End game & delete pages"}</button>` : ""}
         <span id="bkLiveStatus" style="font-size:12px;color:var(--bk-text-muted);"></span>
       </div>
     </div>`;
@@ -1584,6 +1665,12 @@
     init,
     createLiveGame,
     endLiveGame,
+    savePreset,
+    loadPreset,
+    deletePreset,
+    randomizeRoles,
+    redeal,
+    sendAllWhatsapp,
     setThemeFam,
     genTheme,
     useGenTheme,

@@ -7,6 +7,13 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
 ## 2026-11-06
+- **Bootkeh:**
+  - **Saved games:** save the current setup (roles, player count, world) under a name and load it with one tap (this device).
+  - **Random roles:** a balanced random set for the player count.
+  - **Re-deal:** same players, new roles.
+  - **Send to everyone:** one panel walks through all players; one tap per WhatsApp chat, since WhatsApp needs Send pressed for each chat.
+  - **Phones:** an app-style bottom tab bar, single-column layout, and a round table and thrones that scale to the screen.
+  - **Calmer look:** short, plain labels without emoji noise or mixed-language parentheses; fewer glows.
 - **Bootkeh (Blood on the Clocktower):**
   - **Medieval look across the sub-site.** A night town with a castle and a glowing clock tower behind every page (`assets/bootkeh-castle.svg`, drawn for the site). Stone-and-gold panels, banner tabs, wax-seal buttons, and a parchment player page (`assets/bootkeh-medieval.css`).
   - **Seating:** a round oak council table with every seat drawn as a throne. The velvet is gold, blue (good), red (evil) or grey (dead).

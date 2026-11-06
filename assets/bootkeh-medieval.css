@@ -168,3 +168,94 @@ body.bootkeh-body::after {
 .bootkeh-portal-card .bootkeh-portal-body > div, .bootkeh-portal-card #portalRoleAbility { color: var(--bk-parch-ink) !important; }
 .bootkeh-portal-root { background: transparent !important; }
 @media (max-width: 700px) { body.bootkeh-body { background-position: 62% bottom !important; } }
+
+/* =====================================================================================================
+   Calmer, more crafted look: fewer glows and gradients, one accent colour, consistent type.
+   ===================================================================================================== */
+.bk-btn, .bk-btn.pri, .bk-btn.gold { text-transform: none; }
+.bk-btn.pri { box-shadow: 0 2px 0 #3e070e !important; }
+.bootkeh-seat-node.bk-throne-seat.evil { filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .7)) !important; }
+.bk-card { box-shadow: inset 0 0 0 1px rgba(212, 175, 55, .12), 0 14px 30px rgba(0, 0, 0, .55) !important; }
+.bk-card-header::after { display: none; }
+.bootkeh-topbar { box-shadow: 0 4px 14px rgba(0, 0, 0, .55) !important; }
+.bootkeh-title { text-shadow: none !important; }
+.bk-label { color: #e8d6a8 !important; font-weight: 700 !important; letter-spacing: .02em; }
+.bk-tab-ic { font-family: serif; opacity: .8; margin-inline-end: 2px; }
+.bk-legend { display: flex; gap: 14px; align-items: center; font-size: 12px; color: var(--bk-text-muted); flex-wrap: wrap; }
+.bk-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-inline-end: 5px; vertical-align: -1px; }
+.bk-legend i.good { background: #1e3f7a; border: 1px solid #e6be5a; }
+.bk-legend i.evil { background: #7a1020; border: 1px solid #ff9a8a; }
+.bk-muted-note { font-size: 12.5px; color: var(--bk-text-muted); line-height: 1.5; margin: 6px 0 0; }
+
+/* saved games */
+.bk-presets-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.bk-presets { display: flex; gap: 8px; flex-wrap: wrap; }
+.bk-preset { display: inline-flex; align-items: stretch; border: 1px solid rgba(212, 175, 55, .45); border-radius: 6px; overflow: hidden; background: rgba(233, 220, 192, .06); }
+.bk-preset > button:first-child { all: unset; cursor: pointer; padding: 7px 10px; display: grid; gap: 2px; }
+.bk-preset > button:first-child:hover { background: rgba(212, 175, 55, .14); }
+.bk-preset b { font: 700 13px/1.2 var(--bk-font-serif); color: #f5e3b3; }
+.bk-preset small { font-size: 11px; color: var(--bk-text-muted); }
+.bk-preset-x { all: unset; cursor: pointer; padding: 0 9px; color: var(--bk-text-muted); border-inline-start: 1px solid rgba(212, 175, 55, .25); font-size: 16px; display: grid; place-items: center; }
+.bk-preset-x:hover { color: #fff; background: rgba(220, 38, 38, .35); }
+
+/* send to everyone */
+.bk-sendall { position: fixed; inset: 0; z-index: 5000; background: rgba(5, 3, 6, .78); display: grid; place-items: center; padding: 16px; }
+.bk-sendall-card { width: min(440px, 100%); background: linear-gradient(180deg, #221a24, #140f16); border: 1px solid rgba(212, 175, 55, .5); border-radius: 10px; padding: 18px; display: grid; gap: 10px; color: var(--bk-text); }
+.bk-sendall-top { display: flex; justify-content: space-between; align-items: center; font: 700 17px/1.2 var(--bk-font-serif); color: #f5e3b3; }
+.bk-sendall-x { all: unset; cursor: pointer; font-size: 22px; color: var(--bk-text-muted); padding: 0 6px; }
+.bk-sendall-bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.bk-sendall-bar i { display: block; height: 100%; background: #25d366; }
+.bk-sendall-count { font-size: 12px; color: var(--bk-text-muted); }
+.bk-sendall-go { width: 100%; justify-content: center; padding: 14px !important; font-size: 16px !important; background: #1f9d55 !important; border-color: #25d366 !important; box-shadow: 0 2px 0 #0d4f2a !important; }
+.bk-sendall-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.bk-sendall-list span { font-size: 12px; padding: 3px 8px; border-radius: 4px; background: rgba(255, 255, 255, .06); color: var(--bk-text-muted); }
+.bk-sendall-list span.on { background: rgba(37, 211, 102, .15); color: #86efac; }
+
+/* the round table scales with the screen (seats are placed in % by bootkeh.js) */
+.bootkeh-circle-container { width: min(760px, 100%) !important; height: auto !important; aspect-ratio: 1 / 1; margin: 20px auto !important; transform: none !important; }
+.bootkeh-circle-center { width: 30% !important; height: 30% !important; padding: 2% !important; }
+
+/* =====================================================================================================
+   Phones
+   ===================================================================================================== */
+@media (max-width: 760px) {
+  body.bootkeh-body { padding-bottom: 70px; }
+  .bootkeh-topbar { padding: 8px 12px !important; gap: 8px !important; }
+  .bootkeh-back-link span { display: none; }
+  .bootkeh-title { font-size: 20px !important; }
+  .bootkeh-logo-icon { font-size: 18px !important; }
+  .bootkeh-topbar-actions .bk-btn { padding: 6px 9px !important; font-size: 12px !important; }
+  /* tabs become an app-style bar at the bottom */
+  .bootkeh-nav-tabs { position: fixed !important; top: auto !important; bottom: 0; left: 0; right: 0; z-index: 200 !important; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)) !important;
+    background: rgba(14, 9, 12, .97) !important; border-top: 1px solid rgba(212, 175, 55, .45) !important; display: grid !important; grid-template-columns: repeat(4, 1fr); gap: 4px !important; }
+  .bootkeh-tab-btn { display: flex !important; flex-direction: column; gap: 2px !important; padding: 6px 2px !important; border: 0 !important; border-radius: 6px !important; font-size: 11px !important;
+    background: transparent !important; box-shadow: none !important; justify-content: center; text-align: center; line-height: 1.15; }
+  .bootkeh-tab-btn.active { background: rgba(122, 20, 32, .55) !important; }
+  .bk-tab-ic { font-size: 16px; margin: 0; }
+  .bootkeh-main { padding: 12px 10px 30px !important; }
+  .bk-card { padding: 14px !important; }
+  .bk-card-header { flex-wrap: wrap; gap: 10px; }
+  .bk-grid-2, .bk-theme-grid, .bk-roster-grid, .bootkeh-cards-grid { grid-template-columns: 1fr !important; }
+  .bk-role-search-wrap { flex-wrap: wrap; }
+  .bk-role-search-wrap .bk-input { flex: 1 1 100%; }
+  .bootkeh-phase-bar { flex-direction: column; align-items: stretch !important; gap: 10px !important; padding: 12px !important; }
+  .bootkeh-phase-bar > div:last-child { flex-wrap: wrap; justify-content: space-between; gap: 8px !important; }
+  .bootkeh-seat-node.bk-throne-seat { width: 64px !important; height: 80px !important; padding-top: 20px; }
+  .bk-throne-seat .bootkeh-seat-icon { font-size: 17px !important; }
+  .bk-throne-seat .bootkeh-seat-name { font-size: 9px !important; bottom: 13px; max-width: 60px; }
+  .bk-throne-seat .bootkeh-seat-role-title { font-size: 9.5px !important; bottom: -15px; max-width: 86px; padding: 1px 5px; }
+  .bk-throne-seat .bootkeh-seat-num { font-size: 9px; padding: 2px 6px; top: -11px; }
+  .bootkeh-circle-center-title { font-size: 11px !important; }
+  .bootkeh-circle-center-sub, .bootkeh-circle-center-logo { display: none; }
+  .bk-live-row { gap: 6px; }
+  .bk-live-row .bk-btn { flex: 1 1 auto; justify-content: center; }
+  .bk-scroll { padding: 14px; }
+  .bk-scroll h3 { font-size: 17px; }
+  #characterSheetWrap { overflow-x: auto; }
+}
+details.bk-form-group > summary { list-style: none; display: flex; align-items: center; gap: 8px; }
+details.bk-form-group > summary::-webkit-details-marker { display: none; }
+details.bk-form-group > summary::after { content: "▾"; color: var(--bk-gold); transition: transform .2s; }
+details.bk-form-group[open] > summary::after { transform: rotate(180deg); }
+.bootkeh-tab-btn.active { box-shadow: inset 0 -3px 0 var(--bk-gold), 0 8px 18px rgba(0, 0, 0, .6) !important; }
+@media (max-width: 760px) { .bootkeh-tab-btn.active { box-shadow: none !important; } }
