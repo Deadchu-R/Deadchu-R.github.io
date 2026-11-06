@@ -7,6 +7,20 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
 ## 2026-11-06
+- **CV Studio:** a single Design place, the Design tab (the duplicate Designs box in the side menu is removed). It is ordered as:
+  1. Template (gallery of 13, columns, photo/icons, drag-arrange);
+  2. Main color & background;
+  3. Font, text colors, sizes & spacing.
+
+  A sticky Apple-style jump button moves between the three parts (tap opens; press-slide-release jumps), and its label follows the scroll.
+- **Résumé designs:** 5 more templates in the shared renderer:
+  - Harvard (career-office classic);
+  - Compact (dense, Jake's-résumé style);
+  - Swiss (titles in a left margin);
+  - Highlight (tinted section bars);
+  - Gradient (gradient header, two columns).
+
+  `RTCV.ATS_SAFE` marks the ATS-safe ones.
 - **Résumé designs:** 5 new templates in the shared renderer (`assets/cv.js` + `cv.css`), so they work in CV Studio, the site editor, cv.html and the PDFs:
   - Chicago (classic single column, ATS-safe);
   - Executive (dark header + career timeline);

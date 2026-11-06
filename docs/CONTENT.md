@@ -123,7 +123,7 @@ Lists of clips `{label, caption, video, drive_id}`, shown on lab.html and in the
     "<id>": {
       "label": "Unity ATS",            // name in the editor's résumé picker
       "public": true,                  // false = kept in the file but not on cv.html
-      "template": "ats",               // ats | chicago | executive | novo | top | corporate | monogram | studio  (see RTCV.TEMPLATES)
+      "template": "ats",               // ats | chicago | executive | harvard | jake | swiss | highlight | novo | top | corporate | monogram | gradient | studio  (RTCV.TEMPLATES)
       "accent": "#2a8a8f", "font": "Open Sans", "density": "compact|normal|roomy",
       "photo": "/assets/uploads/…", "show_photo": true, "show_icons": false,
       "lang": "en", "dir": "ltr",

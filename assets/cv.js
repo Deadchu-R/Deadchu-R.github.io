@@ -1,7 +1,7 @@
 /* Résumé builder: one renderer for the CV page, the PDFs/images built by the site, and the visual editor.
    A résumé ("variant") is data in content/cv.json: person + two lists of sections (main, side) + design (template, color, font).
    Templates (TEMPLATES below): one column — "ats", "chicago", "executive"; two columns — "novo", "top", "corporate", "monogram";
-   sidebar — "studio". The newer looks follow common résumé families (classic single column with rules, executive header +
+   sidebar — "studio"; plus "harvard", "jake" (Compact), "swiss", "highlight" (one column) and "gradient" (two columns). The newer looks follow common résumé families (classic single column with rules, executive header +
    timeline, bold header band, shaded contact sidebar, monogram) and are drawn only with CSS in assets/cv.css. */
 (function(root){
   "use strict";
@@ -14,11 +14,19 @@
     top:{label:"Bold Top",about:"Big colored header with photo, two columns below. Modern and eye-catching."},
     corporate:{label:"Corporate",about:"Clean header line and a shaded side column for contact, skills and languages."},
     monogram:{label:"Monogram",about:"Your initials as a monogram, lots of white space, narrow left column."},
+    harvard:{label:"Harvard",about:"The classic career-office format: name on the left, small-caps headings over full rules. Very ATS-safe."},
+    jake:{label:"Compact",about:"High-density single column (like the well-known \"Jake's résumé\"): fits a lot on one page. ATS-safe."},
+    swiss:{label:"Swiss",about:"Minimal grid: section titles in a left margin, content on the right, lots of white space. ATS-safe."},
+    highlight:{label:"Highlight",about:"One column with tinted section bars in your color that guide the eye."},
+    gradient:{label:"Gradient",about:"Soft gradient header in your color, two columns below. Modern and bright."},
   };
   // how each template is built: "one" column, "two" columns (header + .cv-cols) or "sidebar"
-  const LAYOUT={ats:"one",chicago:"one",executive:"one",novo:"two",top:"two",corporate:"two",monogram:"two",studio:"sidebar"};
+  const LAYOUT={ats:"one",chicago:"one",executive:"one",harvard:"one",jake:"one",swiss:"one",highlight:"one",
+    novo:"two",top:"two",corporate:"two",monogram:"two",gradient:"two",studio:"sidebar"};
   // templates that keep skills / contact as plain text (no chips, no icons) for applicant-tracking systems
-  const PLAIN={ats:1,chicago:1};
+  const PLAIN={ats:1,chicago:1,harvard:1,jake:1,swiss:1};
+  // templates that read cleanly in applicant-tracking systems (shown with an "ATS" tag in the editors)
+  const ATS_SAFE=PLAIN;
   const FONTS={
     "Open Sans":"Open+Sans:ital,wght@0,400;0,600;0,700;1,400",
     "Inter":"Inter:wght@400;500;600;700",
@@ -199,6 +207,6 @@
     for(const s of v.main.concat(v.side)){out.push("",(s.title||"").toUpperCase());for(const it of s.items){out.push(Object.values(it).flat().filter(x=>typeof x==="string"&&x).join(" | "))}}
     return out.filter(x=>x!=null).join("\n");
   }
-  const api={SEC_ICON,TEMPLATES,LAYOUT,FONTS,DENSITY,COLORS,SECTION_TYPES,render,normalize,fontHref,newSection,blank,plainText,esc};
+  const api={SEC_ICON,TEMPLATES,LAYOUT,ATS_SAFE,FONTS,DENSITY,COLORS,SECTION_TYPES,render,normalize,fontHref,newSection,blank,plainText,esc};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;else root.RTCV=api;
 })(typeof self!=="undefined"?self:this);

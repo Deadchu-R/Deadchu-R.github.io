@@ -4073,3 +4073,23 @@ body.cve-sidebar-collapsed .cve-canvas-wrap {
 .cve-board-card.cve-drop-target-before { box-shadow: 0 -3px 0 #38bdf8, 0 0 14px rgba(56, 189, 248, .4) !important; }
 .cve-board-card.cve-drop-target-after { box-shadow: 0 3px 0 #38bdf8, 0 0 14px rgba(56, 189, 248, .4) !important; }
 .cve-login-user { flex-wrap: wrap; }
+
+/* Design tab: sticky jump button + Apple-style menu to move between Template / Colors / Font parts */
+.cve-ds-jump { position: sticky; top: -16px; z-index: 5; margin: -16px -16px 10px; padding: 10px 16px; display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(var(--cve-surface) 75%, transparent); }
+.cve-ds-jump-btn { flex: 1; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--cve-border);
+  background: rgba(255, 255, 255, .06); color: var(--cve-text); font: 700 13px/1 inherit; cursor: pointer; touch-action: none; user-select: none; }
+.cve-ds-jump-btn:hover { border-color: rgba(56, 189, 248, .6); }
+.cve-ds-jump-lbl { flex: 1; text-align: start; }
+.cve-ds-jump-car { color: var(--cve-text-muted); font-size: 14px; }
+.cve-ds-jump-hint { font-size: 10.5px; color: var(--cve-text-muted); white-space: nowrap; }
+.cve-ds-menu { position: fixed; z-index: 100002; padding: 6px; border-radius: 14px; background: rgba(30, 36, 48, .92); backdrop-filter: blur(18px) saturate(1.6);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6); border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 18px 50px rgba(0, 0, 0, .55);
+  animation: cveDsPop .16s cubic-bezier(.2, .9, .3, 1.2); transform-origin: top left; }
+@keyframes cveDsPop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
+.cve-ds-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 9px; background: none;
+  color: #f1f5f9; font: 600 13.5px/1.2 inherit; text-align: start; cursor: pointer; }
+.cve-ds-menu button + button { border-top: 1px solid rgba(255, 255, 255, .06); }
+.cve-ds-menu button:hover, .cve-ds-menu button.hot { background: #2563eb; color: #fff; }
+.cve-ds-part { scroll-margin-top: 60px; }
+.cve-sidebar-content .cve-tpl-gallery { grid-template-columns: repeat(4, 1fr); }

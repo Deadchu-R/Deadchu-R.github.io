@@ -2730,17 +2730,111 @@
     });
   }
 
+  // The Design tab — the one place for the résumé's look, in this order:
+  //   1. Template (layout gallery, columns, photo/icons)  2. Colors & background  3. Font, text colors and sizes.
+  // A jump button at the top (Apple-style: tap to open, or press-and-slide-and-release) moves between the three parts.
+  const DESIGN_PARTS = [
+    { id: "cveDsTemplate", icon: "🧩", label: "Template" },
+    { id: "cveDsColors", icon: "🎨", label: "Colors & background" },
+    { id: "cveDsType", icon: "🔤", label: "Font, text color & size" }
+  ];
   function renderDesignTab(body) {
     const cv = getCurrentCV();
-    const colors = ["#1f5fa8", "#2a8a8f", "#1f6feb", "#0b7a4b", "#b5452a", "#7c3aed", "#c2185b", "#334155", "#d4a017"];
+    const R = window.RTCV || { TEMPLATES: {}, COLORS: [] };
+    const colors = Array.from(new Set(["#1f5fa8"].concat(R.COLORS || [])));
     const textColors = ["#10131a", "#000000", "#1e293b", "#292524", "#0f172a", "#f8fafc"];
     const muteColors = ["#64748b", "#78716c", "#94a3b8", "#93c5fd", "#475569"];
+    const cur = cv.template || "ats", a = cv.accent || "#1f5fa8", ats = R.ATS_SAFE || { ats: 1, chicago: 1 };
 
     body.innerHTML = `
+      <div class="cve-ds-jump" id="cveDsJump">
+        <button type="button" class="cve-ds-jump-btn" id="cveDsJumpBtn" aria-haspopup="menu">
+          <span class="cve-ds-jump-ic">${DESIGN_PARTS[0].icon}</span><span class="cve-ds-jump-lbl">${DESIGN_PARTS[0].label}</span><span class="cve-ds-jump-car">⌄</span>
+        </button>
+        <span class="cve-ds-jump-hint">hold & slide to jump</span>
+      </div>
+
+      <!-- 1. Template -->
+      <div class="cve-section-card cve-ds-part" id="cveDsTemplate">
+        <div class="cve-section-header"><span class="cve-section-title">🧩 1 · Template</span>
+          <span class="cve-badge-pill" style="font-size:10px;background:var(--cve-accent);color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">${Object.keys(R.TEMPLATES).length} designs</span></div>
+        <div class="cve-section-body">
+          <div class="cve-tpl-gallery">
+            ${Object.entries(R.TEMPLATES).map(([k, t]) => `
+              <button type="button" class="cve-tpl-card${k === cur ? " active" : ""}" onclick="window.CVE.setTemplate('${k}')" title="${esc(t.about)}">
+                ${tplSketch(k, a)}<span>${esc(t.label)}</span>${ats[k] ? `<em>ATS</em>` : ""}
+              </button>`).join("")}
+          </div>
+          <p class="cve-tpl-about">${esc((R.TEMPLATES[cur] || {}).about || "")}</p>
+          <div class="cve-form-group">
+            <label class="cve-label">Column Layout Ratio</label>
+            <select class="cve-select" onchange="window.CVE.setLayoutRatio(this.value)">
+              <option value="50-50" ${(cv.layout_ratio || "50-50") === "50-50" ? "selected" : ""}>50 / 50 Balanced Split (Novo Standard)</option>
+              <option value="35-65" ${cv.layout_ratio === "35-65" ? "selected" : ""}>35 / 65 Left Sidebar (Studio Style)</option>
+              <option value="65-35" ${cv.layout_ratio === "65-35" ? "selected" : ""}>65 / 35 Right Sidebar (Modern)</option>
+              <option value="1-col" ${cv.layout_ratio === "1-col" ? "selected" : ""}>1-Column Full Width (ATS Classic)</option>
+            </select>
+          </div>
+          <div class="cve-design-row"><span>Show</span>
+            <label class="cve-chk"><input type="checkbox" ${cv.show_photo ? "checked" : ""} onchange="window.CVE.setShowPhoto(this.checked)"> Photo</label>
+            <label class="cve-chk"><input type="checkbox" ${cv.show_icons ? "checked" : ""} onchange="window.CVE.setShowIcons(this.checked)"> Section icons</label>
+          </div>
+          <button type="button" class="cve-btn layout-btn" style="justify-content:center;margin-top:8px;width:100%;" onclick="window.CVE.openLayoutModal()">📐 Arrange sections (drag)</button>
+        </div>
+      </div>
+
+      <!-- 2. Colors & background -->
+      <div class="cve-ds-part" id="cveDsColors">
+        <div class="cve-section-card">
+          <div class="cve-section-header"><span class="cve-section-title">🎨 2 · Main color</span></div>
+          <div class="cve-section-body">
+            <label class="cve-label">Accent (titles, lines, highlights)</label>
+            <div class="cve-color-palette">
+              ${colors.map(c => `<div class="cve-color-swatch ${(cv.accent || "").toLowerCase() === c ? "active" : ""}" style="background:${c};" onclick="window.CVE.setAccent('${c}')"></div>`).join("")}
+            </div>
+            <input type="color" style="margin-top:8px;height:32px;width:100%;background:none;border:none;cursor:pointer;" value="${a}" onchange="window.CVE.setAccent(this.value)">
+          </div>
+        </div>
+      <!-- CV Document Backgrounds -->
+      <div class="cve-section-card">
+        <div class="cve-section-header">
+          <span class="cve-section-title">🖼️ 2 · Background</span>
+          <span class="cve-badge-pill" style="font-size:10px;background:#3b82f6;color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">10 Backgrounds</span>
+        </div>
+        <div class="cve-section-body">
+          <p style="font-size:12px;color:var(--cve-text-muted);margin-bottom:10px;line-height:1.4;">
+            בחר רקע לקורות החיים שלך ממסך העריכה של האתר — טופוגרפי, גריד הנדסי, כחול רויאל או קלאסי:
+          </p>
+          <div class="cve-bg-grid">
+            ${CV_BACKGROUNDS.map(bg => `
+              <div class="cve-bg-card ${(cv.background || "white") === bg.id ? "active" : ""}" onclick="window.CVE.setBg('${bg.id}')">
+                <div class="cve-bg-preview" style="${bg.previewStyle}">
+                  ${(cv.background || "white") === bg.id ? `<span class="cve-bg-check">✓</span>` : ""}
+                </div>
+                <div class="cve-bg-info">
+                  <div class="cve-bg-name">${esc(bg.name)}</div>
+                  <div class="cve-bg-name-he">${esc(bg.nameHe)}</div>
+                  <div class="cve-bg-desc">${esc(bg.desc)}</div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <label class="cve-label" style="margin:0;">צבע רקע מותאם אישית (Custom Color):</label>
+            <input type="color" class="cve-color-input" style="width:48px;height:30px;padding:0;border:1px solid rgba(255,255,255,0.2);border-radius:6px;cursor:pointer;background:none;" value="${cv.custom_bg || "#ffffff"}" onchange="window.CVE.setBg('custom-color', this.value)">
+          </div>
+        </div>
+      </div>
+
+      </div>
+
+      <!-- 3. Font, text color & size -->
+      <div class="cve-ds-part" id="cveDsType">
       <!-- Full Document Typography & Google Fonts -->
       <div class="cve-section-card">
         <div class="cve-section-header">
-          <span class="cve-section-title">🔤 Document Typography (Google Fonts)</span>
+          <span class="cve-section-title">🔤 3 · Font</span>
           <span class="cve-badge-pill" style="font-size:10px;background:var(--cve-accent);color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">12 Fonts</span>
         </div>
         <div class="cve-section-body">
@@ -2762,7 +2856,7 @@
       <!-- Text Color & Contrast -->
       <div class="cve-section-card">
         <div class="cve-section-header">
-          <span class="cve-section-title">🎨 צבעי טקסט וניגודיות (Text Colors)</span>
+          <span class="cve-section-title">🖋 3 · Text colors</span>
         </div>
         <div class="cve-section-body">
           <div class="cve-form-group">
@@ -2796,7 +2890,7 @@
       <!-- Font Sizing & Scale Controls -->
       <div class="cve-section-card">
         <div class="cve-section-header">
-          <span class="cve-section-title">📏 גדלי טקסט וכותרות (Font & Element Sizing)</span>
+          <span class="cve-section-title">📏 3 · Text size & spacing</span>
         </div>
         <div class="cve-section-body">
           <!-- Body Text Size -->
@@ -2855,115 +2949,64 @@
         </div>
       </div>
 
-      <!-- CV Document Backgrounds -->
-      <div class="cve-section-card">
-        <div class="cve-section-header">
-          <span class="cve-section-title">🖼️ רקעי קורות חיים (CV Document Backgrounds)</span>
-          <span class="cve-badge-pill" style="font-size:10px;background:#3b82f6;color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">10 Backgrounds</span>
-        </div>
-        <div class="cve-section-body">
-          <p style="font-size:12px;color:var(--cve-text-muted);margin-bottom:10px;line-height:1.4;">
-            בחר רקע לקורות החיים שלך ממסך העריכה של האתר — טופוגרפי, גריד הנדסי, כחול רויאל או קלאסי:
-          </p>
-          <div class="cve-bg-grid">
-            ${CV_BACKGROUNDS.map(bg => `
-              <div class="cve-bg-card ${(cv.background || "white") === bg.id ? "active" : ""}" onclick="window.CVE.setBg('${bg.id}')">
-                <div class="cve-bg-preview" style="${bg.previewStyle}">
-                  ${(cv.background || "white") === bg.id ? `<span class="cve-bg-check">✓</span>` : ""}
-                </div>
-                <div class="cve-bg-info">
-                  <div class="cve-bg-name">${esc(bg.name)}</div>
-                  <div class="cve-bg-name-he">${esc(bg.nameHe)}</div>
-                  <div class="cve-bg-desc">${esc(bg.desc)}</div>
-                </div>
-              </div>
-            `).join("")}
-          </div>
-
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <label class="cve-label" style="margin:0;">צבע רקע מותאם אישית (Custom Color):</label>
-            <input type="color" class="cve-color-input" style="width:48px;height:30px;padding:0;border:1px solid rgba(255,255,255,0.2);border-radius:6px;cursor:pointer;background:none;" value="${cv.custom_bg || "#ffffff"}" onchange="window.CVE.setBg('custom-color', this.value)">
-          </div>
-        </div>
-      </div>
-
-      <!-- Site Themes & Skins -->
-      <div class="cve-section-card">
-        <div class="cve-section-header">
-          <span class="cve-section-title">🎨 Site Themes & Skins</span>
-          <span class="cve-badge-pill" style="font-size:10px;background:var(--cve-accent);color:#fff;padding:2px 8px;border-radius:980px;font-weight:700;">8 Styles</span>
-        </div>
-        <div class="cve-section-body">
-          <div class="cve-skin-grid">
-            ${SITE_SKINS.map(s => `
-              <div class="cve-skin-card ${(cv.skin || "classic") === s.id ? "active" : ""}" onclick="window.CVE.setSkin('${s.id}')">
-                <div class="cve-skin-card-header">
-                  <span class="cve-skin-icon">${s.icon}</span>
-                  <span class="cve-skin-name">${esc(s.name)}</span>
-                  <span class="cve-skin-dot" style="background:${s.accent};"></span>
-                </div>
-                <div class="cve-skin-desc">${esc(s.desc)}</div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      </div>
-
-      <!-- Layout & Column Options -->
-      <div class="cve-section-card">
-        <div class="cve-section-header">
-          <span class="cve-section-title">📐 Layout & Column Options</span>
-        </div>
-        <div class="cve-section-body">
-          <div class="cve-form-group">
-            <label class="cve-label">Column Layout Ratio</label>
-            <select class="cve-select" onchange="window.CVE.setLayoutRatio(this.value)">
-              <option value="50-50" ${(cv.layout_ratio || "50-50") === "50-50" ? "selected" : ""}>50 / 50 Balanced Split (Novo Standard)</option>
-              <option value="35-65" ${cv.layout_ratio === "35-65" ? "selected" : ""}>35 / 65 Left Sidebar (Studio Style)</option>
-              <option value="65-35" ${cv.layout_ratio === "65-35" ? "selected" : ""}>65 / 35 Right Sidebar (Modern)</option>
-              <option value="1-col" ${cv.layout_ratio === "1-col" ? "selected" : ""}>1-Column Full Width (ATS Classic)</option>
-            </select>
-          </div>
-          <button type="button" class="cve-btn layout-btn" style="justify-content:center;margin-top:2px;" onclick="window.CVE.openLayoutModal()">
-            📐 Open Visual Column Organizer
-          </button>
-        </div>
-      </div>
-
-      <!-- Accent Color & Presets -->
-      <div class="cve-section-card">
-        <div class="cve-section-header">
-          <span class="cve-section-title">🖌 Accent Color & Template Preset</span>
-        </div>
-        <div class="cve-section-body">
-          <div class="cve-form-group">
-            <label class="cve-label">Template Preset</label>
-            <select class="cve-select" data-bind="template" onchange="window.CVE.setTemplate(this.value)">
-              ${Object.entries((window.RTCV && window.RTCV.TEMPLATES) || {}).map(([k, t]) => `<option value="${k}" ${cv.template === k ? "selected" : ""}>${esc(t.label)}</option>`).join("")}
-            </select>
-          </div>
-          <div class="cve-form-group">
-            <label class="cve-label">Accent Color (כותרות, קווים והדגשות)</label>
-            <div class="cve-color-palette">
-              ${colors.map(c => `
-                <div class="cve-color-swatch ${cv.accent === c ? "active" : ""}" style="background:${c};" onclick="window.CVE.setAccent('${c}')"></div>
-              `).join("")}
-            </div>
-            <input type="color" style="margin-top:8px;height:32px;width:100%;background:none;border:none;cursor:pointer;" value="${cv.accent || "#1f5fa8"}" onchange="window.CVE.setAccent(this.value)">
-          </div>
-          <div class="cve-form-group">
+        <div class="cve-section-card">
+          <div class="cve-section-header"><span class="cve-section-title">↔ Text direction</span></div>
+          <div class="cve-section-body"><div class="cve-form-group">
             <label class="cve-label">Text Direction (Language)</label>
             <select class="cve-select" data-bind="dir" onchange="window.CVE.setDirection(this.value)">
               <option value="ltr" ${cv.dir === "ltr" ? "selected" : ""}>Left-to-Right (English / Latin)</option>
               <option value="rtl" ${cv.dir === "rtl" ? "selected" : ""}>Right-to-Left (עברית / Hebrew)</option>
             </select>
-          </div>
+          </div></div>
         </div>
       </div>
     `;
     attachSidebarInputs(body);
+    wireDesignJump(body);
   }
 
+  // The jump button of the Design tab: tap opens a small menu; press, slide to a part and release jumps there
+  // (like the jump menu on the main site). The label follows the part you scrolled to.
+  function wireDesignJump(body) {
+    const btn = body.querySelector("#cveDsJumpBtn"), scroller = document.getElementById("sidebarContent");
+    if (!btn || !scroller) return;
+    const setLabel = p => { btn.querySelector(".cve-ds-jump-ic").textContent = p.icon; btn.querySelector(".cve-ds-jump-lbl").textContent = p.label; };
+    const go = p => { const el = document.getElementById(p.id); if (!el) return; scroller.scrollTo({ top: el.offsetTop - 52, behavior: "smooth" }); setLabel(p); };
+    let menu = null, held = false, downAt = 0;
+    const close = () => { if (menu) menu.remove(); menu = null; document.removeEventListener("pointerdown", outside, true); };
+    const outside = e => { if (menu && !menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) close(); };
+    const open = () => {
+      close();
+      const r = btn.getBoundingClientRect();
+      menu = document.createElement("div"); menu.className = "cve-ds-menu"; menu.setAttribute("role", "menu");
+      menu.innerHTML = DESIGN_PARTS.map((p, k) => `<button type="button" role="menuitem" data-k="${k}"><span>${p.icon}</span>${esc(p.label)}</button>`).join("");
+      Object.assign(menu.style, { left: r.left + "px", top: (r.bottom + 6) + "px", width: Math.max(220, r.width) + "px" });
+      document.body.appendChild(menu);
+      menu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { go(DESIGN_PARTS[+b.dataset.k]); close(); }));
+      setTimeout(() => document.addEventListener("pointerdown", outside, true), 0);
+    };
+    const hover = e => { if (!menu) return; const el = document.elementFromPoint(e.clientX, e.clientY); menu.querySelectorAll("button").forEach(b => b.classList.toggle("hot", b === (el && el.closest && el.closest(".cve-ds-menu button")))); };
+    btn.addEventListener("pointerdown", e => {
+      if (e.button !== 0) return;
+      e.preventDefault(); downAt = Date.now(); held = true; open();
+      const move = ev => { if (held) hover(ev); };
+      const up = ev => {
+        document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", up);
+        held = false;
+        const el = document.elementFromPoint(ev.clientX, ev.clientY), b = el && el.closest && el.closest(".cve-ds-menu button");
+        if (b && Date.now() - downAt > 180) { go(DESIGN_PARTS[+b.dataset.k]); close(); }   // slide & release picks; a quick tap leaves the menu open
+      };
+      document.addEventListener("pointermove", move); document.addEventListener("pointerup", up);
+    });
+    // keep the label in step with scrolling
+    const onScroll = () => {
+      if (!document.getElementById("cveDsJumpBtn")) { scroller.removeEventListener("scroll", onScroll); return; }
+      let curP = DESIGN_PARTS[0];
+      for (const p of DESIGN_PARTS) { const el = document.getElementById(p.id); if (el && el.offsetTop - 70 <= scroller.scrollTop) curP = p; }
+      setLabel(curP);
+    };
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+  }
 
     function renderAtsTab(body) {
     const cv = getCurrentCV();
@@ -3189,7 +3232,9 @@
   const TPL_SKETCH = {
     ats: { cols: 1, center: 1 }, chicago: { cols: 1, center: 1, rules: 1 }, executive: { band: "#1f2833", cols: 1, timeline: 1 },
     novo: { cols: 2, photo: 1 }, top: { band: "accent", cols: 2, photo: 1 }, corporate: { cols: 2, shade: 1, rule: 1 },
-    monogram: { cols: 2, mono: 1, narrowLeft: 1 }, studio: { sidebar: 1 }
+    monogram: { cols: 2, mono: 1, narrowLeft: 1 }, studio: { sidebar: 1 },
+    harvard: { cols: 1, rules: 1, left: 1 }, jake: { cols: 1, center: 1, rules: 1, dense: 1 }, swiss: { cols: 1, gutter: 1, left: 1 },
+    highlight: { cols: 1, bars: 1, left: 1 }, gradient: { band: "gradient", cols: 2, photo: 1 }
   };
   // A tiny SVG drawing of a template's layout in the résumé's accent color.
   function tplSketch(key, a) {
@@ -3197,12 +3242,18 @@
     if (k.sidebar) { L.push(`<rect x="0" y="0" width="20" height="80" fill="${a}" opacity=".18"/><circle cx="10" cy="11" r="6" fill="${a}" opacity=".7"/>`); for (let y = 22; y < 74; y += 6) line(4, y, 12); line(25, 6, 26, "#334155", 4); line(25, 13, 18, a); for (let y = 22; y < 76; y += 5) line(25, y, y % 15 ? 30 : 20); }
     else {
       let top = 4;
-      if (k.band) { L.push(`<rect x="0" y="0" width="60" height="20" fill="${k.band === "accent" ? a : k.band}"/>`); if (k.photo) L.push(`<circle cx="10" cy="10" r="6" fill="#fff" opacity=".85"/>`); line(k.photo ? 20 : 6, 6, 24, "#fff", 4); line(k.photo ? 20 : 6, 13, 16, "#fff"); top = 25; }
+      if (k.band === "gradient") L.push(`<defs><linearGradient id="g${key}" x1="0" x2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="#ff7eb3"/></linearGradient></defs>`);
+      if (k.band) { L.push(`<rect x="0" y="0" width="60" height="20" fill="${k.band === "accent" ? a : k.band === "gradient" ? `url(#g${key})` : k.band}"/>`); if (k.photo) L.push(`<circle cx="10" cy="10" r="6" fill="#fff" opacity=".85"/>`); line(k.photo ? 20 : 6, 6, 24, "#fff", 4); line(k.photo ? 20 : 6, 13, 16, "#fff"); top = 25; }
       else if (k.mono) { L.push(`<rect x="5" y="4" width="11" height="11" transform="rotate(45 10.5 9.5)" fill="none" stroke="${a}" stroke-width="1.4"/>`); line(22, 6, 22, "#334155", 3); line(22, 12, 14, a); top = 21; }
+      else if (k.left) { line(4, 4, 26, "#334155", 4); line(4, 10, 16, a); line(4, 15, 40); top = 21; if (k.rules) L.push(`<rect x="4" y="18.5" width="52" height=".8" fill="#334155"/>`); }
       else if (k.center) { line(16, 4, 28, "#334155", 4); line(21, 10, 18, a); line(12, 15, 36); top = 21; if (!k.rules) L.push(`<rect x="4" y="19" width="52" height="1" fill="${a}"/>`); }
       else { if (k.photo) L.push(`<circle cx="30" cy="9" r="6" fill="${a}" opacity=".6"/>`); line(4, 5, 18, "#334155", 4); line(4, 11, 14, a); line(44, 5, 12); line(44, 9, 12); top = 19; if (k.rule) L.push(`<rect x="4" y="17" width="52" height="2" fill="${a}"/>`); }
-      if (k.cols === 1) {
-        for (let y = top; y < 76; y += 5) { const head = (y - top) % 20 === 0; if (head && k.rules) L.push(`<rect x="4" y="${y - 1.5}" width="52" height=".6" fill="#334155"/>`); line(k.timeline && !head ? 9 : 4, y, head ? 16 : (k.timeline ? 44 : 50), head ? a : null); if (k.timeline && !head) L.push(`<circle cx="5.5" cy="${y + 1}" r="1.3" fill="#fff" stroke="${a}" stroke-width=".8"/>`); }
+      if (k.cols === 1 && (k.gutter || k.bars)) {
+        for (let y = top; y < 76; y += 5) { const head = (y - top) % 20 === 0;
+          if (k.gutter) { if (head) line(4, y, 10, a); line(18, y, 38); }
+          else { if (head) { L.push(`<rect x="4" y="${y - 1}" width="52" height="4" rx="1" fill="${a}" opacity=".22"/><rect x="4" y="${y - 1}" width="1.6" height="4" fill="${a}"/>`); } else line(4, y, 50); } }
+      } else if (k.cols === 1) {
+        for (let y = top; y < 76; y += (k.dense ? 4 : 5)) { const head = (y - top) % 20 === 0; if (head && k.rules) L.push(`<rect x="4" y="${y - 1.5}" width="52" height=".6" fill="#334155"/>`); line(k.timeline && !head ? 9 : 4, y, head ? 16 : (k.timeline ? 44 : 50), head ? a : null); if (k.timeline && !head) L.push(`<circle cx="5.5" cy="${y + 1}" r="1.3" fill="#fff" stroke="${a}" stroke-width=".8"/>`); }
       } else {
         const lw = k.narrowLeft ? 16 : (k.shade ? 32 : 24), rx = k.narrowLeft ? 24 : (k.shade ? 40 : 32), rw = k.narrowLeft ? 32 : (k.shade ? 16 : 24);
         if (k.shade) L.push(`<rect x="${rx - 2}" y="${top - 2}" width="${rw + 4}" height="${78 - top}" rx="2" fill="#e8edf2"/>`);
@@ -3217,7 +3268,7 @@
     const box = document.getElementById("cveDesignsBody");
     if (!box || !window.RTCV) return;
     const cv = getCurrentCV(), R = window.RTCV, a = cv.accent || "#1f5fa8", cur = cv.template || "ats";
-    const ats = { ats: 1, chicago: 1 };
+    const ats = R.ATS_SAFE || { ats: 1, chicago: 1 };
     box.innerHTML = `
       <div class="cve-tpl-gallery">
         ${Object.entries(R.TEMPLATES).map(([k, t]) => `
