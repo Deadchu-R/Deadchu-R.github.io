@@ -71,6 +71,9 @@
     }
   };
 
+  // Switch account: save what is pending, then open Google's account chooser; the new account replaces the current one.
+  cloud.switchAccount = async () => { await cloud.flush(); return cloud.signIn(); };
+
   cloud.signOut = async () => { await cloud.flush(); if (auth) await auth.signOut(); };
 
   cloud.load = async uid => {

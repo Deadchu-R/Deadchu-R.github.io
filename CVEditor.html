@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rubik:ital,wght@0,400;0,500;0,700;1,400&family=Assistant:wght@400;600;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Lato:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap">
-  <link rel="stylesheet" href="assets/cv.css?v=20261105_15">
-  <link rel="stylesheet" href="assets/cveditor.css?v=20261106_3">
+  <link rel="stylesheet" href="assets/cv.css?v=20261106_4">
+  <link rel="stylesheet" href="assets/cveditor.css?v=20261106_4">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body class="cve-body">
@@ -121,24 +121,13 @@
         <details class="cve-side-design">
           <summary>🎨 Designs</summary>
           <div class="cve-side-design-body">
-            <div class="cve-tpl-pills">
-              <button type="button" class="cve-tpl-btn active" data-tpl="ats" onclick="window.CVE.setTemplate('ats')">ATS Pro</button>
-              <button type="button" class="cve-tpl-btn" data-tpl="novo" onclick="window.CVE.setTemplate('novo')">Novo</button>
-              <button type="button" class="cve-tpl-btn" data-tpl="studio" onclick="window.CVE.setTemplate('studio')">Studio</button>
+            <!-- templates, color, font, spacing, photo/icons: filled by renderDesignsPanel() in cveditor.js -->
+            <div id="cveDesignsBody"></div>
+            <!-- hidden: the template pills and site-style picker are kept only so older code finds them -->
+            <div class="cve-tpl-pills" style="display:none">
+              <button type="button" class="cve-tpl-btn" data-tpl="ats">ATS Pro</button>
             </div>
-            <div class="cve-skin-bar" title="Change roeetal.com site design style for this CV">
-              <label for="cveSkinSelect" class="cve-skin-label">🎨 Style:</label>
-              <select id="cveSkinSelect" class="cve-skin-select" onchange="window.CVE.setSkin(this.value)">
-                <option value="classic">🏛️ Classic</option>
-                <option value="apple">🍏 Apple (Minimal)</option>
-                <option value="valley">🎬 Robert Valley (Cinematic)</option>
-                <option value="avraham">🌌 Avraham (Cyber Space)</option>
-                <option value="arcade">🎮 Arcade (Retro)</option>
-                <option value="hobbies">🧗‍♂️ Hobbies (Climbing)</option>
-                <option value="sketchbook">📓 Sketchbook</option>
-                <option value="plain">📄 Plain</option>
-              </select>
-            </div>
+            <select id="cveSkinSelect" style="display:none"><option value="classic">Classic</option></select>
             <div class="cve-skin-bar cve-bg-bar" title="Change CV Document Background / רקע קורות חיים ממסך העריכה">
               <label for="cveBgSelect" class="cve-skin-label">🖼️ Background:</label>
               <select id="cveBgSelect" class="cve-skin-select" onchange="window.CVE.setBg(this.value)">
@@ -759,9 +748,9 @@
   <input type="file" id="cvePhotoFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none">
 
   <!-- Core Scripts -->
-  <script src="assets/cv.js?v=20261105_20"></script>
-  <script src="assets/cveditor-cloud.js?v=20261106_3"></script>
-  <script src="assets/cveditor.js?v=20261106_3"></script>
+  <script src="assets/cv.js?v=20261106_4"></script>
+  <script src="assets/cveditor-cloud.js?v=20261106_4"></script>
+  <script src="assets/cveditor.js?v=20261106_4"></script>
   <script>
     if (window.CVE && window.CVE.init && !window._cveBooted) {
       window.CVE.init();

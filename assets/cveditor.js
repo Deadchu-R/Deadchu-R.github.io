@@ -2939,9 +2939,7 @@
           <div class="cve-form-group">
             <label class="cve-label">Template Preset</label>
             <select class="cve-select" data-bind="template" onchange="window.CVE.setTemplate(this.value)">
-              <option value="ats" ${cv.template === "ats" ? "selected" : ""}>ATS Pro (1-Column, High Parsing Accuracy)</option>
-              <option value="novo" ${cv.template === "novo" ? "selected" : ""}>Novo (2-Column, Modern & Balanced)</option>
-              <option value="studio" ${cv.template === "studio" ? "selected" : ""}>Studio (Colored Sidebar)</option>
+              ${Object.entries((window.RTCV && window.RTCV.TEMPLATES) || {}).map(([k, t]) => `<option value="${k}" ${cv.template === k ? "selected" : ""}>${esc(t.label)}</option>`).join("")}
             </select>
           </div>
           <div class="cve-form-group">
@@ -3186,6 +3184,64 @@
     }
   }
 
+  // ---- Designs panel (side menu): résumé templates with a small drawing of each layout, color, font, spacing ----
+  // The templates come from assets/cv.js (RTCV.TEMPLATES), the same list the main site's résumé editor uses.
+  const TPL_SKETCH = {
+    ats: { cols: 1, center: 1 }, chicago: { cols: 1, center: 1, rules: 1 }, executive: { band: "#1f2833", cols: 1, timeline: 1 },
+    novo: { cols: 2, photo: 1 }, top: { band: "accent", cols: 2, photo: 1 }, corporate: { cols: 2, shade: 1, rule: 1 },
+    monogram: { cols: 2, mono: 1, narrowLeft: 1 }, studio: { sidebar: 1 }
+  };
+  // A tiny SVG drawing of a template's layout in the résumé's accent color.
+  function tplSketch(key, a) {
+    const k = TPL_SKETCH[key] || { cols: 1 }, L = [], line = (x, y, w, c, h) => L.push(`<rect x="${x}" y="${y}" width="${w}" height="${h || 2}" rx="1" fill="${c || "#c9d1d9"}"/>`);
+    if (k.sidebar) { L.push(`<rect x="0" y="0" width="20" height="80" fill="${a}" opacity=".18"/><circle cx="10" cy="11" r="6" fill="${a}" opacity=".7"/>`); for (let y = 22; y < 74; y += 6) line(4, y, 12); line(25, 6, 26, "#334155", 4); line(25, 13, 18, a); for (let y = 22; y < 76; y += 5) line(25, y, y % 15 ? 30 : 20); }
+    else {
+      let top = 4;
+      if (k.band) { L.push(`<rect x="0" y="0" width="60" height="20" fill="${k.band === "accent" ? a : k.band}"/>`); if (k.photo) L.push(`<circle cx="10" cy="10" r="6" fill="#fff" opacity=".85"/>`); line(k.photo ? 20 : 6, 6, 24, "#fff", 4); line(k.photo ? 20 : 6, 13, 16, "#fff"); top = 25; }
+      else if (k.mono) { L.push(`<rect x="5" y="4" width="11" height="11" transform="rotate(45 10.5 9.5)" fill="none" stroke="${a}" stroke-width="1.4"/>`); line(22, 6, 22, "#334155", 3); line(22, 12, 14, a); top = 21; }
+      else if (k.center) { line(16, 4, 28, "#334155", 4); line(21, 10, 18, a); line(12, 15, 36); top = 21; if (!k.rules) L.push(`<rect x="4" y="19" width="52" height="1" fill="${a}"/>`); }
+      else { if (k.photo) L.push(`<circle cx="30" cy="9" r="6" fill="${a}" opacity=".6"/>`); line(4, 5, 18, "#334155", 4); line(4, 11, 14, a); line(44, 5, 12); line(44, 9, 12); top = 19; if (k.rule) L.push(`<rect x="4" y="17" width="52" height="2" fill="${a}"/>`); }
+      if (k.cols === 1) {
+        for (let y = top; y < 76; y += 5) { const head = (y - top) % 20 === 0; if (head && k.rules) L.push(`<rect x="4" y="${y - 1.5}" width="52" height=".6" fill="#334155"/>`); line(k.timeline && !head ? 9 : 4, y, head ? 16 : (k.timeline ? 44 : 50), head ? a : null); if (k.timeline && !head) L.push(`<circle cx="5.5" cy="${y + 1}" r="1.3" fill="#fff" stroke="${a}" stroke-width=".8"/>`); }
+      } else {
+        const lw = k.narrowLeft ? 16 : (k.shade ? 32 : 24), rx = k.narrowLeft ? 24 : (k.shade ? 40 : 32), rw = k.narrowLeft ? 32 : (k.shade ? 16 : 24);
+        if (k.shade) L.push(`<rect x="${rx - 2}" y="${top - 2}" width="${rw + 4}" height="${78 - top}" rx="2" fill="#e8edf2"/>`);
+        for (let y = top; y < 76; y += 5) { const head = (y - top) % 20 === 0; line(4, y, head ? 12 : lw, head ? a : null); line(rx, y, head ? 10 : rw, head ? a : null); }
+      }
+    }
+    return `<svg viewBox="0 0 60 80" width="60" height="80" aria-hidden="true"><rect width="60" height="80" fill="#fff"/>${L.join("")}</svg>`;
+  }
+
+  // Fill the "🎨 Designs" box of the side menu for the current résumé.
+  function renderDesignsPanel() {
+    const box = document.getElementById("cveDesignsBody");
+    if (!box || !window.RTCV) return;
+    const cv = getCurrentCV(), R = window.RTCV, a = cv.accent || "#1f5fa8", cur = cv.template || "ats";
+    const ats = { ats: 1, chicago: 1 };
+    box.innerHTML = `
+      <div class="cve-tpl-gallery">
+        ${Object.entries(R.TEMPLATES).map(([k, t]) => `
+          <button type="button" class="cve-tpl-card${k === cur ? " active" : ""}" onclick="window.CVE.setTemplate('${k}')" title="${esc(t.about)}">
+            ${tplSketch(k, a)}<span>${esc(t.label)}</span>${ats[k] ? `<em>ATS</em>` : ""}
+          </button>`).join("")}
+      </div>
+      <p class="cve-tpl-about">${esc((R.TEMPLATES[cur] || {}).about || "")}</p>
+      <div class="cve-design-row"><span>Color</span>
+        <div class="cve-design-swatches">${R.COLORS.map(c => `<button type="button" class="cve-sw${(cv.accent || "").toLowerCase() === c ? " on" : ""}" style="background:${c}" title="${c}" onclick="window.CVE.setAccent('${c}')"></button>`).join("")}
+          <label class="cve-sw cve-sw-pick" title="Any color"><input type="color" value="${esc(a)}" onchange="window.CVE.setAccent(this.value)">＋</label></div>
+      </div>
+      <div class="cve-design-row"><span>Font</span>
+        <select class="cve-skin-select" onchange="window.CVE.setFont(this.value)">${Object.keys(R.FONTS).map(f => `<option ${cv.font === f ? "selected" : ""}>${esc(f)}</option>`).join("")}</select>
+      </div>
+      <div class="cve-design-row"><span>Spacing</span>
+        <div class="cve-seg">${R.DENSITY.map(d => `<button type="button" class="${(cv.density || "normal") === d ? "on" : ""}" onclick="window.CVE.setDensity('${d}');window.CVE.refreshDesigns&&window.CVE.refreshDesigns()">${d === "compact" ? "Compact" : d === "roomy" ? "Roomy" : "Normal"}</button>`).join("")}</div>
+      </div>
+      <div class="cve-design-row"><span>Show</span>
+        <label class="cve-chk"><input type="checkbox" ${cv.show_photo ? "checked" : ""} onchange="window.CVE.setShowPhoto(this.checked)"> Photo</label>
+        <label class="cve-chk"><input type="checkbox" ${cv.show_icons ? "checked" : ""} onchange="window.CVE.setShowIcons(this.checked)"> Section icons</label>
+      </div>`;
+  }
+
   function updateTopbarUI() {
     const cv = getCurrentCV();
     const myCvs = state.vault[state.activeOwnerId] || {};
@@ -3200,6 +3256,7 @@
     $$(".cve-tpl-btn").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-tpl") === cv.template);
     });
+    renderDesignsPanel();
 
     const skinSel = $("#cveSkinSelect");
     if (skinSel) {
@@ -3595,99 +3652,76 @@
     attachBoardDragAndDrop(body);
   }
 
+  // Drag sections around the Layout board with the mouse or a finger: press a card (not its buttons), move it, drop it
+  // before/after another card or into an empty spot of a column. A copy of the card follows the pointer and the
+  // drop place gets the same solid-blue feedback as on the sheet.
   function attachBoardDragAndDrop(container) {
-    const cards = container.querySelectorAll(".cve-board-card[data-col]");
-    cards.forEach(card => {
-      const col = card.getAttribute("data-col");
-      const idx = parseInt(card.getAttribute("data-idx"), 10);
+    let drag = null;   // {card, col, idx, startX, startY, ghost, active, target}
+    const clear = () => container.querySelectorAll(".cve-drop-target-before,.cve-drop-target-after,.cve-drop-zone-active").forEach(el => el.classList.remove("cve-drop-target-before", "cve-drop-target-after", "cve-drop-zone-active"));
+    const colOf = el => { const c = el && el.closest(".cve-board-col"); if (!c) return null; const all = [...container.querySelectorAll(".cve-board-col")]; return all.indexOf(c) === 0 ? "side" : "main"; };
+
+    const onMove = e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+      if (!drag.active) {
+        if (Math.hypot(dx, dy) < 6) return;
+        drag.active = true;
+        const r = drag.card.getBoundingClientRect();
+        drag.offX = drag.startX - r.left; drag.offY = drag.startY - r.top;
+        drag.ghost = drag.card.cloneNode(true);
+        drag.ghost.classList.add("cve-board-ghost");
+        Object.assign(drag.ghost.style, { position: "fixed", left: r.left + "px", top: r.top + "px", width: r.width + "px", pointerEvents: "none", zIndex: 100001, opacity: ".92" });
+        document.body.appendChild(drag.ghost);
+        drag.card.classList.add("cve-is-dragging");
+        document.body.style.userSelect = "none";
+      }
+      e.preventDefault();
+      drag.ghost.style.left = (e.clientX - drag.offX) + "px";
+      drag.ghost.style.top = (e.clientY - drag.offY) + "px";
+      clear(); drag.target = null;
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      const card = under && under.closest(".cve-board-card[data-col]");
+      if (card && card !== drag.card && container.contains(card)) {
+        const r = card.getBoundingClientRect(), pos = e.clientY < r.top + r.height / 2 ? "before" : "after";
+        card.classList.add(pos === "before" ? "cve-drop-target-before" : "cve-drop-target-after");
+        drag.target = { col: card.getAttribute("data-col"), idx: +card.getAttribute("data-idx"), pos };
+      } else {
+        const col = colOf(under);
+        if (col && (!card || card !== drag.card)) {
+          under.closest(".cve-board-col").classList.add("cve-drop-zone-active");
+          drag.target = { col, idx: null, pos: "after" };
+        }
+      }
+    };
+
+    const onUp = () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onUp);
+      if (!drag) return;
+      const d = drag; drag = null;
+      document.body.style.userSelect = "";
+      if (d.ghost) d.ghost.remove();
+      d.card.classList.remove("cve-is-dragging");
+      clear();
+      if (!d.active || !d.target) return;
+      const cv = getCurrentCV();
+      const t = d.target;
+      if (t.idx === null) window.CVE.moveSectionPosition(d.col, d.idx, t.col, (cv[t.col] || []).length, "after");
+      else window.CVE.moveSectionPosition(d.col, d.idx, t.col, t.idx, t.pos);
+    };
+
+    container.querySelectorAll(".cve-board-card[data-col]").forEach(card => {
       const handle = card.querySelector(".cve-drag-handle");
-      if (!handle) return;
-
-      handle.addEventListener("dragstart", (e) => {
-        card.classList.add("cve-is-dragging");
-        state.draggingSection = { col, idx };
-        if (e.dataTransfer) {
-          e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", JSON.stringify({ col, idx }));
-        }
-      });
-
-      handle.addEventListener("dragend", () => {
-        card.classList.remove("cve-is-dragging");
-        clearAllDropFeedback();
-        state.draggingSection = null;
-      });
-
-      card.addEventListener("dragover", (e) => {
-        if (!state.draggingSection) return;
-        const dragging = state.draggingSection;
-        if (dragging.col === col && dragging.idx === idx) return;
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-
-        const rect = card.getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
-        if (e.clientY < midY) {
-          card.classList.add("cve-drop-target-before");
-          card.classList.remove("cve-drop-target-after");
-        } else {
-          card.classList.add("cve-drop-target-after");
-          card.classList.remove("cve-drop-target-before");
-        }
-      });
-
-      card.addEventListener("dragleave", (e) => {
-        if (!card.contains(e.relatedTarget)) {
-          card.classList.remove("cve-drop-target-before", "cve-drop-target-after");
-        }
-      });
-
-      card.addEventListener("drop", (e) => {
-        if (!state.draggingSection) return;
-        const dragging = state.draggingSection;
-        if (dragging.col === col && dragging.idx === idx) return;
-        e.preventDefault();
-        e.stopPropagation();
-
-        const rect = card.getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
-        const pos = e.clientY < midY ? "before" : "after";
-
-        clearAllDropFeedback();
-        state.draggingSection = null;
-        window.CVE.moveSectionPosition(dragging.col, dragging.idx, col, idx, pos);
-      });
-    });
-
-    const cols = container.querySelectorAll(".cve-board-col");
-    cols.forEach((colEl, cIdx) => {
-      const colName = cIdx === 0 ? "side" : "main";
-      colEl.addEventListener("dragover", (e) => {
-        if (!state.draggingSection) return;
-        if (e.target.closest && e.target.closest(".cve-board-card")) return;
-        e.preventDefault();
-        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-        colEl.classList.add("cve-drop-zone-active");
-      });
-
-      colEl.addEventListener("dragleave", (e) => {
-        if (!colEl.contains(e.relatedTarget)) {
-          colEl.classList.remove("cve-drop-zone-active");
-        }
-      });
-
-      colEl.addEventListener("drop", (e) => {
-        if (!state.draggingSection) return;
-        if (e.target.closest && e.target.closest(".cve-board-card")) return;
-        e.preventDefault();
-        e.stopPropagation();
-        colEl.classList.remove("cve-drop-zone-active");
-        const dragging = state.draggingSection;
-        clearAllDropFeedback();
-        state.draggingSection = null;
-        const cv = getCurrentCV();
-        window.CVE.moveSectionPosition(dragging.col, dragging.idx, colName, (cv[colName] || []).length, "after");
+      if (handle) handle.removeAttribute("draggable");   // no browser drag image: the pointer drag below does it
+      card.style.cursor = "grab";
+      card.style.touchAction = "none";
+      card.addEventListener("pointerdown", e => {
+        if (e.button !== 0 || e.target.closest("button,a,input,select,textarea")) return;
+        drag = { card, col: card.getAttribute("data-col"), idx: +card.getAttribute("data-idx"), startX: e.clientX, startY: e.clientY, active: false, target: null };
+        document.addEventListener("pointermove", onMove, { passive: false });
+        document.addEventListener("pointerup", onUp);
+        document.addEventListener("pointercancel", onUp);
       });
     });
   }
@@ -3769,6 +3803,7 @@
           <div class="cve-login-user">
             <div class="cve-login-avatar">${pic}</div>
             <div class="cve-login-who"><b>${esc(displayName)}${isRoeeUser() ? " 👑" : ""}</b><small>${esc(user.email)}</small></div>
+            <button type="button" class="cve-login-out" onclick="window.CVE.switchAccount()" title="Use another Google account">⇄ Switch</button>
             <button type="button" class="cve-login-out" onclick="window.CVE.logout(event)">Sign out</button>
           </div>
         </div>`;
@@ -3809,6 +3844,8 @@
       return;
     }
     const id = "g_" + gu.uid;
+    const prev = state.currentUser;
+    if (prev && prev.cloud && prev.id !== id) delete state.vault[prev.id];
     const guestCv = state.vault["guest"] && state.vault["guest"]["starter"];
     const guestEdited = !!guestCv && JSON.stringify(guestCv) !== JSON.stringify(STARTER_DEFAULT_CV);
     state.currentUser = { id, uid: gu.uid, email: gu.email, name: gu.name || gu.email.split("@")[0], photo: gu.photo, verified: gu.verified, role: "friend", cloud: true, owner: gu.verified && await isOwnerEmail(gu.email) };
@@ -4076,6 +4113,11 @@
     submitGoogleEmailAuth,
     renderTopbarAuth,
     logout: (e) => Storage.logout(e),
+    // Switch to another Google account without signing out first (Google's account chooser opens).
+    async switchAccount() {
+      if (!window.RTCloud) return;
+      try { await window.RTCloud.switchAccount(); } catch (e) { showToast("Couldn't switch account: " + (e.message || e)); }
+    },
     toggleSectionMaximize,
     showIkhsa,
     isRoeeUser,
@@ -4127,6 +4169,7 @@
     setTemplate(tpl) {
       const cv = getCurrentCV();
       cv.template = tpl;
+      cv.skin = "classic";   // résumé designs only: drop any site style that an older version put on the sheet
       saveCurrentCV(cv);
       renderA4Sheet();
       renderSidebar();
@@ -4504,6 +4547,11 @@
       saveCurrentCV(cv);
       renderA4Sheet();
     },
+
+    setShowPhoto(show) { this.togglePhoto(show); renderDesignsPanel(); },
+    // Section icons on/off (templates show them next to section titles).
+    setShowIcons(show) { const cv = getCurrentCV(); cv.show_icons = !!show; saveCurrentCV(cv); renderA4Sheet(); renderDesignsPanel(); },
+    refreshDesigns() { renderDesignsPanel(); },
 
     togglePhoto(show) {
       const cv = getCurrentCV();

@@ -123,3 +123,88 @@
 .cv-photo-add{display:grid;place-items:center;border:2px dashed var(--a)!important;background:color-mix(in srgb,var(--a) 8%,#fff)!important;color:var(--a);
   font:700 11px/1.1 system-ui,sans-serif;cursor:pointer;padding:0;box-shadow:none!important}
 .t-ats .cv-head.has-photo.add .cv-photo{width:20mm;height:20mm}
+
+/* ---------- Chicago: classic single column, centered name, fine rules between sections (ATS-safe) */
+.t-chicago .cv-head{text-align:center;padding-bottom:calc(8px * var(--gap))}
+.t-chicago h1{font-size:2.2em;font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.1}
+.t-chicago .cv-title{font-size:1.05em;letter-spacing:.18em;text-transform:uppercase;color:var(--mute);margin-top:4px}
+.t-chicago .cv-contact{margin-top:6px;color:var(--mute);font-size:.92em}
+.t-chicago .cv-dot{color:var(--line)}
+.t-chicago .cv-head.has-photo{display:flex;align-items:center;justify-content:center;gap:6mm;text-align:start}
+.t-chicago .cv-head.has-photo .cv-photo{width:24mm;height:24mm;border-radius:50%;object-fit:cover;flex:none}
+.t-chicago .cv-sec{border-top:1px solid var(--ink);padding-top:calc(6px * var(--gap))}
+.t-chicago .cv-sec h2{font-size:.95em;font-weight:700;letter-spacing:.2em;text-transform:uppercase;justify-content:center;color:var(--ink)}
+.t-chicago .cv-sum p{margin-top:5px;text-align:center}
+.t-chicago .cv-org{font-weight:400;font-style:italic}
+.t-chicago .cv-meta{font-weight:400;color:var(--mute)}
+.t-chicago .cv-bul li::before{width:4px;height:4px;border-radius:50%;transform:none;top:.6em;background:var(--ink)}
+.t-chicago .cv-lang{display:inline;margin:0}.t-chicago .cv-languages .cv-item+.cv-item::before{content:" · ";color:var(--mute)}
+.t-chicago .cv-lang b{display:inline}.t-chicago .cv-lang span{font-style:normal;color:var(--ink);font-size:1em}
+.t-chicago .cv-hi{width:auto;height:auto;background:none;color:var(--ink)}
+
+/* ---------- Executive: dark header band, one column, experience as a timeline */
+.t-executive{padding-top:0}
+.t-executive .cv-head{margin:0 -14mm;padding:11mm 14mm 9mm;background:#1f2833;color:#fff;display:grid;grid-template-columns:auto 1fr;gap:4px 8mm;align-items:center}
+.t-executive .cv-head .cv-photo{grid-row:span 2;width:28mm;height:28mm;border-radius:50%;object-fit:cover;border:3px solid var(--a)}
+.t-executive .cv-head .cv-id{grid-column:2}
+.t-executive h1{font-size:2.4em;font-weight:700;line-height:1.05}
+.t-executive .cv-title{color:color-mix(in srgb,var(--a) 55%,#fff);font-size:1.15em;font-weight:600;margin-top:3px;letter-spacing:.04em}
+.t-executive .cv-contact{grid-column:2;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.88em;color:#d6dde4;margin-top:4px}
+.t-executive .cv-contact li{display:flex;align-items:center;gap:6px}.t-executive .cv-contact .cv-i{color:var(--a)}
+.t-executive .cv-sec h2{font-size:1.02em;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1f2833;gap:10px}
+.t-executive .cv-sec h2::after{content:"";flex:1;height:2px;background:var(--a)}
+.t-executive .cv-sum p{margin-top:5px}
+.t-executive .cv-org{font-weight:400;color:var(--a)}
+.t-executive .cv-meta{font-weight:400;color:var(--mute)}
+.t-executive :is(.cv-experience,.cv-education,.cv-projects) .cv-items{border-inline-start:2px solid var(--line);margin-inline-start:4px;padding-inline-start:14px}
+.t-executive :is(.cv-experience,.cv-education,.cv-projects) .cv-item{position:relative}
+.t-executive :is(.cv-experience,.cv-education,.cv-projects) .cv-item::before{content:"";position:absolute;inset-inline-start:-20.5px;top:.32em;width:9px;height:9px;border-radius:50%;background:#fff;border:2.5px solid var(--a)}
+.t-executive .cv-chip{background:color-mix(in srgb,var(--a) 14%,#fff);color:var(--ink)}
+
+/* ---------- Bold Top: big colored header band, two columns */
+.t-top{padding-top:0}
+.t-top .cv-head{margin:0 -14mm;padding:10mm 14mm;background:var(--a);color:#fff;display:grid;grid-template-columns:auto 1fr auto;gap:8mm;align-items:center}
+.t-top .cv-photo{width:30mm;height:30mm;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.85)}
+.t-top h1{font-size:2.6em;font-weight:800;line-height:1.02;letter-spacing:-.01em}
+.t-top .cv-title{font-size:1.2em;font-weight:600;opacity:.92;margin-top:3px}
+.t-top .cv-summary{font-size:.9em;line-height:1.45;margin-top:6px;opacity:.95;max-width:110mm}
+.t-top .cv-contact{display:grid;gap:6px;font-size:.88em}
+.t-top .cv-contact li{display:flex;align-items:center;gap:7px}
+.t-top .cv-cols{display:grid;grid-template-columns:1.55fr 1fr;gap:9mm;margin-top:calc(4px * var(--gap))}
+.t-top .cv-sec h2{font-size:1.15em;font-weight:800;color:var(--a);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid color-mix(in srgb,var(--a) 25%,#fff);padding-bottom:3px}
+.t-top .cv-org{font-weight:400;color:var(--mute)}
+.t-top .cv-chip{background:color-mix(in srgb,var(--a) 85%,#000)}
+
+/* ---------- Corporate: header with a thick rule, shaded side column */
+.t-corporate .cv-head{display:grid;grid-template-columns:auto 1fr auto;gap:7mm;align-items:center;padding-bottom:calc(8px * var(--gap));border-bottom:4px solid var(--a)}
+.t-corporate .cv-photo{width:26mm;height:26mm;border-radius:6px;object-fit:cover}
+.t-corporate h1{font-size:2.4em;font-weight:700;line-height:1.05;color:#1f2833}
+.t-corporate .cv-title{color:var(--a);font-size:1.15em;font-weight:600;margin-top:2px}
+.t-corporate .cv-summary{font-size:.92em;margin-top:6px;line-height:1.45;color:var(--mute)}
+.t-corporate .cv-contact{display:grid;gap:5px;font-size:.86em;justify-items:start}
+.t-corporate .cv-contact li{display:flex;align-items:center;gap:7px}.t-corporate .cv-contact .cv-i{color:var(--a)}
+.t-corporate .cv-cols{display:grid;grid-template-columns:1fr 62mm;gap:7mm;margin-top:calc(8px * var(--gap))}
+.t-corporate .cv-side{background:#f1f4f7;border-radius:6px;padding:4mm 5mm 6mm;align-self:start}
+.t-corporate .cv-side .cv-sec:first-child{margin-top:0}
+.t-corporate .cv-sec h2{font-size:1em;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#1f2833}
+.t-corporate .cv-main .cv-sec h2{border-bottom:1px solid var(--line);padding-bottom:2px}
+.t-corporate .cv-org{font-weight:400;color:var(--a)}
+.t-corporate .cv-chip{background:#fff;color:var(--ink);border:1px solid #cfd6dd}
+.t-corporate .cv-lang-grid{grid-template-columns:1fr}
+
+/* ---------- Monogram: initials, white space, narrow left column */
+.t-monogram{padding:15mm 16mm}
+.t-monogram .cv-head{display:grid;grid-template-columns:auto 1fr auto;gap:8mm;align-items:center;padding-bottom:calc(10px * var(--gap))}
+.t-monogram .cv-mono{width:24mm;height:24mm;border:2px solid var(--a);color:var(--a);display:grid;place-items:center;font-size:2.1em;font-weight:300;letter-spacing:.05em;transform:rotate(45deg)}
+.t-monogram .cv-mono span{transform:rotate(-45deg);display:block}
+.t-monogram h1{font-size:2.5em;font-weight:300;letter-spacing:.04em;line-height:1.05}
+.t-monogram .cv-title{color:var(--a);font-size:1.05em;letter-spacing:.2em;text-transform:uppercase;margin-top:4px}
+.t-monogram .cv-summary{font-size:.92em;margin-top:6px;color:var(--mute);line-height:1.5}
+.t-monogram .cv-contact{display:grid;gap:5px;font-size:.86em;justify-items:end;text-align:end}
+.t-monogram .cv-contact li{display:flex;align-items:center;gap:7px;flex-direction:row-reverse}.t-monogram .cv-contact .cv-i{color:var(--a)}
+.t-monogram .cv-cols{display:grid;grid-template-columns:58mm 1fr;gap:9mm;margin-top:calc(8px * var(--gap));border-top:1px solid var(--line);padding-top:calc(4px * var(--gap))}
+.t-monogram .cv-side{order:-1;border-inline-end:1px solid var(--line);padding-inline-end:6mm}
+.t-monogram .cv-sec h2{font-size:.92em;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--a)}
+.t-monogram .cv-org{font-weight:400;color:var(--mute)}
+.t-monogram .cv-chips.outline .cv-chip,.t-monogram .cv-chip{background:none;color:var(--ink);border:1px solid var(--line)}
+.t-monogram .cv-lang-grid{grid-template-columns:1fr}

@@ -7,6 +7,18 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
 ## 2026-11-06
+- **Résumé designs:** 5 new templates in the shared renderer (`assets/cv.js` + `cv.css`), so they work in CV Studio, the site editor, cv.html and the PDFs:
+  - Chicago (classic single column, ATS-safe);
+  - Executive (dark header + career timeline);
+  - Bold Top (colored header band, two columns);
+  - Corporate (shaded side column);
+  - Monogram (initials, narrow left column).
+
+  They are modelled on common résumé families (Resume Genius / NovoResume galleries).
+- **CV Studio:**
+  - The side menu's Designs box is now résumé-only: a template gallery with a small drawing of each layout, color swatches + any color, font, spacing, and photo / section-icon toggles. The site-style picker is removed, and choosing a template resets any old site style on the sheet.
+  - Layout & Columns: drag the section cards with the mouse or a finger, between columns or into an empty column.
+  - Account box: ⇄ Switch account opens Google's account chooser without signing out.
 - **CVEditor:** the top bar is cleaner. Save, PDF, Share, Send, ATS Check, Tips, Designs (template, style, background, layout) and Publish moved to the side menu under the account box.
 - **CVEditor:** **Publish to roeetal.com/cv**, for the owner only (roeetal17).
   - It commits the current résumé into `content/cv.json`, optionally as the main one. The Action then rebuilds cv.html and the PDF.

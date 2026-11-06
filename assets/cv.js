@@ -1,13 +1,24 @@
 /* Résumé builder: one renderer for the CV page, the PDFs/images built by the site, and the visual editor.
    A résumé ("variant") is data in content/cv.json: person + two lists of sections (main, side) + design (template, color, font).
-   Templates: "ats" (one column, built for applicant-tracking systems), "novo" (two columns with photo), "studio" (sidebar). */
+   Templates (TEMPLATES below): one column — "ats", "chicago", "executive"; two columns — "novo", "top", "corporate", "monogram";
+   sidebar — "studio". The newer looks follow common résumé families (classic single column with rules, executive header +
+   timeline, bold header band, shaded contact sidebar, monogram) and are drawn only with CSS in assets/cv.css. */
 (function(root){
   "use strict";
   const TEMPLATES={
     ats:{label:"ATS Pro",about:"One clean column. Parses perfectly in applicant-tracking systems. Best for job applications."},
     novo:{label:"Novo",about:"Two columns, photo and skill chips, like the NovoResume design."},
     studio:{label:"Studio",about:"Colored sidebar with photo, contact and skills; main column for experience and projects."},
+    chicago:{label:"Chicago",about:"Classic single column with fine rules between sections and a centered name. Very ATS-safe."},
+    executive:{label:"Executive",about:"Dark header band, then one column with a career timeline. Traditional and senior-looking."},
+    top:{label:"Bold Top",about:"Big colored header with photo, two columns below. Modern and eye-catching."},
+    corporate:{label:"Corporate",about:"Clean header line and a shaded side column for contact, skills and languages."},
+    monogram:{label:"Monogram",about:"Your initials as a monogram, lots of white space, narrow left column."},
   };
+  // how each template is built: "one" column, "two" columns (header + .cv-cols) or "sidebar"
+  const LAYOUT={ats:"one",chicago:"one",executive:"one",novo:"two",top:"two",corporate:"two",monogram:"two",studio:"sidebar"};
+  // templates that keep skills / contact as plain text (no chips, no icons) for applicant-tracking systems
+  const PLAIN={ats:1,chicago:1};
   const FONTS={
     "Open Sans":"Open+Sans:ital,wght@0,400;0,600;0,700;1,400",
     "Inter":"Inter:wght@400;500;600;700",
@@ -71,7 +82,7 @@
   // HTML for one entry (job, school, project, skill…) of a section.
   function itemHTML(s,sp,it,i,v,env){
     const isEdit=Boolean(env&&env.edit);
-    const ip=`${sp}.items.${i}`,T=v.template;
+    const ip=`${sp}.items.${i}`,T=v.template,plain=!!PLAIN[T];
     switch(s.type){
       case "experience":return `<div class="cv-item" data-i="${i}"${X(["Link (web address, optional)",ip+".link","text"])}>`+
         `<div class="cv-row"><h3><span${E(ip+".role")}>${esc(it.role)}</span>${T!=="novo"?`<span class="cv-sep"> — </span>`:""}<span class="cv-org"${E(ip+".org")}>${esc(it.org)}</span></h3>`+
@@ -81,21 +92,21 @@
         `<div class="cv-row"><h3><span${E(ip+".degree")}>${esc(it.degree)}</span>${T!=="novo"?`<span class="cv-sep"> — </span>`:""}<span class="cv-org"${E(ip+".school")}>${esc(it.school)}</span></h3>`+
         `<p class="cv-when"><span${E(ip+".dates")}>${esc(it.dates)}</span>${opt("span","cv-loc",ip+".location",it.location,"city")}</p></div>`+
         opt("p","cv-about",ip+".about",it.about,"one line")+
-        (T==="ats"&&(it.bullets||[]).length?`<p class="cv-inline"><span${E(ip+".label")}>${esc(it.label||"Courses")}</span>: `+(it.bullets||[]).filter(x=>typeof x==="string"&&x.trim()).map((t,k)=>`<span class="cv-inline-bullet" data-i="${k}">${isEdit?`<span class="cve-bullet-grip" title="Drag to reorder" draggable="true">⠿</span>`:""}<span class="cv-bullet-text"${E(`${ip}.bullets.${k}`)}>${esc(t)}</span>${isEdit?`<button type="button" class="cve-inline-del-btn" title="Delete" onclick="window.CVE&&window.CVE.removeBulletFromItem&&window.CVE.removeBulletFromItem('${ip}',${k})">✕</button>`:""}</span>`).join(", ")+`</p>`
+        (plain&&(it.bullets||[]).length?`<p class="cv-inline"><span${E(ip+".label")}>${esc(it.label||"Courses")}</span>: `+(it.bullets||[]).filter(x=>typeof x==="string"&&x.trim()).map((t,k)=>`<span class="cv-inline-bullet" data-i="${k}">${isEdit?`<span class="cve-bullet-grip" title="Drag to reorder" draggable="true">⠿</span>`:""}<span class="cv-bullet-text"${E(`${ip}.bullets.${k}`)}>${esc(t)}</span>${isEdit?`<button type="button" class="cve-inline-del-btn" title="Delete" onclick="window.CVE&&window.CVE.removeBulletFromItem&&window.CVE.removeBulletFromItem('${ip}',${k})">✕</button>`:""}</span>`).join(", ")+`</p>`
           :opt("p","cv-lbl",ip+".label",it.label,"label above the list")+bullets(ip,it.bullets,env).replace('class="cv-bul"','class="cv-bul cols"'))+`</div>`;
       case "projects":{const url=full(it.link);
         return `<div class="cv-item" data-i="${i}"${X(["Link (web address)",ip+".link","text"])}>`+
-        `<div class="cv-row"><h3><span${E(ip+".name")}>${esc(it.name)}</span>${it.meta||T!=="ats"?`<span class="cv-sep"> — </span>`:""}${opt("span","cv-meta",ip+".meta",it.meta,"engine · role")}</h3>`+
+        `<div class="cv-row"><h3><span${E(ip+".name")}>${esc(it.name)}</span>${it.meta||!plain?`<span class="cv-sep"> — </span>`:""}${opt("span","cv-meta",ip+".meta",it.meta,"engine · role")}</h3>`+
         `<p class="cv-when"><span${E(ip+".dates")}>${esc(it.dates)}</span></p></div>`+
         linkHTML(ip,it)+
         bullets(ip,it.bullets,env)+`</div>`}
       case "skills":case "tags":{
-        const lp=`${ip}.items`,chips=T!=="ats";
+        const lp=`${ip}.items`,chips=!plain;
         return `<div class="cv-item cv-grp" data-i="${i}">`+(chips?opt("p","cv-glbl",ip+".label",it.label,"group name (optional)")+`<div class="cv-chips${s.type==="tags"?" outline":""}" data-l="${lp}">`+
           (it.items||[]).filter(x=>typeof x==="string"&&x.trim()).map((t,k)=>`<span class="cv-chip" data-i="${k}"${E(`${lp}.${k}`)}>${esc(t)}${isEdit?`<button type="button" class="cve-chip-del-btn" title="Delete" onclick="window.CVE&&window.CVE.removeSkillFromItem&&window.CVE.removeSkillFromItem('${ip}',${k})">✕</button>`:""}</span>`).join("")+`</div>`
           :`<p class="cv-inline"><b${E(ip+".label","group")}${it.label?"":" hidden data-edit-show"}>${esc(it.label)}</b>${it.label?": ":""}<span data-l="${lp}">`+
             (it.items||[]).map((t,k)=>`<span data-i="${k}"><span${E(`${lp}.${k}`)}>${esc(t)}</span>${k<(it.items.length-1)?", ":""}</span>`).join("")+`</span></p>`)+`</div>`}
-      case "languages":return `<div class="cv-item cv-lang" data-i="${i}"><b${E(ip+".name")}>${esc(it.name)}</b>${T==="ats"?" — ":""}<span${E(ip+".level")}>${esc(it.level)}</span></div>`;
+      case "languages":return `<div class="cv-item cv-lang" data-i="${i}"><b${E(ip+".name")}>${esc(it.name)}</b>${plain?" — ":""}<span${E(ip+".level")}>${esc(it.level)}</span></div>`;
       case "list":return `<div class="cv-item" data-i="${i}"><div class="cv-row"><h3><span${E(ip+".title")}>${esc(it.title)}</span>${opt("span","cv-org",ip+".sub",it.sub,"issuer")}</h3>`+
         `<p class="cv-when">${opt("span","",ip+".dates",it.dates,"year")}</p></div>${opt("p","cv-about",ip+".text",it.text,"details")}</div>`;
       default:return `<div class="cv-item" data-i="${i}"><p class="cv-text"${E(ip+".text","text")}>${esc(it.text)}</p></div>`;
@@ -109,7 +120,7 @@
   }
   // HTML for one section (heading + entries).
   function sectionHTML(s,sp,i,col,v,env){
-    const lay=(s.type==="languages"&&v.template!=="ats")?" cv-lang-grid":"";
+    const lay=(s.type==="languages"&&!PLAIN[v.template])?" cv-lang-grid":"";
     const ic=v.show_icons?(s.icon||SEC_ICON[s.type]||"star"):"";
     return `<section class="cv-sec cv-${s.type}" data-i="${i}"`+
       X(["Column",sp+".col","select",[col,col==="main"?"side":"main"]],...(env.icons?[["Icon (when section icons are on)",sp+".icon","select",[""].concat(Object.keys(env.icons))]]:[]))+
@@ -151,9 +162,19 @@
       ["Photo",base+".photo","image"],["Text direction",base+".dir","select",["ltr","rtl"]]);
     const name=`<h1${E(pp+".name","Your name")}>${esc(P.name)}</h1>`,title=opt("p","cv-title",pp+".title",P.title,"Job title");
     const summary=opt("p","cv-summary",pp+".summary",P.summary,"2-3 lines: who you are and what you are looking for");
-    const links=contact(v,base,T!=="ats",env.edit);
+    const links=contact(v,base,!PLAIN[T],env.edit);
+    const L=LAYOUT[T]||"one";
+    const initials=String(P.name||"").trim().split(/\s+/).slice(0,2).map(w=>w.charAt(0)).join("").toUpperCase();
     let body;
-    if(T==="ats"){
+    if(T==="executive"){
+      // dark band header with contact icons, then one column (experience shown as a timeline by the CSS)
+      body=`<header class="cv-head">${photo(v,base,env,"cv-photo")}<div class="cv-id">${name}${title}</div><ul class="cv-contact" data-l="${pp}.links">${links.join("")}</ul></header>`+
+        (P.summary||env.edit?`<section class="cv-sec cv-sum"><h2>Profile</h2>${summary}</section>`:"")+column(v,base,"main",env)+column(v,base,"side",env);
+    }else if(L==="two"&&T!=="novo"){
+      const mono=T==="monogram"?`<div class="cv-mono" aria-hidden="true"><span>${esc(initials||"·")}</span></div>`:"";
+      body=`<header class="cv-head">${mono}${T!=="monogram"?photo(v,base,env,"cv-photo"):""}<div class="cv-id">${name}${title}${summary}</div><ul class="cv-contact" data-l="${pp}.links">${links.join("")}</ul></header>`+
+        `<div class="cv-cols">${column(v,base,"main",env)}${column(v,base,"side",env)}</div>`;
+    }else if(L==="one"){
       const line=links.filter(r=>env.edit||!/ hidden data-edit-show/.test(r.slice(0,40))).map(r=>r.replace(/^<li/,"<span").replace(/<\/li>$/,"</span>")).join('<span class="cv-dot" aria-hidden="true"> · </span>');
       const ph=photo(v,base,env,"cv-photo");
       body=`<header class="cv-head${ph&&!/cv-photo-add/.test(ph)?" has-photo":ph?" has-photo add":""}">${ph}<div class="cv-id">${name}${title}<p class="cv-contact" data-l="${pp}.links">${line}</p></div></header>`+
@@ -178,6 +199,6 @@
     for(const s of v.main.concat(v.side)){out.push("",(s.title||"").toUpperCase());for(const it of s.items){out.push(Object.values(it).flat().filter(x=>typeof x==="string"&&x).join(" | "))}}
     return out.filter(x=>x!=null).join("\n");
   }
-  const api={SEC_ICON,TEMPLATES,FONTS,DENSITY,COLORS,SECTION_TYPES,render,normalize,fontHref,newSection,blank,plainText,esc};
+  const api={SEC_ICON,TEMPLATES,LAYOUT,FONTS,DENSITY,COLORS,SECTION_TYPES,render,normalize,fontHref,newSection,blank,plainText,esc};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;else root.RTCV=api;
 })(typeof self!=="undefined"?self:this);
