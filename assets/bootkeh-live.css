@@ -416,14 +416,14 @@ html, body { overflow-x: clip; max-width: 100%; }
   .bootkeh-nav-tabs { left: 12px !important; right: 12px !important; bottom: calc(10px + env(safe-area-inset-bottom)) !important; padding: 6px !important; border-radius: 30px !important;
     background: rgba(24, 14, 20, .58) !important; -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
     border: 1px solid rgba(255, 255, 255, .12) !important; box-shadow: 0 12px 34px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .08) !important;
-    touch-action: none; user-select: none; -webkit-user-select: none; }
+    touch-action: none; user-select: none; -webkit-user-select: none; gap: 0 !important; }
   .bootkeh-nav-tabs .bootkeh-tab-btn { position: relative; z-index: 1; background: transparent !important; border-radius: 24px !important; min-height: 56px; color: #d9cba8 !important;
     transition: color .2s ease, transform .2s ease; -webkit-tap-highlight-color: transparent; }
   .bootkeh-nav-tabs .bootkeh-tab-btn.active { color: #fff6d8 !important; }
   .bootkeh-nav-tabs .bootkeh-tab-btn.hl { color: #fff !important; transform: translateY(-2px) scale(1.06); }
-  .bk-tab-pill { display: block; position: absolute; top: 6px; bottom: 6px; left: 0; border-radius: 24px; z-index: 0; pointer-events: none;
+  .bk-tab-pill { display: block; position: absolute; top: 6px; bottom: 6px; inset-inline-start: 6px; width: calc((100% - 12px) / var(--bk-tabs, 4)); border-radius: 24px; z-index: 0; pointer-events: none;
     background: linear-gradient(180deg, rgba(150, 28, 44, .85), rgba(90, 14, 26, .85)); box-shadow: 0 0 0 1px rgba(212, 175, 55, .55) inset, 0 6px 18px rgba(0, 0, 0, .35);
-    transition: transform .42s cubic-bezier(.25, 1.35, .45, 1), width .3s ease; will-change: transform; }
+    transition: transform .42s cubic-bezier(.25, 1.35, .45, 1); will-change: transform; }
   .bootkeh-nav-tabs.sliding .bk-tab-pill { background: linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .1)); box-shadow: 0 0 0 1px rgba(255, 255, 255, .35) inset, 0 10px 26px rgba(0, 0, 0, .45); }
   body.bootkeh-body { padding-bottom: 104px !important; }
   .bk-picked { bottom: 96px !important; }

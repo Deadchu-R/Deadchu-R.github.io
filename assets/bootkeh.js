@@ -302,15 +302,21 @@
     let pill = nav.querySelector(".bk-tab-pill");
     if (!pill) { pill = document.createElement("span"); pill.className = "bk-tab-pill"; pill.setAttribute("aria-hidden", "true"); nav.prepend(pill); }
     const btns = () => [...nav.querySelectorAll(".bootkeh-tab-btn")];
-    const place = (btn, x, live) => {   // put the bubble under a tab (or centred on x while dragging)
-      const nr = nav.getBoundingClientRect(), br = btn.getBoundingClientRect(), w = br.width;
-      let left = (x != null ? x - w / 2 : br.left) - nr.left;
-      left = Math.max(4, Math.min(nr.width - w - 4, left));
-      pill.style.width = w + "px"; pill.style.transform = `translate3d(${left}px,0,0)${live ? " scale(1.12, 1.06)" : ""}`;
+    // The bubble is sized and moved as a share of the whole bar (1/n of it per tab), never from pixel measurements —
+    // so phone zoom ("Desktop site", pinch) can't make it the wrong size or put it in the wrong place.
+    const rtl = () => getComputedStyle(nav).direction === "rtl";
+    const fracAt = x => { const r = nav.getBoundingClientRect(), f = (x - r.left) / Math.max(1, r.width); return Math.max(0, Math.min(1, rtl() ? 1 - f : f)); };
+    const place = (btn, x, live) => {   // index (possibly fractional while dragging) → transform in % of the bubble's own width
+      const n = btns().length || 1;
+      let idx = x != null ? fracAt(x) * n - 0.5 : btns().indexOf(btn);
+      idx = Math.max(0, Math.min(n - 1, idx));
+      nav.style.setProperty("--bk-tabs", n);
+      pill.style.transform = `translateX(${(rtl() ? -1 : 1) * idx * 100}%)${live ? " scale(1.1, 1.08)" : ""}`;
     };
+    const btnAtF = x => { const n = btns().length; return btns()[Math.max(0, Math.min(n - 1, Math.floor(fracAt(x) * n)))]; };
     window.__bkPlacePill = () => { const a = nav.querySelector(".bootkeh-tab-btn.active"); if (a) place(a); };
     let d = null, ignoreClick = false;
-    const btnAt = x => { let best = null, bd = 1e9; for (const b of btns()) { const r = b.getBoundingClientRect(), c = (r.left + r.right) / 2, dd = Math.abs(c - x); if (dd < bd) { bd = dd; best = b; } } return best; };
+    const btnAt = btnAtF;
     const hl = b => { btns().forEach(x => x.classList.toggle("hl", x === b)); if (b && d && d.last !== b) { d.last = b; try { navigator.vibrate && navigator.vibrate(7); } catch (e) {} } };
     nav.addEventListener("pointerdown", e => {
       if (e.pointerType === "mouse" || !matchMedia("(max-width: 760px)").matches && !document.documentElement.classList.contains("bk-phone")) return;
@@ -402,9 +408,9 @@
       setX(g.cur, g.dx, false);
       if (g.peek) setX(g.peek, g.dx - Math.sign(dx) * g.w, false);
       glow(tab, Math.min(1, Math.abs(g.dx) / (g.w * 0.5)));
-      const pillEl = document.querySelector(".bk-tab-pill"), a = tabBtn(state.activeTab), bb = tab && tabBtn(tab);
-      if (pillEl && a) { const nr = a.parentElement.getBoundingClientRect(), ra = a.getBoundingClientRect(), rb = bb ? bb.getBoundingClientRect() : ra, k = Math.min(1, Math.abs(g.dx) / g.w);
-        pillEl.style.transition = "none"; pillEl.style.transform = `translate3d(${ra.left - nr.left + (rb.left - ra.left) * k}px,0,0)`; }
+      const pillEl = document.querySelector(".bk-tab-pill"), ia = order.indexOf(state.activeTab), ib = tab ? order.indexOf(tab) : ia;
+      if (pillEl && ia >= 0) { const k = Math.min(1, Math.abs(g.dx) / g.w), idx = ia + (ib - ia) * k, dirRtl = getComputedStyle(pillEl.parentElement).direction === "rtl";
+        pillEl.style.transition = "none"; pillEl.style.transform = `translateX(${(dirRtl ? -1 : 1) * idx * 100}%)`; }
     }
 
     const end = () => {

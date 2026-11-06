@@ -8,6 +8,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Bottom-bar bubble fixed on real phones:** it is now sized and moved as a share of the whole bar (1/4 per tab) instead of pixel measurements, so phone zoom no longer makes it huge or puts it in the wrong place.
   - **Choosing a character** on the player's phone (Philosopher, Pit-Hag, Gambler, Cerenovus, Courtier), from the game's roles.
   - **Storyteller decisions:** after a choice, the storyteller gets a decision card with ready options (Fortune Teller yes/no with the truth marked — red herring and poison included; Ravenkeeper, Dreamer, Gambler, Cerenovus, Pit-Hag role change, Philosopher ability + the real holder made drunk, Courtier, Snake Charmer swap, the Imp killing itself → pick the new Imp) — each option sends messages to the right players and changes the game; plus "your own call" to message the relevant players, and a "message chosen players" tool in every phase.
   - **Bottom bar like Apple's** on phones: a floating glass bar with a bubble behind the current tab; press, hold and slide — the bubble follows the finger with a vibration tick per tab, letting go selects; the bubble also follows page swipes.
