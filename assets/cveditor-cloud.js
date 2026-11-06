@@ -20,7 +20,7 @@
   "use strict";
   const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
   const ME = (document.currentScript && document.currentScript.src) || location.href;
-  const cloud = { configured: false, user: null };
+  const cloud = { configured: false, user: null, resolved: false };   // resolved: the first sign-in state is known
   let auth = null, db = null, listeners = [], saveTimer = null, pending = null;
 
   // Load one script tag and wait for it.
@@ -38,7 +38,7 @@
       const r = await fetch(new URL("cveditor-firebase.json", ME).href, { cache: "no-cache" });
       if (r.ok) cfg = await r.json();
     } catch (e) { /* no config file */ }
-    if (!cfg || !cfg.apiKey || !cfg.projectId) { console.info("CVEditor: Google sign-in is not set up (assets/cveditor-firebase.json is empty)."); return; }
+    if (!cfg || !cfg.apiKey || !cfg.projectId) { cloud.resolved = true; console.info("CVEditor: Google sign-in is not set up (assets/cveditor-firebase.json is empty)."); return; }
     try {
       await script(SDK + "firebase-app-compat.js");
       await script(SDK + "firebase-auth-compat.js");
@@ -47,9 +47,10 @@
       auth = app.auth(); db = app.firestore();
       await auth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL);   // stay signed in on this device until Sign out
       cloud.configured = true;
-      auth.onAuthStateChanged(u => { cloud.user = shape(u); listeners.forEach(cb => { try { cb(cloud.user); } catch (e) { console.error(e); } }); });
+      auth.onAuthStateChanged(u => { cloud.user = shape(u); cloud.resolved = true; listeners.forEach(cb => { try { cb(cloud.user); } catch (e) { console.error(e); } }); });
       auth.getRedirectResult().catch(e => console.warn("Google sign-in:", e.message));
     } catch (e) {
+      cloud.resolved = true;
       console.warn("CVEditor: Google sign-in could not start:", e.message);
     }
   })();

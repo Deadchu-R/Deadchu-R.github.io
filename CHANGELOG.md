@@ -7,6 +7,15 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
 ## 2026-11-06
+- **CVEditor:** the top bar is cleaner. Save, PDF, Share, Send, ATS Check, Tips, Designs (template, style, background, layout) and Publish moved to the side menu under the account box.
+- **CVEditor:** **Publish to roeetal.com/cv**, for the owner only (roeetal17).
+  - It commits the current résumé into `content/cv.json`, optionally as the main one. The Action then rebuilds cv.html and the PDF.
+  - It is unlocked with the site-editor name + password (the token stays encrypted; this tab only).
+  - The old fake publish (which only downloaded a file) is gone.
+- **CVEditor:**
+  - The page no longer starts twice, which could reset the signed-in state.
+  - "Signing you back in…" shows while the session is restored after a refresh.
+  - The clean-up also removes owner résumés found in other accounts by the owner's email.
 - **CVEditor:** only roeetal17 is the owner. Every other Google account, including the owner's second account, gets its own empty-start résumés. Copies of the site's résumés that an earlier version put into the second account are removed automatically on sign-in.
 - **CVEditor:** Firebase project `roeetal-cv` set up:
   - Google sign-in on;

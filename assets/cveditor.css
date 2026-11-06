@@ -4004,3 +4004,35 @@ body.cve-sidebar-collapsed .cve-canvas-wrap {
 .cv-chip.cve-chip-drop-before::before, .cv-chip.cve-chip-drop-after::after,
 .cv-contact-item.cve-contact-drop-before::before, .cv-contact-item.cve-contact-drop-after::after {
   background: var(--cve-drop) !important; box-shadow: 0 0 10px var(--cve-drop) !important; }
+
+/* ==========================================================================
+   Side menu actions (Save, PDF, Share, Send, ATS Check, Tips, Publish, Designs) — moved out of the top bar
+   ========================================================================== */
+.cve-sidebar { overflow: hidden; }
+.cve-sidebar-content { height: auto !important; }
+.cve-side-actions { flex: none; padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--cve-border); }
+.cve-side-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.cve-side-actions .cve-btn { width: 100%; justify-content: center; padding: 7px 8px; font-size: 12.5px; min-height: 34px; }
+.cve-side-actions .cve-score-pill { margin-left: 4px; }
+.cve-side-actions .cve-publish-main-btn { width: 100%; justify-content: center; padding: 9px 10px; font-size: 13px; min-height: 38px; }
+.cve-side-actions .cve-publish-main-btn[style*="inline-flex"] { display: flex !important; }
+.cve-side-design { border: 1px solid var(--cve-border); border-radius: 8px; background: rgba(255, 255, 255, .03); }
+.cve-side-design > summary { cursor: pointer; list-style: none; padding: 8px 10px; font-size: 12.5px; font-weight: 700; color: var(--cve-text); display: flex; align-items: center; justify-content: space-between; }
+.cve-side-design > summary::-webkit-details-marker { display: none; }
+.cve-side-design > summary::after { content: "▾"; color: var(--cve-text-muted); transition: transform .2s; }
+.cve-side-design[open] > summary::after { transform: rotate(180deg); }
+.cve-side-design-body { padding: 0 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+.cve-side-design .cve-tpl-pills { width: 100%; }
+.cve-side-design .cve-tpl-btn { flex: 1; text-align: center; }
+.cve-side-design .cve-skin-bar { display: flex; margin: 0; justify-content: space-between; border-radius: 8px; padding: 5px 8px; }
+.cve-side-design .cve-skin-select { max-width: 62%; }
+.cve-login-pending { font-size: 12.5px; color: var(--cve-text-muted); padding: 6px 2px; }
+/* publish dialog */
+.cve-pub-modal { position: fixed; inset: 0; z-index: 100000; background: rgba(0, 0, 0, .6); display: grid; place-items: center; padding: 16px; }
+.cve-pub-card { width: min(420px, 100%); background: var(--cve-surface-card); border: 1px solid var(--cve-border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px; color: var(--cve-text); }
+.cve-pub-card h3 { margin: 0; font-size: 18px; }
+.cve-pub-card p { margin: 0; font-size: 13px; color: var(--cve-text-muted); line-height: 1.45; }
+.cve-pub-card input[type=text], .cve-pub-card input[type=password] { width: 100%; padding: 9px 10px; border-radius: 7px; border: 1px solid var(--cve-border); background: var(--cve-bg); color: #fff; font-size: 14px; }
+.cve-pub-card label { font-size: 13px; display: flex; gap: 8px; align-items: center; }
+.cve-pub-card .row { display: flex; gap: 8px; justify-content: flex-end; }
+.cve-pub-err { color: #fca5a5 !important; min-height: 1.2em; }

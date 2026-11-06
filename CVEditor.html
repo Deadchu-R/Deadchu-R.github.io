@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rubik:ital,wght@0,400;0,500;0,700;1,400&family=Assistant:wght@400;600;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Lato:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap">
   <link rel="stylesheet" href="assets/cv.css?v=20261105_15">
-  <link rel="stylesheet" href="assets/cveditor.css?v=20261105_20">
+  <link rel="stylesheet" href="assets/cveditor.css?v=20261106_3">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body class="cve-body">
@@ -44,49 +44,13 @@
       <button type="button" class="cve-autofit-btn" id="autofitBtn" style="display:none;" onclick="window.CVE.autoFitToOnePage()">⚡ Auto-Fit</button>
     </div>
 
-    <!-- Template Switcher Pills -->
-    <div class="cve-tpl-pills">
-      <button type="button" class="cve-tpl-btn active" data-tpl="ats" onclick="window.CVE.setTemplate('ats')">ATS Pro</button>
-      <button type="button" class="cve-tpl-btn" data-tpl="novo" onclick="window.CVE.setTemplate('novo')">Novo (2-Col)</button>
-      <button type="button" class="cve-tpl-btn" data-tpl="studio" onclick="window.CVE.setTemplate('studio')">Studio (Sidebar)</button>
-    </div>
 
-    <!-- Site Style / Skin Switcher -->
-    <div class="cve-skin-bar" title="Change roeetal.com site design style for this CV">
-      <label for="cveSkinSelect" class="cve-skin-label">🎨 Style:</label>
-      <select id="cveSkinSelect" class="cve-skin-select" onchange="window.CVE.setSkin(this.value)">
-        <option value="classic">🏛️ Classic</option>
-        <option value="apple">🍏 Apple (Minimal)</option>
-        <option value="valley">🎬 Robert Valley (Cinematic)</option>
-        <option value="avraham">🌌 Avraham (Cyber Space)</option>
-        <option value="arcade">🎮 Arcade (Retro)</option>
-        <option value="hobbies">🧗‍♂️ Hobbies (Climbing)</option>
-        <option value="sketchbook">📓 Sketchbook</option>
-        <option value="plain">📄 Plain</option>
-      </select>
-    </div>
 
-    <!-- CV Background Switcher -->
-    <div class="cve-skin-bar cve-bg-bar" title="Change CV Document Background / רקע קורות חיים ממסך העריכה">
-      <label for="cveBgSelect" class="cve-skin-label">🖼️ Background:</label>
-      <select id="cveBgSelect" class="cve-skin-select" onchange="window.CVE.setBg(this.value)">
-        <option value="white">⚪ White (ATS)</option>
-        <option value="ivory">📜 Ivory Linen</option>
-        <option value="parchment">📄 Parchment</option>
-        <option value="topo">🗺️ Topo Contours (Site)</option>
-        <option value="grid">📐 Blueprint Grid</option>
-        <option value="dots">⠶ Dot Matrix</option>
-        <option value="slate">🪙 Modern Slate</option>
-        <option value="royal-blue">🌊 Royal Navy (Site)</option>
-        <option value="dark-slate">🌑 Dark Mode</option>
-        <option value="cyber">🌌 Cyber Space</option>
-      </select>
-    </div>
 
     <!-- Actions & Collaboration -->
     <div class="cve-topbar-actions">
       <!-- Test Button: ל' (Pops up 'איכסה' and disappears) -->
-      <button type="button" id="cveLButton" class="cve-btn cve-l-btn" onclick="window.CVE&&window.CVE.showIkhsa?window.CVE.showIkhsa():(alert('איכסה'))" title="ל'">
+      <button type="button" id="cveLButton" class="cve-btn cve-l-btn" style="display:none" onclick="window.CVE&&window.CVE.showIkhsa?window.CVE.showIkhsa():(alert('איכסה'))" title="ל'">
         <span>ל'</span>
       </button>
 
@@ -109,40 +73,13 @@
         </button>
       </div>
 
-      <button type="button" class="cve-btn layout-btn" onclick="window.CVE.openLayoutModal()" title="Arrange columns and layouts">
-        <span>📐 Layout & Columns</span>
-      </button>
 
-      <button type="button" class="cve-btn ats-btn" onclick="window.CVE.openAtsModal()">
-        <span>🎯 ATS & Job Match</span>
-        <span id="atsScoreBadge" class="cve-score-pill">90%</span>
-      </button>
 
-      <button type="button" id="cveTipsBtn" class="cve-btn tips-btn" onclick="window.CVE.openTipsModal()" title="View ATS Recommendations & Fixes">
-        <span>💡 Tips</span>
-        <span id="cveTipsCount" class="cve-score-pill" style="background:#ef4444;color:#fff;">! 0</span>
-      </button>
 
-      <button type="button" class="cve-btn collab-btn" onclick="window.CVE.openCollabModal()">
-        <span>👥 Collaborate</span>
-      </button>
 
-      <button type="button" class="cve-btn" onclick="window.CVE.openEmailModal()">
-        <span>✉️ Send</span>
-      </button>
 
-      <!-- Add to main website CV (Available only for Roee when logged in) -->
-      <button type="button" id="cvePublishMainBtn" class="cve-btn cve-publish-main-btn" style="display:none;" onclick="window.CVE.addToMainWebsiteCV()" title="הוסף ועדכן לקורות החיים הראשיים באתר roeetal.com/cv">
-        <span>🌐 Add to main website CV</span>
-      </button>
 
-      <button type="button" class="cve-btn pri" onclick="window.CVE.saveAction()">
-        <span>💾 Save</span>
-      </button>
 
-      <button type="button" class="cve-btn" onclick="window.CVE.printPdf()">
-        <span>🖨️ PDF</span>
-      </button>
 
       <button type="button" id="userBtn" class="cve-user-btn" style="display:none" onclick="window.CVE.openAuthModal()">
         <span class="cve-user-avatar">👤</span>
@@ -162,6 +99,65 @@
 
       <!-- Account: "Log in with Google" / signed-in user (filled by renderTopbarAuth in cveditor.js) -->
       <div id="cveSidebarAuth" class="cve-sidebar-auth"></div>
+
+      <!-- Actions (moved here from the top bar so the top stays clean) -->
+      <div class="cve-side-actions">
+        <div class="cve-side-row">
+          <button type="button" class="cve-btn pri" onclick="window.CVE.saveAction()"><span>💾 Save</span></button>
+          <button type="button" class="cve-btn" onclick="window.CVE.printPdf()"><span>🖨️ PDF</span></button>
+        </div>
+        <div class="cve-side-row">
+          <button type="button" class="cve-btn collab-btn" onclick="window.CVE.openCollabModal()"><span>🔗 Share</span></button>
+          <button type="button" class="cve-btn" onclick="window.CVE.openEmailModal()"><span>✉️ Send</span></button>
+        </div>
+        <div class="cve-side-row">
+          <button type="button" class="cve-btn ats-btn" onclick="window.CVE.openAtsModal()"><span>🎯 ATS Check</span><span id="atsScoreBadge" class="cve-score-pill">90%</span></button>
+          <button type="button" id="cveTipsBtn" class="cve-btn tips-btn" onclick="window.CVE.openTipsModal()" title="Recommendations & fixes"><span>💡 Tips</span><span id="cveTipsCount" class="cve-score-pill" style="background:#ef4444;color:#fff;">! 0</span></button>
+        </div>
+        <!-- Publish: only for the site owner (shown by updateMainWebsiteCvButton) -->
+        <button type="button" id="cvePublishMainBtn" class="cve-btn cve-publish-main-btn" style="display:none;" onclick="window.CVE.addToMainWebsiteCV()" title="Put this résumé on roeetal.com/cv.html">
+          <span>🌐 Publish to roeetal.com/cv</span>
+        </button>
+        <details class="cve-side-design">
+          <summary>🎨 Designs</summary>
+          <div class="cve-side-design-body">
+            <div class="cve-tpl-pills">
+              <button type="button" class="cve-tpl-btn active" data-tpl="ats" onclick="window.CVE.setTemplate('ats')">ATS Pro</button>
+              <button type="button" class="cve-tpl-btn" data-tpl="novo" onclick="window.CVE.setTemplate('novo')">Novo</button>
+              <button type="button" class="cve-tpl-btn" data-tpl="studio" onclick="window.CVE.setTemplate('studio')">Studio</button>
+            </div>
+            <div class="cve-skin-bar" title="Change roeetal.com site design style for this CV">
+              <label for="cveSkinSelect" class="cve-skin-label">🎨 Style:</label>
+              <select id="cveSkinSelect" class="cve-skin-select" onchange="window.CVE.setSkin(this.value)">
+                <option value="classic">🏛️ Classic</option>
+                <option value="apple">🍏 Apple (Minimal)</option>
+                <option value="valley">🎬 Robert Valley (Cinematic)</option>
+                <option value="avraham">🌌 Avraham (Cyber Space)</option>
+                <option value="arcade">🎮 Arcade (Retro)</option>
+                <option value="hobbies">🧗‍♂️ Hobbies (Climbing)</option>
+                <option value="sketchbook">📓 Sketchbook</option>
+                <option value="plain">📄 Plain</option>
+              </select>
+            </div>
+            <div class="cve-skin-bar cve-bg-bar" title="Change CV Document Background / רקע קורות חיים ממסך העריכה">
+              <label for="cveBgSelect" class="cve-skin-label">🖼️ Background:</label>
+              <select id="cveBgSelect" class="cve-skin-select" onchange="window.CVE.setBg(this.value)">
+                <option value="white">⚪ White (ATS)</option>
+                <option value="ivory">📜 Ivory Linen</option>
+                <option value="parchment">📄 Parchment</option>
+                <option value="topo">🗺️ Topo Contours (Site)</option>
+                <option value="grid">📐 Blueprint Grid</option>
+                <option value="dots">⠶ Dot Matrix</option>
+                <option value="slate">🪙 Modern Slate</option>
+                <option value="royal-blue">🌊 Royal Navy (Site)</option>
+                <option value="dark-slate">🌑 Dark Mode</option>
+                <option value="cyber">🌌 Cyber Space</option>
+              </select>
+            </div>
+            <button type="button" class="cve-btn layout-btn" onclick="window.CVE.openLayoutModal()" title="Arrange columns and layouts"><span>📐 Layout & Columns</span></button>
+          </div>
+        </details>
+      </div>
 
       <div class="cve-sidebar-tabs">
         <button type="button" class="cve-sidebar-tab active" data-tab="content" onclick="window.CVE.setTab('content')">📝 Content</button>
@@ -764,8 +760,8 @@
 
   <!-- Core Scripts -->
   <script src="assets/cv.js?v=20261105_20"></script>
-  <script src="assets/cveditor-cloud.js?v=20261105_20"></script>
-  <script src="assets/cveditor.js?v=20261106_2"></script>
+  <script src="assets/cveditor-cloud.js?v=20261106_3"></script>
+  <script src="assets/cveditor.js?v=20261106_3"></script>
   <script>
     if (window.CVE && window.CVE.init && !window._cveBooted) {
       window.CVE.init();

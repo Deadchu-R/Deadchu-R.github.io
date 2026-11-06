@@ -3749,6 +3749,11 @@
     const area = document.getElementById("cveSidebarAuth");
     if (!area) return;
     const user = state.currentUser;
+    let hint = false; try { hint = localStorage.getItem("cve_signed_in_hint") === "1"; } catch (e) {}
+    if (!user && hint && window.RTCloud && !window.RTCloud.resolved) {
+      area.innerHTML = `<div class="cve-login-card"><div class="cve-login-pending">⏳ Signing you back in…</div></div>`;
+      return;
+    }
     if (!user) {
       area.innerHTML = `
         <div class="cve-login-card">
@@ -3791,7 +3796,9 @@
 
   // A Google user signed in (or out): show only their own résumés, loaded from their private vault.
   async function onCloudUser(gu) {
+    try { gu ? localStorage.setItem("cve_signed_in_hint", "1") : localStorage.removeItem("cve_signed_in_hint"); } catch (e) {}
     if (!gu) {
+      renderTopbarAuth();
       const was = state.currentUser;
       if (was && was.cloud) {
         delete state.vault[was.id];
@@ -3818,7 +3825,8 @@
       let removed = 0;
       for (const k of Object.keys(cvs)) {
         const c = cvs[k];
-        if (site[k] && c && c.person && siteNames.has(c.person.name)) { delete cvs[k]; removed++; }
+        const ownersCopy = c && c.person && ((site[k] && siteNames.has(c.person.name)) || (c.person.email && await isOwnerEmail(c.person.email)));
+        if (ownersCopy) { delete cvs[k]; removed++; }
       }
       if (removed && !Object.keys(cvs).length) cvs = {};
       if (removed) window.RTCloud.save(gu.uid, cvs).catch(() => {});
@@ -3887,27 +3895,87 @@
     }
   }
 
+  // ---- Publish to roeetal.com/cv (owner only) ------------------------------------------------------------
+  // Writes the current résumé into content/cv.json in the site's GitHub repo (one commit); the site's Action then
+  // rebuilds cv.html and the PDF/PNG. Write access uses the same GitHub token as the site editor: it is stored
+  // encrypted in assets/editor-auth.json and unlocked here with the editor name + password (kept only in this tab).
+  const GH_REPO = "Deadchu-R/Deadchu-R.github.io", GH_BRANCH = "main", GH_AUTHOR = { name: "Roee Tal", email: "93131102+Deadchu-R@users.noreply.github.com" };
+  const b64ToUtf8 = t => decodeURIComponent(escape(atob(String(t).replace(/\s/g, ""))));
+  const utf8ToB64 = t => btoa(unescape(encodeURIComponent(t)));
+
+  // GitHub REST call with the unlocked token.
+  async function ghApi(path, token, opts) {
+    const r = await fetch("https://api.github.com" + path, Object.assign({}, opts, {
+      headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json" }
+    }));
+    if (!r.ok) { let m = r.status + ""; try { m = (await r.json()).message || m; } catch (e) {} throw new Error("GitHub: " + m); }
+    return r.json();
+  }
+
+  // Decrypt the editor's GitHub token with the editor name + password (same scheme as assets/edit.js).
+  async function unlockEditorToken(user, pass) {
+    const r = await fetch("/assets/editor-auth.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("The editor sign-in file is missing.");
+    const a = await r.json();
+    const unb = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(user.trim().toLowerCase() + "\n" + pass), "PBKDF2", false, ["deriveBits"]);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: unb(a.salt), iterations: a.iter }, base, 512));
+    const check = [...bits.slice(0, 32)].map(x => x.toString(16).padStart(2, "0")).join("");
+    if (check !== a.check) throw new Error("Wrong name or password.");
+    const key = await crypto.subtle.importKey("raw", bits.slice(32), "AES-GCM", false, ["decrypt"]);
+    const tok = new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb(a.token.iv) }, key, unb(a.token.ct)));
+    try { sessionStorage.setItem("rt-edit-token", tok); } catch (e) {}
+    return tok;
+  }
+
+  // The publish dialog: what will happen, "show as main résumé", and the editor password when the tab isn't unlocked yet.
+  function publishDialog(cv, hasToken) {
+    return new Promise(resolve => {
+      const m = document.createElement("div"); m.className = "cve-pub-modal";
+      m.innerHTML = `<div class="cve-pub-card" role="dialog" aria-label="Publish">
+          <h3>🌐 Publish to roeetal.com/cv</h3>
+          <p>“${esc(cv.label || cv.person && cv.person.name || "Résumé")}” will be saved to the site. The page and its PDF update in about a minute.</p>
+          <label><input type="checkbox" id="cvePubMain" checked> Show it as the main résumé (first on the page and Roee-Tal-CV.pdf)</label>
+          ${hasToken ? "" : `<p>Unlock publishing with your site-editor sign-in (the one on roeetal.com/?edit):</p>
+          <input type="text" id="cvePubUser" placeholder="Name" autocomplete="username" autocapitalize="off">
+          <input type="password" id="cvePubPass" placeholder="Password" autocomplete="current-password">`}
+          <p class="cve-pub-err" id="cvePubErr"></p>
+          <div class="row"><button type="button" class="cve-btn" data-x="cancel">Cancel</button><button type="button" class="cve-btn pri" data-x="go">Publish</button></div>
+        </div>`;
+      document.body.appendChild(m);
+      const close = v => { m.remove(); resolve(v); };
+      m.addEventListener("click", e => { if (e.target === m) close(null); });
+      m.querySelector('[data-x="cancel"]').onclick = () => close(null);
+      const go = m.querySelector('[data-x="go"]'), err = m.querySelector("#cvePubErr");
+      const submit = async () => {
+        go.disabled = true; err.textContent = "";
+        try {
+          let token = "";
+          try { token = sessionStorage.getItem("rt-edit-token") || ""; } catch (e) {}
+          if (!token) { err.style.color = "#94a3b8"; err.textContent = "Unlocking…"; token = await unlockEditorToken(m.querySelector("#cvePubUser").value, m.querySelector("#cvePubPass").value); }
+          close({ token, makeMain: m.querySelector("#cvePubMain").checked, setErr: null });
+        } catch (e) { err.style.color = ""; err.textContent = e.message || String(e); go.disabled = false; }
+      };
+      go.onclick = submit;
+      m.querySelectorAll("input").forEach(i => i.addEventListener("keydown", e => { if (e.key === "Enter") submit(); }));
+      setTimeout(() => { const f = m.querySelector("#cvePubUser") || go; f.focus(); }, 30);
+    });
+  }
+
   async function addToMainWebsiteCV() {
-    if (!isRoeeUser()) {
-      alert("🔒 פעולה זו זמינה רק כאשר רועי מחובר לחשבון שלו.");
-      return;
-    }
-
+    if (!isRoeeUser()) { showToast("🔒 Only the site owner can publish to roeetal.com."); return; }
     const cv = getCurrentCV();
-    const confirmed = confirm(
-      "🌐 האם להוסיף ולעדכן את קורות החיים הנוכחיים כקורות החיים הראשיים באתר roeetal.com/cv?\n\nקורות חיים אלו יהיו קורות החיים הרשמיים שכל המבקרים באתר רואים."
-    );
-    if (!confirmed) return;
-
-    // Clean CV variant conforming to content/cv.json
+    const choice = await publishDialog(cv, !!(sessionStorage.getItem("rt-edit-token")));
+    if (!choice) return;
     const pubVariant = {
-      label: cv.label || "Roee Tal — Resume",
+      label: cv.label || "Roee Tal — Résumé",
       template: cv.template || "ats",
       accent: cv.accent || "#1f5fa8",
       font: cv.font || "Inter",
       density: cv.density || "normal",
-      photo: cv.photo || "/assets/uploads/1000211257-f1al.jpg",
+      photo: cv.photo || "",
       show_photo: Boolean(cv.show_photo),
+      show_icons: Boolean(cv.show_icons),
       dir: cv.dir || "ltr",
       lang: cv.lang || "en",
       public: true,
@@ -3915,22 +3983,30 @@
       main: JSON.parse(JSON.stringify(cv.main || [])),
       side: JSON.parse(JSON.stringify(cv.side || []))
     };
-
-    localStorage.setItem("cve_main_site_published_cv", JSON.stringify(pubVariant));
-
-    // Offer instant cv.json file download as backup
-    const jsonStr = JSON.stringify({ default: "unity-ats", variants: { "unity-ats": pubVariant } }, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "cv.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    showSaveIndicator("✓ קורות החיים הראשיים עודכנו!");
-    alert("✅ קורות החיים עודכנו והוגדרו כקורות החיים הראשיים באתר roeetal.com/cv! (קובץ cv.json נשמר)");
+    if (/^data:/.test(pubVariant.photo) && pubVariant.photo.length > 600000) { showToast("The photo is too big to publish — use a smaller one."); return; }
+    try {
+      showSaveIndicator("🌐 Publishing…");
+      const file = await ghApi(`/repos/${GH_REPO}/contents/content/cv.json?ref=${GH_BRANCH}&t=${Date.now()}`, choice.token);
+      const data = JSON.parse(b64ToUtf8(file.content));
+      data.variants = data.variants || {};
+      // keep the same id when this résumé came from the site; otherwise a new id from its label
+      let id = state.activeCvId && data.variants[state.activeCvId] ? state.activeCvId
+        : (String(pubVariant.label).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "cv");
+      data.variants[id] = pubVariant;
+      if (choice.makeMain) data.default = id;
+      await ghApi(`/repos/${GH_REPO}/contents/content/cv.json`, choice.token, {
+        method: "PUT",
+        body: JSON.stringify({ message: `Résumé: publish “${pubVariant.label}” from CV Studio`, content: utf8ToB64(JSON.stringify(data, null, 2) + "\n"), sha: file.sha, branch: GH_BRANCH, author: GH_AUTHOR, committer: GH_AUTHOR })
+      });
+      showSaveIndicator("✓ Published — roeetal.com/cv updates in ~1 min");
+      showToast("✅ Published! roeetal.com/cv and the PDF update in about a minute.");
+    } catch (e) {
+      if (/401|Bad credentials/i.test(e.message)) { try { sessionStorage.removeItem("rt-edit-token"); } catch (_) {} }
+      showToast("Couldn't publish: " + (e.message || e));
+      showSaveIndicator("⚠ Not published");
+    }
   }
+
 
 
   
@@ -4009,6 +4085,8 @@
       return getCurrentCV();
     },
     init() {
+      if (window._cveInitDone) return;   // the page calls init from two places; run it once
+      window._cveInitDone = true; window._cveBooted = true;
       initPhotoFileInput();
       Storage.init();
       renderTopbarAuth();
