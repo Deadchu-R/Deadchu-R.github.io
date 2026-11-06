@@ -8,6 +8,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Fix: roeetal.com/Bootkeh (no slash) showed old files.** GitHub Pages serves that address from Bootkeh.html itself, whose ?v= marks were never updated, so phones kept old cached styles/scripts (the saved-players window without scrolling, phone fields…). build.py now stamps Bootkeh.html too (file hashes + version code, stable between builds) and writes bootkeh-version.json for the reload-when-newer check.
   - **Always the newest version:** build.py writes Bootkeh/version.json; when a phone opens an older cached copy of the page, it reloads itself once.
   - **Player rows fit the phone:** name takes the room, the saved-player picker is a small 👤 button; no phone fields anywhere.
   - **Language button switches everything** (assets/bootkeh-i18n.js for the fixed texts + every screen redrawn), and it is labelled with the other language ("English" / "עברית").

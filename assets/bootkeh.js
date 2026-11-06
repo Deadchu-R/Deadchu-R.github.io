@@ -1630,7 +1630,7 @@
     // phones sometimes keep an old copy of the page: if a newer version is online, reload once (not in a loop)
     if (el.dataset.v && !el.dataset.v.startsWith("__") && !showVersion.checked) {
       showVersion.checked = true;
-      fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => {
+      fetch((/\/Bootkeh\/(index\.html)?$/.test(location.pathname) ? "version.json" : "bootkeh-version.json") + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => {
         if (!j || !j.v || j.v === el.dataset.v) return;
         let tried = ""; try { tried = sessionStorage.getItem("bk_reload_for") || ""; } catch (e) {}
         if (tried === j.v) return;

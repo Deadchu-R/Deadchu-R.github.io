@@ -1237,25 +1237,33 @@ def build_cv():
     _cv_files(pub, default)
 
 def build_bootkeh():
-    """Ensure Bootkeh.html and Bootkeh/index.html are maintained across builds."""
+    """Bootkeh.html (source) → Bootkeh/index.html, and keep both copies on the newest file versions.
+    GitHub Pages serves roeetal.com/Bootkeh (no slash) from Bootkeh.html itself, so that copy also gets the content
+    hash of every Bootkeh file (?v=…) and the version code, or phones would keep showing old cached files."""
     bk_path = ROOT / "Bootkeh.html"
     if not bk_path.exists():
         return
     bk_html = bk_path.read_text(encoding="utf-8")
+    files = sorted(set(re.findall(r'assets/(bootkeh[\w-]*\.(?:js|css))\?v=', bk_html)))
+    # the version code: hash of the Bootkeh files + the page with its own version marks taken out (so it is stable)
+    plain = re.sub(r'(assets/bootkeh[\w-]*\.(?:js|css))\?v=[^"\']*', r'\1?v=', bk_html)
+    plain = re.sub(r'data-v="[^"]*"', 'data-v=""', plain)
+    stamp = hashlib.md5(("|".join(ver("assets/" + f) for f in files) + hashlib.md5(plain.encode()).hexdigest()).encode()).hexdigest()[:6]
+    def stamped(html):
+        for f in files:
+            html = re.sub(r'assets/' + re.escape(f) + r'\?v=[^"\']*', 'assets/' + f + '?v=' + ver("assets/" + f), html)
+        return re.sub(r'data-v="[^"]*"', 'data-v="' + stamp + '"', html)
+    root_html = stamped(bk_html)
+    if root_html != bk_html:
+        bk_path.write_text(root_html, encoding="utf-8")
     sub_bk = ROOT / "Bootkeh"
     sub_bk.mkdir(exist_ok=True)
-    sub_bk_html = bk_html.replace('href="assets/', 'href="../assets/').replace('src="assets/', 'src="../assets/')
+    sub_bk_html = root_html.replace('href="assets/', 'href="../assets/').replace('src="assets/', 'src="../assets/')
     sub_bk_html = sub_bk_html.replace('href="index.html', 'href="../index.html')
-    # every Bootkeh file gets its own content hash (?v=…) so phones load the new version right after an update,
-    # and the page shows one short version code next to the title (see BK_VERSION in assets/bootkeh.js)
-    files = sorted(set(re.findall(r'assets/(bootkeh[\w-]*\.(?:js|css))\?v=', sub_bk_html)))
-    for f in files:
-        sub_bk_html = re.sub(r'assets/' + re.escape(f) + r'\?v=[^"\']*', 'assets/' + f + '?v=' + ver("assets/" + f), sub_bk_html)
-    stamp = hashlib.md5(("|".join(ver("assets/" + f) for f in files) + ver("Bootkeh.html")).encode()).hexdigest()[:6]
-    sub_bk_html = sub_bk_html.replace("__BK_VERSION__", stamp)
     (sub_bk / "index.html").write_text(sub_bk_html, encoding="utf-8")
     # the page compares itself with this file on load and reloads once when a newer version is online (showVersion in bootkeh.js)
     (sub_bk / "version.json").write_text('{"v":"' + stamp + '"}\n', encoding="utf-8")
+    (ROOT / "bootkeh-version.json").write_text('{"v":"' + stamp + '"}\n', encoding="utf-8")
 
 
 def build_cveditor():
