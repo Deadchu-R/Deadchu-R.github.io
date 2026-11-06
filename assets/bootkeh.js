@@ -405,6 +405,7 @@
     const liveSaved = window.BKCloud && window.BKCloud.saved();
     if (liveSaved && Array.isArray(liveSaved.players) && liveSaved.players.length) {
       state.players = liveSaved.players.map(x => Object.assign({}, x, { role: getRole(x.roleId) || getRole("empath") }));
+      if (liveSaved.rules) state.rules = liveSaved.rules;
       state.playerCount = state.players.length;
     }
 
@@ -505,6 +506,10 @@
   }
 
   // --- Role Lookup Helper ---
+  // The role / team a player is SHOWN (the Drunk thinks it is a Townsfolk, the Lunatic the Demon, the Marionette good).
+  function shownRole(p) { return window.BKRules ? window.BKRules.shown(p) : p.role; }
+  function shownAlign(p) { return window.BKRules ? window.BKRules.shownAlignment(p) : p.alignment; }
+
   // "‹ Back" at the top of every screen except the first one (it goes to the previous screen, like the phone's Back).
   const TAB_NAMES = { setup: ["הכנת משחק", "Setup"], board: ["מעגל הישיבה", "Board"], sheet: ["דף תפקידים", "Roles sheet"], cards: ["שליחה לשחקנים", "Send"] };
   function renderBackBar(tab) {
@@ -959,16 +964,11 @@
     const pickedMinions = shuffle(minionPool).slice(0, minionsNeeded);
     const pickedDemons = shuffle(demonPool).slice(0, demonsNeeded);
 
-    // Check Baron
-    if (pickedMinions.some(m => m.id === "baron")) {
-      outsidersNeeded += 2;
-      townsfolkNeeded = Math.max(1, townsfolkNeeded - 2);
-    }
-    // Check Fang Gu
-    if (pickedDemons.some(d => d.id === "fang_gu")) {
-      outsidersNeeded += 1;
-      townsfolkNeeded = Math.max(1, townsfolkNeeded - 1);
-    }
+    // Setup changes: Baron +2 Outsiders, Godfather +1, Fang Gu +1, Vigormortis −1 (assets/bootkeh-rules.js)
+    const oDelta = window.BKRules ? window.BKRules.outsiderChange(pickedMinions, pickedDemons) : 0;
+    const goodSlots = townsfolkNeeded + outsidersNeeded;
+    outsidersNeeded = Math.max(0, Math.min(outsiderPool.length, goodSlots, outsidersNeeded + oDelta));
+    townsfolkNeeded = goodSlots - outsidersNeeded;
 
     const pickedOutsiders = shuffle(outsiderPool).slice(0, outsidersNeeded);
     const pickedTownsfolk = shuffle(townsfolkPool).slice(0, townsfolkNeeded);
@@ -1006,8 +1006,13 @@
     state.players = players;
     state.poolIds = poolRoles.filter(r => ["townsfolk", "outsider", "minion", "demon"].includes(r.type)).map(r => r.id);
 
-    // Generate dynamic First Night Info for each player
-    computeFirstNightInfo(players, rolesInPlay, poolRoles);
+    // Who thinks they are what, the Fortune Teller's red herring, the Demon's bluffs, and first-night info
+    // (true info, plus false versions ready for a drunk / poisoned player) — assets/bootkeh-rules.js
+    if (window.BKRules) {
+      state.rules = window.BKRules.setup(players, poolRoles);
+      const ctx = { players, pool: poolRoles, rules: state.rules, lang: state.lang };
+      players.forEach(p => { const fn = window.BKRules.firstNight(p, ctx); p.firstNightInfo = fn.truth; p.fnAlt = fn.lies; p.fnNote = fn.note; });
+    } else computeFirstNightInfo(players, rolesInPlay, poolRoles);
 
     // Render updated views
     renderBoardView();
@@ -1157,7 +1162,8 @@
       const y = (50 + R * Math.sin(angle)).toFixed(2);
 
       const isRevealed = state.isStorytellerView;
-      const roleName = isRevealed ? (state.lang === "he" ? p.role.name_he : p.role.name_en) : (state.lang === "he" ? "מושב" : "Seat");
+      const thinks = p.thinks && getRole(p.thinks);
+      const roleName = isRevealed ? (state.lang === "he" ? p.role.name_he : p.role.name_en) + (thinks ? ` → ${state.lang === "he" ? thinks.name_he : thinks.name_en}` : "") : (state.lang === "he" ? "מושב" : "Seat");
       const icon = isRevealed ? p.role.icon : "👤";
       const alignClass = isRevealed ? p.alignment : "";
       const statusClass = p.isAlive ? "" : "dead";
@@ -1184,7 +1190,7 @@
     if (!list) { list = document.createElement("div"); list.id = "bkSeatList"; list.className = "bk-seat-list"; container.insertAdjacentElement("afterend", list); }
     list.innerHTML = state.players.map(p => { const r = p.role || {}, show = state.isStorytellerView;
       return `<button type="button" class="${show ? p.alignment : ""}${p.isAlive ? "" : " dead"}" onclick="window.Bootkeh.openPlayerDetailsModal('${p.id}')">
-        <i>${p.seat}</i><span class="ic">${show ? r.icon : "👤"}</span><b>${esc(p.name)}</b><small>${show ? esc(state.lang === "he" ? r.name_he : r.name_en) : ""}${p.isAlive ? "" : (state.lang === "he" ? " · מת" : " · dead")}</small></button>`; }).join("");
+        <i>${p.seat}</i><span class="ic">${show ? r.icon : "👤"}</span><b>${esc(p.name)}</b><small>${show ? esc(state.lang === "he" ? r.name_he : r.name_en) + (p.thinks && getRole(p.thinks) ? " → " + esc(state.lang === "he" ? getRole(p.thinks).name_he : getRole(p.thinks).name_en) : "") + (state.rules && state.rules.redHerring === p.seat ? (state.lang === "he" ? " · פתיון" : " · red herring") : "") : ""}${p.isAlive ? "" : (state.lang === "he" ? " · מת" : " · dead")}</small></button>`; }).join("");
 
     // Update Storyteller Toggle Button label
     const toggleBtn = $("#toggleViewBtn");
@@ -1303,7 +1309,7 @@
     if (liveBox) liveBox.innerHTML = liveBoxHTML();
     const live = liveGame();
     grid.innerHTML = state.players.map(p => {
-      const r = p.role;
+      const r = shownRole(p);
       const roleName = state.lang === "he" ? r.name_he : r.name_en;
       const ability = state.lang === "he" ? r.ability_he : r.ability_en;
 
@@ -1328,12 +1334,14 @@
                 <span class="bk-dist-pill ${r.type}">${r.type.toUpperCase()}</span>
               </div>
             </div>
+            ${p.thinks || p.fnNote ? `<div class="bk-st-note">👁 ${p.thinks ? esc((state.lang === "he" ? "באמת: " : "Really: ") + (state.lang === "he" ? p.role.name_he : p.role.name_en) + (state.lang === "he" ? " — השחקן רואה את התפקיד למעלה. " : " — the player sees the role above. ")) : ""}${esc(p.fnNote || "")}</div>` : ""}
             <div style="font-size:12.5px;color:var(--bk-text-muted);line-height:1.45;margin-bottom:10px;">
               <b>${t.abilityTitle}</b> ${esc(ability)}
             </div>
             <div class="bootkeh-secret-info-box">
               <div class="bootkeh-secret-info-title">📜 ${t.firstNightTitle}</div>
               <textarea id="bkInfo-${p.id}" class="bk-info-edit">${esc(p.firstNightInfo)}</textarea>
+              ${(p.fnAlt || []).length ? `<div class="bk-alt"><small>${state.lang === "he" ? "מידע שקרי מוכן (לשיכור / מורעל):" : "False info ready (drunk / poisoned):"}</small>${p.fnAlt.slice(0, 3).map((x, i) => `<button type="button" onclick="window.Bootkeh.useAlt('${p.id}', ${i})">${esc(x)}</button>`).join("")}</div>` : ""}
               <div style="display:flex;gap:6px;margin-top:6px;align-items:center;">
                 <button type="button" id="bkInfoBtn-${p.id}" class="bk-btn sm" onclick="window.Bootkeh.pushInfo('${p.id}')">${live ? (state.lang === "he" ? "עדכן בדף שלו" : "Update their page") : (state.lang === "he" ? "שמור" : "Save")}</button>
                 ${live ? `<button type="button" id="bkCopy-${p.seat}" class="bk-btn sm" title="${state.lang === "he" ? "העתק קישור פרטי" : "Copy private link"}" onclick="window.Bootkeh.copyLiveLink(${p.seat})">🔗</button>` : ""}
@@ -1381,10 +1389,10 @@
     const p = state.players.find(x => x.id === playerId);
     if (!p) return;
 
-    const r = p.role;
+    const r = shownRole(p);
     const roleName = state.lang === "he" ? r.name_he : r.name_en;
     const ability = state.lang === "he" ? r.ability_he : r.ability_en;
-    const team = p.alignment === "evil" ? (state.lang === "he" ? "רעים 😈" : "Evil 😈") : (state.lang === "he" ? "טובים 🛡️" : "Good 🛡️");
+    const team = shownAlign(p) === "evil" ? (state.lang === "he" ? "רעים 😈" : "Evil 😈") : (state.lang === "he" ? "טובים 🛡️" : "Good 🛡️");
 
     let msg = "";
     if (state.lang === "he") {
@@ -1591,11 +1599,12 @@
     const st = document.getElementById("bkLiveStatus"); if (st) st.textContent = he ? "יוצר דפים פרטיים…" : "Creating private pages…";
     try {
       const old = liveGame(); if (old) await window.BKCloud.endGame(old.gameId).catch(() => {});
-      const g = await window.BKCloud.createGame(getThemeTitle(), state.players.map(p => ({ seat: p.seat, name: p.name, role: p.role, alignment: p.alignment, info: p.firstNightInfo })), hours, state.lang,
+      const g = await window.BKCloud.createGame(getThemeTitle(), state.players.map(p => ({ seat: p.seat, name: p.name, role: shownRole(p), alignment: shownAlign(p), info: p.firstNightInfo })), hours, state.lang,
         { name: getScriptTitle(), author: (getScript(state.scriptId) || {}).author || "", roles: (state.poolIds || []).map(getRole).filter(Boolean) });
       g.sig = playersSig(); state.liveSig = g.sig;
       // keep the deal on this device, so a refresh brings back the same game with its links
-      g.players = state.players.map(p => ({ id: p.id, seat: p.seat, name: p.name, phone: p.phone, roleId: p.role && p.role.id, alignment: p.alignment, firstNightInfo: p.firstNightInfo, isAlive: p.isAlive, isSent: p.isSent }));
+      g.players = state.players.map(p => ({ id: p.id, seat: p.seat, name: p.name, phone: p.phone, roleId: p.role && p.role.id, thinks: p.thinks || null, isDrunk: !!p.isDrunk, alignment: p.alignment, firstNightInfo: p.firstNightInfo, fnAlt: p.fnAlt || [], fnNote: p.fnNote || "", isAlive: p.isAlive, isSent: p.isSent }));
+      g.rules = state.rules || null;
       try { localStorage.setItem("bk_live_game", JSON.stringify(g)); } catch (e) {}
       renderCardsView();
     } catch (e) { if (st) st.textContent = (he ? "לא הצלחתי ליצור דפים: " : "Couldn't create pages: ") + (e.message || e); }
@@ -1619,6 +1628,12 @@
     if (!g) { renderCardsView(); return; }
     try { await window.BKCloud.updateInfo(g.gameId, g.keys[p.seat], ta.value); flashSaved(playerId); }
     catch (e) { alert(e.message || e); }
+  }
+  // put one of the prepared false answers in a player's first-night box (swaps it with the current text)
+  function useAlt(playerId, i) {
+    const p = state.players.find(x => x.id === playerId), ta = document.getElementById("bkInfo-" + playerId); if (!p || !ta || !p.fnAlt) return;
+    const cur = ta.value; ta.value = p.fnAlt[i]; p.fnAlt[i] = cur; ta.focus();
+    const box = ta.parentElement.querySelector(".bk-alt"); if (box) box.querySelectorAll("button")[i].textContent = cur;
   }
   function flashSaved(id) { const b = document.getElementById("bkInfoBtn-" + id); if (b) { const t = b.textContent; b.textContent = "✓"; setTimeout(() => b.textContent = t, 1200); } }
 
@@ -1698,7 +1713,7 @@
   function sendSms(playerId) {
     const p = state.players.find(x => x.id === playerId);
     if (!p) return;
-    const r = p.role;
+    const r = shownRole(p);
     const roleName = state.lang === "he" ? r.name_he : r.name_en;
     const cleanPhone = (p.phone || "").replace(/[^0-9]/g, "");
 
@@ -1725,7 +1740,7 @@
     const p = state.players.find(x => x.id === playerId);
     if (!p) return;
 
-    const r = p.role;
+    const r = shownRole(p);
     const roleName = state.lang === "he" ? r.name_he : r.name_en;
     const ability = state.lang === "he" ? r.ability_he : r.ability_en;
 
@@ -1926,6 +1941,7 @@
     getThemeTitle,
     getRole,
     openRolePicker,
+    useAlt,
     goBack,
     setThemeFam,
     genTheme,

@@ -87,7 +87,7 @@
   // Storyteller — the game flow:  send to everyone → night 1 → dawn (who died) → day → accusations → night 2 → …
   // Every step updates every phone at once (phase + an announcement), and everything can still be changed by hand.
   // =============================================================================================
-  const ST = { game: null, players: {}, taken: {}, unGame: null, unPlayers: null, unTaken: null, gid: null, draft: {}, deaths: {}, edit: {}, ieOpen: false };
+  const ST = { game: null, players: {}, taken: {}, unGame: null, unPlayers: null, unTaken: null, gid: null, draft: {}, deaths: {}, edit: {}, ieOpen: false, chips: {}, executed: null };
 
   // Start listening to the live game made on this device (called when the Game tab is shown).
   async function attach() {
@@ -209,11 +209,44 @@
     const st = ST.game || {}, nom = st.nom; if (!nom) return;
     const t = tally(), seats = (st.seats || []).map(s => Object.assign({}, s));
     for (const s of seats) if (!s.alive && t.yes.includes(s.seat)) s.ghost = false;
-    if (execute) { const s = seats.find(x => x.seat === nom.on); if (s) s.alive = false; }
+    if (execute) { const s = seats.find(x => x.seat === nom.on); if (s) s.alive = false; ST.executed = { seat: nom.on, day: st.day || 1 }; }
     mirrorLocal(seats);
     const text = execute ? tr(`${nom.onName} הוצא/ה להורג (${t.yes.length} קולות).`, `${nom.onName} was executed (${t.yes.length} votes).`)
                          : tr(`${nom.onName} ניצל/ה (${t.yes.length} קולות, צריך ${needed(st)}).`, `${nom.onName} was spared (${t.yes.length} votes, needed ${needed(st)}).`);
     await C().setState(ST.gid, { seats, nom: Object.assign({}, nom, { open: false, yes: t.yes.length, result: execute ? "executed" : "spared" }), notice: notice(text) });
+  }
+
+  // Ready answers to tap (assets/bootkeh-rules.js): night 1 = the true info and the prepared false ones; later nights =
+  // Empath numbers, Fortune Teller yes/no, Undertaker, Oracle…; plus quick messages ("You died tonight", "You are now evil"…).
+  function rulesCtx() {
+    const st = B()._state, pool = (st.poolIds || []).map(id => B().getRole(id)).filter(Boolean);
+    const ex = ST.executed && ST.executed.day === ((ST.game && ST.game.day) || 1) - 1 ? players().find(p => p.seat === ST.executed.seat) : null;
+    return { players: players(), pool, rules: st.rules || {}, lang: he() ? "he" : "en", executedToday: ex };
+  }
+  function chipsFor(p, target) {
+    const R = window.BKRules; if (!R) return "";
+    const st = ST.game || {}, first = (st.day || 1) === 1 && st.phase === "night", out = [];
+    if (target === "night" && first) {
+      if (p.firstNightInfo) out.push({ label: tr("המידע שחושב", "Dealt info") + (p.isDrunk ? " (" + tr("שקרי", "false") + ")" : ""), text: p.firstNightInfo, truth: !p.isDrunk });
+      (p.fnAlt || []).slice(0, 3).forEach((t, i) => out.push({ label: (p.isDrunk && i === (p.fnAlt.length - 1) ? tr("אמת", "True") : tr("שקר", "False")) + " " + (i + 1), text: t, truth: false }));
+    } else R.laterNight(p, rulesCtx()).forEach(x => out.push(x));
+    if (target === "ie") R.quick(he() ? "he" : "en").forEach(q => out.push({ label: q.text.split(" ").slice(0, 3).join(" "), text: q.text, truth: null }));
+    if (!out.length) return "";
+    ST.chips[target + p.seat] = out.map(x => x.text);
+    return `<div class="bk-chips">${out.map((x, i) => `<button type="button" class="${x.truth === true ? "t" : x.truth === false ? "f" : ""}" onclick="window.BKLive.useChip('${target}', ${p.seat}, ${i})" title="${esc(x.text)}">${x.truth === true ? "✓ " : x.truth === false ? "✗ " : ""}${esc(x.label)}</button>`).join("")}</div>`;
+  }
+  function useChip(target, seat, i) {
+    const text = (ST.chips[target + seat] || [])[i]; if (text == null) return;
+    if (target === "night") { ST.draft[seat] = text; const ta = document.getElementById("bkNight-" + seat); if (ta) ta.value = text; }
+    else { ST.edit[seat] = text; render(); }
+  }
+  // who wakes tonight, in order (first night uses the first-night order)
+  function orderedForNight(st) {
+    const R = window.BKRules, ps = players();
+    if (!R) return ps.slice().sort((a, b) => (b.isAlive !== false) - (a.isAlive !== false) || a.seat - b.seat);
+    const order = R.nightOrder(ps, (st.day || 1) === 1), woke = order.map(x => x.p), rest = ps.filter(p => !woke.includes(p)).sort((a, b) => (b.isAlive !== false) - (a.isAlive !== false) || a.seat - b.seat);
+    ST.wakeNo = {}; woke.forEach((p, i) => { ST.wakeNo[p.seat] = i + 1; });
+    return woke.concat(rest);
   }
 
   // Night composer: one text per player (night 1 starts from the dealt first-night info), then send all at once.
@@ -248,6 +281,7 @@
       return `<div class="bk-ie-row${changed ? " changed" : ""}${p.isAlive === false ? " dead" : ""}">
         <span><b>${p.seat} · ${esc(p.name)}</b> <small>${r.icon || ""} ${esc(he() ? r.name_he : r.name_en)}${p.isAlive === false ? " · " + tr("מת", "dead") : ""}</small></span>
         <textarea id="bkIe-${p.seat}" rows="2" oninput="window.BKLive.editInfo(${p.seat}, this.value)" placeholder="${tr("מה כתוב בכרטיס שלו…", "What their card says…")}">${esc(v)}</textarea>
+        ${chipsFor(p, "ie")}
         <button type="button" class="bk-btn sm${changed ? " pri" : ""}" onclick="window.BKLive.sendInfo([${p.seat}])">${tr("שלח לכרטיס שלו", "Send to their card")}</button></div>`;
     }).join("");
     const n = Object.keys(ST.edit).filter(k => ST.edit[k] !== ((ST.players[k] && ST.players[k].info) || "")).length;
@@ -306,10 +340,13 @@
 
     if (st.phase === "night") body = `<section class="bk-lp-sec"><h4>${tr("מידע ללילה", "Night info")} — ${esc(phaseName(st, he()))}</h4>
         <p class="bk-hint">${tr("כתוב לכל שחקן מה הוא לומד הלילה (ריק = לא נשלח). \"שלח לכולם\" שולח לכל הטלפונים בבת אחת, והמידע הקודם נשמר אצלם בהיסטוריה.", "Write what each player learns tonight (empty = not sent). \"Send to all\" sends to every phone at once; older info stays in their history.")}</p>
-        <div class="bk-night">${players().slice().sort((a, b) => (b.isAlive !== false) - (a.isAlive !== false) || a.seat - b.seat).map(p => {
-          const r = p.role || {}; const v = ST.draft[p.seat] != null ? ST.draft[p.seat] : nightDefault(p);
-          return `<label class="${p.isAlive === false ? "dead" : ""}"><span><b>${p.seat} · ${esc(p.name)}</b> <small>${r.icon || ""} ${esc(he() ? r.name_he : r.name_en)}${p.isAlive === false ? " · " + tr("מת", "dead") : ""}</small></span>
-            <textarea id="bkNight-${p.seat}" rows="2" oninput="window.BKLive.draft(${p.seat}, this.value)" placeholder="${tr("מה הוא לומד הלילה…", "What they learn tonight…")}">${esc(v)}</textarea></label>`;
+        <p class="bk-hint">${tr("הסדר הוא סדר ההתעוררות הרשמי (מספר ליד מי שמתעורר). ✓ = מידע אמיתי, ✗ = שקרי (לשיכור או מורעל).", "Rows follow the official wake order (number = wakes). ✓ = true info, ✗ = false (for a drunk or poisoned player).")}</p>
+        <div class="bk-night">${orderedForNight(st).map(p => {
+          const r = p.role || {}, th = p.thinks && B().getRole(p.thinks), v = ST.draft[p.seat] != null ? ST.draft[p.seat] : nightDefault(p), w = ST.wakeNo && ST.wakeNo[p.seat];
+          return `<div class="bk-night-row${p.isAlive === false ? " dead" : ""}${w ? " wakes" : ""}"><span>${w ? `<em class="bk-wake">${w}</em>` : ""}<b>${p.seat} · ${esc(p.name)}</b> <small>${r.icon || ""} ${esc(he() ? r.name_he : r.name_en)}${th ? " → " + esc(he() ? th.name_he : th.name_en) : ""}${p.isAlive === false ? " · " + tr("מת", "dead") : ""}</small></span>
+            ${p.fnNote && (st.day || 1) === 1 ? `<i class="bk-st-note">👁 ${esc(p.fnNote)}</i>` : ""}
+            <textarea id="bkNight-${p.seat}" rows="2" oninput="window.BKLive.draft(${p.seat}, this.value)" placeholder="${tr("מה הוא לומד הלילה…", "What they learn tonight…")}">${esc(v)}</textarea>
+            ${chipsFor(p, "night")}</div>`;
         }).join("")}</div>
         <button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.sendNight(false)">${tr("שלח מידע לכולם", "Send info to everyone")}</button>
         <button type="button" class="bk-btn bk-wide" onclick="window.BKLive.sendNight(true)">${tr("שלח וגם ב־WhatsApp", "Send + WhatsApp")}</button>
@@ -621,7 +658,7 @@
     };
   }
 
-  window.BKLive = { sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
+  window.BKLive = { useChip, sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
     groupSend, openLobby, startFlow, toggleDeath, announceDawn, openRoles, closeRoles, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
     openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
 })();
