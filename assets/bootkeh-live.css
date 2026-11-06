@@ -115,3 +115,28 @@ body.bkp-mode { overflow-x: hidden; }
   .bk-seg { width: 100%; } .bk-seg button { flex: 1; }
   .bk-lp-sec .bk-row .bk-btn { flex: 1 1 100%; }
 }
+
+/* ---------- version label, group link, "who are you?" page ---------- */
+.bk-ver { font: 600 10.5px/1 var(--bk-font-sans); color: #c9b27a; opacity: .8; padding: 4px 7px; border: 1px solid rgba(212, 175, 55, .3); border-radius: 999px;
+  margin-inline-start: 8px; white-space: nowrap; letter-spacing: .02em; align-self: center; }
+@media (max-width: 760px) {
+  .bootkeh-logo-wrap { flex-wrap: wrap; justify-content: center; row-gap: 2px; min-width: 0; }
+  .bk-ver { flex-basis: 100%; text-align: center; margin: 0; padding: 0; border: 0; font-size: 9.5px; }
+}
+.bk-group { display: grid; gap: 10px; max-height: 90vh; overflow: auto; }
+.bk-group a.bk-btn { display: flex; align-items: center; justify-content: center; text-decoration: none; min-height: 48px; }
+.bk-qr { display: flex; justify-content: center; } .bk-qr img, .bk-qr canvas { border-radius: 10px; border: 6px solid #f3e7cb; }
+.bk-group-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.bk-group-list span { font-size: 13px; padding: 6px 10px; border-radius: 999px; background: rgba(255, 255, 255, .06); display: inline-flex; gap: 6px; align-items: center; }
+.bk-group-list span.on { background: rgba(16, 185, 129, .18); color: #a7f3d0; }
+.bk-group-list button { appearance: none; border: 0; background: rgba(0, 0, 0, .35); color: #fde68a; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; }
+.bk-group details summary { cursor: pointer; }
+.bkp-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.bkp-pick button { appearance: none; display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 10px 12px; border-radius: 14px; cursor: pointer; text-align: start;
+  border: 1px solid rgba(212, 175, 55, .3); background: rgba(22, 15, 24, .92); color: #f3e7cb; font: 700 16px/1.2 var(--bk-font-sans); }
+.bkp-pick button i { font-style: normal; font-size: 12px; color: var(--bk-gold); min-width: 18px; }
+.bkp-pick button.sel { border-color: var(--bk-gold); box-shadow: 0 0 0 2px var(--bk-gold) inset; background: #3a0a10; }
+.bkp-pick button.taken { opacity: .45; } .bkp-pick button small { margin-inline-start: auto; font-size: 11px; color: var(--bk-text-muted); }
+.bk-sendall { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+.bk-sendall-card > * { min-width: 0; }
+.bk-group .bk-hint, .bk-group details { overflow-wrap: anywhere; }

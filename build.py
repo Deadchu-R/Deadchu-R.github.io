@@ -1246,6 +1246,13 @@ def build_bootkeh():
     sub_bk.mkdir(exist_ok=True)
     sub_bk_html = bk_html.replace('href="assets/', 'href="../assets/').replace('src="assets/', 'src="../assets/')
     sub_bk_html = sub_bk_html.replace('href="index.html', 'href="../index.html')
+    # every Bootkeh file gets its own content hash (?v=…) so phones load the new version right after an update,
+    # and the page shows one short version code next to the title (see BK_VERSION in assets/bootkeh.js)
+    files = sorted(set(re.findall(r'assets/(bootkeh[\w-]*\.(?:js|css))\?v=', sub_bk_html)))
+    for f in files:
+        sub_bk_html = re.sub(r'assets/' + re.escape(f) + r'\?v=[^"\']*', 'assets/' + f + '?v=' + ver("assets/" + f), sub_bk_html)
+    stamp = hashlib.md5(("|".join(ver("assets/" + f) for f in files) + ver("Bootkeh.html")).encode()).hexdigest()[:6]
+    sub_bk_html = sub_bk_html.replace("__BK_VERSION__", stamp)
     (sub_bk / "index.html").write_text(sub_bk_html, encoding="utf-8")
 
 

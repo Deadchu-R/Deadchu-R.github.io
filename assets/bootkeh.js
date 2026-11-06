@@ -316,7 +316,10 @@
     // Check if opening as player from WhatsApp link (?player=seat_1 or #p=seat_1)
     const urlParams = new URLSearchParams(window.location.search);
     const playerParam = urlParams.get("player") || urlParams.get("p");
-    if (urlParams.get("g") && urlParams.get("k")) {
+    showVersion();
+    if (urlParams.get("g") && urlParams.get("join") && window.BKLive) {
+      window.BKLive.openLobby(urlParams.get("g"));   // the one link for the whole group
+    } else if (urlParams.get("g") && urlParams.get("k")) {
       openLivePortal(urlParams.get("g"), urlParams.get("k"));
     } else if (playerParam) {
       openPlayerPortal(playerParam);
@@ -1306,8 +1309,13 @@
   // another from one panel — one tap per player, no searching. ----
   // night = {night: "לילה 2", items: [{seat, text}]} sends that night's info instead of the role message.
   function sendAllWhatsapp(night) {
-    const he = state.lang === "he";
     if (night && night.items) return sendNightWhatsapp(night);
+    if (window.BKLive && window.BKCloud && window.BKCloud.ok !== false) return window.BKLive.groupSend();   // one link for everyone
+    return sendEachWhatsapp();
+  }
+  // Fallback: private chats, one tap each (WhatsApp makes a person press Send in every chat).
+  function sendEachWhatsapp() {
+    const he = state.lang === "he";
     let ov = document.getElementById("bkSendAll");
     if (!ov) { ov = document.createElement("div"); ov.id = "bkSendAll"; ov.className = "bk-sendall"; document.body.appendChild(ov); }
     const draw = () => {
@@ -1352,6 +1360,18 @@
       };
     };
     draw();
+  }
+
+  // Version next to the title: a short code that changes with every update of Bootkeh (made by build.py),
+  // and when the page on the server was last updated, so it's easy to see the new version arrived.
+  function showVersion() {
+    const el = document.getElementById("bkVersion"); if (!el) return;
+    const v = el.dataset.v && !el.dataset.v.startsWith("__") ? el.dataset.v : "dev";
+    const d = new Date(document.lastModified), ok = !isNaN(d) && Date.now() - d > 5000;
+    const when = ok ? d.toLocaleString(state.lang === "he" ? "he-IL" : "en-GB", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+    el.textContent = "v." + v;
+    el.title = (state.lang === "he" ? "גרסה " : "Version ") + v + (when ? (state.lang === "he" ? " · עודכן " : " · updated ") + when : "");
+    if (when) el.textContent += " · " + when;
   }
 
   // Phone number for WhatsApp links: digits only, international format (Israeli 05x… → 9725x…).
@@ -1439,7 +1459,7 @@
         <label style="font-size:13px;color:#f1dfb5;">${he ? "נמחק אחרי" : "Expires after"}
           <select id="bkLiveHours" style="margin-inline-start:6px;"><option value="3">3 ${he ? "שעות" : "hours"}</option><option value="6" selected>6 ${he ? "שעות" : "hours"}</option><option value="12">12 ${he ? "שעות" : "hours"}</option></select></label>
         <button type="button" class="bk-btn pri sm" onclick="window.Bootkeh.createLiveGame()">${g ? (he ? "צור מחדש" : "Recreate") : (he ? "צור דפים פרטיים" : "Create private pages")}</button>
-        <button type="button" class="bk-btn sm whatsapp" onclick="window.Bootkeh.sendAllWhatsapp()">${he ? "שלח לכולם ב־WhatsApp" : "Send to everyone on WhatsApp"}</button>
+        <button type="button" class="bk-btn sm whatsapp" onclick="window.Bootkeh.sendAllWhatsapp()">${he ? "שלח לכולם בבת אחת" : "Send to everyone at once"}</button>
         <button type="button" class="bk-btn sm" onclick="window.Bootkeh.redeal()">${he ? "חלק תפקידים מחדש" : "Re-deal roles"}</button>
         ${g ? `<button type="button" class="bk-btn sm" onclick="window.Bootkeh.endLiveGame()">${he ? "סיים משחק ומחק דפים" : "End game & delete pages"}</button>` : ""}
         <span id="bkLiveStatus" style="font-size:12px;color:var(--bk-text-muted);"></span>
@@ -1703,6 +1723,8 @@
     randomizeRoles,
     redeal,
     sendAllWhatsapp,
+    sendEachWhatsapp,
+    getThemeTitle,
     setThemeFam,
     genTheme,
     useGenTheme,

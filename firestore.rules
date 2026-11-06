@@ -40,6 +40,26 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['vote', 'defense']));
         allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
       }
+
+      // seat tickets for the one group link: a signed-in (anonymous) player may take a free seat once;
+      // only the storyteller and the player who took it can read it (it holds that seat's secret key)
+      match /c/{seat} {
+        allow get: if request.auth != null
+          && (resource.data.owner == request.auth.uid || resource.data.claimedBy == request.auth.uid);
+        allow list: if request.auth != null && resource.data.owner == request.auth.uid;
+        allow create: if request.auth != null
+          && request.resource.data.owner == request.auth.uid
+          && request.resource.data.expiresAt is timestamp
+          && request.resource.data.expiresAt < request.time + duration.value(13, 'h')
+          && request.resource.data.size() < 8;
+        allow update: if request.auth != null
+          && ((resource.data.owner == request.auth.uid
+               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimedBy']))
+            || (resource.data.claimedBy == null && resource.data.expiresAt > request.time
+               && request.resource.data.claimedBy == request.auth.uid
+               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimedBy'])));
+        allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
+      }
     }
 
     match /{document=**} {

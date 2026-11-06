@@ -66,9 +66,12 @@
         updatedAt: FV.FieldValue.serverTimestamp()
       });
       links[p.seat] = `${base}?g=${gameId}&k=${key}`;
+      // seat ticket for the one group link: a player who opens …?g=<game>&join takes their seat here once,
+      // and only then may read the secret key of that seat (see firestore.rules, match /c/{seat})
+      b.set(db.collection("bk_games").doc(gameId).collection("c").doc(String(p.seat)), { owner: uid, expiresAt: exp, seat: p.seat, key, claimedBy: null });
     }
     await b.commit();
-    const saved = { gameId, keys, links, expiresAt: exp.toMillis(), title };
+    const saved = { gameId, keys, links, join: `${base}?g=${gameId}&join=1`, expiresAt: exp.toMillis(), title };
     try { localStorage.setItem("bk_live_game", JSON.stringify(saved)); } catch (e) {}
     return saved;
   };
@@ -124,11 +127,36 @@
     await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ defense: { nom: nomId, text: String(text || "").slice(0, 600), at: Date.now() } });
   };
 
+  // ---- one link for the whole group ----
+  // Storyteller: watch which seats were taken. cb({seat: claimedBy|null})
+  C.watchClaims = async (gameId, cb) => {
+    const uid = await storyteller();
+    return db.collection("bk_games").doc(gameId).collection("c").where("owner", "==", uid).onSnapshot(q => {
+      const out = {}; q.forEach(d => { const x = d.data(); out[x.seat] = x.claimedBy || null; }); cb(out);
+    }, e => console.warn("watchClaims", e.message));
+  };
+  // Storyteller: free a seat that the wrong person took.
+  C.releaseSeat = async (gameId, seat) => {
+    await storyteller();
+    await db.collection("bk_games").doc(gameId).collection("c").doc(String(seat)).update({ claimedBy: null });
+  };
+  // Player: take a seat from the group link. Returns the seat's secret key, or throws "taken".
+  C.claimSeat = async (gameId, seat) => {
+    const uid = await storyteller();   // players sign in anonymously too, so the seat is tied to this phone
+    const ref = db.collection("bk_games").doc(gameId).collection("c").doc(String(seat));
+    const mine = async () => { try { const d = await ref.get(); return d.exists && d.data().claimedBy === uid ? d.data().key : null; } catch (e) { return null; } };
+    let k = await mine(); if (k) return k;
+    try { await ref.update({ claimedBy: uid }); } catch (e) { throw new Error("taken"); }
+    k = await mine(); if (!k) throw new Error("taken");
+    return k;
+  };
+
   // End the game: delete every page of it (links stop working right away).
   C.endGame = async gameId => {
     const uid = await storyteller();
     const ps = await db.collection("bk_games").doc(gameId).collection("p").where("owner", "==", uid).get();
-    const b = db.batch(); ps.forEach(d => b.delete(d.ref)); b.delete(db.collection("bk_games").doc(gameId));
+    const cs = await db.collection("bk_games").doc(gameId).collection("c").where("owner", "==", uid).get();
+    const b = db.batch(); ps.forEach(d => b.delete(d.ref)); cs.forEach(d => b.delete(d.ref)); b.delete(db.collection("bk_games").doc(gameId));
     await b.commit();
     try { const s = JSON.parse(localStorage.getItem("bk_live_game") || "null"); if (s && s.gameId === gameId) localStorage.removeItem("bk_live_game"); } catch (e) {}
   };

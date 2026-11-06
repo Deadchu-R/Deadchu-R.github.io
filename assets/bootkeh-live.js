@@ -323,6 +323,103 @@
       <footer class="bkp-foot">⌛ ${T("הדף נמחק ב־", "This page is deleted at ")}${exp}</footer>`;
   }
 
-  window.BKLive = { attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
+  // =============================================================================================
+  // One link for everyone: the storyteller sends a single message (to the WhatsApp group, or shows a QR code at
+  // the table); each player opens it, taps their own name, and lands on their private page. A seat can be taken
+  // once (it locks to that phone); the storyteller sees who joined and can free a seat taken by mistake.
+  // =============================================================================================
+  const GS = { claims: {}, un: null, gid: null };
+
+  async function groupSend() {
+    const isHe = he();
+    let g = B().liveGame();
+    if (!g) { await B().createLiveGame(); g = B().liveGame(); }
+    if (!g) return;
+    if (!g.join) g.join = g.links[Object.keys(g.links)[0]].replace(/&k=.*$/, "&join=1");
+    let ov = document.getElementById("bkGroup");
+    if (!ov) { ov = document.createElement("div"); ov.id = "bkGroup"; ov.className = "bk-sendall"; document.body.appendChild(ov); }
+    const title = (B().getThemeTitle && B().getThemeTitle()) || g.title || "Bootkeh";
+    const msg = isHe ? `🕰️ ${title}\nכל אחד לוחץ על הקישור, בוחר את השם שלו ומקבל את התפקיד שלו:\n${g.join}`
+                     : `🕰️ ${title}\nTap the link, pick your name and get your role:\n${g.join}`;
+    const draw = () => {
+      const ps = players(), taken = ps.filter(p => GS.claims[p.seat]).length;
+      ov.innerHTML = `<div class="bk-sendall-card bk-group" role="dialog" aria-label="${tr("שליחה לכולם", "Send to everyone")}">
+        <div class="bk-sendall-top"><b>${tr("שליחה לכולם בבת אחת", "Send to everyone at once")}</b><button type="button" class="bk-sendall-x" aria-label="${tr("סגור", "Close")}">×</button></div>
+        <p class="bk-hint">${tr("הודעה אחת לקבוצה (או סריקה של הקוד מהמסך שלך). כל שחקן בוחר את השם שלו ומקבל רק את התפקיד שלו — המושב ננעל לטלפון שלו.", "One message to the group (or scan the code on your screen). Each player taps their name and sees only their own role — the seat locks to their phone.")}</p>
+        <a class="bk-btn pri whatsapp bk-wide" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${tr("שלח לקבוצה ב־WhatsApp", "Send to the WhatsApp group")}</a>
+        <div class="bk-row">
+          <button type="button" class="bk-btn" data-act="copy">${tr("העתק קישור", "Copy link")}</button>
+          ${navigator.share ? `<button type="button" class="bk-btn" data-act="share">${tr("שתף…", "Share…")}</button>` : ""}
+        </div>
+        <div class="bk-qr" id="bkQr" aria-label="QR"></div>
+        <div class="bk-sendall-bar"><i style="width:${Math.round(taken / Math.max(1, ps.length) * 100)}%"></i></div>
+        <div class="bk-sendall-count">${taken} / ${ps.length} ${tr("הצטרפו", "joined")}</div>
+        <div class="bk-group-list">${ps.map(p => `<span class="${GS.claims[p.seat] ? "on" : ""}">${p.seat}. ${esc(p.name)}${GS.claims[p.seat] ? ` ✓ <button type="button" data-free="${p.seat}" title="${tr("שחרר מושב", "Free seat")}">↺</button>` : ""}</span>`).join("")}</div>
+        <details class="bk-hint"><summary>${tr("לשלוח לכל אחד בפרטי במקום?", "Send privately to each one instead?")}</summary>
+          <p>${tr("WhatsApp לא מאפשר לאתר לשלוח הודעות בשמך, אז בפרטי צריך ללחוץ “שלח” בכל צ'אט.", "WhatsApp doesn't let a website send messages for you, so private chats need one tap each.")}</p>
+          <button type="button" class="bk-btn sm" data-act="each">${tr("שליחה בפרטי, אחד אחד", "Private, one by one")}</button></details>
+      </div>`;
+      ov.querySelector(".bk-sendall-x").onclick = () => { ov.remove(); };
+      ov.querySelector('[data-act="copy"]').onclick = e => { navigator.clipboard && navigator.clipboard.writeText(g.join); e.target.textContent = "✓"; };
+      const sh = ov.querySelector('[data-act="share"]'); if (sh) sh.onclick = () => navigator.share({ title, text: msg }).catch(() => {});
+      ov.querySelector('[data-act="each"]').onclick = () => { ov.remove(); B().sendEachWhatsapp(); };
+      ov.querySelectorAll("[data-free]").forEach(b => b.onclick = () => C().releaseSeat(g.gameId, +b.dataset.free).catch(e => alert(e.message || e)));
+      drawQr(g.join);
+    };
+    draw();
+    if (GS.gid !== g.gameId) {
+      if (GS.un) GS.un(); GS.gid = g.gameId;
+      try { GS.un = await C().watchClaims(g.gameId, c => { GS.claims = c; if (document.getElementById("bkGroup")) draw(); }); } catch (e) { console.warn(e); }
+    }
+  }
+
+  // QR code (qrcodejs from cdnjs, loaded the first time it's needed)
+  let qrLib = null;
+  function drawQr(text) {
+    const box = document.getElementById("bkQr"); if (!box) return;
+    qrLib = qrLib || new Promise((ok, bad) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"; s.onload = ok; s.onerror = bad; document.head.appendChild(s); });
+    qrLib.then(() => { box.innerHTML = ""; new window.QRCode(box, { text, width: 180, height: 180, colorDark: "#1a0f08", colorLight: "#f3e7cb", correctLevel: window.QRCode.CorrectLevel.M }); }).catch(() => { box.remove(); });
+  }
+
+  // Player side of the group link: …/Bootkeh/?g=<game>&join=1
+  const LB = { gid: null, sel: null, taken: {}, busy: false, game: null };
+  async function openLobby(gid) {
+    LB.gid = gid;
+    try { const k = localStorage.getItem("bk_seat_" + gid); if (k) { location.replace(location.pathname + `?g=${gid}&k=${k}`); return; } } catch (e) {}
+    document.body.classList.add("bkp-mode");
+    let root = document.getElementById("bkPlayerApp");
+    if (!root) { root = document.createElement("div"); root.id = "bkPlayerApp"; root.className = "bkp"; document.body.appendChild(root); }
+    root.innerHTML = `<div class="bkp-load">…</div>`;
+    if (!C()) return;
+    await C().watchGame(gid, st => { LB.game = st; drawLobby(); });
+  }
+  function drawLobby() {
+    const root = document.getElementById("bkPlayerApp"); if (!root) return;
+    const s = LB.game, isHe = s ? s.lang !== "en" : true, T = (h, e) => isHe ? h : e;
+    document.documentElement.setAttribute("dir", isHe ? "rtl" : "ltr");
+    if (!s) { root.innerHTML = `<div class="bkp-end"><div class="bkp-candle">🕯️</div><h2>${T("המשחק הסתיים", "This game has ended")}</h2><p>${T("הקישור כבר לא פעיל.", "This link is no longer active.")}</p></div>`; return; }
+    root.innerHTML = `<header class="bkp-top"><div><small>${esc(s.title || "")}</small><b>${T("מי אתה?", "Who are you?")}</b></div></header>
+      <p class="bkp-hint">${T("לחץ על השם שלך. אחרי זה המושב ננעל לטלפון הזה ותקבל רק את התפקיד שלך.", "Tap your name. The seat then locks to this phone and you'll see only your own role.")}</p>
+      <div class="bkp-pick">${(s.seats || []).map(x => `<button type="button" class="${LB.sel === x.seat ? "sel" : ""}${LB.taken[x.seat] ? " taken" : ""}" data-seat="${x.seat}"${LB.taken[x.seat] ? " disabled" : ""}>
+        <i>${x.seat}</i><span>${esc(x.name)}</span>${LB.taken[x.seat] ? `<small>${T("תפוס", "taken")}</small>` : ""}</button>`).join("")}</div>
+      ${LB.sel ? `<button type="button" class="bkp-reveal" id="bkpClaim"${LB.busy ? " disabled" : ""}>${LB.busy ? "…" : T("כן, זה אני — ", "Yes, that's me — ") + esc(((s.seats || []).find(x => x.seat === LB.sel) || {}).name || "")}</button>` : ""}
+      <p class="bkp-hint" id="bkpLobbyMsg">${esc(LB.msg || "")}</p>`;
+    root.querySelectorAll("[data-seat]").forEach(b => b.onclick = () => { LB.sel = +b.dataset.seat; LB.msg = ""; drawLobby(); });
+    const go = document.getElementById("bkpClaim");
+    if (go) go.onclick = async () => {
+      LB.busy = true; drawLobby();
+      try {
+        const k = await C().claimSeat(LB.gid, LB.sel);
+        try { localStorage.setItem("bk_seat_" + LB.gid, k); } catch (e) {}
+        location.replace(location.pathname + `?g=${LB.gid}&k=${k}`);
+      } catch (e) {
+        LB.taken[LB.sel] = true; LB.sel = null; LB.busy = false;
+        LB.msg = T("המושב הזה כבר נלקח. אם זה אתה — בקש ממספר הסיפורים לשחרר אותו.", "That seat is already taken. If it's yours, ask the storyteller to free it.");
+        drawLobby();
+      }
+    };
+  }
+
+  window.BKLive = { groupSend, openLobby, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
     openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
 })();
