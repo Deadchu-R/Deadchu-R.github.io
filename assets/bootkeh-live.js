@@ -11,6 +11,46 @@
    may change what (only the storyteller changes the game; a player only their own vote and defence). */
 (function () {
   "use strict";
+  // ---------------------------------------------------------------------------------------------
+  // The roles sheet, laid out like the official script sheet: title "by author", a line per kind with its label at the
+  // end, two columns of icon + name (blue = good, red = evil) + ability, and the "* Not the first night" footer.
+  // Used by the storyteller's "Roles sheet" screen and by the 📜 pull-out on the players' phones.
+  // opts: {title, author, roles:[{icon,type,name_he,name_en,ability_he,ability_en}], lang}
+  // ---------------------------------------------------------------------------------------------
+  function sheetHTML(o) {
+    const isHe = (o.lang || "he") !== "en", e = x => String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const kinds = [["townsfolk", "תושבי העיירה", "Townsfolk"], ["outsider", "אאוטסיידרים", "Outsiders"], ["minion", "משרתים", "Minions"], ["demon", "שדים", "Demons"],
+      ["traveller", "נוסעים", "Travellers"], ["fabled", "אגדיים", "Fabled"]];
+    const roles = o.roles || [];
+    return `<div class="bk-script" dir="${isHe ? "rtl" : "ltr"}">
+      <div class="bk-script-head"><h2>${e(o.title || "")}</h2>${o.author ? `<span>${isHe ? "מאת" : "by"} ${e(o.author)}</span>` : ""}</div>
+      ${kinds.map(([k, h, en]) => { const rs = roles.filter(r => r.type === k); if (!rs.length) return "";
+        return `<div class="bk-script-kind ${k}"><div class="bk-script-rule"><span>${isHe ? h : en.toUpperCase()}</span></div>
+          <div class="bk-script-grid">${rs.map(r => `<div class="bk-script-role ${k}"><div class="bk-script-ic" aria-hidden="true">${r.icon || "🎭"}</div>
+            <div><b>${e(isHe ? r.name_he || r.name_en : r.name_en || r.name_he)}</b><p>${e(isHe ? r.ability_he || r.ability_en : r.ability_en || r.ability_he)}</p></div></div>`).join("")}</div></div>`;
+      }).join("")}
+      <div class="bk-script-foot"><span>© Steven Medway, bloodontheclocktower.com</span><span>* ${isHe ? "לא בלילה הראשון" : "Not the first night"}</span></div>
+    </div>`;
+  }
+  window.BKSheet = { html: sheetHTML };
+
+  // Copy every "small screen" rule (@media max-width ≤ 900px) of the Bootkeh styles to html.bk-phone, so a phone gets
+  // the phone layout even when the browser lays the page out wider than the screen (see the script in Bootkeh.html).
+  function phoneStyles() {
+    const d = document.documentElement; if (!d.classList.contains("bk-phone") || document.getElementById("bkPhoneCss")) return;
+    const out = [];
+    const pre = sel => sel.split(",").map(x => { x = x.trim(); if (!x) return x;
+      if (/^html\b/.test(x)) return x.replace(/^html/, "html.bk-phone"); if (/^:root\b/.test(x)) return x.replace(/^:root/, "html.bk-phone");
+      return "html.bk-phone " + x; }).join(", ");
+    const walk = rules => { for (const r of rules) {
+      if (r.type === 4 /* media */) {
+        const m = /max-width:\s*(\d+)px/.exec(r.conditionText || r.media.mediaText || ""), print = /print/.test(r.conditionText || "");
+        if (m && +m[1] <= 900 && !print) for (const x of r.cssRules) if (x.selectorText) out.push(pre(x.selectorText) + "{" + x.style.cssText + "}");
+      } } };
+    for (const sh of document.styleSheets) { if (!/bootkeh/.test(sh.href || "")) continue; try { walk(sh.cssRules); } catch (e) { /* other origin */ } }
+    const st = document.createElement("style"); st.id = "bkPhoneCss"; st.textContent = out.join("\n"); document.head.appendChild(st);
+  }
+  if (document.readyState === "complete") phoneStyles(); else addEventListener("load", phoneStyles);
   const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const B = () => window.Bootkeh, C = () => window.BKCloud;
   const he = () => (B() && B()._state ? B()._state.lang : "he") !== "en";
@@ -31,7 +71,7 @@
   // Storyteller — the game flow:  send to everyone → night 1 → dawn (who died) → day → accusations → night 2 → …
   // Every step updates every phone at once (phase + an announcement), and everything can still be changed by hand.
   // =============================================================================================
-  const ST = { game: null, players: {}, taken: {}, unGame: null, unPlayers: null, unTaken: null, gid: null, draft: {}, deaths: {} };
+  const ST = { game: null, players: {}, taken: {}, unGame: null, unPlayers: null, unTaken: null, gid: null, draft: {}, deaths: {}, edit: {}, ieOpen: false };
 
   // Start listening to the live game made on this device (called when the Game tab is shown).
   async function attach() {
@@ -183,6 +223,36 @@
     if (toWhatsapp && B().sendAllWhatsapp) B().sendAllWhatsapp({ night: label, items: items.map(i => ({ seat: players().find(p => key(p.seat) === i.key).seat, text: i.text })) });
   }
 
+  // Any time during the game: see what each player's card says now, change it and send it to that player (or to all
+  // the changed ones at once). It lands on their card right away, and the old text stays in their history.
+  function infoEditorHTML(st) {
+    const rows = players().slice().sort((a, b) => a.seat - b.seat).map(p => {
+      const cur = (ST.players[p.seat] && ST.players[p.seat].info) || "", r = p.role || {};
+      const v = ST.edit[p.seat] != null ? ST.edit[p.seat] : cur, changed = ST.edit[p.seat] != null && ST.edit[p.seat] !== cur;
+      return `<div class="bk-ie-row${changed ? " changed" : ""}${p.isAlive === false ? " dead" : ""}">
+        <span><b>${p.seat} · ${esc(p.name)}</b> <small>${r.icon || ""} ${esc(he() ? r.name_he : r.name_en)}${p.isAlive === false ? " · " + tr("מת", "dead") : ""}</small></span>
+        <textarea id="bkIe-${p.seat}" rows="2" oninput="window.BKLive.editInfo(${p.seat}, this.value)" placeholder="${tr("מה כתוב בכרטיס שלו…", "What their card says…")}">${esc(v)}</textarea>
+        <button type="button" class="bk-btn sm${changed ? " pri" : ""}" onclick="window.BKLive.sendInfo([${p.seat}])">${tr("שלח לכרטיס שלו", "Send to their card")}</button></div>`;
+    }).join("");
+    const n = Object.keys(ST.edit).filter(k => ST.edit[k] !== ((ST.players[k] && ST.players[k].info) || "")).length;
+    return `<details class="bk-lp-sec bk-ie" ${ST.ieOpen ? "open" : ""} ontoggle="window.BKLive.ieToggle(this.open)">
+      <summary><h4>${tr("עריכת מידע ורמזים לשחקנים", "Edit players' info & hints")}</h4><small>${tr("ישר לכרטיס שלהם", "straight to their card")}</small></summary>
+      <p class="bk-hint">${tr("שנה את מה שכתוב לשחקן (רמז חדש, מידע שגוי בכוונה, תיקון) ושלח. זה מופיע מיד בכרטיס שלו עם התראה, והקודם נשמר אצלו בהיסטוריה.", "Change what a player is told (a new hint, deliberately false info, a fix) and send it. It shows on their card at once with an alert; the old text stays in their history.")}</p>
+      <div class="bk-ie-list">${rows}</div>
+      ${n ? `<button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.sendInfo()">${tr(`שלח את כל השינויים (${n})`, `Send all changes (${n})`)}</button>` : ""}
+      <div class="bk-hint">${esc(ST.ieMsg || "")}</div>
+    </details>`;
+  }
+  async function sendInfo(seats) {
+    const st = ST.game || {}, label = tr("עדכון · ", "Update · ") + phaseName(st, he());
+    const list = (seats || Object.keys(ST.edit).map(Number)).filter(seat => ST.edit[seat] != null && ST.edit[seat].trim() && ST.edit[seat] !== ((ST.players[seat] && ST.players[seat].info) || ""));
+    const items = list.map(seat => ({ key: key(seat), text: ST.edit[seat].trim(), label })).filter(i => i.key);
+    if (!items.length) return;
+    await C().pushInfos(ST.gid, items);
+    list.forEach(seat => { const p = players().find(x => x.seat === seat); if (p) p.firstNightInfo = ST.edit[seat].trim(); delete ST.edit[seat]; });
+    ST.ieMsg = tr(`✓ נשלח ל־${items.length} שחקנים`, `✓ Sent to ${items.length} players`); render();
+  }
+
   // The steps bar at the top of the panel.
   function stepsHTML(st) {
     const steps = [["lobby", tr("הצטרפות", "Join")], ["night", tr("לילה", "Night")], ["dawn", tr("בוקר", "Dawn")], ["day", tr("יום", "Day")], ["nominate", tr("האשמות", "Accuse")]];
@@ -192,6 +262,11 @@
 
   function render() {
     const box = document.getElementById("bkLivePanel"); if (!box) return;
+    const a = document.activeElement, keep = a && box.contains(a) && a.id ? { id: a.id, s: a.selectionStart, e: a.selectionEnd } : null;
+    draw(box);
+    if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus({ preventScroll: true }); try { el.setSelectionRange(keep.s, keep.e); } catch (e) {} } }
+  }
+  function draw(box) {
     const g = B() && B().liveGame && B().liveGame();
     if (!g) {
       box.innerHTML = `<div class="bk-lp bk-lp-empty"><b>${tr("הפעלת משחק", "Run the game")}</b>
@@ -260,6 +335,7 @@
         <div class="bk-lp-stats"><span>${alive.length}/${seats.length} ${tr("חיים", "alive")}</span><span>${joined}/${total} ${tr("מחוברים", "joined")}</span></div></div>
       ${stepsHTML(st)}
       ${body}
+      ${st.phase !== "night" ? infoEditorHTML(st) : ""}
       <section class="bk-lp-sec"><h4>${tr("הודעה לכולם", "Announcement")}</h4>
         <div class="bk-row"><input id="bkLiveNotice" type="text" maxlength="300" placeholder="${tr("למשל: עוד 2 דקות להצבעה", "e.g. 2 minutes to the vote")}">
           <button type="button" class="bk-btn" onclick="window.BKLive.announce()">${tr("שלח", "Send")}</button></div>
@@ -282,7 +358,7 @@
     if (!sh) { sh = document.createElement("div"); sh.id = "bkpSheet"; sh.className = "bkp-sheet"; document.body.appendChild(sh); }
     sh.innerHTML = `<div class="bkp-sheet-bg" onclick="window.BKLive.closeRoles()"></div><div class="bkp-sheet-card" role="dialog" aria-label="${isHe ? "התפקידים במשחק" : "Roles in this game"}">
       <div class="bkp-sheet-grab"></div><div class="bkp-sheet-top"><b>${isHe ? "התפקידים שיכולים להיות במשחק" : "Roles that can be in this game"}</b><button type="button" onclick="window.BKLive.closeRoles()" aria-label="${isHe ? "סגור" : "Close"}">×</button></div>
-      <div class="bkp-sheet-body">${rolesSheetHTML(s.script, isHe)}</div></div>`;
+      <div class="bkp-sheet-body">${s.script && s.script.length ? sheetHTML({ title: s.scriptName || s.title, author: s.scriptAuthor, roles: s.script, lang: s.lang }) : rolesSheetHTML(s.script, isHe)}</div></div>`;
     requestAnimationFrame(() => sh.classList.add("on"));
   }
   function closeRoles() { const sh = document.getElementById("bkpSheet"); if (sh) { sh.classList.remove("on"); setTimeout(() => sh.remove(), 250); } }
@@ -528,6 +604,7 @@
     };
   }
 
-  window.BKLive = { groupSend, openLobby, startFlow, toggleDeath, announceDawn, openRoles, closeRoles, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
+  window.BKLive = { sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
+    groupSend, openLobby, startFlow, toggleDeath, announceDawn, openRoles, closeRoles, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
     openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
 })();

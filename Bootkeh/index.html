@@ -3,6 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    /* Phones: always use the phone layout, even when the browser reports a wide screen ("Desktop site" mode, or a
+       phone that zooms out). A touch screen no wider than a tablet gets html.bk-phone; if the page is laid out wider
+       than the screen, it is zoomed back up to screen size. The phone styles are copied to html.bk-phone by
+       assets/bootkeh-live.js (phoneStyles). */
+    (function () {
+      var d = document.documentElement, coarse = window.matchMedia && matchMedia("(pointer: coarse)").matches,
+          sw = Math.min(screen.width || 9999, screen.height || 9999);
+      if (!(coarse && sw <= 820) && !/Android.+Mobile|iPhone|iPod/i.test(navigator.userAgent)) return;
+      d.classList.add("bk-phone");
+      function fit() { var r = window.innerWidth / (screen.width || window.innerWidth); d.style.zoom = r > 1.2 ? r.toFixed(3) : ""; }
+      fit(); addEventListener("resize", fit); addEventListener("orientationchange", function () { setTimeout(fit, 300); });
+    })();
+  </script>
   <title>Bootkeh — מחולל משחקי דם על מגדל השעון | roeetal.com</title>
   <meta name="description" content="מחולל משחקים ועוזר מספר סיפורים למשחק 'דם על מגדל השעון' (Blood on the Clocktower) — דפי תפקידים, מעגל ישיבה, שיתוף שחקנים בווצאפ וטיימר אוטומטי">
   
@@ -11,7 +25,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/bootkeh.css?v=9c3fa812">
   <link rel="stylesheet" href="../assets/bootkeh-medieval.css?v=23c27a0d">
-  <link rel="stylesheet" href="../assets/bootkeh-live.css?v=71f487f8">
+  <link rel="stylesheet" href="../assets/bootkeh-live.css?v=42378749">
 </head>
 <body class="bootkeh-body">
 
@@ -25,7 +39,7 @@
       <div class="bootkeh-logo-wrap">
         <span class="bootkeh-logo-icon">🕰️</span>
         <span class="bootkeh-title">Bootkeh</span>
-        <span class="bk-ver" id="bkVersion" data-v="c0124c"></span>
+        <span class="bk-ver" id="bkVersion" data-v="a0db99"></span>
       </div>
     </div>
 
@@ -345,8 +359,8 @@
   <script src="../assets/bootkeh-data.js?v=3f4114aa"></script>
   <script src="../assets/bootkeh-roles-extra.js?v=471f8fef"></script>
   <script src="../assets/bootkeh-themes.js?v=8c51438b"></script>
-  <script src="../assets/bootkeh-cloud.js?v=fb015aa3"></script>
-  <script src="../assets/bootkeh-live.js?v=4ec3e48a"></script>
-  <script src="../assets/bootkeh.js?v=4d078fa5"></script>
+  <script src="../assets/bootkeh-cloud.js?v=1dbf251d"></script>
+  <script src="../assets/bootkeh-live.js?v=88125a5c"></script>
+  <script src="../assets/bootkeh.js?v=46a87ccc"></script>
 </body>
 </html>

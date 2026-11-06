@@ -3,6 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    /* Phones: always use the phone layout, even when the browser reports a wide screen ("Desktop site" mode, or a
+       phone that zooms out). A touch screen no wider than a tablet gets html.bk-phone; if the page is laid out wider
+       than the screen, it is zoomed back up to screen size. The phone styles are copied to html.bk-phone by
+       assets/bootkeh-live.js (phoneStyles). */
+    (function () {
+      var d = document.documentElement, coarse = window.matchMedia && matchMedia("(pointer: coarse)").matches,
+          sw = Math.min(screen.width || 9999, screen.height || 9999);
+      if (!(coarse && sw <= 820) && !/Android.+Mobile|iPhone|iPod/i.test(navigator.userAgent)) return;
+      d.classList.add("bk-phone");
+      function fit() { var r = window.innerWidth / (screen.width || window.innerWidth); d.style.zoom = r > 1.2 ? r.toFixed(3) : ""; }
+      fit(); addEventListener("resize", fit); addEventListener("orientationchange", function () { setTimeout(fit, 300); });
+    })();
+  </script>
   <title>Bootkeh — מחולל משחקי דם על מגדל השעון | roeetal.com</title>
   <meta name="description" content="מחולל משחקים ועוזר מספר סיפורים למשחק 'דם על מגדל השעון' (Blood on the Clocktower) — דפי תפקידים, מעגל ישיבה, שיתוף שחקנים בווצאפ וטיימר אוטומטי">
   

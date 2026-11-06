@@ -8,6 +8,9 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Roles sheet** in the official script-sheet layout (title "by author", a ruled label per kind, two columns, blue good / red evil names, tinted icons, "* Not the first night"); used on the Roles sheet screen and in the players' 📜 pull-out (one column on phones).
+  - **Phone layout everywhere:** a touch screen always gets the phone layout, also in "Desktop site" mode (the page is zoomed back to screen size and the small-screen styles are applied).
+  - **Edit info during the game:** in every stage the storyteller can change any player's info / hints and send it straight to their card (one player, or all changes at once); typing is no longer lost when live updates arrive.
   - **Game flow:** "Deal roles" goes straight into the game: private pages are made and "send to everyone" opens. Then, step by step: join (live "x / n joined", "everyone is in", or start anyway to test) → night (info for all at once) → dawn (mark who died, everyone is told) → day → accusations → next night. Every step sends its update to every phone.
   - **Group link:** taken names lock on every phone right away; the roles that can be in the game are in a pull-out list (📜) on the join page and on each player's page.
   - **Phones:** bigger text and buttons, swipe left/right between the main screens, role search that stays in view, and a "picked roles" column/tray (tap to remove) that shows what is still missing; the page can no longer get wider than the screen.

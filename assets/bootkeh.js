@@ -1114,6 +1114,10 @@
       `;
     }
 
+    if (window.BKSheet) {   // same layout as the official script sheet (and as the players' 📜 list)
+      wrap.innerHTML = window.BKSheet.html({ title: sheetTitle, author, roles: [...townsfolk, ...outsiders, ...minions, ...demons], lang: state.lang });
+      return;
+    }
     wrap.innerHTML = `
       <div class="bootkeh-sheet-preview-wrap">
         <div class="bootkeh-sheet-header">
@@ -1450,7 +1454,7 @@
     try {
       const old = liveGame(); if (old) await window.BKCloud.endGame(old.gameId).catch(() => {});
       const g = await window.BKCloud.createGame(getThemeTitle(), state.players.map(p => ({ seat: p.seat, name: p.name, role: p.role, alignment: p.alignment, info: p.firstNightInfo })), hours, state.lang,
-        (state.poolIds || []).map(getRole).filter(Boolean));
+        { name: getScriptTitle(), author: (getScript(state.scriptId) || {}).author || "", roles: (state.poolIds || []).map(getRole).filter(Boolean) });
       g.sig = playersSig(); state.liveSig = g.sig;
       // keep the deal on this device, so a refresh brings back the same game with its links
       g.players = state.players.map(p => ({ id: p.id, seat: p.seat, name: p.name, phone: p.phone, roleId: p.role && p.role.id, alignment: p.alignment, firstNightInfo: p.firstNightInfo, isAlive: p.isAlive, isSent: p.isSent }));

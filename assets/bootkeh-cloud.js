@@ -49,13 +49,16 @@
     const uid = await storyteller();
     hours = Math.min(12, Math.max(1, +hours || 6));
     const exp = FV.Timestamp.fromMillis(Date.now() + hours * 3600e3);
+    // script: an array of roles, or {name, author, roles}
+    const sc = Array.isArray(script) ? { roles: script } : (script || { roles: [] });
     const gameId = rid(10), b = db.batch(), base = location.origin + location.pathname.replace(/[^/]*$/, ""), links = {}, keys = {};
     // the shared, public part of the game (phase, who is alive, the current accusation, announcements)
     const seats = players.map(p => ({ seat: p.seat, name: String(p.name || "").slice(0, 60), alive: p.alive !== false, ghost: true }));
     b.set(db.collection("bk_games").doc(gameId), { owner: uid, title: String(title || "").slice(0, 120), createdAt: FV.FieldValue.serverTimestamp(), expiresAt: exp,
       lang: lang || "he", state: { phase: "lobby", day: 1, seats, nom: null, notice: null, rev: 1 },
       // the roles that can be in this game (public in Blood on the Clocktower) — shown to players in a pull-out list
-      script: (script || []).slice(0, 40).map(r => ({ id: r.id, icon: r.icon || "", type: r.type || "", name_he: r.name_he || "", name_en: r.name_en || "",
+      scriptName: String(sc.name || "").slice(0, 80), scriptAuthor: String(sc.author || "").slice(0, 60),
+      script: (sc.roles || []).slice(0, 40).map(r => ({ id: r.id, icon: r.icon || "", type: r.type || "", name_he: r.name_he || "", name_en: r.name_en || "",
         ability_he: String(r.ability_he || "").slice(0, 400), ability_en: String(r.ability_en || "").slice(0, 400) })) });
     for (const p of players) {
       const key = rid(16); keys[p.seat] = key;
@@ -115,7 +118,7 @@
   // Anyone with the link (storyteller or player): watch the shared game state. cb(state|null)
   C.watchGame = async (gameId, cb) => {
     await C.ready; if (!C.ok) { cb(null); return () => {}; }
-    return db.collection("bk_games").doc(gameId).onSnapshot(d => cb(d.exists ? Object.assign({ title: d.data().title, lang: d.data().lang, script: d.data().script || [] }, d.data().state || {}) : null), () => cb(null));
+    return db.collection("bk_games").doc(gameId).onSnapshot(d => cb(d.exists ? Object.assign({ title: d.data().title, lang: d.data().lang, script: d.data().script || [], scriptName: d.data().scriptName || "", scriptAuthor: d.data().scriptAuthor || "" }, d.data().state || {}) : null), () => cb(null));
   };
 
   // Player: vote on the open accusation ("yes" / "no"), from their own private page.

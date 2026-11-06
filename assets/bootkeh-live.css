@@ -229,3 +229,47 @@ html, body { overflow-x: clip; max-width: 100%; }
   .bk-steps button { font-size: 12px; min-height: 48px; }
   .bk-sendall-card { border-radius: 18px !important; }
 }
+
+/* ---------- roles sheet in the official script-sheet layout ---------- */
+.bk-script { background: #fbf9f4; color: #1d1d1d; border-radius: 6px; padding: 28px 32px 18px; box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
+  font-family: "Inter", "Rubik", -apple-system, "Segoe UI", sans-serif; max-width: 1000px; margin: 0 auto; }
+.bk-script-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+.bk-script-head h2 { margin: 0; font: 400 34px/1.1 "Crimson Pro", "Cinzel", Georgia, "David", serif; color: #111; }
+.bk-script-head span { font: italic 400 17px/1 "Crimson Pro", Georgia, serif; color: #333; }
+.bk-script-rule { display: flex; align-items: center; gap: 0; margin: 14px 0 6px; }
+.bk-script-rule::before { content: ""; flex: 1; height: 1px; background: #b9a98b; }
+.bk-script-rule::after { content: ""; width: 34px; height: 1px; background: #b9a98b; }
+.bk-script-rule span { font: 500 13px/1 "Cinzel", "Crimson Pro", Georgia, serif; letter-spacing: .1em; color: #5c4b33; padding: 5px 16px; border: 1.5px solid #b9a98b;
+  border-radius: 999px; background: #fbf9f4; box-shadow: 0 0 0 2px #fbf9f4, 0 0 0 3px #d7cbb4; }
+.bk-script-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 34px; row-gap: 10px; }
+.bk-script-role { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: start; padding: 4px 0; }
+.bk-script-ic { font-size: 44px; line-height: 64px; text-align: center; height: 64px; }
+.bk-script-role.townsfolk .bk-script-ic, .bk-script-role.outsider .bk-script-ic { filter: grayscale(1) sepia(1) hue-rotate(175deg) saturate(5) brightness(.85) contrast(1.1); }
+.bk-script-role.minion .bk-script-ic, .bk-script-role.demon .bk-script-ic { filter: grayscale(1) sepia(1) hue-rotate(-35deg) saturate(6) brightness(.75) contrast(1.15); }
+.bk-script-role b { display: block; font: 700 17px/1.25 "Inter", "Rubik", sans-serif; margin-bottom: 3px; }
+.bk-script-role.townsfolk b, .bk-script-role.outsider b { color: #1d6fae; }
+.bk-script-role.minion b, .bk-script-role.demon b { color: #8f1c1c; }
+.bk-script-role.traveller b { color: #6b3fa0; } .bk-script-role.fabled b { color: #a07a12; }
+.bk-script-role p { margin: 0; font-size: 15.5px; line-height: 1.38; color: #1d1d1d; }
+.bk-script-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 22px; font-size: 12.5px; color: #777; }
+@media (max-width: 640px) {
+  .bk-script { padding: 18px 16px 14px; border-radius: 14px; }
+  .bk-script-head h2 { font-size: 26px; }
+  .bk-script-grid { grid-template-columns: 1fr; }
+  .bk-script-role { grid-template-columns: 52px 1fr; gap: 10px; }
+  .bk-script-ic { font-size: 36px; line-height: 52px; height: 52px; }
+  .bk-script-role b { font-size: 17px; } .bk-script-role p { font-size: 15.5px; }
+}
+.bkp-sheet-body .bk-script { box-shadow: none; border-radius: 12px; }
+@media print { .bk-script { box-shadow: none; padding: 0; } .bk-script-grid { grid-template-columns: 1fr 1fr !important; } }
+
+/* ---------- edit players' info during the game ---------- */
+.bk-ie > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-height: 44px; }
+.bk-ie > summary::-webkit-details-marker { display: none; }
+.bk-ie > summary h4::before { content: "▸ "; color: var(--bk-gold); } .bk-ie[open] > summary h4::before { content: "▾ "; }
+.bk-ie > summary small { color: var(--bk-text-muted); font-size: 12px; }
+.bk-ie-list { display: grid; gap: 8px; }
+.bk-ie-row { display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: rgba(255, 255, 255, .04); }
+.bk-ie-row span { display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; font-size: 14px; } .bk-ie-row small { color: var(--bk-text-muted); }
+.bk-ie-row.changed { box-shadow: 0 0 0 1px var(--bk-gold) inset; } .bk-ie-row.dead { opacity: .75; }
+.bk-ie-row .bk-btn { justify-self: start; }
