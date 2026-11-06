@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 187 commits.
+Total: 194 commits.
 
 ## 2026-10-31
 
@@ -953,3 +953,40 @@ files: docs/COMMITS.md
 CVEditor: authentic Google Sign-In with account chooser, total removal of hardcoded Roee CV data
 
 files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.css, assets/cveditor.js
+
+### c305b5c · 2026-11-05 · Roee Tal
+docs: update COMMITS.md
+
+files: docs/COMMITS.md
+
+### feb9086 · 2026-11-05 · Roee Tal
+CVEditor: real Sign in with Google in the side menu, private per-user vaults, John Doe example when logged out, one solid-blue drag look
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor-cloud.js, assets/cveditor-firebase.json, assets/cveditor.css, assets/cveditor.js, docs/CVEDITOR-ACCOUNTS.md, firestore.rules
+
+## 2026-11-06
+
+### 343fefb · 2026-11-06 · Roee Tal
+CVEditor: connect Firebase project roeetal-cv — Google sign-in live
+
+files: CHANGELOG.md, assets/cveditor-firebase.json, assets/cveditor.js, docs/CVEDITOR-ACCOUNTS.md
+
+### 6b35a93 · 2026-11-06 · Roee Tal
+CVEditor: only roeetal17 is the owner; other accounts never get (or keep) the site's résumés
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor.js, docs/CVEDITOR-ACCOUNTS.md
+
+### 9b86bf8 · 2026-11-06 · Roee Tal
+CVEditor: actions in the side menu, real owner-only Publish to roeetal.com/cv, init once, restore-session state
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cveditor-cloud.js, assets/cveditor.css, assets/cveditor.js
+
+### 7a6f7d4 · 2026-11-06 · Roee Tal
+Bootkeh: Blood on the Clocktower generator & storyteller assistant (roeetal.com/Bootkeh)
+
+files: Bootkeh.html, Bootkeh/index.html, CHANGELOG.md, assets/bootkeh-data.js, assets/bootkeh.css, assets/bootkeh.js, build.py, tools/generate_bootkeh_roles.py
+
+### 6b50cb6 · 2026-11-06 · Roee Tal
+docs: refresh commit log
+
+files: docs/COMMITS.md
