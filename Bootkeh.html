@@ -119,9 +119,9 @@
         </div>
 
         <!-- Advanced Role Matrix Dropdown with Search & Filters -->
-        <details style="margin-top:16px;" class="bk-form-group">
+        <details style="margin-top:16px;" class="bk-form-group bk-roles-box" id="bkRolesBox">
           <summary class="bk-label" style="cursor:pointer;padding:8px 0;user-select:none;">
-            <span>הגדרות מתקדמות — בחירת תפקידים ידנית</span>
+            <span>בחירת תפקידים</span> <span id="bkPickedCount" class="bk-picked-count"></span>
           </summary>
           <div style="padding-top:14px;">
             <div class="bk-role-search-wrap">
@@ -139,7 +139,11 @@
               <button type="button" class="bk-role-filter-chip" id="chip-filter-traveller" onclick="window.Bootkeh.setRoleFilterCat('traveller')">נוסעים</button>
               <button type="button" class="bk-role-filter-chip" id="chip-filter-fabled" onclick="window.Bootkeh.setRoleFilterCat('fabled')">אגדיים</button>
             </div>
-            <div id="customRolesMatrix"></div>
+            <div class="bk-roles-split">
+              <div id="customRolesMatrix"></div>
+              <!-- the roles picked so far, as a separate column (a sticky tray on phones); tap one to remove it -->
+              <aside id="bkPicked" class="bk-picked" aria-live="polite"></aside>
+            </div>
           </div>
         </details>
 

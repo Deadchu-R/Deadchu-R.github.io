@@ -8,6 +8,10 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Game flow:** "Deal roles" goes straight into the game: private pages are made and "send to everyone" opens. Then, step by step: join (live "x / n joined", "everyone is in", or start anyway to test) → night (info for all at once) → dawn (mark who died, everyone is told) → day → accusations → next night. Every step sends its update to every phone.
+  - **Group link:** taken names lock on every phone right away; the roles that can be in the game are in a pull-out list (📜) on the join page and on each player's page.
+  - **Phones:** bigger text and buttons, swipe left/right between the main screens, role search that stays in view, and a "picked roles" column/tray (tap to remove) that shows what is still missing; the page can no longer get wider than the screen.
+  - **Fair deal:** roles are shuffled with crypto random numbers (Fisher–Yates) instead of sort(Math.random), which was biased and could be fixed from the console.
   - **Send to everyone at once:** one group link (WhatsApp group message, share, or a QR code on the storyteller's screen); each player taps their own name and lands on their private page; the seat locks to that phone, and the storyteller sees who joined and can free a seat. Private one-by-one sending is still there as a fallback.
   - **Version label** next to the title (a code that changes with every update, plus the time the page was published); Bootkeh files now get content-hash cache-busting from build.py.
   - **Live game on every phone:** the storyteller runs the game from the board tab — night / day / accusations, announcements, and an accusation with a live vote (players vote on their page, or the storyteller taps hands raised at the table), then execute or spare; who is alive updates for everyone.

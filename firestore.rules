@@ -60,6 +60,17 @@ service cloud.firestore {
                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimedBy'])));
         allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
       }
+
+      // "seat taken" flags, so every phone on the group link sees taken seats right away (no secrets in them)
+      match /t/{seat} {
+        allow read: if get(/databases/$(database)/documents/bk_games/$(gameId)).data.expiresAt > request.time;
+        allow create: if request.auth != null
+          && request.resource.data.keys().hasOnly(['seat', 'by'])
+          && request.resource.data.by == request.auth.uid
+          && get(/databases/$(database)/documents/bk_games/$(gameId)/c/$(seat)).data.claimedBy == request.auth.uid;
+        allow delete: if request.auth != null
+          && get(/databases/$(database)/documents/bk_games/$(gameId)).data.owner == request.auth.uid;
+      }
     }
 
     match /{document=**} {

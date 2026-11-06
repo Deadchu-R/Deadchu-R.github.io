@@ -293,6 +293,29 @@
 
 
   // --- Initialization ---
+  // Phones: swipe left / right on the page to move between the main screens (Setup ↔ Board ↔ Roles ↔ Send).
+  function attachSwipe() {
+    const order = ["setup", "board", "sheet", "cards"], main = document.querySelector(".bootkeh-main"); if (!main) return;
+    let x0 = 0, y0 = 0, t0 = 0, ok = false;
+    main.addEventListener("touchstart", e => {
+      const t = e.touches[0], el = e.target;
+      // not when the finger starts on something that scrolls or slides sideways itself
+      ok = e.touches.length === 1 && !el.closest('input[type="range"], textarea, select, .bk-role-filter-chips, .bk-themegen-cats, .bk-picked, .bk-no-swipe, .bootkeh-circle-container');
+      x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
+    }, { passive: true });
+    main.addEventListener("touchend", e => {
+      if (!ok) return; ok = false;
+      const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - t0 > 700) return;
+      const rtl = document.documentElement.dir !== "ltr" && state.lang === "he";
+      const i = order.indexOf(state.activeTab || "setup"), step = (dx < 0) !== rtl ? 1 : -1, next = order[i + step];
+      if (!next) return;
+      main.classList.remove("bk-swipe-l", "bk-swipe-r"); void main.offsetWidth;
+      main.classList.add(step > 0 ? "bk-swipe-l" : "bk-swipe-r");
+      setTab(next); window.scrollTo({ top: 0, behavior: "smooth" });
+    }, { passive: true });
+  }
+
   function init() {
     loadSavedPlayers();
     const slider = $("#playerCountSlider");
@@ -305,6 +328,8 @@
     renderThemeGen();
     renderPresets();
     attachEventListeners();
+    attachSwipe();
+    if (window.matchMedia && matchMedia("(max-width: 760px)").matches) { const rb = document.getElementById("bkRolesBox"); if (rb) rb.open = true; }
     generateGame(false); // prepare initial game data silently
     // a live game made on this device is still running: bring back that exact deal (same seats, roles and links)
     const liveSaved = window.BKCloud && window.BKCloud.saved();
@@ -605,6 +630,7 @@
     }
 
     matrix.innerHTML = html;
+    renderPicked();
     const allChip = document.getElementById("chip-filter-all");
     if (allChip) allChip.textContent = (state.lang === "he" ? "הכל" : "All") + ` (${allRoles.length})`;
   }
@@ -639,7 +665,28 @@
     initCustomRolesMatrix();
   }
 
+  // The "picked roles" column: what is chosen so far, per kind, against what this player count needs.
+  function renderPicked() {
+    const box = document.getElementById("bkPicked"), cnt = document.getElementById("bkPickedCount"); if (!box) return;
+    const he = state.lang === "he", n = parseInt(state.playerCount, 10) || 8;
+    const d = (window.BOOTKEH_PLAYER_DISTRIBUTION || {})[String(n)] || { townsfolk: 5, outsiders: 1, minions: 1, demons: 1 };
+    const picked = state.customRoles.map(getRole).filter(Boolean);
+    const kinds = [["townsfolk", d.townsfolk, "תושבים", "Townsfolk"], ["outsider", d.outsiders, "אאוטסיידרים", "Outsiders"], ["minion", d.minions, "משרתים", "Minions"], ["demon", d.demons, "שדים", "Demons"]];
+    const dealt = picked.filter(r => kinds.some(k => k[0] === r.type)).length;
+    const short = kinds.filter(([k, need]) => picked.filter(r => r.type === k).length < need);
+    if (cnt) cnt.textContent = picked.length ? `· ${he ? "נבחרו" : "picked"} ${picked.length}` : "";
+    box.innerHTML = `<div class="bk-picked-top"><b>${he ? "נבחרו" : "Picked"} ${picked.length}</b>
+        <span class="${short.length ? "warn" : "ok"}">${short.length ? (he ? "חסרים: " : "Missing: ") + short.map(k => he ? k[2] : k[3]).join(", ") : (he ? `מספיק ל־${n} שחקנים ✓` : `Enough for ${n} players ✓`)}</span></div>
+      ${picked.length ? kinds.concat([["traveller", 0, "נוסעים", "Travellers"], ["fabled", 0, "אגדיים", "Fabled"]]).map(([k, need, h, e]) => {
+        const rs = picked.filter(r => r.type === k); if (!rs.length) return "";
+        return `<div class="bk-picked-group"><small class="${k}">${he ? h : e} ${rs.length}${need ? "/" + need : ""}</small>
+          <div>${rs.map(r => `<button type="button" class="bk-picked-chip ${k}" onclick="window.Bootkeh.toggleRoleSelection('${r.id}')" title="${he ? "הסר" : "Remove"}">${r.icon} ${esc(he ? r.name_he : r.name_en)} <i>×</i></button>`).join("")}</div></div>`;
+      }).join("") : `<p class="bk-picked-empty">${he ? "עוד לא נבחרו תפקידים. חפש ולחץ על תפקיד כדי להוסיף אותו — או “תפקידים אקראיים”." : "No roles picked yet. Search and tap a role to add it — or use Random roles."}</p>`}
+      ${dealt && dealt < n ? `<p class="bk-picked-empty">${he ? `לחלוקה צריך לפחות ${n} תפקידים (חסרים ${n - dealt}).` : `Dealing needs at least ${n} roles (${n - dealt} more).`}</p>` : ""}`;
+  }
+
   function updateCustomRoleChips() {
+    renderPicked();
     const allRoles = window.BOOTKEH_ROLES || [];
     allRoles.forEach(r => {
       const chip = $(`#chip-${r.id}`);
@@ -777,7 +824,7 @@
     const demonPool = poolRoles.filter(r => r.type === "demon");
 
     // Shuffle helper
-    const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+    const shuffle = fairShuffle;
 
     // Pick Minions & Demons first to check setup modifiers (e.g. Baron +2 outsiders, Fang Gu +1 outsider)
     const pickedMinions = shuffle(minionPool).slice(0, minionsNeeded);
@@ -828,6 +875,7 @@
     }
 
     state.players = players;
+    state.poolIds = poolRoles.filter(r => ["townsfolk", "outsider", "minion", "demon"].includes(r.type)).map(r => r.id);
 
     // Generate dynamic First Night Info for each player
     computeFirstNightInfo(players, rolesInPlay, poolRoles);
@@ -839,6 +887,8 @@
     if (autoSwitch) {
       setTab("board");
       SoundFX.playGong();
+      // straight into the game: make the private pages and open "send to everyone" (one group link)
+      if (window.BKLive && window.BKCloud && window.BKCloud.ok !== false) window.BKLive.startFlow();
     }
   }
 
@@ -1288,7 +1338,7 @@
   function randomizeRoles() {
     const n = parseInt(state.playerCount, 10) || 8;
     const d = (window.BOOTKEH_PLAYER_DISTRIBUTION || {})[String(n)] || { townsfolk: 5, outsiders: 1, minions: 1, demons: 1 };
-    const all = window.BOOTKEH_ROLES || [], sh = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const all = window.BOOTKEH_ROLES || [], sh = fairShuffle;
     const take = (type, k) => sh(all.filter(r => r.type === type)).slice(0, k).map(r => r.id);
     // a few more than needed of each kind, so the deal still varies and bluffs exist
     state.customRoles = [...take("townsfolk", d.townsfolk + 4), ...take("outsider", d.outsiders + 2), ...take("minion", d.minions + 2), ...take("demon", Math.max(2, d.demons + 1))];
@@ -1399,7 +1449,8 @@
     const st = document.getElementById("bkLiveStatus"); if (st) st.textContent = he ? "יוצר דפים פרטיים…" : "Creating private pages…";
     try {
       const old = liveGame(); if (old) await window.BKCloud.endGame(old.gameId).catch(() => {});
-      const g = await window.BKCloud.createGame(getThemeTitle(), state.players.map(p => ({ seat: p.seat, name: p.name, role: p.role, alignment: p.alignment, info: p.firstNightInfo })), hours, state.lang);
+      const g = await window.BKCloud.createGame(getThemeTitle(), state.players.map(p => ({ seat: p.seat, name: p.name, role: p.role, alignment: p.alignment, info: p.firstNightInfo })), hours, state.lang,
+        (state.poolIds || []).map(getRole).filter(Boolean));
       g.sig = playersSig(); state.liveSig = g.sig;
       // keep the deal on this device, so a refresh brings back the same game with its links
       g.players = state.players.map(p => ({ id: p.id, seat: p.seat, name: p.name, phone: p.phone, roleId: p.role && p.role.id, alignment: p.alignment, firstNightInfo: p.firstNightInfo, isAlive: p.isAlive, isSent: p.isSent }));
@@ -1709,6 +1760,12 @@
     }
   }
 
+  // Fair shuffle (Fisher–Yates) with the browser's crypto random numbers. The old sort(() => Math.random() - .5)
+  // was biased, and anyone could fix its result by replacing Math.random in the console.
+  const RNG = window.crypto && crypto.getRandomValues.bind(crypto);
+  function randInt(n) { if (!RNG) return Math.floor(Math.random() * n); const u = new Uint32Array(1), lim = Math.floor(0x100000000 / n) * n; do RNG(u); while (u[0] >= lim); return u[0] % n; }
+  function fairShuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = randInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
   // --- Public API ---
   window.Bootkeh = {
     _state: state,
@@ -1725,6 +1782,7 @@
     sendAllWhatsapp,
     sendEachWhatsapp,
     getThemeTitle,
+    getRole,
     setThemeFam,
     genTheme,
     useGenTheme,

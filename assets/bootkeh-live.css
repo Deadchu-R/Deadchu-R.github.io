@@ -102,7 +102,7 @@ body.bkp-mode { overflow-x: hidden; }
 .bkp-town span.me { box-shadow: 0 0 0 1px var(--bk-gold) inset; }
 .bkp-foot { text-align: center; font-size: 12px; color: var(--bk-text-muted); }
 .bkp-end { text-align: center; padding: 30vh 10px; } .bkp-candle { font-size: 54px; } .bkp-end h2 { font-family: "Cinzel Decorative", var(--bk-font-serif); color: var(--bk-gold-light); }
-.bkp-toast { position: fixed; z-index: 50; inset-inline: 12px; top: calc(10px + env(safe-area-inset-top)); max-width: 500px; margin: 0 auto; padding: 14px 16px; border-radius: 16px;
+.bkp-toast { position: fixed; z-index: 6000; inset-inline: 12px; top: calc(10px + env(safe-area-inset-top)); max-width: 500px; margin: 0 auto; padding: 14px 16px; border-radius: 16px;
   background: #3a0a10; border: 1px solid var(--bk-gold); box-shadow: 0 14px 40px rgba(0, 0, 0, .6); display: grid; gap: 4px; transform: translateY(-140%); transition: transform .3s ease; }
 .bkp-toast.on { transform: none; } .bkp-toast b { font-size: 16px; color: #fff6d8; } .bkp-toast span { font-size: 14px; color: #f1dfb5; }
 
@@ -140,3 +140,92 @@ body.bkp-mode { overflow-x: hidden; }
 .bk-sendall { grid-template-columns: minmax(0, 1fr); justify-items: center; }
 .bk-sendall-card > * { min-width: 0; }
 .bk-group .bk-hint, .bk-group details { overflow-wrap: anywhere; }
+
+/* ---------- never wider than the screen (a too-wide element made phones zoom the whole page out) ---------- */
+html, body { overflow-x: clip; max-width: 100%; }
+
+/* ---------- game flow: steps bar, big buttons, joined counter ---------- */
+.bk-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; counter-reset: st; }
+.bk-steps li { counter-increment: st; }
+.bk-steps button { appearance: none; width: 100%; min-height: 44px; border-radius: 10px; border: 1px solid rgba(212, 175, 55, .25); background: rgba(0, 0, 0, .3);
+  color: #cbb98f; font: 700 12.5px/1.1 var(--bk-font-sans); cursor: pointer; display: grid; place-items: center; gap: 2px; padding: 4px 2px; }
+.bk-steps button::before { content: counter(st); font-size: 10px; opacity: .7; }
+.bk-steps li.done button { color: #a7f3d0; border-color: rgba(16, 185, 129, .4); }
+.bk-steps li.on button { background: linear-gradient(180deg, #7a1420, #4a0c14); color: #fff6d8; border-color: var(--bk-gold); }
+.bk-big { min-height: 54px !important; font-size: 16px !important; font-weight: 800 !important; }
+.bk-join { padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, .05); font-size: 15px; text-align: center; }
+.bk-join b { font-size: 22px; color: var(--bk-gold-light); }
+.bk-join.all { background: rgba(16, 185, 129, .16); color: #a7f3d0; box-shadow: 0 0 0 1px rgba(16, 185, 129, .45) inset; }
+.bk-lp-head .bk-lp-stats { justify-content: flex-end; }
+
+/* ---------- picked roles column / tray ---------- */
+.bk-picked-count { font: 600 12.5px/1 var(--bk-font-sans); color: var(--bk-gold-light); margin-inline-start: 6px; }
+.bk-roles-split { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; align-items: start; }
+.bk-picked { position: sticky; top: 80px; max-height: calc(100vh - 110px); overflow: auto; background: rgba(12, 8, 14, .92); border: 1px solid rgba(212, 175, 55, .35);
+  border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+.bk-picked-top { display: grid; gap: 4px; } .bk-picked-top b { font: 700 16px/1.2 var(--bk-font-serif); color: var(--bk-gold-light); }
+.bk-picked-top span { font-size: 12.5px; } .bk-picked-top .warn { color: #fcd34d; } .bk-picked-top .ok { color: #86efac; }
+.bk-picked-group { display: grid; gap: 6px; } .bk-picked-group > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.bk-picked-group small { font-weight: 700; font-size: 12px; }
+.bk-picked-group small.townsfolk { color: #38bdf8; } .bk-picked-group small.outsider { color: #2dd4bf; } .bk-picked-group small.minion { color: #fb923c; }
+.bk-picked-group small.demon { color: #ef4444; } .bk-picked-group small.traveller { color: #c084fc; } .bk-picked-group small.fabled { color: #facc15; }
+.bk-picked-chip { appearance: none; display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; min-height: 38px; border-radius: 999px; cursor: pointer;
+  background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .15); color: #f3e7cb; font: 600 13px/1 var(--bk-font-sans); }
+.bk-picked-chip i { font-style: normal; opacity: .6; }
+.bk-picked-chip.townsfolk { border-color: rgba(56, 189, 248, .5); } .bk-picked-chip.outsider { border-color: rgba(45, 212, 191, .5); }
+.bk-picked-chip.minion { border-color: rgba(251, 146, 60, .55); } .bk-picked-chip.demon { border-color: rgba(239, 68, 68, .6); }
+.bk-picked-empty { margin: 0; font-size: 13px; color: var(--bk-text-muted); line-height: 1.45; }
+
+/* ---------- roles list for players (bottom sheet) ---------- */
+.bkp-top-btns { display: inline-flex; gap: 8px; }
+.bkp-sheet { position: fixed; inset: 0; z-index: 60; }
+.bkp-sheet-bg { position: absolute; inset: 0; background: rgba(0, 0, 0, .55); opacity: 0; transition: opacity .25s; }
+.bkp-sheet-card { position: absolute; inset-inline: 0; bottom: 0; max-height: 82vh; display: grid; grid-template-rows: auto auto 1fr; background: #1a1219; border-top: 1px solid var(--bk-gold);
+  border-radius: 20px 20px 0 0; transform: translateY(100%); transition: transform .28s ease; padding-bottom: env(safe-area-inset-bottom); max-width: 620px; margin: 0 auto; color: #f3e7cb; }
+.bkp-sheet.on .bkp-sheet-bg { opacity: 1; } .bkp-sheet.on .bkp-sheet-card { transform: none; }
+.bkp-sheet-grab { width: 44px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .25); margin: 8px auto 0; }
+.bkp-sheet-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; font: 700 17px/1.2 var(--bk-font-serif); color: var(--bk-gold-light); }
+.bkp-sheet-top button { appearance: none; border: 0; background: rgba(255, 255, 255, .08); color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 22px; cursor: pointer; }
+.bkp-sheet-body { overflow: auto; padding: 0 16px 20px; }
+.bkp-sheet-h { margin: 14px 0 6px; font: 700 14px/1 var(--bk-font-sans); } .bkp-sheet-h small { opacity: .6; }
+.bkp-sheet-h.townsfolk { color: #38bdf8; } .bkp-sheet-h.outsider { color: #2dd4bf; } .bkp-sheet-h.minion { color: #fb923c; } .bkp-sheet-h.demon { color: #ef4444; }
+.bkp-sheet-r { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.bkp-sheet-r > span { font-size: 26px; line-height: 1; width: 32px; text-align: center; flex: none; }
+.bkp-sheet-r b { font-size: 15px; } .bkp-sheet-r p { margin: 3px 0 0; font-size: 13.5px; line-height: 1.45; color: #d8c9a6; }
+
+/* ---------- swipe between screens ---------- */
+@keyframes bkInL { from { opacity: .3; transform: translateX(-28px); } } @keyframes bkInR { from { opacity: .3; transform: translateX(28px); } }
+.bootkeh-main.bk-swipe-l .bootkeh-view.active { animation: bkInR .25s ease; } .bootkeh-main.bk-swipe-r .bootkeh-view.active { animation: bkInL .25s ease; }
+[dir="rtl"] .bootkeh-main.bk-swipe-l .bootkeh-view.active { animation-name: bkInL; } [dir="rtl"] .bootkeh-main.bk-swipe-r .bootkeh-view.active { animation-name: bkInR; }
+@media (prefers-reduced-motion: reduce) { .bootkeh-main .bootkeh-view.active { animation: none !important; } }
+
+/* ---------- phones: bigger, easier to read and to tap ---------- */
+@media (max-width: 760px) {
+  body.bootkeh-body { font-size: 16px; padding-bottom: 86px; }
+  .bootkeh-title { font-size: 22px !important; }
+  .bootkeh-topbar-actions .bk-btn { min-height: 40px; padding: 8px 12px !important; font-size: 13px !important; border-radius: 10px !important; }
+  .bootkeh-nav-tabs { padding: 6px 8px calc(8px + env(safe-area-inset-bottom)) !important; }
+  .bootkeh-tab-btn { min-height: 58px; font-size: 12.5px !important; border-radius: 12px !important; }
+  .bk-tab-ic { font-size: 21px; }
+  .bk-card { border-radius: 18px !important; padding: 16px !important; }
+  .bk-card-title, .bk-card-header h2 { font-size: 21px !important; }
+  .bk-label { font-size: 15px !important; }
+  .bk-btn { min-height: 48px; padding: 10px 16px !important; font-size: 15px !important; border-radius: 12px !important; justify-content: center; }
+  .bk-btn.sm { min-height: 42px; font-size: 14px !important; padding: 8px 12px !important; }
+  .bk-input, .bk-select, .bootkeh-main input[type="text"], .bootkeh-main input[type="tel"], .bootkeh-main select { min-height: 48px; font-size: 16px !important; border-radius: 12px !important; }
+  .bk-dist-pill, .bk-dist-pills span { font-size: 13.5px !important; padding: 7px 11px !important; }
+  .bk-role-chip { padding: 10px 14px !important; font-size: 14.5px !important; border-radius: 999px !important; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+  .bk-role-filter-chips { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+  .bk-role-filter-chip { flex: none; min-height: 40px; font-size: 14px !important; padding: 8px 14px !important; border-radius: 999px !important; }
+  .bk-role-search-wrap { position: sticky; top: 0; z-index: 20; background: rgba(20, 14, 22, .97); padding: 8px 0; }
+  .bk-role-search-wrap .bk-btn { flex: 1 1 auto; }
+  .bk-roles-split { grid-template-columns: 1fr; }
+  /* on phones the picked roles sit in a tray above the bottom bar, always in view */
+  .bk-picked { position: sticky; top: auto; bottom: 84px; z-index: 30; max-height: 34vh; box-shadow: 0 -10px 30px rgba(0, 0, 0, .55); }
+  .bk-picked-group > div { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .bk-picked-chip { flex: none; }
+  .bk-theme-card, .bk-theme-grid > * { font-size: 14px; }
+  .bk-roster-grid input { min-height: 46px; }
+  .bk-steps button { font-size: 12px; min-height: 48px; }
+  .bk-sendall-card { border-radius: 18px !important; }
+}

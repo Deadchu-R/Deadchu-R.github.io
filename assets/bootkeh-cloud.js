@@ -45,7 +45,7 @@
   }
 
   // Publish a game: one private page per player. players: [{seat,name,phone?,role:{…},alignment,info}]. Returns {gameId, links:{seat: url}, expiresAt}.
-  C.createGame = async (title, players, hours, lang) => {
+  C.createGame = async (title, players, hours, lang, script) => {
     const uid = await storyteller();
     hours = Math.min(12, Math.max(1, +hours || 6));
     const exp = FV.Timestamp.fromMillis(Date.now() + hours * 3600e3);
@@ -53,7 +53,10 @@
     // the shared, public part of the game (phase, who is alive, the current accusation, announcements)
     const seats = players.map(p => ({ seat: p.seat, name: String(p.name || "").slice(0, 60), alive: p.alive !== false, ghost: true }));
     b.set(db.collection("bk_games").doc(gameId), { owner: uid, title: String(title || "").slice(0, 120), createdAt: FV.FieldValue.serverTimestamp(), expiresAt: exp,
-      lang: lang || "he", state: { phase: "night", day: 1, seats, nom: null, notice: null, rev: 1 } });
+      lang: lang || "he", state: { phase: "lobby", day: 1, seats, nom: null, notice: null, rev: 1 },
+      // the roles that can be in this game (public in Blood on the Clocktower) — shown to players in a pull-out list
+      script: (script || []).slice(0, 40).map(r => ({ id: r.id, icon: r.icon || "", type: r.type || "", name_he: r.name_he || "", name_en: r.name_en || "",
+        ability_he: String(r.ability_he || "").slice(0, 400), ability_en: String(r.ability_en || "").slice(0, 400) })) });
     for (const p of players) {
       const key = rid(16); keys[p.seat] = key;
       const r = p.role || {};
@@ -112,7 +115,7 @@
   // Anyone with the link (storyteller or player): watch the shared game state. cb(state|null)
   C.watchGame = async (gameId, cb) => {
     await C.ready; if (!C.ok) { cb(null); return () => {}; }
-    return db.collection("bk_games").doc(gameId).onSnapshot(d => cb(d.exists ? Object.assign({ title: d.data().title, lang: d.data().lang }, d.data().state || {}) : null), () => cb(null));
+    return db.collection("bk_games").doc(gameId).onSnapshot(d => cb(d.exists ? Object.assign({ title: d.data().title, lang: d.data().lang, script: d.data().script || [] }, d.data().state || {}) : null), () => cb(null));
   };
 
   // Player: vote on the open accusation ("yes" / "no"), from their own private page.
@@ -139,6 +142,7 @@
   C.releaseSeat = async (gameId, seat) => {
     await storyteller();
     await db.collection("bk_games").doc(gameId).collection("c").doc(String(seat)).update({ claimedBy: null });
+    await db.collection("bk_games").doc(gameId).collection("t").doc(String(seat)).delete().catch(() => {});
   };
   // Player: take a seat from the group link. Returns the seat's secret key, or throws "taken".
   C.claimSeat = async (gameId, seat) => {
@@ -148,7 +152,14 @@
     let k = await mine(); if (k) return k;
     try { await ref.update({ claimedBy: uid }); } catch (e) { throw new Error("taken"); }
     k = await mine(); if (!k) throw new Error("taken");
+    // tell everyone (the other phones on the group link, and the storyteller) that this seat is taken
+    try { await db.collection("bk_games").doc(gameId).collection("t").doc(String(seat)).set({ seat: +seat, by: uid }); } catch (e) { console.warn("taken flag", e.message); }
     return k;
+  };
+  // Anyone with the group link: watch which seats are already taken. cb({seat: true})
+  C.watchTaken = async (gameId, cb) => {
+    await C.ready; if (!C.ok) { cb({}); return () => {}; }
+    return db.collection("bk_games").doc(gameId).collection("t").onSnapshot(q => { const o = {}; q.forEach(d => { o[d.data().seat] = true; }); cb(o); }, e => console.warn("watchTaken", e.message));
   };
 
   // End the game: delete every page of it (links stop working right away).
@@ -156,7 +167,8 @@
     const uid = await storyteller();
     const ps = await db.collection("bk_games").doc(gameId).collection("p").where("owner", "==", uid).get();
     const cs = await db.collection("bk_games").doc(gameId).collection("c").where("owner", "==", uid).get();
-    const b = db.batch(); ps.forEach(d => b.delete(d.ref)); cs.forEach(d => b.delete(d.ref)); b.delete(db.collection("bk_games").doc(gameId));
+    const ts = await db.collection("bk_games").doc(gameId).collection("t").get().catch(() => ({ forEach() {} }));
+    const b = db.batch(); ps.forEach(d => b.delete(d.ref)); cs.forEach(d => b.delete(d.ref)); ts.forEach(d => b.delete(d.ref)); b.delete(db.collection("bk_games").doc(gameId));
     await b.commit();
     try { const s = JSON.parse(localStorage.getItem("bk_live_game") || "null"); if (s && s.gameId === gameId) localStorage.removeItem("bk_live_game"); } catch (e) {}
   };
