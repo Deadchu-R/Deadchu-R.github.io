@@ -22,7 +22,7 @@
     const kinds = [["townsfolk", "תושבי העיירה", "Townsfolk"], ["outsider", "אאוטסיידרים", "Outsiders"], ["minion", "משרתים", "Minions"], ["demon", "שדים", "Demons"],
       ["traveller", "נוסעים", "Travellers"], ["fabled", "אגדיים", "Fabled"]];
     const roles = o.roles || [];
-    return `<div class="bk-script" dir="${isHe ? "rtl" : "ltr"}">
+    return `<div class="bk-script bk-script-${sheetMode()}" dir="${isHe ? "rtl" : "ltr"}">
       <div class="bk-script-head"><h2>${e(o.title || "")}</h2>${o.author ? `<span>${isHe ? "מאת" : "by"} ${e(o.author)}</span>` : ""}</div>
       ${kinds.map(([k, h, en]) => { const rs = roles.filter(r => r.type === k); if (!rs.length) return "";
         return `<div class="bk-script-kind ${k}"><div class="bk-script-rule"><span>${isHe ? h : en.toUpperCase()}</span></div>
@@ -32,7 +32,23 @@
       <div class="bk-script-foot"><span>© Steven Medway, bloodontheclocktower.com</span><span>* ${isHe ? "לא בלילה הראשון" : "Not the first night"}</span></div>
     </div>`;
   }
-  window.BKSheet = { html: sheetHTML };
+  // Two ways to show the sheet: "list" (one column that scrolls, easy to read on a phone) or "page" (the whole sheet in
+  // two columns like the printed one, shrunk to fit the screen; pinch to zoom in). The choice is kept on this device.
+  function sheetMode() { try { return localStorage.getItem("bk_sheet_mode") || "list"; } catch (e) { return "list"; } }
+  function fitSheets() {
+    document.querySelectorAll(".bk-script-page").forEach(el => {
+      const box = el.parentElement, w = box ? box.clientWidth : 0;
+      el.style.zoom = w ? Math.min(1, w / 1000).toFixed(3) : "";
+    });
+    document.querySelectorAll(".bk-sheet-mode button").forEach(b => b.classList.toggle("on", b.dataset.mode === sheetMode()));
+  }
+  function setMode(m) {
+    try { localStorage.setItem("bk_sheet_mode", m); } catch (e) {}
+    document.querySelectorAll(".bk-script").forEach(el => { el.classList.toggle("bk-script-page", m === "page"); el.classList.toggle("bk-script-list", m !== "page"); });
+    fitSheets();
+  }
+  addEventListener("resize", () => fitSheets());
+  window.BKSheet = { html: sheetHTML, setMode, fit: fitSheets, mode: sheetMode };
 
   // Copy every "small screen" rule (@media max-width ≤ 900px) of the Bootkeh styles to html.bk-phone, so a phone gets
   // the phone layout even when the browser lays the page out wider than the screen (see the script in Bootkeh.html).
@@ -357,9 +373,10 @@
     let sh = document.getElementById("bkpSheet");
     if (!sh) { sh = document.createElement("div"); sh.id = "bkpSheet"; sh.className = "bkp-sheet"; document.body.appendChild(sh); }
     sh.innerHTML = `<div class="bkp-sheet-bg" onclick="window.BKLive.closeRoles()"></div><div class="bkp-sheet-card" role="dialog" aria-label="${isHe ? "התפקידים במשחק" : "Roles in this game"}">
-      <div class="bkp-sheet-grab"></div><div class="bkp-sheet-top"><b>${isHe ? "התפקידים שיכולים להיות במשחק" : "Roles that can be in this game"}</b><button type="button" onclick="window.BKLive.closeRoles()" aria-label="${isHe ? "סגור" : "Close"}">×</button></div>
+      <div class="bkp-sheet-grab"></div><div class="bkp-sheet-top"><b>${isHe ? "התפקידים במשחק" : "Roles in this game"}</b><button type="button" onclick="window.BKLive.closeRoles()" aria-label="${isHe ? "סגור" : "Close"}">×</button></div>
+      <div class="bk-seg bk-sheet-mode"><button type="button" data-mode="list" onclick="window.BKSheet.setMode('list')">${isHe ? "רשימה נגללת" : "List"}</button><button type="button" data-mode="page" onclick="window.BKSheet.setMode('page')">${isHe ? "דף מלא" : "Full page"}</button></div>
       <div class="bkp-sheet-body">${s.script && s.script.length ? sheetHTML({ title: s.scriptName || s.title, author: s.scriptAuthor, roles: s.script, lang: s.lang }) : rolesSheetHTML(s.script, isHe)}</div></div>`;
-    requestAnimationFrame(() => sh.classList.add("on"));
+    requestAnimationFrame(() => { sh.classList.add("on"); fitSheets(); });
   }
   function closeRoles() { const sh = document.getElementById("bkpSheet"); if (sh) { sh.classList.remove("on"); setTimeout(() => sh.remove(), 250); } }
 

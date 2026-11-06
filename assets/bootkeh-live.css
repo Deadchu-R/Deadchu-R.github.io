@@ -279,3 +279,64 @@ html, body { overflow-x: clip; max-width: 100%; }
 .bootkeh-view { will-change: auto; }
 .bootkeh-view.bk-peek { pointer-events: none; z-index: 1; }
 .bootkeh-main .bootkeh-view.active { animation: none !important; }   /* the old slide-in is replaced by the drag */
+
+/* ---------- roles sheet: list or full page ---------- */
+.bk-sheet-mode { margin: 0 auto 12px; display: flex; max-width: 360px; }
+.bk-sheet-mode button { flex: 1; }
+.bk-script.bk-script-page { width: 1000px; max-width: none; padding: 28px 32px 18px; border-radius: 6px; }
+.bk-script.bk-script-page .bk-script-grid { grid-template-columns: 1fr 1fr !important; column-gap: 34px !important; }
+.bk-script.bk-script-page .bk-script-role { grid-template-columns: 64px 1fr !important; gap: 14px !important; }
+.bk-script.bk-script-page .bk-script-ic { font-size: 44px !important; line-height: 64px !important; height: 64px !important; }
+.bk-script.bk-script-page .bk-script-head h2 { font-size: 34px !important; }
+.bk-script.bk-script-page .bk-script-role b { font-size: 17px !important; } .bk-script.bk-script-page .bk-script-role p { font-size: 15.5px !important; }
+.bkp-sheet-body { overflow-x: hidden; }
+.bkp-sheet-card .bk-sheet-mode { margin: 0 16px 10px; max-width: none; }
+
+/* ---------- back bar on every screen but the first ---------- */
+.bk-backbar { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+.bk-back { appearance: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(212, 175, 55, .45); background: rgba(0, 0, 0, .35); color: #f3e7cb; font: 700 15px/1 var(--bk-font-sans); }
+.bk-back span { font-size: 22px; line-height: 1; margin-top: -2px; }
+.bk-backbar b { font: 700 18px/1.2 var(--bk-font-serif); color: var(--bk-gold-light); }
+
+/* ---------- clearer role picking ---------- */
+.bk-pick-roles-btn { width: 100%; margin-top: 8px; justify-content: center; }
+.bk-roles-box > summary { font-size: 17px !important; }
+
+/* ---------- seat list under the circle (phones) ---------- */
+.bk-seat-list { display: none; }
+@media (max-width: 760px) {
+  .bk-role-search-wrap .bk-input, .bk-role-search-wrap input { flex: 1 1 100% !important; min-width: 0; }
+  .bk-seat-list { display: grid; gap: 6px; margin-top: 14px; }
+  .bk-seat-list button { appearance: none; display: grid; grid-template-columns: 28px 30px 1fr auto; align-items: center; gap: 8px; min-height: 50px; padding: 6px 12px;
+    border-radius: 12px; border: 1px solid rgba(212, 175, 55, .2); background: rgba(255, 255, 255, .04); color: #f3e7cb; text-align: start; cursor: pointer; font-family: var(--bk-font-sans); }
+  .bk-seat-list i { font-style: normal; font-size: 12px; color: var(--bk-gold); } .bk-seat-list .ic { font-size: 20px; }
+  .bk-seat-list b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .bk-seat-list small { font-size: 13px; color: #cdbf9c; }
+  .bk-seat-list .good { box-shadow: inset 3px 0 0 #3b82f6; } .bk-seat-list .evil { box-shadow: inset 3px 0 0 #dc2626; }
+  [dir="rtl"] .bk-seat-list .good { box-shadow: inset -3px 0 0 #3b82f6; } [dir="rtl"] .bk-seat-list .evil { box-shadow: inset -3px 0 0 #dc2626; }
+  .bk-seat-list .dead { opacity: .5; } .bk-seat-list .dead b { text-decoration: line-through; }
+  /* in the circle itself: no role labels when it's crowded (they are in the list), short names */
+  .bk-many .bootkeh-seat-role-title { display: none !important; }
+  .bk-many .bootkeh-seat-node.bk-throne-seat { width: 54px !important; height: 68px !important; }
+  .bk-many .bk-throne-seat .bootkeh-seat-name { max-width: 64px; font-size: 9.5px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bootkeh-main, .bootkeh-view { max-width: 100%; }
+}
+
+/* ---------- setup "shutters" (collapsible panels with a title + summary) ---------- */
+.bk-panel { margin-top: 14px; border: 1px solid rgba(212, 175, 55, .35); border-radius: 16px; background: rgba(0, 0, 0, .22); overflow: clip; }
+.bk-panel > summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; user-select: none; min-height: 60px;
+  background: linear-gradient(180deg, rgba(122, 20, 32, .28), rgba(58, 10, 16, .18)); }
+.bk-panel > summary::-webkit-details-marker { display: none; }
+.bk-panel[open] > summary { border-bottom: 1px solid rgba(212, 175, 55, .25); }
+.bk-panel-ic { font-size: 24px; flex: none; }
+.bk-panel-t { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.bk-panel-t b { font: 700 18px/1.2 var(--bk-font-serif); color: var(--bk-gold-light); }
+.bk-panel-t small { font-size: 13.5px; color: #d8c9a6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-panel-chev { width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(212, 175, 55, .4); transition: transform .25s ease; }
+.bk-panel-chev::before { content: ""; width: 8px; height: 8px; border: solid var(--bk-gold-light); border-width: 0 2px 2px 0; transform: translateY(-2px) rotate(45deg); }
+.bk-panel[open] .bk-panel-chev { transform: rotate(180deg); }
+.bk-panel-body { padding: 16px; }
+@media (prefers-reduced-motion: no-preference) { .bk-panel[open] .bk-panel-body { animation: bkPanelIn .22s ease; } }
+@keyframes bkPanelIn { from { opacity: 0; transform: translateY(-6px); } }
+@media (max-width: 760px) { .bk-panel-body { padding: 12px; } .bk-panel > summary { padding: 12px 14px; } }
+@media (max-width: 760px) { .bk-dup-title { display: none; } }

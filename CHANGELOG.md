@@ -8,6 +8,10 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Setup shutters:** "Roles" (role set + pick your own) now comes before "Game world"; both are collapsible panels whose title and one-line summary stay visible when closed. A clear "Pick the roles yourself" button starts from the chosen set; the role search no longer squeezes on phones.
+  - **Back:** a "‹ Back" bar on every screen but the first, and the phone's Back button steps between screens.
+  - **Seat circle on phones:** short names, no overlapping role labels when crowded, and a readable seat list (seat, role, alive) under the table.
+  - **Roles sheet views:** "scrolling list" or "full page" (the two-column printed layout fitted to the screen), on the storyteller's sheet and in the players' 📜 list; remembered per device.
   - **Swipe like the Android home screen:** the page follows the finger with the next screen sliding in beside it; a long or quick drag glides to it, a short one springs back, the first/last screen stretches a little; up/down scrolling is never mistaken for a swipe.
   - **Roles sheet** in the official script-sheet layout (title "by author", a ruled label per kind, two columns, blue good / red evil names, tinted icons, "* Not the first night"); used on the Roles sheet screen and in the players' 📜 pull-out (one column on phones).
   - **Phone layout everywhere:** a touch screen always gets the phone layout, also in "Desktop site" mode (the page is zoomed back to screen size and the small-screen styles are applied).

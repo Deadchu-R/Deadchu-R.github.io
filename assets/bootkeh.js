@@ -380,7 +380,7 @@
     renderPresets();
     attachEventListeners();
     attachSwipe();
-    if (window.matchMedia && matchMedia("(max-width: 760px)").matches) { const rb = document.getElementById("bkRolesBox"); if (rb) rb.open = true; }
+    initPanels();
     generateGame(false); // prepare initial game data silently
     // a live game made on this device is still running: bring back that exact deal (same seats, roles and links)
     const liveSaved = window.BKCloud && window.BKCloud.saved();
@@ -467,8 +467,13 @@
     updateLanguage();
   }
 
-  function setTab(tab) {
+  function setTab(tab, fromHistory) {
+    const prev = state.activeTab;
+    if (!fromHistory && prev && prev !== tab && !document.body.classList.contains("bkp-mode")) {
+      try { history.pushState({ bkTab: tab }, "", location.pathname + location.search + "#" + tab); } catch (e) {}
+    }
     state.activeTab = tab;
+    renderBackBar(tab);
     $$(".bootkeh-tab-btn").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
     });
@@ -481,6 +486,26 @@
   }
 
   // --- Role Lookup Helper ---
+  // "‹ Back" at the top of every screen except the first one (it goes to the previous screen, like the phone's Back).
+  const TAB_NAMES = { setup: ["הכנת משחק", "Setup"], board: ["מעגל הישיבה", "Board"], sheet: ["דף תפקידים", "Roles sheet"], cards: ["שליחה לשחקנים", "Send"] };
+  function renderBackBar(tab) {
+    document.querySelectorAll(".bk-backbar").forEach(x => x.remove());
+    if (tab === "setup") return;
+    const v = document.getElementById("view-" + tab); if (!v) return;
+    const he = state.lang === "he", b = document.createElement("div"); b.className = "bk-backbar bootkeh-print-hide";
+    b.innerHTML = `<button type="button" class="bk-back" onclick="window.Bootkeh.goBack()"><span aria-hidden="true">${he ? "›" : "‹"}</span> ${he ? "חזרה" : "Back"}</button><b>${(TAB_NAMES[tab] || [tab, tab])[he ? 0 : 1]}</b>`;
+    v.prepend(b);
+  }
+  function goBack() {
+    if (history.state && history.state.bkTab) history.back();
+    else setTab(({ board: "setup", sheet: "board", cards: "sheet" })[state.activeTab] || "setup");
+  }
+  window.addEventListener("popstate", e => {
+    if (document.body.classList.contains("bkp-mode")) return;
+    const t = (e.state && e.state.bkTab) || (location.hash.slice(1) in TAB_NAMES ? location.hash.slice(1) : "setup");
+    setTab(t, true);
+  });
+
   function getRole(id) {
     return (window.BOOTKEH_ROLES || []).find(r => r.id === id) || null;
   }
@@ -716,8 +741,42 @@
     initCustomRolesMatrix();
   }
 
+  // The setup "shutters" (Roles, Game world): remember which are open on this device, and keep the one-line summary
+  // in each title up to date, so a closed panel still says what is chosen inside it.
+  function initPanels() {
+    let saved = {}; try { saved = JSON.parse(localStorage.getItem("bk_panels") || "{}"); } catch (e) {}
+    document.querySelectorAll(".bk-panel").forEach(d => {
+      if (d.id in saved) d.open = saved[d.id];
+      d.addEventListener("toggle", () => { saved[d.id] = d.open; try { localStorage.setItem("bk_panels", JSON.stringify(saved)); } catch (e) {} });
+    });
+    const v = document.getElementById("view-setup");
+    if (v) ["click", "input", "change"].forEach(ev => v.addEventListener(ev, () => requestAnimationFrame(updatePanels)));
+    updatePanels();
+  }
+  function updatePanels() {
+    const he = state.lang === "he", r = document.getElementById("bkPanelRolesSum"), t = document.getElementById("bkPanelThemeSum");
+    if (r) {
+      const custom = state.scriptId === "custom" && state.customRoles.length, sc = getScript(state.scriptId);
+      const n = custom ? state.customRoles.length : (sc ? sc.roles.length : 0);
+      r.textContent = `${custom ? (he ? "מותאם אישית" : "Custom") : getScriptTitle()} · ${n} ${he ? "תפקידים" : "roles"}`;
+    }
+    if (t) t.textContent = getThemeTitle();
+  }
+
+  // "Pick the roles yourself": open the role picker and start it from the chosen set (so you edit that list).
+  function openRolePicker() {
+    if (!state.customRoles.length && state.scriptId !== "custom") {
+      const sc = getScript(state.scriptId); if (sc) state.customRoles = sc.roles.slice();
+    }
+    state.scriptId = "custom"; const sel = $("#scriptSelect"); if (sel) sel.value = "custom";
+    const panel = document.getElementById("bkPanelRoles"); if (panel) panel.open = true;
+    initCustomRolesMatrix();
+    const box = document.getElementById("bkRolesBox"); if (box) box.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   // The "picked roles" column: what is chosen so far, per kind, against what this player count needs.
   function renderPicked() {
+    updatePanels();
     const box = document.getElementById("bkPicked"), cnt = document.getElementById("bkPickedCount"); if (!box) return;
     const he = state.lang === "he", n = parseInt(state.playerCount, 10) || 8;
     const d = (window.BOOTKEH_PLAYER_DISTRIBUTION || {})[String(n)] || { townsfolk: 5, outsiders: 1, minions: 1, demons: 1 };
@@ -1092,13 +1151,21 @@
           ${THRONE_SVG}
           <span class="bootkeh-seat-num">#${p.seat}</span>
           <span class="bootkeh-seat-icon">${icon}</span>
-          <span class="bootkeh-seat-name">${esc(p.name)}</span>
+          <span class="bootkeh-seat-name">${esc(String(p.name).split(" / ")[0])}</span>
           <span class="bootkeh-seat-role-title">${esc(roleName)}</span>
         </div>
       `;
     });
 
     container.innerHTML = html;
+    container.classList.toggle("bk-many", N > 8);
+
+    // the same seats as a list (on phones the labels around the table would overlap, so roles are read here)
+    let list = document.getElementById("bkSeatList");
+    if (!list) { list = document.createElement("div"); list.id = "bkSeatList"; list.className = "bk-seat-list"; container.insertAdjacentElement("afterend", list); }
+    list.innerHTML = state.players.map(p => { const r = p.role || {}, show = state.isStorytellerView;
+      return `<button type="button" class="${show ? p.alignment : ""}${p.isAlive ? "" : " dead"}" onclick="window.Bootkeh.openPlayerDetailsModal('${p.id}')">
+        <i>${p.seat}</i><span class="ic">${show ? r.icon : "👤"}</span><b>${esc(p.name)}</b><small>${show ? esc(state.lang === "he" ? r.name_he : r.name_en) : ""}${p.isAlive ? "" : (state.lang === "he" ? " · מת" : " · dead")}</small></button>`; }).join("");
 
     // Update Storyteller Toggle Button label
     const toggleBtn = $("#toggleViewBtn");
@@ -1167,6 +1234,7 @@
 
     if (window.BKSheet) {   // same layout as the official script sheet (and as the players' 📜 list)
       wrap.innerHTML = window.BKSheet.html({ title: sheetTitle, author, roles: [...townsfolk, ...outsiders, ...minions, ...demons], lang: state.lang });
+      window.BKSheet.fit();
       return;
     }
     wrap.innerHTML = `
@@ -1838,6 +1906,8 @@
     sendEachWhatsapp,
     getThemeTitle,
     getRole,
+    openRolePicker,
+    goBack,
     setThemeFam,
     genTheme,
     useGenTheme,

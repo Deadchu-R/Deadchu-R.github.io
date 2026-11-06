@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/bootkeh.css?v=9c3fa812">
   <link rel="stylesheet" href="../assets/bootkeh-medieval.css?v=23c27a0d">
-  <link rel="stylesheet" href="../assets/bootkeh-live.css?v=730950ea">
+  <link rel="stylesheet" href="../assets/bootkeh-live.css?v=7f966b65">
 </head>
 <body class="bootkeh-body">
 
@@ -39,7 +39,7 @@
       <div class="bootkeh-logo-wrap">
         <span class="bootkeh-logo-icon">🕰️</span>
         <span class="bootkeh-title">Bootkeh</span>
-        <span class="bk-ver" id="bkVersion" data-v="2b5a66"></span>
+        <span class="bk-ver" id="bkVersion" data-v="137235"></span>
       </div>
     </div>
 
@@ -85,7 +85,6 @@
         </div>
 
         <div class="bk-grid-2">
-          <!-- Left Column: Players & Roles Distribution -->
           <div>
             <div class="bk-form-group">
               <label class="bk-label">מספר שחקנים</label>
@@ -95,7 +94,21 @@
               </div>
               <div id="distributionPills" class="bk-dist-pills"></div>
             </div>
+          </div>
+          <div>
+            <div class="bk-form-group">
+              <label class="bk-label">מספר הסיפורים</label>
+              <input type="text" id="storytellerInput" class="bk-input" value="רועי / Sit" placeholder="שם מספר הסיפורים">
+            </div>
+            <!-- saved custom games (renderPresets in bootkeh.js) -->
+            <div id="bkPresets" class="bk-form-group"></div>
+          </div>
+        </div>
 
+        <!-- Collapsible panels ("shutters"): the title and a one-line summary stay visible when closed (bkPanels in bootkeh.js) -->
+        <details class="bk-panel" id="bkPanelRoles" open>
+          <summary><span class="bk-panel-ic" aria-hidden="true">🎭</span><span class="bk-panel-t"><b>תפקידים</b><small id="bkPanelRolesSum"></small></span><span class="bk-panel-chev" aria-hidden="true"></span></summary>
+          <div class="bk-panel-body">
             <div class="bk-form-group">
               <label class="bk-label">סט תפקידים</label>
               <select id="scriptSelect" class="bk-select">
@@ -104,39 +117,10 @@
                 <option value="sects_and_violets">כתות וסיגליות</option>
                 <option value="custom">מותאם אישית</option>
               </select>
+              <button type="button" class="bk-btn bk-pick-roles-btn" onclick="window.Bootkeh.openRolePicker()">✎ <span>בחירת התפקידים בעצמך</span></button>
             </div>
-
-            <!-- saved custom games (renderPresets in bootkeh.js) -->
-            <div id="bkPresets" class="bk-form-group"></div>
-
-            <div class="bk-form-group">
-              <label class="bk-label">מספר הסיפורים</label>
-              <input type="text" id="storytellerInput" class="bk-input" value="רועי / Sit" placeholder="שם מספר הסיפורים">
-            </div>
-          </div>
-
-          <!-- Right Column: Thematic Setting & Flavor -->
-          <div>
-            <div class="bk-form-group">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                <label class="bk-label" style="margin:0;">עולם המשחק</label>
-                <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.generateRandomTheme()">
-                  <span>עולם אקראי</span>
-                </button>
-              </div>
-              <input type="text" id="customThemeInput" class="bk-input" placeholder="או כתוב עולם משלך, למשל: ספינת פיראטים, 1690" oninput="window.Bootkeh.setCustomTheme(this.value)" style="margin-bottom:10px;">
-              <!-- Theme generator: history / movies / RPG (assets/bootkeh-themes.js) -->
-              <div id="bkThemeGen" class="bk-themegen" style="margin:10px 0 12px;"></div>
-              <div id="themeGrid" class="bk-theme-grid"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Advanced Role Matrix Dropdown with Search & Filters -->
-        <details style="margin-top:16px;" class="bk-form-group bk-roles-box" id="bkRolesBox">
-          <summary class="bk-label" style="cursor:pointer;padding:8px 0;user-select:none;">
-            <span>בחירת תפקידים</span> <span id="bkPickedCount" class="bk-picked-count"></span>
-          </summary>
+            <div class="bk-roles-box" id="bkRolesBox">
+              <div class="bk-label" style="margin:14px 0 6px;">בחירה ידנית <span id="bkPickedCount" class="bk-picked-count"></span></div>
           <div style="padding-top:14px;">
             <div class="bk-role-search-wrap">
               <input type="text" id="roleSearchInput" class="bk-input" placeholder="חיפוש תפקיד או יכולת (למשל: מורעל, Poisoner)" oninput="window.Bootkeh.onRoleSearch(this.value)" style="flex:1;">
@@ -157,6 +141,26 @@
               <div id="customRolesMatrix"></div>
               <!-- the roles picked so far, as a separate column (a sticky tray on phones); tap one to remove it -->
               <aside id="bkPicked" class="bk-picked" aria-live="polite"></aside>
+            </div>
+          </div>
+            </div>
+          </div>
+        </details>
+
+        <details class="bk-panel" id="bkPanelTheme">
+          <summary><span class="bk-panel-ic" aria-hidden="true">🏰</span><span class="bk-panel-t"><b>עולם המשחק</b><small id="bkPanelThemeSum"></small></span><span class="bk-panel-chev" aria-hidden="true"></span></summary>
+          <div class="bk-panel-body">
+            <div class="bk-form-group">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <label class="bk-label" style="margin:0;">עולם המשחק</label>
+                <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.generateRandomTheme()">
+                  <span>עולם אקראי</span>
+                </button>
+              </div>
+              <input type="text" id="customThemeInput" class="bk-input" placeholder="או כתוב עולם משלך, למשל: ספינת פיראטים, 1690" oninput="window.Bootkeh.setCustomTheme(this.value)" style="margin-bottom:10px;">
+              <!-- Theme generator: history / movies / RPG (assets/bootkeh-themes.js) -->
+              <div id="bkThemeGen" class="bk-themegen" style="margin:10px 0 12px;"></div>
+              <div id="themeGrid" class="bk-theme-grid"></div>
             </div>
           </div>
         </details>
@@ -243,7 +247,7 @@
     <section id="view-sheet" class="bootkeh-view">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;" class="bootkeh-print-hide">
         <div>
-          <h2 style="font-family:var(--bk-font-serif);font-size:20px;color:#fff;">דף תפקידים</h2>
+          <h2 class="bk-dup-title" style="font-family:var(--bk-font-serif);font-size:20px;color:#fff;">דף תפקידים</h2>
           <p style="font-size:12.5px;color:var(--bk-text-muted);">דף תפקידים מעוצב להדפסה, חלוקה לשחקנים ושמירה ב-PDF בדיוק כמו בגרסה הרשמית של המשחק</p>
         </div>
         <button type="button" class="bk-btn pri" onclick="window.Bootkeh.printSheet()">
@@ -252,6 +256,11 @@
       </div>
 
       <!-- Character Sheet Paper Preview Container -->
+      <!-- how to show the sheet: a scrolling list, or the whole page like the printed sheet -->
+      <div class="bk-seg bk-sheet-mode bootkeh-print-hide" role="group" aria-label="תצוגה">
+        <button type="button" data-mode="list" onclick="window.BKSheet.setMode('list')">רשימה נגללת</button>
+        <button type="button" data-mode="page" onclick="window.BKSheet.setMode('page')">דף מלא</button>
+      </div>
       <div id="characterSheetWrap"></div>
     </section>
 
@@ -360,7 +369,7 @@
   <script src="../assets/bootkeh-roles-extra.js?v=471f8fef"></script>
   <script src="../assets/bootkeh-themes.js?v=8c51438b"></script>
   <script src="../assets/bootkeh-cloud.js?v=1dbf251d"></script>
-  <script src="../assets/bootkeh-live.js?v=88125a5c"></script>
-  <script src="../assets/bootkeh.js?v=950b37aa"></script>
+  <script src="../assets/bootkeh-live.js?v=65bf55e6"></script>
+  <script src="../assets/bootkeh.js?v=067686e6"></script>
 </body>
 </html>
