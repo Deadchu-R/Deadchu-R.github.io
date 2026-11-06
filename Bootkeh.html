@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="assets/bootkeh.css?v=20261106_01">
+  <link rel="stylesheet" href="assets/bootkeh.css?v=20261106_02">
 </head>
 <body class="bootkeh-body">
 
@@ -115,52 +115,34 @@
         </details>
 
         <!-- Player Names & WhatsApp Roster -->
-        <div style="margin-top:20px;border-top:1px solid var(--bk-border);padding-top:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <label class="bk-label" style="margin:0;">שמות השחקנים ומספרי טלפון (לשליחה מהירה ב-WhatsApp):</label>
-            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSavedPlayersModal()">
-              <span>📋 בחר משחקנים שמורים</span>
-            </button>
-          </div>
-          <div id="playerRosterInputs" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:10px;">
-            <div style="display:flex;gap:6px;">
-              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 1 (למשל: דני)" style="flex:1;">
-              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+        <div style="margin-top:24px;border-top:1px solid rgba(212,175,55,0.25);padding-top:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+            <div>
+              <label class="bk-label" style="margin:0;font-size:15px;">📜 שמות השחקנים ומספרי WhatsApp לכל המושבים במעגל:</label>
+              <div id="rosterCountSummary" style="font-size:12px;color:var(--bk-text-muted);margin-top:3px;">
+                מוגדר עבור <b id="rosterCountVal" style="color:var(--bk-gold-light);">8</b> שחקנים (1 עד 8) — כל שחקן יקבל הודעת WhatsApp סודית אישית.
+              </div>
             </div>
-            <div style="display:flex;gap:6px;">
-              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 2" style="flex:1;">
-              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
-            </div>
-            <div style="display:flex;gap:6px;">
-              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 3" style="flex:1;">
-              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
-            </div>
-            <div style="display:flex;gap:6px;">
-              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 4" style="flex:1;">
-              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
-            </div>
-            <div style="display:flex;gap:6px;">
-              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 5" style="flex:1;">
-              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
-            </div>
-            <div style="display:flex;gap:6px;">
-              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 6" style="flex:1;">
-              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
-            </div>
-            <div style="display:flex;gap:6px;">
-              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 7" style="flex:1;">
-              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
-            </div>
-            <div style="display:flex;gap:6px;">
-              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 8" style="flex:1;">
-              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.autoFillRosterFromSaved()">
+                <span>🪄 שבוץ אוטומטי מרשימה שמורה</span>
+              </button>
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.clearRoster()">
+                <span>🧹 נקה שמות</span>
+              </button>
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSavedPlayersModal()">
+                <span>👥 נהל שחקנים שמורים</span>
+              </button>
             </div>
           </div>
+
+          <!-- Dynamic Roster Inputs Generated According to Slider (5 to 15) -->
+          <div id="playerRosterInputs" class="bk-roster-grid"></div>
         </div>
 
-        <div style="margin-top:20px;display:flex;justify-content:center;">
-          <button type="button" class="bk-btn pri" style="padding:12px 28px;font-size:15px;font-weight:800;" onclick="window.Bootkeh.generateGame()">
-            <span>⚡ ג'נרט משחק והושב שחקנים!</span>
+        <div style="margin-top:26px;display:flex;justify-content:center;">
+          <button type="button" class="bk-btn pri" style="padding:14px 34px;font-size:16px;font-weight:800;letter-spacing:0.5px;" onclick="window.Bootkeh.generateGame()">
+            <span>⚡ ג'נרט משחק, פזר תפקידים והושב במעגל!</span>
           </button>
         </div>
       </div>
@@ -226,10 +208,28 @@
 
     <!-- ================= VIEW 4: PLAYER CARDS & WHATSAPP ================= -->
     <section id="view-cards" class="bootkeh-view">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <div>
-          <h2 style="font-family:var(--bk-font-serif);font-size:20px;color:#fff;">קלפי שחקנים ומידע סודי</h2>
-          <p style="font-size:12.5px;color:var(--bk-text-muted);">שלח לכל שחקן את התפקיד והמידע ההתחלתי שלו ישירות ל-WhatsApp בלחיצה אחת!</p>
+      <!-- WhatsApp Dispatch Center Banner -->
+      <div class="bk-dispatch-banner">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:24px;">💬</span>
+              <h2 style="font-family:var(--bk-font-serif);font-size:20px;font-weight:800;color:#fff;margin:0;">
+                מרכז שליחת הודעות WhatsApp סודיות לשחקנים
+              </h2>
+            </div>
+            <p style="font-size:12.5px;color:var(--bk-text-muted);margin-top:4px;">
+              שלח לכל שחקן את התפקיד הסודי שלו, ההסבר והמידע האישי ללילה הראשון ישירות למכשיר שלו בלחיצה אחת!
+            </p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div id="dispatchStatusPill" class="bk-dist-pill townsfolk" style="font-size:13px;padding:6px 14px;">
+              נשלחו <b id="dispatchedCount">0</b> מתוך <b id="dispatchTotalCount">8</b>
+            </div>
+          </div>
+        </div>
+        <div class="bk-progress-bar-wrap">
+          <div id="dispatchProgressBar" class="bk-progress-bar-fill" style="width:0%;"></div>
         </div>
       </div>
 
@@ -265,7 +265,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="assets/bootkeh-data.js?v=20261106_01"></script>
-  <script src="assets/bootkeh.js?v=20261106_01"></script>
+  <script src="assets/bootkeh-data.js?v=20261106_02"></script>
+  <script src="assets/bootkeh.js?v=20261106_02"></script>
 </body>
 </html>

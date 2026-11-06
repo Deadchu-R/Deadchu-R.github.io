@@ -15,6 +15,7 @@
     customRoles: [],
     players: [],
     savedPlayers: [],
+    roster: Array(15).fill(null).map((_, i) => ({ name: "", phone: "" })),
     isStorytellerView: true,
     timer: {
       mode: "auto", // "auto" | "manual"
@@ -203,10 +204,13 @@
   // --- Initialization ---
   function init() {
     loadSavedPlayers();
+    const slider = $("#playerCountSlider");
+    if (slider) state.playerCount = parseInt(slider.value, 10) || state.playerCount;
     initThemeSelection();
     initCustomRolesMatrix();
     updateLanguage();
     renderSetupView();
+    renderRosterInputs();
     attachEventListeners();
     generateGame(false); // prepare initial game data silently
     setTab("setup");     // start on Setup view as requested
@@ -223,10 +227,32 @@
         { id: "p5", name: "עומר / Omer", phone: "", notes: "" },
         { id: "p6", name: "טל / Tal", phone: "", notes: "" },
         { id: "p7", name: "נועה / Noa", phone: "", notes: "" },
-        { id: "p8", name: "יוסי / Yossi", phone: "", notes: "" }
+        { id: "p8", name: "יוסי / Yossi", phone: "", notes: "" },
+        { id: "p9", name: "איתי / Itay", phone: "", notes: "" },
+        { id: "p10", name: "יעל / Yael", phone: "", notes: "" },
+        { id: "p11", name: "מאיה / Maya", phone: "", notes: "" },
+        { id: "p12", name: "אור / Or", phone: "", notes: "" },
+        { id: "p13", name: "גיא / Guy", phone: "", notes: "" },
+        { id: "p14", name: "שירה / Shira", phone: "", notes: "" },
+        { id: "p15", name: "עדי / Adi", phone: "", notes: "" }
       ];
     } catch (_) {
       state.savedPlayers = [];
+    }
+
+    // Initialize roster up to 15 items
+    for (let i = 0; i < 15; i++) {
+      if (state.savedPlayers[i]) {
+        state.roster[i] = {
+          name: state.savedPlayers[i].name,
+          phone: state.savedPlayers[i].phone || ""
+        };
+      } else {
+        state.roster[i] = {
+          name: `${state.lang === "he" ? "שחקן" : "Player"} ${i + 1}`,
+          phone: ""
+        };
+      }
     }
   }
 
@@ -277,6 +303,91 @@
     return (window.BOOTKEH_THEMES || []).find(t => t.id === id) || null;
   }
 
+  // --- Dynamic Player Roster (Up to 15 Players) ---
+  function renderRosterInputs() {
+    const container = $("#playerRosterInputs");
+    if (!container) return;
+
+    const count = parseInt(state.playerCount, 10) || 8;
+
+    const valEl = $("#rosterCountVal");
+    if (valEl) valEl.textContent = `${count}`;
+
+    const summaryEl = $("#rosterCountSummary");
+    if (summaryEl) {
+      if (state.lang === "he") {
+        summaryEl.innerHTML = `מוגדר עבור <b style="color:var(--bk-gold-light);">${count}</b> שחקנים (מושבים 1 עד ${count}) — כל ${count} השחקנים יוכלו לקבל הודעת WhatsApp אישית.`;
+      } else {
+        summaryEl.innerHTML = `Configured for <b style="color:var(--bk-gold-light);">${count}</b> players (Seats 1 to ${count}) — all ${count} players will get secret WhatsApp info.`;
+      }
+    }
+
+    let html = "";
+    for (let i = 0; i < count; i++) {
+      const item = state.roster[i] || { name: "", phone: "" };
+      const placeholderName = state.lang === "he" ? `שחקן ${i + 1}` : `Player ${i + 1}`;
+      const placeholderPhone = state.lang === "he" ? "טלפון לווצאפ (05...)" : "Phone (05...)";
+
+      const savedOptions = state.savedPlayers.map(sp => 
+        `<option value="${sp.id}">${esc(sp.name)}</option>`
+      ).join("");
+
+      html += `
+        <div class="bk-roster-row">
+          <div class="bk-roster-seat">#${i + 1}</div>
+          <input type="text" class="bk-input bk-roster-name-input" value="${esc(item.name)}" placeholder="${placeholderName}" oninput="window.Bootkeh.updateRosterItem(${i}, 'name', this.value)">
+          <input type="text" class="bk-input bk-roster-phone-input" value="${esc(item.phone)}" placeholder="${placeholderPhone}" oninput="window.Bootkeh.updateRosterItem(${i}, 'phone', this.value)">
+          <select class="bk-roster-quick-pick" onchange="window.Bootkeh.quickAssignRosterSeat(${i}, this.value)">
+            <option value="">👤 ${state.lang === "he" ? "שמור..." : "Saved..."}</option>
+            ${savedOptions}
+          </select>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
+
+  function updateRosterItem(index, key, value) {
+    if (!state.roster[index]) {
+      state.roster[index] = { name: "", phone: "" };
+    }
+    state.roster[index][key] = value;
+  }
+
+  function quickAssignRosterSeat(index, savedPlayerId) {
+    if (!savedPlayerId) return;
+    const sp = state.savedPlayers.find(x => x.id === savedPlayerId);
+    if (!sp) return;
+    if (!state.roster[index]) {
+      state.roster[index] = { name: "", phone: "" };
+    }
+    state.roster[index].name = sp.name;
+    state.roster[index].phone = sp.phone || "";
+    renderRosterInputs();
+  }
+
+  function autoFillRosterFromSaved() {
+    const count = parseInt(state.playerCount, 10) || 8;
+    for (let i = 0; i < count; i++) {
+      if (state.savedPlayers[i]) {
+        state.roster[i] = {
+          name: state.savedPlayers[i].name,
+          phone: state.savedPlayers[i].phone || ""
+        };
+      }
+    }
+    renderRosterInputs();
+  }
+
+  function clearRoster() {
+    const count = parseInt(state.playerCount, 10) || 8;
+    for (let i = 0; i < count; i++) {
+      state.roster[i] = { name: "", phone: "" };
+    }
+    renderRosterInputs();
+  }
+
+
   // --- Setup View Rendering ---
   function renderSetupView() {
     const t = T[state.lang];
@@ -296,6 +407,8 @@
         <span class="bk-dist-pill demon">😈 ${dist.demons} ${t.demons}</span>
       `;
     }
+
+    renderRosterInputs();
 
     // Populate theme cards
     const themeGrid = $("#themeGrid");
@@ -438,17 +551,13 @@
     // Combine game roles in play
     const rolesInPlay = shuffle([...pickedTownsfolk, ...pickedOutsiders, ...pickedMinions, ...pickedDemons]);
 
-    // Prepare player names from roster inputs or saved directory
-    const playerInputs = $$(".bk-roster-name-input");
-    const phoneInputs = $$(".bk-roster-phone-input");
-
+    // Prepare player names from state.roster for all `count` seats (up to 15)
     const players = [];
     for (let i = 0; i < count; i++) {
-      const name = (playerInputs[i] && playerInputs[i].value.trim()) || 
-                   (state.savedPlayers[i] && state.savedPlayers[i].name) || 
+      const item = state.roster[i] || {};
+      const name = (item.name && item.name.trim()) || 
                    `${state.lang === "he" ? "שחקן" : "Player"} ${i + 1}`;
-      const phone = (phoneInputs[i] && phoneInputs[i].value.trim()) || 
-                    (state.savedPlayers[i] && state.savedPlayers[i].phone) || "";
+      const phone = (item.phone && item.phone.trim()) || "";
 
       const role = rolesInPlay[i] || pickedTownsfolk[0] || getRole("empath");
       const alignment = (role.type === "minion" || role.type === "demon") ? "evil" : "good";
@@ -464,6 +573,7 @@
         isAlive: true,
         hasGhostVote: true,
         isRevealed: false,
+        isSent: false,
         firstNightInfo: ""
       });
     }
@@ -719,46 +829,64 @@
     if (!grid) return;
     const t = T[state.lang];
 
+    const total = state.players.length;
+    const sentCount = state.players.filter(p => p.isSent).length;
+
+    const dispatchedCountEl = $("#dispatchedCount");
+    if (dispatchedCountEl) dispatchedCountEl.textContent = `${sentCount}`;
+
+    const dispatchTotalEl = $("#dispatchTotalCount");
+    if (dispatchTotalEl) dispatchTotalEl.textContent = `${total}`;
+
+    const progressBar = $("#dispatchProgressBar");
+    if (progressBar) {
+      const pct = total > 0 ? Math.round((sentCount / total) * 100) : 0;
+      progressBar.style.width = `${pct}%`;
+    }
+
     grid.innerHTML = state.players.map(p => {
       const r = p.role;
       const roleName = state.lang === "he" ? r.name_he : r.name_en;
       const ability = state.lang === "he" ? r.ability_he : r.ability_en;
 
+      const sentBadge = p.isSent
+        ? `<span class="bk-dist-pill" style="background:rgba(16,185,129,0.2);color:#34d399;border-color:#10b981;font-size:11px;">✅ ${state.lang === 'he' ? 'נשלח ב-WhatsApp' : 'Sent'}</span>`
+        : `<span class="bk-dist-pill" style="background:rgba(255,255,255,0.06);color:var(--bk-text-muted);font-size:11px;">⏳ ${state.lang === 'he' ? 'טרם נשלח' : 'Pending'}</span>`;
+
       return `
-        <div class="bootkeh-player-card">
+        <div class="bootkeh-player-card ${p.alignment}">
           <div class="bootkeh-player-card-header">
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:16px;">${p.alignment === "evil" ? "😈" : "🛡️"}</span>
               <span style="font-weight:700;font-size:14px;color:#fff;">#${p.seat} ${esc(p.name)}</span>
             </div>
-            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.toggleCardSecret('${p.id}')">
-              ${p.isRevealed ? t.secretRevealed : t.secretHidden}
-            </button>
+            ${sentBadge}
           </div>
           <div class="bootkeh-player-card-body">
-            <div style="display:${p.isRevealed ? "block" : "none"};">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                <span style="font-size:28px;">${r.icon}</span>
-                <div>
-                  <div style="font-weight:700;font-size:15px;color:#fff;">${esc(roleName)}</div>
-                  <span class="bk-dist-pill ${r.type}">${r.type.toUpperCase()}</span>
-                </div>
-              </div>
-              <div style="font-size:12.5px;color:var(--bk-text-muted);line-height:1.45;margin-bottom:10px;">
-                <b>${t.abilityTitle}</b> ${esc(ability)}
-              </div>
-              <div class="bootkeh-secret-info-box">
-                <div class="bootkeh-secret-info-title">📜 ${t.firstNightTitle}</div>
-                <div>${esc(p.firstNightInfo)}</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span style="font-size:28px;">${r.icon}</span>
+              <div>
+                <div style="font-weight:700;font-size:15px;color:#fff;">${esc(roleName)}</div>
+                <span class="bk-dist-pill ${r.type}">${r.type.toUpperCase()}</span>
               </div>
             </div>
+            <div style="font-size:12.5px;color:var(--bk-text-muted);line-height:1.45;margin-bottom:10px;">
+              <b>${t.abilityTitle}</b> ${esc(ability)}
+            </div>
+            <div class="bootkeh-secret-info-box">
+              <div class="bootkeh-secret-info-title">📜 ${t.firstNightTitle}</div>
+              <div>${esc(p.firstNightInfo)}</div>
+            </div>
 
-            <div style="display:flex;gap:8px;margin-top:auto;padding-top:10px;">
-              <button type="button" class="bk-btn pri sm" style="flex:1;justify-content:center;" onclick="window.Bootkeh.sendWhatsapp('${p.id}')">
-                <span>${t.shareWhatsapp}</span>
+            <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;">
+              <button type="button" class="bk-btn whatsapp sm" style="flex:1;justify-content:center;" onclick="window.Bootkeh.sendWhatsapp('${p.id}')">
+                <span>💬 ${t.shareWhatsapp}</span>
               </button>
               <button type="button" class="bk-btn sm" onclick="window.Bootkeh.copySecretText('${p.id}')" title="${t.copySecret}">
                 <span>📋</span>
+              </button>
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.toggleSentStatus('${p.id}')" title="${state.lang === 'he' ? 'סמן כנשלח' : 'Toggle sent'}">
+                <span>${p.isSent ? "↩" : "✓"}</span>
               </button>
             </div>
           </div>
@@ -771,6 +899,14 @@
     const p = state.players.find(x => x.id === playerId);
     if (p) {
       p.isRevealed = !p.isRevealed;
+      renderCardsView();
+    }
+  }
+
+  function toggleSentStatus(playerId) {
+    const p = state.players.find(x => x.id === playerId);
+    if (p) {
+      p.isSent = !p.isSent;
       renderCardsView();
     }
   }
@@ -814,6 +950,8 @@
       url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
     }
 
+    p.isSent = true;
+    renderCardsView();
     window.open(url, "_blank");
   }
 
@@ -985,6 +1123,7 @@
       slider.addEventListener("input", (e) => {
         state.playerCount = parseInt(e.target.value, 10);
         renderSetupView();
+        renderRosterInputs();
       });
     }
 
@@ -1020,6 +1159,11 @@
     addSavedPlayer,
     deleteSavedPlayer,
     quickSeatSavedPlayer,
+    updateRosterItem,
+    quickAssignRosterSeat,
+    autoFillRosterFromSaved,
+    clearRoster,
+    toggleSentStatus,
     printSheet() {
       window.print();
     },

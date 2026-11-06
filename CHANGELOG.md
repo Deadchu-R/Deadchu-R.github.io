@@ -37,6 +37,11 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
   The config is in `assets/cveditor-firebase.json`, so Google sign-in is live. The owner is recognised by SHA-256 hashes of his addresses, so no email is in the code. The old fake email login and owner-password paths are switched off.
 
 ### Bootkeh
+- **Bootkeh:** Gothic atmospheric redesign, dynamic 15-player roster, and WhatsApp Dispatch Center:
+  - Dynamic Roster for up to 15 Players: roster input list now dynamically scales from 5 to 15 seats with the slider in real-time, allowing all 15 players to have custom names, phone numbers, and one-click seating from saved players.
+  - WhatsApp Dispatch Center: dedicated dispatch dashboard with live progress counter (e.g. 15/15 sent), status badges (✅ נשלח ב-WhatsApp / ⏳ טרם נשלח), quick-copy clipboard buttons, and manual toggle.
+  - Gothic Occult Atmosphere & Aesthetic: deep obsidian midnight background, blood-crimson radial glows, candlelight flicker animations, swinging clock pendulum in header, ornate gold filigree, wax-seal buttons, and wooden Grimoire felt board.
+  - Case-insensitive routing: added smart 404 handler for automatic redirection from lowercase `/bootkeh` and `/cveditor`.
 - **Bootkeh:** Blood on the Clocktower generator & storyteller assistant at roeetal.com/Bootkeh:
   - Exact Character Script Sheet: layout mirroring the Crimson Guard reference sheet (two-column grid, character icons, rules text, category pills for Townsfolk, Outsiders, Minions, Demons, and footnote note) with print/PDF optimization.
   - Comprehensive Bilingual Role Database: 46 characters across Townsfolk, Outsiders, Minions, and Demons with full Hebrew and English translations, abilities, setup rules, and night wake orders.

@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 195 commits.
+Total: 196 commits.
 
 ## 2026-10-31
 
@@ -991,7 +991,12 @@ docs: refresh commit log
 
 files: docs/COMMITS.md
 
-### 9fc5675 · 2026-11-06 · Roee Tal
+### dcdac80 · 2026-11-06 · Roee Tal
 Bootkeh: start on setup view, add 404 smart routing for lowercase /bootkeh and /cveditor
 
-files: 404.html, assets/bootkeh.js
+files: 404.html, assets/bootkeh.js, docs/COMMITS.md
+
+### d22d9a4 · 2026-11-06 · Roee Tal
+Bootkeh: dynamic 15-player roster, WhatsApp dispatch dashboard, and gothic redesign
+
+files: 404.html, Bootkeh.html, Bootkeh/index.html, CHANGELOG.md, assets/bootkeh.css, assets/bootkeh.js

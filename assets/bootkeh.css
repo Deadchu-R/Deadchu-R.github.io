@@ -1,23 +1,30 @@
-/* assets/bootkeh.css — Blood on the Clocktower Generator & Assistant */
+/* assets/bootkeh.css — Blood on the Clocktower Gothic Occult Grimoire & Assistant */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Rubik:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  --bk-bg: #0b0e17;
-  --bk-surface: #121826;
-  --bk-surface-card: #182234;
-  --bk-surface-hover: #1f2c42;
-  --bk-border: rgba(255, 255, 255, 0.12);
-  --bk-border-accent: rgba(225, 29, 72, 0.4);
-  --bk-crimson: #e11d48;
-  --bk-crimson-light: #f43f5e;
-  --bk-gold: #f59e0b;
+  --bk-bg: #07070b;
+  --bk-bg-alt: #0d0e17;
+  --bk-surface: #10121d;
+  --bk-surface-card: #151827;
+  --bk-surface-hover: #1e2238;
+  --bk-border: rgba(212, 175, 55, 0.22);
+  --bk-border-accent: rgba(225, 29, 72, 0.45);
+  --bk-gold: #d4af37;
+  --bk-gold-light: #fef08a;
+  --bk-gold-glow: rgba(212, 175, 55, 0.35);
+  --bk-crimson: #991b1b;
+  --bk-crimson-bright: #dc2626;
+  --bk-crimson-glow: rgba(220, 38, 38, 0.4);
   --bk-townsfolk: #38bdf8;
   --bk-outsider: #2dd4bf;
-  --bk-minion: #f97316;
+  --bk-minion: #fb923c;
   --bk-demon: #ef4444;
-  --bk-text: #f1f5f9;
+  --bk-text: #f8fafc;
   --bk-text-muted: #94a3b8;
-  --bk-radius: 10px;
   --bk-font-serif: "Cinzel", "Crimson Pro", "David", serif;
-  --bk-font-sans: "Inter", "Rubik", "Assistant", -apple-system, sans-serif;
+  --bk-font-sans: "Rubik", "Inter", -apple-system, sans-serif;
+  --bk-shadow-gold: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 1px rgba(212, 175, 55, 0.4);
+  --bk-shadow-crimson: 0 10px 40px rgba(185, 28, 28, 0.35), 0 0 20px rgba(153, 27, 27, 0.2);
 }
 
 * {
@@ -35,11 +42,23 @@ body.bootkeh-body {
   flex-direction: column;
   overflow-x: hidden;
   background-image: 
-    radial-gradient(circle at 50% 0%, rgba(225, 29, 72, 0.15), transparent 45%),
-    radial-gradient(circle at 10% 80%, rgba(56, 189, 248, 0.08), transparent 35%);
+    radial-gradient(ellipse at 50% 0%, rgba(185, 28, 28, 0.28) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 85%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+    radial-gradient(ellipse at 15% 90%, rgba(56, 189, 248, 0.06) 0%, transparent 35%);
+  position: relative;
 }
 
-/* RTL / LTR Language Styles */
+/* Occult atmospheric particles & vignette */
+body.bootkeh-body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.75) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* RTL / LTR Language Support */
 html[dir="rtl"] body.bootkeh-body {
   direction: rtl;
   text-align: right;
@@ -50,12 +69,29 @@ html[dir="ltr"] body.bootkeh-body {
   text-align: left;
 }
 
-/* Header & Navigation Bar */
+/* Animations */
+@keyframes candleFlicker {
+  0%, 100% { opacity: 0.85; transform: scale(1); filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)); }
+  50% { opacity: 1; transform: scale(1.04); filter: drop-shadow(0 0 14px rgba(225, 29, 72, 0.6)); }
+}
+
+@keyframes pendulumSwing {
+  0% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+  100% { transform: rotate(-5deg); }
+}
+
+@keyframes bloodPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(220, 38, 38, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(220, 38, 38, 0.65), 0 0 10px rgba(212, 175, 55, 0.4); }
+}
+
+/* Header & Top Bar */
 .bootkeh-topbar {
-  background: rgba(18, 24, 38, 0.95);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--bk-border);
-  padding: 12px 24px;
+  background: linear-gradient(180deg, #161825 0%, #0d0f19 100%);
+  border-bottom: 2px solid var(--bk-gold);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7), inset 0 -1px 0 rgba(212, 175, 55, 0.3);
+  padding: 12px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -68,7 +104,7 @@ html[dir="ltr"] body.bootkeh-body {
 .bootkeh-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .bootkeh-back-link {
@@ -78,49 +114,54 @@ html[dir="ltr"] body.bootkeh-body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--bk-border);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   transition: all 0.2s ease;
 }
 
 .bootkeh-back-link:hover {
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--bk-gold);
+  background: rgba(212, 175, 55, 0.1);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
 }
 
 .bootkeh-logo-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .bootkeh-logo-icon {
   font-size: 26px;
-  line-height: 1;
-  filter: drop-shadow(0 0 10px rgba(225, 29, 72, 0.6));
+  display: inline-block;
+  animation: pendulumSwing 4s ease-in-out infinite;
+  transform-origin: top center;
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
 }
 
 .bootkeh-title {
   font-family: var(--bk-font-serif);
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
   color: #fff;
-  text-transform: uppercase;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.4), 0 2px 4px rgba(0,0,0,0.9);
 }
 
 .bootkeh-badge {
-  background: linear-gradient(135deg, #e11d48, #9f1239);
-  color: #fff;
-  font-size: 10.5px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(153, 27, 27, 0.8), rgba(220, 38, 38, 0.4));
+  color: var(--bk-gold-light);
+  border: 1px solid var(--bk-gold);
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.3);
 }
 
 .bootkeh-topbar-actions {
@@ -129,99 +170,63 @@ html[dir="ltr"] body.bootkeh-body {
   gap: 10px;
 }
 
-/* Primary Buttons & Action Buttons */
-.bk-btn {
-  background: var(--bk-surface-card);
-  color: var(--bk-text);
-  border: 1px solid var(--bk-border);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  transition: all 0.18s ease;
-  user-select: none;
-}
-
-.bk-btn:hover {
-  background: var(--bk-surface-hover);
-  border-color: rgba(255, 255, 255, 0.25);
-  color: #fff;
-}
-
-.bk-btn.pri {
-  background: linear-gradient(135deg, #e11d48, #be123c);
-  border-color: #f43f5e;
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35);
-}
-
-.bk-btn.pri:hover {
-  background: linear-gradient(135deg, #f43f5e, #e11d48);
-  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.5);
-  transform: translateY(-1px);
-}
-
-.bk-btn.gold {
-  background: linear-gradient(135deg, #d97706, #b45309);
-  border-color: #fbbf24;
-  color: #fff;
-}
-
-.bk-btn.sm {
-  padding: 5px 10px;
-  font-size: 12px;
-}
-
-/* Tab Navigation */
+/* Tabs Navigation */
 .bootkeh-nav-tabs {
+  background: rgba(10, 12, 20, 0.95);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
   display: flex;
-  background: var(--bk-surface);
-  border-bottom: 1px solid var(--bk-border);
-  padding: 0 24px;
-  gap: 8px;
-  overflow-x: auto;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 20px;
+  position: sticky;
+  top: 59px;
+  z-index: 95;
+  backdrop-filter: blur(10px);
 }
 
 .bootkeh-tab-btn {
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--bk-text-muted);
+  font-family: var(--bk-font-serif);
   font-size: 13.5px;
-  font-weight: 600;
-  padding: 14px 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 9px 20px;
+  border-radius: 8px;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.15s ease;
-  white-space: nowrap;
+  transition: all 0.25s ease;
 }
 
 .bootkeh-tab-btn:hover {
   color: #fff;
+  border-color: rgba(212, 175, 55, 0.4);
+  background: rgba(212, 175, 55, 0.08);
 }
 
 .bootkeh-tab-btn.active {
-  color: #fff;
-  border-bottom-color: var(--bk-crimson-light);
-  background: rgba(225, 29, 72, 0.08);
+  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%);
+  color: var(--bk-gold-light);
+  border-color: var(--bk-gold);
+  box-shadow: 0 0 15px rgba(220, 38, 38, 0.4), inset 0 0 10px rgba(212, 175, 55, 0.2);
 }
 
-/* Main Container & Layout */
+/* Main Container */
 .bootkeh-main {
   flex: 1;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 1240px;
   width: 100%;
-  padding: 24px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+  position: relative;
+  z-index: 2;
 }
 
+/* Views Visibility */
 .bootkeh-view {
   display: none;
 }
@@ -230,398 +235,625 @@ html[dir="ltr"] body.bootkeh-body {
   display: block;
 }
 
-/* Cards & Panels */
+/* Gothic Cards */
 .bk-card {
-  background: var(--bk-surface);
+  background: linear-gradient(180deg, #141726 0%, #0e101b 100%);
   border: 1px solid var(--bk-border);
-  border-radius: var(--bk-radius);
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  box-shadow: var(--bk-shadow-gold);
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bk-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--bk-gold), transparent);
 }
 
 .bk-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--bk-border);
+  margin-bottom: 22px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
   padding-bottom: 14px;
-  margin-bottom: 16px;
 }
 
 .bk-card-title {
   font-family: var(--bk-font-serif);
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #fff;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
 }
 
-/* Setup Form Controls */
+/* Buttons */
+.bk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-family: var(--bk-font-sans);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: linear-gradient(180deg, #232738 0%, #171a28 100%);
+  color: #f1f5f9;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+.bk-btn:hover {
+  border-color: var(--bk-gold);
+  color: #fff;
+  background: linear-gradient(180deg, #2e344a 0%, #1e2235 100%);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
+  transform: translateY(-1px);
+}
+
+.bk-btn.pri {
+  background: linear-gradient(135deg, #991b1b 0%, #dc2626 50%, #7f1d1d 100%);
+  border-color: var(--bk-gold);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(220, 38, 38, 0.5), inset 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+.bk-btn.pri:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #ef4444 50%, #991b1b 100%);
+  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.7), 0 0 15px rgba(212, 175, 55, 0.5);
+  transform: translateY(-2px);
+}
+
+.bk-btn.whatsapp {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  border-color: #34d399;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+}
+
+.bk-btn.whatsapp:hover {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+  transform: translateY(-1px);
+}
+
+.bk-btn.sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Grids & Forms */
 .bk-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 24px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 820px) {
   .bk-grid-2 {
     grid-template-columns: 1fr;
   }
 }
 
 .bk-form-group {
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  margin-bottom: 20px;
 }
 
 .bk-label {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--bk-text-muted);
-}
-
-.bk-input, .bk-select, .bk-textarea {
-  background: var(--bk-surface-card);
-  border: 1px solid var(--bk-border);
-  color: #fff;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-family: inherit;
+  display: block;
+  font-family: var(--bk-font-serif);
   font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--bk-gold);
+  margin-bottom: 8px;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+}
+
+.bk-input, .bk-select {
+  width: 100%;
+  background: #090b12;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 8px;
+  color: #fff;
+  font-family: var(--bk-font-sans);
+  font-size: 13.5px;
+  padding: 10px 14px;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.bk-input:focus, .bk-select:focus, .bk-textarea:focus {
-  border-color: var(--bk-crimson-light);
-  box-shadow: 0 0 10px rgba(225, 29, 72, 0.3);
+.bk-input:focus, .bk-select:focus {
+  border-color: var(--bk-gold);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
+  background: #0d101a;
 }
 
-/* Player Count Slider & Badge */
+.bk-select.sm {
+  padding: 5px 8px;
+  font-size: 11.5px;
+  width: auto;
+}
+
+/* Slider */
 .bk-player-count-wrap {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: var(--bk-surface-card);
-  padding: 14px;
-  border-radius: 8px;
-  border: 1px solid var(--bk-border);
+  margin-bottom: 12px;
 }
 
 .bk-range-slider {
   flex: 1;
-  accent-color: var(--bk-crimson);
+  height: 8px;
+  border-radius: 4px;
+  background: #181c2e;
+  accent-color: var(--bk-crimson-bright);
   cursor: pointer;
 }
 
 .bk-player-count-badge {
+  font-family: var(--bk-font-serif);
   font-size: 20px;
   font-weight: 900;
-  font-family: var(--bk-font-serif);
-  color: var(--bk-crimson-light);
+  color: var(--bk-gold-light);
+  background: #200808;
+  border: 1px solid var(--bk-crimson);
   min-width: 44px;
-  text-align: center;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.4);
 }
 
+/* Distribution Pills */
 .bk-dist-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 8px;
 }
 
 .bk-dist-pill {
-  padding: 4px 10px;
-  border-radius: 6px;
   font-size: 11.5px;
   font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
-.bk-dist-pill.townsfolk { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.3); }
-.bk-dist-pill.outsider { background: rgba(45, 212, 191, 0.15); color: #5eead4; border: 1px solid rgba(45, 212, 191, 0.3); }
-.bk-dist-pill.minion { background: rgba(249, 115, 22, 0.15); color: #fdba74; border: 1px solid rgba(249, 115, 22, 0.3); }
-.bk-dist-pill.demon { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+.bk-dist-pill.townsfolk {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
 
-/* Thematic Flavor Selector */
+.bk-dist-pill.outsider {
+  background: rgba(45, 212, 191, 0.12);
+  border-color: rgba(45, 212, 191, 0.4);
+  color: #2dd4bf;
+}
+
+.bk-dist-pill.minion {
+  background: rgba(249, 115, 22, 0.12);
+  border-color: rgba(249, 115, 22, 0.4);
+  color: #fb923c;
+}
+
+.bk-dist-pill.demon {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+  animation: bloodPulse 3s infinite;
+}
+
+/* Themes Grid */
 .bk-theme-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
-  margin-top: 8px;
+  max-height: 290px;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .bk-theme-card {
-  background: var(--bk-surface-card);
-  border: 1px solid var(--bk-border);
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.2);
   border-radius: 8px;
   padding: 12px 14px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.2s ease;
   position: relative;
 }
 
 .bk-theme-card:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-  background: var(--bk-surface-hover);
+  border-color: var(--bk-gold);
+  background: rgba(212, 175, 55, 0.08);
+  transform: translateY(-2px);
 }
 
 .bk-theme-card.active {
-  border-color: var(--bk-crimson-light);
-  background: rgba(225, 29, 72, 0.12);
-  box-shadow: 0 0 12px rgba(225, 29, 72, 0.25);
+  background: linear-gradient(135deg, rgba(153, 27, 27, 0.3) 0%, rgba(212, 175, 55, 0.1) 100%);
+  border-color: var(--bk-gold);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.35);
 }
 
 .bk-theme-title {
-  font-weight: 700;
+  font-family: var(--bk-font-serif);
   font-size: 13.5px;
+  font-weight: 700;
   color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin-bottom: 4px;
 }
 
 .bk-theme-desc {
   font-size: 11.5px;
   color: var(--bk-text-muted);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
-/* Advanced Role Selector Matrix */
+/* Role Matrix Dropdown & Chips */
 .bk-role-matrix-category {
   margin-bottom: 16px;
 }
 
 .bk-role-matrix-title {
-  font-size: 12px;
+  font-family: var(--bk-font-serif);
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .bk-role-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 7px;
 }
 
 .bk-role-chip {
-  background: var(--bk-surface-card);
-  border: 1px solid var(--bk-border);
-  color: var(--bk-text);
-  padding: 5px 11px;
-  border-radius: 20px;
+  padding: 5px 12px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--bk-text-muted);
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.bk-role-chip.selected.townsfolk { background: rgba(56, 189, 248, 0.22); border-color: #38bdf8; color: #fff; }
-.bk-role-chip.selected.outsider { background: rgba(45, 212, 191, 0.22); border-color: #2dd4bf; color: #fff; }
-.bk-role-chip.selected.minion { background: rgba(249, 115, 22, 0.25); border-color: #f97316; color: #fff; }
-.bk-role-chip.selected.demon { background: rgba(239, 68, 68, 0.28); border-color: #ef4444; color: #fff; }
-
-/* Circular Seating Grimoire Stage */
-.bootkeh-circle-container {
-  position: relative;
-  width: 100%;
-  max-width: 680px;
-  height: 680px;
-  margin: 0 auto;
-  border-radius: 50%;
-  border: 2px dashed rgba(255, 255, 255, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle, rgba(18, 24, 38, 0.8) 0%, rgba(11, 14, 23, 0.95) 75%);
-  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
-}
-
-.bootkeh-circle-center {
-  text-align: center;
-  max-width: 260px;
-  z-index: 5;
-  pointer-events: none;
-}
-
-.bootkeh-circle-center-logo {
-  font-size: 42px;
-  filter: drop-shadow(0 0 16px rgba(225, 29, 72, 0.7));
-}
-
-.bootkeh-circle-center-title {
-  font-family: var(--bk-font-serif);
-  font-size: 17px;
-  font-weight: 800;
+.bk-role-chip:hover {
   color: #fff;
-  letter-spacing: 0.05em;
-  margin-top: 4px;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.bootkeh-circle-center-sub {
-  font-size: 11.5px;
-  color: var(--bk-text-muted);
-}
-
-.bootkeh-seat-node {
-  position: absolute;
-  width: 90px;
-  height: 90px;
-  margin-left: -45px;
-  margin-top: -45px;
-  border-radius: 50%;
-  background: var(--bk-surface-card);
-  border: 2px solid var(--bk-border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  z-index: 10;
-  user-select: none;
-}
-
-.bootkeh-seat-node:hover {
-  transform: scale(1.1);
-  border-color: #fff;
-  z-index: 20;
-}
-
-.bootkeh-seat-node.good {
+.bk-role-chip.selected.townsfolk {
+  background: rgba(56, 189, 248, 0.18);
   border-color: #38bdf8;
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
-}
-
-.bootkeh-seat-node.evil {
-  border-color: #ef4444;
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.45);
-}
-
-.bootkeh-seat-node.dead {
-  opacity: 0.6;
-  filter: grayscale(0.8);
-  border-color: #64748b;
-}
-
-.bootkeh-seat-node.dead::after {
-  content: "💀";
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  font-size: 16px;
-}
-
-.bootkeh-seat-num {
-  font-size: 9.5px;
-  font-weight: 800;
-  opacity: 0.6;
-  line-height: 1;
-}
-
-.bootkeh-seat-icon {
-  font-size: 22px;
-  line-height: 1.1;
-}
-
-.bootkeh-seat-name {
-  font-size: 11px;
-  font-weight: 700;
-  max-width: 78px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
   color: #fff;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
 }
 
-.bootkeh-seat-role-title {
-  font-size: 9.5px;
+.bk-role-chip.selected.outsider {
+  background: rgba(45, 212, 191, 0.18);
+  border-color: #2dd4bf;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(45, 212, 191, 0.3);
+}
+
+.bk-role-chip.selected.minion {
+  background: rgba(249, 115, 22, 0.18);
+  border-color: #fb923c;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.3);
+}
+
+.bk-role-chip.selected.demon {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: #ef4444;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+/* ================= Dynamic Player Roster Grid (Up to 15 Players) ================= */
+.bk-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.bk-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 13, 22, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  transition: all 0.2s ease;
+}
+
+.bk-roster-row:hover {
+  border-color: var(--bk-gold);
+  background: rgba(21, 24, 38, 0.9);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+.bk-roster-seat {
+  font-family: var(--bk-font-serif);
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--bk-gold-light);
+  background: #1b120c;
+  border: 1px solid var(--bk-gold);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.25);
+}
+
+.bk-roster-name-input {
+  flex: 1;
+}
+
+.bk-roster-phone-input {
+  width: 125px;
+}
+
+.bk-roster-quick-pick {
+  max-width: 130px;
+  background: #111422;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--bk-text-muted);
-  max-width: 78px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
 }
 
-/* Phase Tracker & Timer Controls */
+/* ================= Seating Circle & Gothic Grimoire Board ================= */
 .bootkeh-phase-bar {
+  background: linear-gradient(180deg, #181d2f 0%, #111422 100%);
+  border: 1px solid var(--bk-gold);
+  border-radius: 12px;
+  box-shadow: var(--bk-shadow-gold);
+  padding: 16px 24px;
+  margin-bottom: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  background: var(--bk-surface);
-  border: 1px solid var(--bk-border);
-  padding: 16px 20px;
-  border-radius: var(--bk-radius);
-  margin-bottom: 20px;
 }
 
-.bootkeh-timer-display {
+.bootkeh-timer-digits {
   font-family: var(--bk-font-serif);
-  font-size: 38px;
+  font-size: 32px;
   font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--bk-gold-light);
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+  background: #090a10;
+  border: 1px solid var(--bk-gold);
+  padding: 4px 18px;
+  border-radius: 8px;
+}
+
+.bootkeh-circle-container {
+  position: relative;
+  width: 720px;
+  height: 720px;
+  margin: 30px auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #1b2033 0%, #0c0e18 68%, #05060a 100%);
+  border: 10px solid #281a0e;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), inset 0 0 60px rgba(0, 0, 0, 0.8), 0 0 0 2px var(--bk-gold);
+}
+
+.bootkeh-circle-container::before {
+  content: "";
+  position: absolute;
+  inset: 15px;
+  border-radius: 50%;
+  border: 1px dashed rgba(212, 175, 55, 0.35);
+  pointer-events: none;
+}
+
+.bootkeh-circle-container::after {
+  content: "";
+  position: absolute;
+  inset: 70px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  pointer-events: none;
+}
+
+@media (max-width: 780px) {
+  .bootkeh-circle-container {
+    transform: scale(0.65);
+    transform-origin: top center;
+    margin-bottom: -220px;
+  }
+}
+
+.bootkeh-circle-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #251010 0%, #0d0606 80%);
+  border: 2px solid var(--bk-crimson-bright);
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.5), inset 0 0 20px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  z-index: 10;
+}
+
+.bootkeh-circle-center-logo {
+  font-size: 34px;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+}
+
+.bootkeh-circle-center-title {
+  font-family: var(--bk-font-serif);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--bk-gold-light);
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.bootkeh-circle-center-sub {
+  font-size: 10.5px;
+  color: var(--bk-text-muted);
+}
+
+/* Grimoire Player Seat Token */
+.bootkeh-seat-node {
+  position: absolute;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e2438 0%, #0e111d 100%);
+  border: 2px solid var(--bk-gold);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.7), inset 0 0 8px rgba(212, 175, 55, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  z-index: 20;
+  user-select: none;
+}
+
+.bootkeh-seat-node:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 0 25px var(--bk-gold), 0 0 10px #fff;
+  z-index: 30;
+}
+
+.bootkeh-seat-node.evil {
+  border-color: var(--bk-crimson-bright);
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.6), inset 0 0 10px rgba(185, 28, 28, 0.4);
+}
+
+.bootkeh-seat-node.dead {
+  filter: grayscale(0.9) brightness(0.6);
+  border-color: #64748b;
+  opacity: 0.75;
+}
+
+.bootkeh-seat-badge {
+  position: absolute;
+  top: -6px;
+  font-family: var(--bk-font-serif);
+  font-size: 10.5px;
+  font-weight: 900;
+  background: #000;
+  color: var(--bk-gold-light);
+  border: 1px solid var(--bk-gold);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.bootkeh-seat-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.bootkeh-seat-name {
+  font-size: 11px;
+  font-weight: 700;
   color: #fff;
-  letter-spacing: 0.05em;
-  text-shadow: 0 0 16px rgba(225, 29, 72, 0.4);
+  white-space: nowrap;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
-.bootkeh-timer-display.urgent {
-  color: #ef4444;
-  animation: pulse 1s infinite;
+.bootkeh-seat-role {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--bk-gold);
+  white-space: nowrap;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.04); }
-}
-
-/* Player Secret Cards Grid */
+/* ================= Cards & WhatsApp Dispatch Center ================= */
 .bootkeh-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 16px;
 }
 
 .bootkeh-player-card {
-  background: var(--bk-surface);
+  background: linear-gradient(180deg, #161a29 0%, #0d101b 100%);
   border: 1px solid var(--bk-border);
-  border-radius: var(--bk-radius);
-  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: var(--bk-shadow-gold);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   transition: all 0.2s ease;
 }
 
 .bootkeh-player-card:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  border-color: var(--bk-gold);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 15px rgba(212, 175, 55, 0.25);
+  transform: translateY(-2px);
+}
+
+.bootkeh-player-card.evil {
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .bootkeh-player-card-header {
+  background: rgba(10, 12, 20, 0.9);
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid var(--bk-border);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -632,181 +864,178 @@ html[dir="ltr"] body.bootkeh-body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .bootkeh-secret-info-box {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  padding: 12px;
+  background: #090a10;
+  border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 8px;
+  padding: 12px;
   font-size: 12.5px;
   line-height: 1.45;
-  color: #e2e8f0;
+  color: var(--bk-gold-light);
+  margin-top: 10px;
 }
 
 .bootkeh-secret-info-title {
-  font-weight: 700;
-  font-size: 11.5px;
+  font-family: var(--bk-font-serif);
+  font-size: 12px;
+  font-weight: 800;
   color: var(--bk-gold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   margin-bottom: 4px;
 }
 
-/* ========================================================
-   CHARACTER SCRIPT SHEET (דף תפקידים — בדיוק לפי תמונת המשתמש)
-   ======================================================== */
-.bootkeh-sheet-preview-wrap {
-  background: #ffffff;
-  color: #111827;
-  max-width: 860px;
-  margin: 0 auto 30px auto;
-  padding: 36px 40px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-  border-radius: 6px;
-  font-family: "Crimson Pro", "David", serif;
-  line-height: 1.35;
+/* Dispatch Tracker Banner */
+.bk-dispatch-banner {
+  background: linear-gradient(135deg, #171b2c 0%, #10121d 100%);
+  border: 1px solid var(--bk-gold);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--bk-shadow-gold);
 }
 
-.bootkeh-sheet-header {
-  border-bottom: 1px solid #111827;
-  padding-bottom: 8px;
-  margin-bottom: 14px;
+.bk-progress-bar-wrap {
+  width: 100%;
+  height: 10px;
+  background: #0a0b12;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bk-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* ================= Official Character Script Sheet (Return of the Crimson Guard) ================= */
+.bootkeh-sheet-preview-wrap {
+  background: #fbf9f4;
+  color: #1a1a1a;
+  max-width: 820px;
+  margin: 0 auto 30px;
+  padding: 40px 48px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  font-family: "Crimson Pro", "Garamond", "Georgia", serif;
+}
+
+.bk-sheet-header {
+  border-bottom: 1.5px solid #d4c5b0;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
 }
 
-.bootkeh-sheet-main-title {
-  font-family: var(--bk-font-serif);
-  font-size: 26px;
+.bk-sheet-title {
+  font-family: "Cinzel", "Crimson Pro", serif;
+  font-size: 28px;
   font-weight: 700;
-  color: #0b0f19;
-  letter-spacing: 0.02em;
+  color: #1a1a1a;
+  letter-spacing: 0.5px;
 }
 
-.bootkeh-sheet-author {
+.bk-sheet-author {
+  font-family: "Crimson Pro", serif;
   font-style: italic;
-  font-size: 14px;
-  color: #4b5563;
-  margin-left: 8px;
+  font-size: 16px;
+  color: #555;
+  margin-inline-start: 12px;
 }
 
-.bootkeh-sheet-category {
-  margin-bottom: 18px;
-}
-
-.bootkeh-sheet-cat-divider {
+.bk-sheet-category-header {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  border-bottom: 1px solid #d1d5db;
-  padding-bottom: 2px;
-  margin-bottom: 10px;
+  margin: 20px 0 12px;
+  position: relative;
 }
 
-.bootkeh-sheet-cat-badge {
-  font-family: var(--bk-font-sans);
-  font-size: 10px;
+.bk-sheet-category-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: #d4c5b0;
+  z-index: 1;
+}
+
+.bk-sheet-category-pill {
+  position: relative;
+  z-index: 2;
+  background: #fbf9f4;
+  border: 1px solid #c8b9a2;
+  border-radius: 999px;
+  padding: 2px 16px;
+  font-family: "Cinzel", serif;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  background: #f9fafb;
+  letter-spacing: 1px;
+  color: #7d6e5a;
 }
 
-.bootkeh-sheet-cat-badge.minion,
-.bootkeh-sheet-cat-badge.demon {
-  color: #991b1b;
-  border-color: #fca5a5;
-  background: #fef2f2;
-}
-
-.bootkeh-sheet-grid {
+.bk-sheet-roles-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 24px;
-  row-gap: 12px;
+  gap: 16px 28px;
 }
 
-.bootkeh-sheet-item {
+.bk-sheet-role-entry {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
+  align-items: flex-start;
+  min-height: 54px;
 }
 
-.bootkeh-sheet-icon {
-  font-size: 26px;
+.bk-sheet-role-icon {
+  font-size: 28px;
   line-height: 1;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
-.bootkeh-sheet-item.townsfolk .bootkeh-sheet-icon,
-.bootkeh-sheet-item.outsider .bootkeh-sheet-icon {
-  color: #0284c7;
+.bk-sheet-role-body {
+  flex: 1;
 }
 
-.bootkeh-sheet-item.minion .bootkeh-sheet-icon,
-.bootkeh-sheet-item.demon .bootkeh-sheet-icon {
-  color: #dc2626;
-}
-
-.bootkeh-sheet-role-name {
-  font-family: var(--bk-font-serif);
+.bk-sheet-role-name {
+  font-family: "Crimson Pro", "Garamond", serif;
+  font-size: 16px;
   font-weight: 700;
-  font-size: 14.5px;
-  color: #0369a1;
   margin-bottom: 2px;
+  line-height: 1.2;
 }
 
-.bootkeh-sheet-item.minion .bootkeh-sheet-role-name,
-.bootkeh-sheet-item.demon .bootkeh-sheet-role-name {
-  color: #b91c1c;
-}
+.bk-sheet-role-name.townsfolk { color: #0284c7; }
+.bk-sheet-role-name.outsider { color: #0f766e; }
+.bk-sheet-role-name.minion { color: #991b1b; }
+.bk-sheet-role-name.demon { color: #881337; }
 
-.bootkeh-sheet-ability {
-  font-size: 12px;
-  color: #1f2937;
+.bk-sheet-role-ability {
+  font-family: "Crimson Pro", "Garamond", serif;
+  font-size: 13.5px;
   line-height: 1.35;
+  color: #333;
 }
 
-.bootkeh-sheet-footer {
-  border-top: 1px solid #d1d5db;
-  padding-top: 10px;
-  margin-top: 20px;
+.bk-sheet-footer {
+  margin-top: 36px;
+  border-top: 1.5px solid #d4c5b0;
+  padding-top: 14px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  font-size: 10px;
-  color: #6b7280;
-}
-
-/* Print Styles */
-@media print {
-  body.bootkeh-body {
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
-  .bootkeh-topbar,
-  .bootkeh-nav-tabs,
-  .bootkeh-print-hide {
-    display: none !important;
-  }
-  .bootkeh-main {
-    padding: 0 !important;
-    max-width: 100% !important;
-  }
-  .bootkeh-sheet-preview-wrap {
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-  }
+  align-items: center;
+  font-size: 11.5px;
+  color: #666;
 }
 
 /* Modals */
@@ -814,11 +1043,11 @@ html[dir="ltr"] body.bootkeh-body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
   padding: 20px;
 }
 
@@ -827,36 +1056,47 @@ html[dir="ltr"] body.bootkeh-body {
 }
 
 .bootkeh-modal {
-  background: var(--bk-surface);
-  border: 1px solid var(--bk-border);
-  border-radius: 12px;
-  max-width: 580px;
+  background: #141726;
+  border: 1px solid var(--bk-gold);
+  border-radius: 14px;
   width: 100%;
-  max-height: 85vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  max-width: 520px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9), 0 0 20px rgba(212, 175, 55, 0.3);
+  overflow: hidden;
 }
 
 .bootkeh-modal-header {
+  background: linear-gradient(180deg, #1d2136 0%, #121524 100%);
   padding: 16px 20px;
-  border-bottom: 1px solid var(--bk-border);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.bootkeh-modal-close {
-  background: none;
-  border: none;
-  color: var(--bk-text-muted);
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.bootkeh-modal-close:hover {
-  color: #fff;
-}
-
 .bootkeh-modal-body {
-  padding: 20px;
+  padding: 22px;
+}
+
+/* Print Styles */
+@media print {
+  body.bootkeh-body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .bootkeh-print-hide, .bootkeh-topbar, .bootkeh-nav-tabs, .bootkeh-phase-bar {
+    display: none !important;
+  }
+  .bootkeh-view {
+    display: none !important;
+  }
+  #view-sheet {
+    display: block !important;
+  }
+  .bootkeh-sheet-preview-wrap {
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
 }
