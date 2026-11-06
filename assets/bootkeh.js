@@ -529,6 +529,13 @@
     renderSheetView();
     renderCardsView();
     renderThemeGen();
+    // everything else follows too: roster, presets, picked roles, role sets, shutters, back bar, the live game panel
+    try { renderRosterInputs(); renderPresets(); initCustomRolesMatrix(); updatePanels(); renderBackBar(state.activeTab || "setup"); showVersion(); } catch (e) { console.warn(e); }
+    if (window.BKSets) window.BKSets.renderSelect();
+    if (window.BKLive && document.getElementById("bkLivePanel")) window.BKLive.render();
+    if (window.BKI18n) window.BKI18n.apply(state.lang);   // the fixed texts of the page
+    // the button names the OTHER language
+    document.querySelectorAll('[onclick*="toggleLanguage"]').forEach(b => { const sp = b.querySelector("span") || b; sp.textContent = state.lang === "he" ? "English" : "עברית"; b.setAttribute("aria-label", state.lang === "he" ? "Switch to English" : "החלף לעברית"); });
   }
 
   function toggleLanguage() {
@@ -576,6 +583,8 @@
   }
   window.addEventListener("popstate", e => {
     if (document.body.classList.contains("bkp-mode")) return;
+    const m = document.getElementById("savedPlayersModal");
+    if (m && m.classList.contains("open")) { closeSavedPlayersModal(true); return; }
     const t = (e.state && e.state.bkTab) || (location.hash.slice(1) in TAB_NAMES ? location.hash.slice(1) : "setup");
     setTab(t, true);
   });
@@ -1889,11 +1898,14 @@
     if (!m) return;
     renderSavedPlayersList();
     m.classList.add("open");
+    try { history.pushState({ bkTab: state.activeTab || "setup", bkModal: 1 }, ""); } catch (e) {}   // the phone's Back closes it
   }
 
-  function closeSavedPlayersModal() {
+  function closeSavedPlayersModal(fromHistory) {
     const m = $("#savedPlayersModal");
-    if (m) m.classList.remove("open");
+    if (!m || !m.classList.contains("open")) return;
+    m.classList.remove("open");
+    if (!fromHistory && history.state && history.state.bkModal) history.back();
   }
 
   function renderSavedPlayersList() {
@@ -1904,7 +1916,6 @@
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bk-surface-card);border:1px solid var(--bk-border);border-radius:8px;margin-bottom:8px;">
         <div>
           <div style="font-weight:700;font-size:13.5px;color:#fff;">${esc(p.name)}</div>
-          <div style="font-size:11.5px;color:var(--bk-text-muted);">${esc(p.phone || "ללא טלפון")}</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button type="button" class="bk-btn sm" onclick="window.Bootkeh.quickSeatSavedPlayer('${p.id}')">🪑 ${state.lang === "he" ? "הושב" : "Seat"}</button>

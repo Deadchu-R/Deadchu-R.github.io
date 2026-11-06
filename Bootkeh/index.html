@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/bootkeh.css?v=9c3fa812">
   <link rel="stylesheet" href="../assets/bootkeh-medieval.css?v=23c27a0d">
-  <link rel="stylesheet" href="../assets/bootkeh-live.css?v=af0f2a9b">
+  <link rel="stylesheet" href="../assets/bootkeh-live.css?v=5dcbd325">
 </head>
 <body class="bootkeh-body">
 
@@ -39,7 +39,7 @@
       <div class="bootkeh-logo-wrap">
         <span class="bootkeh-logo-icon">🕰️</span>
         <span class="bootkeh-title">Bootkeh</span>
-        <span class="bk-ver" id="bkVersion" data-v="1389d0"></span>
+        <span class="bk-ver" id="bkVersion" data-v="6fffc6"></span>
       </div>
     </div>
 
@@ -299,8 +299,9 @@
   <div id="savedPlayersModal" class="bootkeh-modal-backdrop">
     <div class="bootkeh-modal">
       <div class="bootkeh-modal-header">
-        <div style="font-weight:700;font-size:15px;color:#fff;">השחקנים השמורים</div>
-        <button type="button" class="bootkeh-modal-close" onclick="window.Bootkeh.closeSavedPlayersModal()">✕</button>
+        <button type="button" class="bk-back" onclick="window.Bootkeh.closeSavedPlayersModal()"><span aria-hidden="true">›</span> חזרה</button>
+        <div style="font-weight:700;font-size:16px;color:#fff;flex:1;">השחקנים השמורים</div>
+        <button type="button" class="bootkeh-modal-close" onclick="window.Bootkeh.closeSavedPlayersModal()" aria-label="סגור">✕</button>
       </div>
       <div class="bootkeh-modal-body">
         <p style="font-size:12.5px;color:var(--bk-text-muted);margin-bottom:14px;">
@@ -310,7 +311,6 @@
         <!-- Add Player Form -->
         <div style="display:flex;gap:8px;margin-bottom:16px;">
           <input type="text" id="newPlayerName" class="bk-input" placeholder="שם שחקן (למשל: דני)" style="flex:1;">
-          <input type="text" id="newPlayerPhone" class="bk-input" placeholder="טלפון (054...)" style="width:130px;">
           <button type="button" class="bk-btn pri sm" onclick="window.Bootkeh.addSavedPlayer()">＋ הוסף</button>
         </div>
 
@@ -366,9 +366,10 @@
   <script src="../assets/bootkeh-roles-extra.js?v=471f8fef"></script>
   <script src="../assets/bootkeh-themes.js?v=8c51438b"></script>
   <script src="../assets/bootkeh-cloud.js?v=1ee8676d"></script>
+  <script src="../assets/bootkeh-i18n.js?v=a458e157"></script>
   <script src="../assets/bootkeh-sets.js?v=e3da8048"></script>
   <script src="../assets/bootkeh-rules.js?v=a69fba06"></script>
   <script src="../assets/bootkeh-live.js?v=cd776f03"></script>
-  <script src="../assets/bootkeh.js?v=4b342c6e"></script>
+  <script src="../assets/bootkeh.js?v=aa25e25d"></script>
 </body>
 </html>

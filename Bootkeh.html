@@ -299,8 +299,9 @@
   <div id="savedPlayersModal" class="bootkeh-modal-backdrop">
     <div class="bootkeh-modal">
       <div class="bootkeh-modal-header">
-        <div style="font-weight:700;font-size:15px;color:#fff;">השחקנים השמורים</div>
-        <button type="button" class="bootkeh-modal-close" onclick="window.Bootkeh.closeSavedPlayersModal()">✕</button>
+        <button type="button" class="bk-back" onclick="window.Bootkeh.closeSavedPlayersModal()"><span aria-hidden="true">›</span> חזרה</button>
+        <div style="font-weight:700;font-size:16px;color:#fff;flex:1;">השחקנים השמורים</div>
+        <button type="button" class="bootkeh-modal-close" onclick="window.Bootkeh.closeSavedPlayersModal()" aria-label="סגור">✕</button>
       </div>
       <div class="bootkeh-modal-body">
         <p style="font-size:12.5px;color:var(--bk-text-muted);margin-bottom:14px;">
@@ -310,7 +311,6 @@
         <!-- Add Player Form -->
         <div style="display:flex;gap:8px;margin-bottom:16px;">
           <input type="text" id="newPlayerName" class="bk-input" placeholder="שם שחקן (למשל: דני)" style="flex:1;">
-          <input type="text" id="newPlayerPhone" class="bk-input" placeholder="טלפון (054...)" style="width:130px;">
           <button type="button" class="bk-btn pri sm" onclick="window.Bootkeh.addSavedPlayer()">＋ הוסף</button>
         </div>
 
@@ -366,6 +366,7 @@
   <script src="assets/bootkeh-roles-extra.js?v=20261106_30"></script>
   <script src="assets/bootkeh-themes.js?v=20261106_30"></script>
   <script src="assets/bootkeh-cloud.js?v=20261106_30"></script>
+  <script src="assets/bootkeh-i18n.js?v=1"></script>
   <script src="assets/bootkeh-sets.js?v=1"></script>
   <script src="assets/bootkeh-rules.js?v=1"></script>
   <script src="assets/bootkeh-live.js?v=20261106_30"></script>

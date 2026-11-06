@@ -437,3 +437,9 @@ html, body { overflow-x: clip; max-width: 100%; }
 .bk-set-roles button i { font-style: normal; opacity: .55; }
 .bk-set-roles .townsfolk { border-color: rgba(56, 189, 248, .5); } .bk-set-roles .outsider { border-color: rgba(45, 212, 191, .5); }
 .bk-set-roles .minion { border-color: rgba(251, 146, 60, .55); } .bk-set-roles .demon { border-color: rgba(239, 68, 68, .6); }
+
+/* ---------- saved players window: fits the screen and scrolls, header with Back stays on top ---------- */
+.bootkeh-modal-backdrop.open { align-items: center; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+.bootkeh-modal { max-height: calc(100dvh - 24px); display: flex !important; flex-direction: column; overflow: hidden; width: min(560px, 100%); }
+.bootkeh-modal-header { position: sticky; top: 0; z-index: 2; display: flex !important; align-items: center; gap: 10px; flex: none; }
+.bootkeh-modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; flex: 1; min-height: 0; }

@@ -8,6 +8,8 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Language button switches everything** (assets/bootkeh-i18n.js for the fixed texts + every screen redrawn), and it is labelled with the other language ("English" / "עברית").
+  - **Saved players window** fits the screen and scrolls, with a "‹ Back" header that stays on top; the phone's Back closes it; no phone fields.
   - **My role sets** (assets/bootkeh-sets.js): save the set you built into the "Role set" list ("My sets", delete too); import a set from a picture of a script sheet (OCR in the browser with Tesseract.js — the Crimson Guard sheet reads 20/20) or from Script Tool / botcscripts.com JSON (official ids map to ours). "Bad Moon Rising" added to the list.
   - **Players** is a shutter like Roles and Game world; phone numbers removed (players join with the group link / QR code). Default player list: Sit's group (Blam, Eden, Jonch, Shai, Danino, Gersh, Gil, Tama, Ilya, Tal, Michelle, Benny).
   - **Bottom-bar bubble fixed on real phones:** it is now sized and moved as a share of the whole bar (1/4 per tab) instead of pixel measurements, so phone zoom no longer makes it huge or puts it in the wrong place.
