@@ -1,6 +1,9 @@
 // Clips: muted loops that play only while on screen. Tap (or the full-screen icon) opens the video
 // full screen, like YouTube. Screenshots and character art open in a zoomable lightbox.
 // Visual editor: roeetal.com/?edit turns on edit mode for this tab (assets/edit.js). Visitors never load it.
+// Bootkeh player links that landed on the main page (an older link built from roeetal.com/Bootkeh pointed at "/"):
+// send them on to the Bootkeh page with the same ?g=…&k=… / ?g=…&join=1.
+if(/[?&]g=[^&]+/.test(location.search)&&/[?&](k|join)=/.test(location.search)&&!/\/Bootkeh/i.test(location.pathname))location.replace(location.origin+"/Bootkeh/"+location.search);
 (function(){
   const me=document.currentScript;
   try{

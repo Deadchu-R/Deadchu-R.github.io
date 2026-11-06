@@ -51,7 +51,9 @@
     const exp = FV.Timestamp.fromMillis(Date.now() + hours * 3600e3);
     // script: an array of roles, or {name, author, roles}
     const sc = Array.isArray(script) ? { roles: script } : (script || { roles: [] });
-    const gameId = rid(10), b = db.batch(), base = location.origin + location.pathname.replace(/[^/]*$/, ""), links = {}, keys = {};
+    const gameId = rid(10), b = db.batch(), links = {}, keys = {};
+    // links always point at the Bootkeh page (…/Bootkeh/), whether it was opened as /Bootkeh, /Bootkeh/ or /Bootkeh.html
+    const base = location.origin + location.pathname.replace(/\/Bootkeh(\.html|\/index\.html|\/)?$/i, "/").replace(/[^/]*$/, "") + "Bootkeh/";
     // the shared, public part of the game (phase, who is alive, the current accusation, announcements)
     const seats = players.map(p => ({ seat: p.seat, name: String(p.name || "").slice(0, 60), alive: p.alive !== false, ghost: true }));
     b.set(db.collection("bk_games").doc(gameId), { owner: uid, title: String(title || "").slice(0, 120), createdAt: FV.FieldValue.serverTimestamp(), expiresAt: exp,
