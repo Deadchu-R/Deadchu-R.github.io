@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bootkeh — מחולל משחקי דם על מגדל השעון | roeetal.com</title>
+  <meta name="description" content="מחולל משחקים ועוזר מספר סיפורים למשחק 'דם על מגדל השעון' (Blood on the Clocktower) — דפי תפקידים, מעגל ישיבה, שיתוף שחקנים בווצאפ וטיימר אוטומטי">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="../assets/bootkeh.css?v=20261106_01">
+</head>
+<body class="bootkeh-body">
+
+  <!-- Top Bar Header -->
+  <header class="bootkeh-topbar bootkeh-print-hide">
+    <div class="bootkeh-brand">
+      <a href="../index.html" class="bootkeh-back-link">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>roeetal.com</span>
+      </a>
+      <div class="bootkeh-logo-wrap">
+        <span class="bootkeh-logo-icon">🕰️</span>
+        <span class="bootkeh-title">Bootkeh</span>
+        <span class="bootkeh-badge">Clocktower Generator</span>
+      </div>
+    </div>
+
+    <div class="bootkeh-topbar-actions">
+      <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSavedPlayersModal()">
+        <span>👥 שחקנים שמורים</span>
+      </button>
+      <button type="button" class="bk-btn sm" onclick="window.Bootkeh.toggleLanguage()" id="langToggleBtn">
+        <span>English 🇬🇧</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="bootkeh-nav-tabs bootkeh-print-hide">
+    <button type="button" class="bootkeh-tab-btn active" data-tab="setup" onclick="window.Bootkeh.setTab('setup')">
+      <span>🎲 הגדרות ויצירת משחק</span>
+    </button>
+    <button type="button" class="bootkeh-tab-btn" data-tab="board" onclick="window.Bootkeh.setTab('board')">
+      <span>⭕ מעגל ישיבה וגרימואר</span>
+    </button>
+    <button type="button" class="bootkeh-tab-btn" data-tab="sheet" onclick="window.Bootkeh.setTab('sheet')">
+      <span>📜 דף תפקידים (Script Sheet)</span>
+    </button>
+    <button type="button" class="bootkeh-tab-btn" data-tab="cards" onclick="window.Bootkeh.setTab('cards')">
+      <span>🃏 קלפי שחקנים ו-WhatsApp</span>
+    </button>
+  </nav>
+
+  <!-- Main Content Stage -->
+  <main class="bootkeh-main">
+
+    <!-- ================= VIEW 1: GAME SETUP ================= -->
+    <section id="view-setup" class="bootkeh-view active">
+      <div class="bk-card">
+        <div class="bk-card-header">
+          <div class="bk-card-title">
+            <span>🎲</span>
+            <span>יצירת משחק "דם על מגדל השעון"</span>
+          </div>
+          <button type="button" class="bk-btn pri" onclick="window.Bootkeh.generateGame()">
+            <span>⚡ ג'נרט משחק והושב שחקנים!</span>
+          </button>
+        </div>
+
+        <div class="bk-grid-2">
+          <!-- Left Column: Players & Roles Distribution -->
+          <div>
+            <div class="bk-form-group">
+              <label class="bk-label">מספר שחקנים (5 עד 15 שחקנים):</label>
+              <div class="bk-player-count-wrap">
+                <input type="range" id="playerCountSlider" class="bk-range-slider" min="5" max="15" value="8">
+                <span id="playerCountBadge" class="bk-player-count-badge">8</span>
+              </div>
+              <div id="distributionPills" class="bk-dist-pills"></div>
+            </div>
+
+            <div class="bk-form-group">
+              <label class="bk-label">סט תפקידים (Script / Edition):</label>
+              <select id="scriptSelect" class="bk-select">
+                <option value="crimson_guard">🩸 שובו של משמר הארגמן (Return of the Crimson Guard)</option>
+                <option value="trouble_brewing">🍺 הצרות מתבשלות (Trouble Brewing - הקלאסי)</option>
+                <option value="sects_and_violets">🔮 כתות וסיגליות (Sects & Violets)</option>
+                <option value="custom">🛠️ סט מותאם אישית (Custom Roles Matrix)</option>
+              </select>
+            </div>
+
+            <div class="bk-form-group">
+              <label class="bk-label">שם מספר הסיפורים (Storyteller):</label>
+              <input type="text" id="storytellerInput" class="bk-input" value="רועי / Sit" placeholder="שם מספר הסיפורים">
+            </div>
+          </div>
+
+          <!-- Right Column: Thematic Setting & Flavor -->
+          <div>
+            <div class="bk-form-group">
+              <label class="bk-label">עולם המשחק והתמה (Thematic Flavor):</label>
+              <div id="themeGrid" class="bk-theme-grid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Role Matrix Dropdown -->
+        <details style="margin-top:16px;" class="bk-form-group">
+          <summary class="bk-label" style="cursor:pointer;padding:8px 0;user-select:none;">
+            <span>⚙️ הגדרות מתקדמות: בחר במדויק אילו תפקידים יהיו בכל אחת מ-4 הקטגוריות ▾</span>
+          </summary>
+          <div id="customRolesMatrix" style="padding-top:12px;"></div>
+        </details>
+
+        <!-- Player Names & WhatsApp Roster -->
+        <div style="margin-top:20px;border-top:1px solid var(--bk-border);padding-top:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <label class="bk-label" style="margin:0;">שמות השחקנים ומספרי טלפון (לשליחה מהירה ב-WhatsApp):</label>
+            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSavedPlayersModal()">
+              <span>📋 בחר משחקנים שמורים</span>
+            </button>
+          </div>
+          <div id="playerRosterInputs" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:10px;">
+            <div style="display:flex;gap:6px;">
+              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 1 (למשל: דני)" style="flex:1;">
+              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+            </div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 2" style="flex:1;">
+              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+            </div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 3" style="flex:1;">
+              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+            </div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 4" style="flex:1;">
+              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+            </div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 5" style="flex:1;">
+              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+            </div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 6" style="flex:1;">
+              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+            </div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 7" style="flex:1;">
+              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+            </div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" class="bk-input bk-roster-name-input" placeholder="שחקן 8" style="flex:1;">
+              <input type="text" class="bk-input bk-roster-phone-input" placeholder="טלפון לווצאפ" style="width:120px;">
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;display:flex;justify-content:center;">
+          <button type="button" class="bk-btn pri" style="padding:12px 28px;font-size:15px;font-weight:800;" onclick="window.Bootkeh.generateGame()">
+            <span>⚡ ג'נרט משחק והושב שחקנים!</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 2: SEATING & GRIMOIRE ================= -->
+    <section id="view-board" class="bootkeh-view">
+      <!-- Game Phase Tracker & Timer Bar -->
+      <div class="bootkeh-phase-bar">
+        <div>
+          <div id="phaseTitle" style="font-family:var(--bk-font-serif);font-size:18px;font-weight:700;color:#fff;">
+            ☀️ שלב היום (דיון חופשי) · יום 1
+          </div>
+          <div style="font-size:12px;color:var(--bk-text-muted);">
+            השתמש בטיימר אוטומטי להרצת שלבי הדיון וההוצאות להורג
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div id="timerDisplay" class="bootkeh-timer-display">05:00</div>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.startTimer()">▶ הפעל</button>
+            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.pauseTimer()">⏸ השהה</button>
+            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.resetTimer()">↺ איפוס</button>
+            <button type="button" class="bk-btn sm" onclick="window.Bootkeh.addMinute()">＋1 דקה</button>
+          </div>
+          <button type="button" class="bk-btn sm gold" onclick="window.Bootkeh.advancePhase()">עבור לשלב הבא ➔</button>
+        </div>
+      </div>
+
+      <!-- Seating Circle Grimoire Stage -->
+      <div class="bk-card" style="display:flex;flex-direction:column;align-items:center;padding:30px 20px;">
+        <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:16px;">
+          <button type="button" id="toggleViewBtn" class="bk-btn sm" onclick="window.Bootkeh.toggleStorytellerView()">
+            עין מספר הסיפורים (הצג תפקידים)
+          </button>
+          <div style="font-size:12px;color:var(--bk-text-muted);display:flex;align-items:center;gap:12px;">
+            <span>🟢 טובים</span>
+            <span>🔴 רעים</span>
+            <span>💀 לחץ על מושב כדי לסמן חי / מת</span>
+          </div>
+        </div>
+
+        <div id="seatingCircle" class="bootkeh-circle-container"></div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 3: CHARACTER SCRIPT SHEET ================= -->
+    <section id="view-sheet" class="bootkeh-view">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;" class="bootkeh-print-hide">
+        <div>
+          <h2 style="font-family:var(--bk-font-serif);font-size:20px;color:#fff;">דף תפקידים (Character Script Sheet)</h2>
+          <p style="font-size:12.5px;color:var(--bk-text-muted);">דף תפקידים מעוצב להדפסה, חלוקה לשחקנים ושמירה ב-PDF בדיוק כמו בגרסה הרשמית של המשחק</p>
+        </div>
+        <button type="button" class="bk-btn pri" onclick="window.Bootkeh.printSheet()">
+          <span>🖨️ הדפס דף תפקידים (Print / PDF)</span>
+        </button>
+      </div>
+
+      <!-- Character Sheet Paper Preview Container -->
+      <div id="characterSheetWrap"></div>
+    </section>
+
+    <!-- ================= VIEW 4: PLAYER CARDS & WHATSAPP ================= -->
+    <section id="view-cards" class="bootkeh-view">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <h2 style="font-family:var(--bk-font-serif);font-size:20px;color:#fff;">קלפי שחקנים ומידע סודי</h2>
+          <p style="font-size:12.5px;color:var(--bk-text-muted);">שלח לכל שחקן את התפקיד והמידע ההתחלתי שלו ישירות ל-WhatsApp בלחיצה אחת!</p>
+        </div>
+      </div>
+
+      <div id="playerCardsGrid" class="bootkeh-cards-grid"></div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Saved Players Directory Modal -->
+  <div id="savedPlayersModal" class="bootkeh-modal-backdrop">
+    <div class="bootkeh-modal">
+      <div class="bootkeh-modal-header">
+        <div style="font-weight:700;font-size:15px;color:#fff;">👥 ספר השחקנים השמורים (WhatsApp)</div>
+        <button type="button" class="bootkeh-modal-close" onclick="window.Bootkeh.closeSavedPlayersModal()">✕</button>
+      </div>
+      <div class="bootkeh-modal-body">
+        <p style="font-size:12.5px;color:var(--bk-text-muted);margin-bottom:14px;">
+          שמור את החברים שלך בקבוצת המשחק כדי להושיב אותם במהירות ולשלוח להם הודעות WhatsApp סודיות בכל משחק חדש.
+        </p>
+
+        <!-- Add Player Form -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <input type="text" id="newPlayerName" class="bk-input" placeholder="שם שחקן (למשל: דני)" style="flex:1;">
+          <input type="text" id="newPlayerPhone" class="bk-input" placeholder="טלפון (054...)" style="width:130px;">
+          <button type="button" class="bk-btn pri sm" onclick="window.Bootkeh.addSavedPlayer()">＋ הוסף</button>
+        </div>
+
+        <div id="savedPlayersList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../assets/bootkeh-data.js?v=20261106_01"></script>
+  <script src="../assets/bootkeh.js?v=20261106_01"></script>
+</body>
+</html>

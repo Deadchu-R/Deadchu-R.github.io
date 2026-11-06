@@ -1236,6 +1236,19 @@ def build_cv():
     (ROOT / "cv.html").write_text(html)
     _cv_files(pub, default)
 
+def build_bootkeh():
+    """Ensure Bootkeh.html and Bootkeh/index.html are maintained across builds."""
+    bk_path = ROOT / "Bootkeh.html"
+    if not bk_path.exists():
+        return
+    bk_html = bk_path.read_text(encoding="utf-8")
+    sub_bk = ROOT / "Bootkeh"
+    sub_bk.mkdir(exist_ok=True)
+    sub_bk_html = bk_html.replace('href="assets/', 'href="../assets/').replace('src="assets/', 'src="../assets/')
+    sub_bk_html = sub_bk_html.replace('href="index.html', 'href="../index.html')
+    (sub_bk / "index.html").write_text(sub_bk_html, encoding="utf-8")
+
+
 def build_cveditor():
     """Ensure CVEditor.html and CVEditor/index.html are maintained across builds."""
     cve_path = ROOT / "CVEditor.html"
@@ -1307,6 +1320,7 @@ if __name__ == "__main__":
     build_lab()
     build_cv()
     build_cveditor()
+    build_bootkeh()
     build_tv()
     for i, cp in enumerate(CODE_PAGES):
         build_code_page(i, cp)

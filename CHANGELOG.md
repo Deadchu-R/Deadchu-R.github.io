@@ -24,6 +24,17 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
   The config is in `assets/cveditor-firebase.json`, so Google sign-in is live. The owner is recognised by SHA-256 hashes of his addresses, so no email is in the code. The old fake email login and owner-password paths are switched off.
 
+### Bootkeh
+- **Bootkeh:** Blood on the Clocktower generator & storyteller assistant at roeetal.com/Bootkeh:
+  - Exact Character Script Sheet: layout mirroring the Crimson Guard reference sheet (two-column grid, character icons, rules text, category pills for Townsfolk, Outsiders, Minions, Demons, and footnote note) with print/PDF optimization.
+  - Comprehensive Bilingual Role Database: 46 characters across Townsfolk, Outsiders, Minions, and Demons with full Hebrew and English translations, abilities, setup rules, and night wake orders.
+  - Seating Circle & Grimoire: dynamic circular seating layout with automatic player distribution (5-15 players) accounting for Baron and Fang Gu setup rules, role assigner, and Storyteller vs TV/Spectator display modes.
+  - Smart First Night Info: dynamic generation of first-night info (Demon bluffs, Minion pairings, Empath count, Librarian pairs, Chef pairs, Clockmaker steps).
+  - WhatsApp Sharing: one-click instant WhatsApp dispatch of secret roles, abilities, and first-night info to players.
+  - Saved Players Directory: localStorage-backed player manager for quick seating and WhatsApp dispatch in recurring sessions.
+  - Phase Timer & Sound Engine: automatic and manual phase timer with Web Audio API synthesized gong, bell, and tick audio effects.
+  - Thematic Scenarios: configurable narrative themes including Victorian London 1800, Alien Invasion on Riyadh, Mongols in Kyoto 1274, and Salem Witch Trials 1692.
+
 ## 2026-11-05
 
 ### CVEditor
