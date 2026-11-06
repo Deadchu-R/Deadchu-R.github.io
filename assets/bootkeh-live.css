@@ -273,3 +273,9 @@ html, body { overflow-x: clip; max-width: 100%; }
 .bk-ie-row span { display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; font-size: 14px; } .bk-ie-row small { color: var(--bk-text-muted); }
 .bk-ie-row.changed { box-shadow: 0 0 0 1px var(--bk-gold) inset; } .bk-ie-row.dead { opacity: .75; }
 .bk-ie-row .bk-btn { justify-self: start; }
+
+/* ---------- drag between screens (attachSwipe in bootkeh.js) ---------- */
+.bootkeh-main { overflow-x: clip; }
+.bootkeh-view { will-change: auto; }
+.bootkeh-view.bk-peek { pointer-events: none; z-index: 1; }
+.bootkeh-main .bootkeh-view.active { animation: none !important; }   /* the old slide-in is replaced by the drag */

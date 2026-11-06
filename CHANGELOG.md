@@ -8,6 +8,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Swipe like the Android home screen:** the page follows the finger with the next screen sliding in beside it; a long or quick drag glides to it, a short one springs back, the first/last screen stretches a little; up/down scrolling is never mistaken for a swipe.
   - **Roles sheet** in the official script-sheet layout (title "by author", a ruled label per kind, two columns, blue good / red evil names, tinted icons, "* Not the first night"); used on the Roles sheet screen and in the players' 📜 pull-out (one column on phones).
   - **Phone layout everywhere:** a touch screen always gets the phone layout, also in "Desktop site" mode (the page is zoomed back to screen size and the small-screen styles are applied).
   - **Edit info during the game:** in every stage the storyteller can change any player's info / hints and send it straight to their card (one player, or all changes at once); typing is no longer lost when live updates arrive.

@@ -293,27 +293,78 @@
 
 
   // --- Initialization ---
-  // Phones: swipe left / right on the page to move between the main screens (Setup ↔ Board ↔ Roles ↔ Send).
+  // Phones: drag the page left / right to move between the main screens (Setup ↔ Board ↔ Roles ↔ Send), like the
+  // Android home screen: the page follows the finger with the next screen sliding in beside it, and on release it
+  // glides to the next screen (a long enough or quick enough drag) or springs back.
   function attachSwipe() {
     const order = ["setup", "board", "sheet", "cards"], main = document.querySelector(".bootkeh-main"); if (!main) return;
-    let x0 = 0, y0 = 0, t0 = 0, ok = false;
+    const NO = 'input[type="range"], textarea, .bk-role-filter-chips, .bk-themegen-cats, .bk-picked-group, .bk-no-swipe, .bootkeh-circle-container, .bk-votes';
+    const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let g = null;   // the drag in progress
+    const rtl = () => getComputedStyle(main).direction === "rtl";
+    const viewOf = tab => document.getElementById("view-" + tab);
+    // which screen comes in for a drag of dx (in RTL the next screen is on the left, so a drag to the right brings it)
+    const targetFor = dx => { const i = order.indexOf(state.activeTab || "setup"), step = (dx < 0) !== rtl() ? 1 : -1; return order[i + step] || null; };
+    const prep = tab => { if (tab === "board") renderBoardView(); if (tab === "sheet") renderSheetView(); };
+    const setX = (el, x, anim) => { el.style.transition = anim ? "transform .32s cubic-bezier(.2,.8,.2,1)" : "none"; el.style.transform = `translate3d(${x}px,0,0)`; };
+
+    function showPeek(tab) {
+      if (g.peekTab === tab) return;
+      if (g.peek) clearPeek(g.peek);
+      g.peekTab = tab; g.peek = tab ? viewOf(tab) : null;
+      if (!g.peek) return;
+      prep(tab);
+      const top = Math.max(0, window.scrollY - g.mainTop);   // show the top of the incoming screen where you are looking
+      Object.assign(g.peek.style, { display: "block", position: "absolute", top: top + "px", left: g.padL + "px", right: g.padR + "px" });
+      g.peek.classList.add("bk-peek"); g.peekTop = top;
+    }
+    function clearPeek(el) { el.classList.remove("bk-peek"); ["display", "position", "top", "left", "right", "transform", "transition"].forEach(k => el.style[k] = ""); }
+
     main.addEventListener("touchstart", e => {
-      const t = e.touches[0], el = e.target;
-      // not when the finger starts on something that scrolls or slides sideways itself
-      ok = e.touches.length === 1 && !el.closest('input[type="range"], textarea, select, .bk-role-filter-chips, .bk-themegen-cats, .bk-picked, .bk-no-swipe, .bootkeh-circle-container');
-      x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
+      if (e.touches.length !== 1 || e.target.closest(NO) || document.body.classList.contains("bkp-mode")) { g = null; return; }
+      const t = e.touches[0], cs = getComputedStyle(main);
+      g = { x0: t.clientX, y0: t.clientY, dx: 0, lock: null, cur: viewOf(state.activeTab || "setup"), w: main.clientWidth, hist: [[Date.now(), t.clientX]],
+            mainTop: main.getBoundingClientRect().top + window.scrollY, padL: parseFloat(cs.paddingLeft) || 0, padR: parseFloat(cs.paddingRight) || 0 };
     }, { passive: true });
-    main.addEventListener("touchend", e => {
-      if (!ok) return; ok = false;
-      const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
-      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - t0 > 700) return;
-      const rtl = document.documentElement.dir !== "ltr" && state.lang === "he";
-      const i = order.indexOf(state.activeTab || "setup"), step = (dx < 0) !== rtl ? 1 : -1, next = order[i + step];
-      if (!next) return;
-      main.classList.remove("bk-swipe-l", "bk-swipe-r"); void main.offsetWidth;
-      main.classList.add(step > 0 ? "bk-swipe-l" : "bk-swipe-r");
-      setTab(next); window.scrollTo({ top: 0, behavior: "smooth" });
-    }, { passive: true });
+
+    main.addEventListener("touchmove", e => {
+      if (!g || !g.cur) return;
+      const t = e.touches[0], dx = t.clientX - g.x0, dy = t.clientY - g.y0;
+      if (!g.lock) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; g.lock = Math.abs(dx) > Math.abs(dy) * 1.15 ? "x" : "y"; }
+      if (g.lock !== "x") return;
+      e.preventDefault();   // a sideways drag: don't scroll the page up/down meanwhile
+      const tab = targetFor(dx);
+      g.dx = tab ? dx : dx * 0.28;   // rubber band at the first / last screen
+      g.hist.push([Date.now(), t.clientX]); if (g.hist.length > 6) g.hist.shift();
+      showPeek(tab);
+      setX(g.cur, g.dx, false);
+      if (g.peek) setX(g.peek, g.dx - Math.sign(dx) * g.w, false);
+    }, { passive: false });
+
+    const end = () => {
+      if (!g || g.lock !== "x") { g = null; return; }
+      const d = g; g = null;
+      const [t0, x0] = d.hist[0], [t1, x1] = d.hist[d.hist.length - 1], v = (x1 - x0) / Math.max(1, t1 - t0);   // px per ms
+      const go = d.peek && ((Math.abs(d.dx) > d.w * 0.28 && Math.sign(v) !== -Math.sign(d.dx)) || (Math.abs(v) > 0.45 && Math.sign(v) === Math.sign(d.dx)));
+      const done = () => {
+        d.cur.style.transform = ""; d.cur.style.transition = "";
+        if (go) {
+          const peekTop = d.peekTop; clearPeek(d.peek);
+          setTab(d.peekTab);
+          // keep the incoming screen exactly where it was on the screen
+          window.scrollTo({ top: peekTop > 0 ? d.mainTop : window.scrollY, behavior: "instant" });
+          if (navigator.vibrate) navigator.vibrate(8);
+        } else if (d.peek) clearPeek(d.peek);
+      };
+      if (reduce) { done(); return; }
+      const dir = Math.sign(d.dx) || 1;
+      setX(d.cur, go ? dir * d.w : 0, true);
+      if (d.peek) setX(d.peek, go ? 0 : -dir * d.w, true);
+      let fired = false; const fin = () => { if (fired) return; fired = true; done(); };
+      d.cur.addEventListener("transitionend", fin, { once: true }); setTimeout(fin, 380);
+    };
+    main.addEventListener("touchend", end, { passive: true });
+    main.addEventListener("touchcancel", end, { passive: true });
   }
 
   function init() {
