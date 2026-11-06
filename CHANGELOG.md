@@ -8,6 +8,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Swipe follows the finger live on Android:** sideways movement is claimed by the page from the first move (touch-action: pan-y), drawn every frame; the screens shrink and dim with depth as they slide, and the bottom-bar tab you're heading to lights up as you drag.
   - **Setup shutters:** "Roles" (role set + pick your own) now comes before "Game world"; both are collapsible panels whose title and one-line summary stay visible when closed. A clear "Pick the roles yourself" button starts from the chosen set; the role search no longer squeezes on phones.
   - **Back:** a "‹ Back" bar on every screen but the first, and the phone's Back button steps between screens.
   - **Seat circle on phones:** short names, no overlapping role labels when crowded, and a readable seat list (seat, role, alive) under the table.

@@ -306,7 +306,17 @@
     // which screen comes in for a drag of dx (in RTL the next screen is on the left, so a drag to the right brings it)
     const targetFor = dx => { const i = order.indexOf(state.activeTab || "setup"), step = (dx < 0) !== rtl() ? 1 : -1; return order[i + step] || null; };
     const prep = tab => { if (tab === "board") renderBoardView(); if (tab === "sheet") renderSheetView(); };
-    const setX = (el, x, anim) => { el.style.transition = anim ? "transform .32s cubic-bezier(.2,.8,.2,1)" : "none"; el.style.transform = `translate3d(${x}px,0,0)`; };
+    // move a screen: x = offset in px; the further from the middle, the smaller and dimmer (depth while dragging)
+    const setX = (el, x, anim) => {
+      const p = Math.min(1, Math.abs(x) / (g ? g.w : main.clientWidth || 1));
+      el.style.transition = anim ? "transform .34s cubic-bezier(.2,.8,.2,1), opacity .34s ease" : "none";
+      el.style.transform = `translate3d(${x}px,0,0) scale(${(1 - p * 0.06).toFixed(4)})`;
+      el.style.opacity = (1 - p * 0.35).toFixed(3);
+    };
+    // the bottom bar follows the finger: the tab you are dragging to lights up as you go
+    const tabBtn = tab => document.querySelector(`.bootkeh-tab-btn[data-tab="${tab}"]`);
+    const glow = (tab, p) => { document.querySelectorAll(".bootkeh-tab-btn").forEach(b => { if (b.dataset.tab !== tab) b.style.removeProperty("--bk-drag"); });
+      const b = tab && tabBtn(tab); if (b) b.style.setProperty("--bk-drag", p.toFixed(3)); };
 
     function showPeek(tab) {
       if (g.peekTab === tab) return;
@@ -318,7 +328,7 @@
       Object.assign(g.peek.style, { display: "block", position: "absolute", top: top + "px", left: g.padL + "px", right: g.padR + "px" });
       g.peek.classList.add("bk-peek"); g.peekTop = top;
     }
-    function clearPeek(el) { el.classList.remove("bk-peek"); ["display", "position", "top", "left", "right", "transform", "transition"].forEach(k => el.style[k] = ""); }
+    function clearPeek(el) { el.classList.remove("bk-peek"); ["display", "position", "top", "left", "right", "transform", "transition", "opacity"].forEach(k => el.style[k] = ""); }
 
     main.addEventListener("touchstart", e => {
       if (e.touches.length !== 1 || e.target.closest(NO) || document.body.classList.contains("bkp-mode")) { g = null; return; }
@@ -330,24 +340,33 @@
     main.addEventListener("touchmove", e => {
       if (!g || !g.cur) return;
       const t = e.touches[0], dx = t.clientX - g.x0, dy = t.clientY - g.y0;
-      if (!g.lock) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; g.lock = Math.abs(dx) > Math.abs(dy) * 1.15 ? "x" : "y"; }
+      if (!g.lock) { if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return; g.lock = Math.abs(dx) > Math.abs(dy) ? "x" : "y"; }
       if (g.lock !== "x") return;
-      e.preventDefault();   // a sideways drag: don't scroll the page up/down meanwhile
+      if (e.cancelable) e.preventDefault();   // a sideways drag: don't scroll the page up/down meanwhile
+      g.hist.push([Date.now(), t.clientX]); if (g.hist.length > 6) g.hist.shift();
+      g.lastX = t.clientX; if (g.raf) return;   // draw once per frame
+      g.raf = requestAnimationFrame(() => { if (g) { g.raf = 0; drawDrag(g.lastX); } });
+    }, { passive: false });
+
+    function drawDrag(x) {
+      const dx = x - g.x0;
       const tab = targetFor(dx);
       g.dx = tab ? dx : dx * 0.28;   // rubber band at the first / last screen
-      g.hist.push([Date.now(), t.clientX]); if (g.hist.length > 6) g.hist.shift();
       showPeek(tab);
       setX(g.cur, g.dx, false);
       if (g.peek) setX(g.peek, g.dx - Math.sign(dx) * g.w, false);
-    }, { passive: false });
+      glow(tab, Math.min(1, Math.abs(g.dx) / (g.w * 0.5)));
+    }
 
     const end = () => {
       if (!g || g.lock !== "x") { g = null; return; }
+      if (g.raf) { cancelAnimationFrame(g.raf); g.raf = 0; drawDrag(g.lastX); }   // the last finger position
       const d = g; g = null;
       const [t0, x0] = d.hist[0], [t1, x1] = d.hist[d.hist.length - 1], v = (x1 - x0) / Math.max(1, t1 - t0);   // px per ms
       const go = d.peek && ((Math.abs(d.dx) > d.w * 0.28 && Math.sign(v) !== -Math.sign(d.dx)) || (Math.abs(v) > 0.45 && Math.sign(v) === Math.sign(d.dx)));
+      glow(null, 0);
       const done = () => {
-        d.cur.style.transform = ""; d.cur.style.transition = "";
+        d.cur.style.transform = ""; d.cur.style.transition = ""; d.cur.style.opacity = "";
         if (go) {
           const peekTop = d.peekTop; clearPeek(d.peek);
           setTab(d.peekTab);

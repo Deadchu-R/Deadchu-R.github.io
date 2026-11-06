@@ -340,3 +340,11 @@ html, body { overflow-x: clip; max-width: 100%; }
 @keyframes bkPanelIn { from { opacity: 0; transform: translateY(-6px); } }
 @media (max-width: 760px) { .bk-panel-body { padding: 12px; } .bk-panel > summary { padding: 12px 14px; } }
 @media (max-width: 760px) { .bk-dup-title { display: none; } }
+
+/* ---------- live drag: the browser keeps up/down scrolling and pinch, sideways belongs to the page ---------- */
+.bootkeh-main { touch-action: pan-y pinch-zoom; }
+.bk-role-filter-chips, .bk-themegen-cats, .bk-picked-group > div, .bk-no-swipe, input[type="range"] { touch-action: pan-x pan-y pinch-zoom; }
+.bootkeh-view.active, .bootkeh-view.bk-peek { transform-origin: 50% 30vh; backface-visibility: hidden; }
+/* the tab being dragged to lights up with the drag (--bk-drag from 0 to 1) */
+.bootkeh-tab-btn { --bk-drag: 0; }
+.bootkeh-tab-btn:not(.active) { background-color: rgba(122, 20, 32, calc(var(--bk-drag) * .55)) !important; transform: translateY(calc(var(--bk-drag) * -3px)); }
