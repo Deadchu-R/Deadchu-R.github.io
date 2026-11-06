@@ -1,1 +1,8 @@
-{}
+{
+  "apiKey": "AIzaSyDrEHkCxlYTyjSXkevGGVlht6_cGk89SZk",
+  "authDomain": "roeetal-cv.firebaseapp.com",
+  "projectId": "roeetal-cv",
+  "storageBucket": "roeetal-cv.firebasestorage.app",
+  "messagingSenderId": "24541750125",
+  "appId": "1:24541750125:web:972ab776c7a77ae1d4f064"
+}

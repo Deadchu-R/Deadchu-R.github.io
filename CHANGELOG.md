@@ -6,6 +6,14 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
+## 2026-11-06
+- **CVEditor:** Firebase project `roeetal-cv` set up:
+  - Google sign-in on;
+  - domains roeetal.com / www.roeetal.com allowed;
+  - Firestore in eur3 with owner-only rules.
+
+  The config is in `assets/cveditor-firebase.json`, so Google sign-in is live. The owner is recognised by SHA-256 hashes of his addresses, so no email is in the code. The old fake email login and owner-password paths are switched off.
+
 ## 2026-11-05
 
 ### CVEditor

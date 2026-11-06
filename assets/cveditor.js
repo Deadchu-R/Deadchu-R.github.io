@@ -328,7 +328,7 @@
         const cur = null;
         if (cur) loggedInUser = JSON.parse(cur);
         // If it was Roee, require explicit login
-        if (loggedInUser && (loggedInUser.id === "roee" || loggedInUser.email === "roeetal17@gmail.com")) {
+        if (loggedInUser && (loggedInUser.id === "roee")) {
           loggedInUser = null;
           sessionStorage.removeItem("cve_cur_user");
         }
@@ -343,7 +343,7 @@
         const localCur = null;
         if (localCur) {
           const parsed = JSON.parse(localCur);
-          if (parsed && (parsed.id === "roee" || parsed.email === "roeetal17@gmail.com")) {
+          if (parsed && (parsed.id === "roee")) {
             localStorage.removeItem("cve_cur_user");
           } else if (!loggedInUser && parsed && state.allUsers.some(x => x.id === parsed.id)) {
             // Restore friend session
@@ -425,12 +425,6 @@
     async login(email, pass) {
       email = email.trim().toLowerCase();
       let u = state.allUsers.find(x => x.email.toLowerCase() === email);
-      if (!u && (email === "roeetal17@gmail.com" || email === "roee")) {
-        const hashed = await hashPass(email, pass);
-        u = { id: "roee", email: "roeetal17@gmail.com", name: "Roee Tal", role: "friend", salt: hashed.salt, hash: hashed.hash };
-        state.allUsers.unshift(u);
-        this.saveUsers();
-      }
       if (!u) throw new Error("No account found with this email. Please sign up.");
       if (u.hash) {
         const h = await hashPass(email, pass, u.salt);
@@ -535,38 +529,11 @@
       return u;
     },
 
-        async loginRoee(password) {
-      const email = "roeetal17@gmail.com";
-      let u = state.allUsers.find(x => x.id === "roee" || x.email.toLowerCase() === email);
-      if (!u) {
-        const hashed = await hashPass(email, password);
-        u = { id: "roee", email: "roeetal17@gmail.com", name: "Roee Tal", role: "owner", salt: hashed.salt, hash: hashed.hash };
-        state.allUsers.unshift(u);
-        this.saveUsers();
-      } else if (u.hash) {
-        const h = await hashPass(email, password, u.salt);
-        if (h.hash !== u.hash) {
-          await new Promise(r => setTimeout(r, 600));
-          throw new Error("סיסמה שגויה (Incorrect password).");
-        }
-      }
-
-      state.currentUser = publicUser(u);
-      sessionStorage.setItem("cve_cur_user", JSON.stringify(state.currentUser));
-      state.activeOwnerId = "roee";
-
-      // Load Roee's CVs from /content/cv.json
-      await Storage.loadSiteCv();
-
-      const ownerCvs = state.vault["roee"] || {};
-      state.activeCvId = Object.keys(ownerCvs)[0] || "unity-ats";
-
-      updateMainWebsiteCvButton();
-      renderTopbarAuth();
-      renderA4Sheet();
-      renderSidebar();
-      return u;
+        // The owner signs in with Google now; the old password login is switched off.
+        async loginRoee() {
+      throw new Error("Sign in with Google.");
     },
+
 
         logout(e) {
       if (e && e.stopPropagation) e.stopPropagation();
@@ -3837,7 +3804,7 @@
     const id = "g_" + gu.uid;
     const guestCv = state.vault["guest"] && state.vault["guest"]["starter"];
     const guestEdited = !!guestCv && JSON.stringify(guestCv) !== JSON.stringify(STARTER_DEFAULT_CV);
-    state.currentUser = { id, uid: gu.uid, email: gu.email, name: gu.name || gu.email.split("@")[0], photo: gu.photo, verified: gu.verified, role: "friend", cloud: true };
+    state.currentUser = { id, uid: gu.uid, email: gu.email, name: gu.name || gu.email.split("@")[0], photo: gu.photo, verified: gu.verified, role: "friend", cloud: true, owner: gu.verified && await isOwnerEmail(gu.email) };
     renderTopbarAuth();
     showSaveIndicator("☁ Loading your résumés…");
     let cvs = {};
@@ -3872,62 +3839,29 @@
   }
 
 
-  function selectGoogleAccount(email, name) {
-    const emailInput = document.getElementById("cveGoogleEmailInput");
-    const nameInput = document.getElementById("cveGoogleNameInput");
-    if (emailInput) emailInput.value = email;
-    if (nameInput) nameInput.value = name || "";
-    submitGoogleEmailAuth();
-  }
+  // Old fake account chooser: now opens the real Google sign-in.
+  function selectGoogleAccount() { openGoogleAuthModal(); }
 
-  async function submitGoogleEmailAuth() {
-    const emailInput = document.getElementById("cveGoogleEmailInput");
-    const nameInput = document.getElementById("cveGoogleNameInput");
-    const passInput = document.getElementById("cveRoeePassInput");
-    const passGroup = document.getElementById("cveRoeePassGroup");
-    const errEl = document.getElementById("googleAuthError");
 
-    const email = (emailInput ? emailInput.value : "").trim();
-    const name = (nameInput ? nameInput.value : "").trim();
-    const pass = (passInput ? passInput.value : "").trim();
+  // Old "type your Gmail" form: now opens the real Google sign-in.
+  async function submitGoogleEmailAuth() { return openGoogleAuthModal(); }
 
-    if (errEl) errEl.textContent = "";
-
-    if (!email || !email.includes("@")) {
-      if (errEl) errEl.textContent = "נא להזין כתובת מייל תקינה (Please enter a valid Gmail / Google email address)";
-      return;
-    }
-
-    try {
-      if (email.toLowerCase() === "roeetal17@gmail.com" || email.toLowerCase() === "roee") {
-        if (!pass) {
-          if (passGroup) passGroup.style.display = "block";
-          if (errEl) errEl.textContent = "זוהה חשבון המנהל של רועי. נא להזין סיסמה כדי להתחבר.";
-          if (passInput) passInput.focus();
-          return;
-        }
-        await Storage.loginRoee(pass);
-        const m = document.getElementById("googleAuthModal");
-        if (m) m.classList.remove("open");
-        showToast("👑 שלום רועי! התחברת בהצלחה לחשבון המנהל.");
-      } else {
-        await Storage.loginWithGoogle(email, name);
-        const m = document.getElementById("googleAuthModal");
-        if (m) m.classList.remove("open");
-        const displayName = name || email.split("@")[0];
-        showToast(`🎉 שלום ${displayName}! החשבון האישי שלך מחובר בהצלחה.`);
-      }
-    } catch (err) {
-      if (errEl) errEl.textContent = err.message || "שגיאה בהתחברות";
-    }
-  }
 
   // The site owner: signed in with Google (verified) as the owner's address. This only changes what the UI offers;
   // the data itself is protected by the Firestore rules (each user can open only their own vault).
-  const OWNER_EMAIL = "roeetal17@gmail.com";
+  // The owner's Google addresses, stored only as SHA-256 hashes so the code doesn't publish them.
+  const OWNER_EMAIL_HASHES = [
+    "21e9a2d8b958f2e90dbb9a70748001e41e4ed2f4ab96b7fa2263a46c40c30c55",
+    "d3d450b638535a86b38b3f512ee147adfd47db807c84e59163c158834e5c3de3"
+  ];
+  // True when this (verified) email is one of the owner's.
+  async function isOwnerEmail(email) {
+    const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(email || "").trim().toLowerCase()));
+    return OWNER_EMAIL_HASHES.includes([...new Uint8Array(d)].map(x => x.toString(16).padStart(2, "0")).join(""));
+  }
   function isRoeeUser() {
     const u = state.currentUser;
-    return Boolean(u && u.cloud && u.verified && u.email === OWNER_EMAIL);
+    return Boolean(u && u.cloud && u.verified && u.owner);
   }
 
   function updateMainWebsiteCvButton() {
