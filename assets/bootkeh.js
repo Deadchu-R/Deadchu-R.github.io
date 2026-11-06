@@ -208,7 +208,8 @@
     updateLanguage();
     renderSetupView();
     attachEventListeners();
-    generateGame(); // initial quick game
+    generateGame(false); // prepare initial game data silently
+    setTab("setup");     // start on Setup view as requested
   }
 
   function loadSavedPlayers() {
@@ -385,7 +386,7 @@
   }
 
   // --- Game Generation Core Logic ---
-  function generateGame() {
+  function generateGame(autoSwitch = true) {
     const count = parseInt(state.playerCount, 10) || 8;
     const baseDist = (window.BOOTKEH_PLAYER_DISTRIBUTION || {})[String(count)] || { townsfolk: 5, outsiders: 1, minions: 1, demons: 1 };
     let townsfolkNeeded = baseDist.townsfolk;
@@ -476,10 +477,10 @@
     renderBoardView();
     renderSheetView();
     renderCardsView();
-    setTab("board");
-
-    // Sound notification
-    SoundFX.playGong();
+    if (autoSwitch) {
+      setTab("board");
+      SoundFX.playGong();
+    }
   }
 
   // --- Dynamic First Night Information Calculator ---

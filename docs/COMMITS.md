@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 194 commits.
+Total: 195 commits.
 
 ## 2026-10-31
 
@@ -986,7 +986,12 @@ Bootkeh: Blood on the Clocktower generator & storyteller assistant (roeetal.com/
 
 files: Bootkeh.html, Bootkeh/index.html, CHANGELOG.md, assets/bootkeh-data.js, assets/bootkeh.css, assets/bootkeh.js, build.py, tools/generate_bootkeh_roles.py
 
-### 6b50cb6 · 2026-11-06 · Roee Tal
+### ba93ca5 · 2026-11-06 · Roee Tal
 docs: refresh commit log
 
 files: docs/COMMITS.md
+
+### 9fc5675 · 2026-11-06 · Roee Tal
+Bootkeh: start on setup view, add 404 smart routing for lowercase /bootkeh and /cveditor
+
+files: 404.html, assets/bootkeh.js

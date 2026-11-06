@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>מעביר עמוד... | roeetal.com</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    .box {
+      background: #1e293b;
+      padding: 32px;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      max-width: 420px;
+    }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    p { color: #94a3b8; font-size: 14px; margin: 0 0 16px; }
+    a { color: #38bdf8; text-decoration: none; font-weight: 600; }
+  </style>
+  <script>
+    (function() {
+      var p = window.location.pathname.toLowerCase();
+      var s = window.location.search || '';
+      var h = window.location.hash || '';
+
+      if (p.indexOf('bootkeh') !== -1) {
+        window.location.replace('/Bootkeh/' + s + h);
+        return;
+      }
+      if (p.indexOf('cveditor') !== -1) {
+        window.location.replace('/CVEditor/' + s + h);
+        return;
+      }
+      if (p.indexOf('cv') !== -1) {
+        window.location.replace('/cv.html' + s + h);
+        return;
+      }
+      // Fallback redirect to home page
+      setTimeout(function() {
+        window.location.replace('/' + s);
+      }, 1500);
+    })();
+  </script>
+</head>
+<body>
+  <div class="box">
+    <h1>מעביר אותך לעמוד המבוקש...</h1>
+    <p>אם אינך מועבר אוטומטית תוך רגע, לחץ כאן:</p>
+    <p><a href="/Bootkeh/">למעבר ל-Bootkeh (דם על מגדל השעון)</a></p>
+    <p><a href="/">לדף הבית roeetal.com</a></p>
+  </div>
+</body>
+</html>
