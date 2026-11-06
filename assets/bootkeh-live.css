@@ -47,7 +47,7 @@ body.bkp-mode { overflow-x: hidden; }
 #bkPlayerApp { box-sizing: border-box; width: 100%; position: relative; z-index: 2; max-width: 520px; margin: 0 auto; padding: 0 14px calc(28px + env(safe-area-inset-bottom)); color: #f3e7cb;
   font-family: var(--bk-font-sans); display: grid; gap: 12px; }
 #bkPlayerApp > * { min-width: 0; box-sizing: border-box; }
-.bkp-load { padding: 40vh 0; text-align: center; font-size: 24px; }
+.bkp-load { padding: calc(var(--bk-vh, 100vh) * 0.4) 0; text-align: center; font-size: 24px; }
 .bkp-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: calc(12px + env(safe-area-inset-top)) 2px 12px; background: linear-gradient(180deg, rgba(10, 6, 12, .96), rgba(10, 6, 12, .75)); backdrop-filter: blur(8px); }
 .bkp-top small { display: block; font-size: 12px; color: var(--bk-gold); }
@@ -101,7 +101,7 @@ body.bkp-mode { overflow-x: hidden; }
 .bkp-town span.dead { opacity: .5; text-decoration: line-through; }
 .bkp-town span.me { box-shadow: 0 0 0 1px var(--bk-gold) inset; }
 .bkp-foot { text-align: center; font-size: 12px; color: var(--bk-text-muted); }
-.bkp-end { text-align: center; padding: 30vh 10px; } .bkp-candle { font-size: 54px; } .bkp-end h2 { font-family: "Cinzel Decorative", var(--bk-font-serif); color: var(--bk-gold-light); }
+.bkp-end { text-align: center; padding: calc(var(--bk-vh, 100vh) * 0.3) 10px; } .bkp-candle { font-size: 54px; } .bkp-end h2 { font-family: "Cinzel Decorative", var(--bk-font-serif); color: var(--bk-gold-light); }
 .bkp-toast { position: fixed; z-index: 6000; inset-inline: 12px; top: calc(10px + env(safe-area-inset-top)); max-width: 500px; margin: 0 auto; padding: 14px 16px; border-radius: 16px;
   background: #3a0a10; border: 1px solid var(--bk-gold); box-shadow: 0 14px 40px rgba(0, 0, 0, .6); display: grid; gap: 4px; transform: translateY(-140%); transition: transform .3s ease; }
 .bkp-toast.on { transform: none; } .bkp-toast b { font-size: 16px; color: #fff6d8; } .bkp-toast span { font-size: 14px; color: #f1dfb5; }
@@ -123,7 +123,7 @@ body.bkp-mode { overflow-x: hidden; }
   .bootkeh-logo-wrap { flex-wrap: wrap; justify-content: center; row-gap: 2px; min-width: 0; }
   .bk-ver { flex-basis: 100%; text-align: center; margin: 0; padding: 0; border: 0; font-size: 9.5px; }
 }
-.bk-group { display: grid; gap: 10px; max-height: 90vh; overflow: auto; }
+.bk-group { display: grid; gap: 10px; max-height: calc(var(--bk-vh, 100vh) * 0.9); overflow: auto; }
 .bk-group a.bk-btn { display: flex; align-items: center; justify-content: center; text-decoration: none; min-height: 48px; }
 .bk-qr { display: flex; justify-content: center; } .bk-qr img, .bk-qr canvas { border-radius: 10px; border: 6px solid #f3e7cb; }
 .bk-group-list { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -161,7 +161,7 @@ html, body { overflow-x: clip; max-width: 100%; }
 /* ---------- picked roles column / tray ---------- */
 .bk-picked-count { font: 600 12.5px/1 var(--bk-font-sans); color: var(--bk-gold-light); margin-inline-start: 6px; }
 .bk-roles-split { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; align-items: start; }
-.bk-picked { position: sticky; top: 80px; max-height: calc(100vh - 110px); overflow: auto; background: rgba(12, 8, 14, .92); border: 1px solid rgba(212, 175, 55, .35);
+.bk-picked { position: sticky; top: 80px; max-height: calc(var(--bk-vh, 100vh) - 110px); overflow: auto; background: rgba(12, 8, 14, .92); border: 1px solid rgba(212, 175, 55, .35);
   border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
 .bk-picked-top { display: grid; gap: 4px; } .bk-picked-top b { font: 700 16px/1.2 var(--bk-font-serif); color: var(--bk-gold-light); }
 .bk-picked-top span { font-size: 12.5px; } .bk-picked-top .warn { color: #fcd34d; } .bk-picked-top .ok { color: #86efac; }
@@ -180,7 +180,7 @@ html, body { overflow-x: clip; max-width: 100%; }
 .bkp-top-btns { display: inline-flex; gap: 8px; }
 .bkp-sheet { position: fixed; inset: 0; z-index: 60; }
 .bkp-sheet-bg { position: absolute; inset: 0; background: rgba(0, 0, 0, .55); opacity: 0; transition: opacity .25s; }
-.bkp-sheet-card { position: absolute; inset-inline: 0; bottom: 0; max-height: 82vh; display: grid; grid-template-rows: auto auto 1fr; background: #1a1219; border-top: 1px solid var(--bk-gold);
+.bkp-sheet-card { position: absolute; inset-inline: 0; bottom: 0; max-height: calc(var(--bk-vh, 100vh) * 0.82); display: grid; grid-template-rows: auto auto 1fr; background: #1a1219; border-top: 1px solid var(--bk-gold);
   border-radius: 20px 20px 0 0; transform: translateY(100%); transition: transform .28s ease; padding-bottom: env(safe-area-inset-bottom); max-width: 620px; margin: 0 auto; color: #f3e7cb; }
 .bkp-sheet.on .bkp-sheet-bg { opacity: 1; } .bkp-sheet.on .bkp-sheet-card { transform: none; }
 .bkp-sheet-grab { width: 44px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .25); margin: 8px auto 0; }
@@ -221,7 +221,7 @@ html, body { overflow-x: clip; max-width: 100%; }
   .bk-role-search-wrap .bk-btn { flex: 1 1 auto; }
   .bk-roles-split { grid-template-columns: 1fr; }
   /* on phones the picked roles sit in a tray above the bottom bar, always in view */
-  .bk-picked { position: sticky; top: auto; bottom: 84px; z-index: 30; max-height: 34vh; box-shadow: 0 -10px 30px rgba(0, 0, 0, .55); }
+  .bk-picked { position: sticky; top: auto; bottom: 84px; z-index: 30; max-height: calc(var(--bk-vh, 100vh) * 0.34); box-shadow: 0 -10px 30px rgba(0, 0, 0, .55); }
   .bk-picked-group > div { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
   .bk-picked-chip { flex: none; }
   .bk-theme-card, .bk-theme-grid > * { font-size: 14px; }
@@ -344,7 +344,7 @@ html, body { overflow-x: clip; max-width: 100%; }
 /* ---------- live drag: the browser keeps up/down scrolling and pinch, sideways belongs to the page ---------- */
 .bootkeh-main { touch-action: pan-y pinch-zoom; }
 .bk-role-filter-chips, .bk-themegen-cats, .bk-picked-group > div, .bk-no-swipe, input[type="range"] { touch-action: pan-x pan-y pinch-zoom; }
-.bootkeh-view.active, .bootkeh-view.bk-peek { transform-origin: 50% 30vh; backface-visibility: hidden; }
+.bootkeh-view.active, .bootkeh-view.bk-peek { transform-origin: 50% calc(var(--bk-vh, 100vh) * 0.3); backface-visibility: hidden; }
 /* the tab being dragged to lights up with the drag (--bk-drag from 0 to 1) */
 .bootkeh-tab-btn { --bk-drag: 0; }
 .bootkeh-tab-btn:not(.active) { background-color: rgba(122, 20, 32, calc(var(--bk-drag) * .55)) !important; transform: translateY(calc(var(--bk-drag) * -3px)); }
@@ -432,7 +432,7 @@ html, body { overflow-x: clip; max-width: 100%; }
 /* ---------- my sets ---------- */
 .bk-set-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .bk-set-tools .bk-btn { flex: 1 1 auto; justify-content: center; }
-.bk-set-roles { display: flex; flex-wrap: wrap; gap: 6px; max-height: 40vh; overflow: auto; }
+.bk-set-roles { display: flex; flex-wrap: wrap; gap: 6px; max-height: calc(var(--bk-vh, 100vh) * 0.4); overflow: auto; }
 .bk-set-roles button { appearance: none; padding: 7px 10px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .15); background: rgba(255, 255, 255, .06); color: #f3e7cb; font: 600 13px/1 var(--bk-font-sans); cursor: pointer; }
 .bk-set-roles button i { font-style: normal; opacity: .55; }
 .bk-set-roles .townsfolk { border-color: rgba(56, 189, 248, .5); } .bk-set-roles .outsider { border-color: rgba(45, 212, 191, .5); }
@@ -440,7 +440,7 @@ html, body { overflow-x: clip; max-width: 100%; }
 
 /* ---------- saved players window: fits the screen and scrolls, header with Back stays on top ---------- */
 .bootkeh-modal-backdrop.open { align-items: center; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
-.bootkeh-modal { max-height: calc(100dvh - 24px); display: flex !important; flex-direction: column; overflow: hidden; width: min(560px, 100%); }
+.bootkeh-modal { max-height: calc(var(--bk-vh, 100vh) - 24px); display: flex !important; flex-direction: column; overflow: hidden; width: min(560px, 100%); }
 .bootkeh-modal-header { position: sticky; top: 0; z-index: 2; display: flex !important; align-items: center; gap: 10px; flex: none; }
 .bootkeh-modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; flex: 1; min-height: 0; }
 

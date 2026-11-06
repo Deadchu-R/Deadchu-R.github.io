@@ -13,7 +13,12 @@
           sw = Math.min(screen.width || 9999, screen.height || 9999);
       if (!(coarse && sw <= 820) && !/Android.+Mobile|iPhone|iPod/i.test(navigator.userAgent)) return;
       d.classList.add("bk-phone");
-      function fit() { var r = window.innerWidth / (screen.width || window.innerWidth); d.style.zoom = r > 1.2 ? r.toFixed(3) : ""; }
+      function fit() {
+        var r = window.innerWidth / (screen.width || window.innerWidth), z = r > 1.2 ? r : 1;
+        d.style.zoom = z > 1 ? z.toFixed(3) : "";
+        // the visible screen height in page pixels — use var(--bk-vh) instead of vh (vh would be zoomed as well)
+        d.style.setProperty("--bk-vh", (window.innerHeight / z).toFixed(1) + "px");
+      }
       fit(); addEventListener("resize", fit); addEventListener("orientationchange", function () { setTimeout(fit, 300); });
     })();
   </script>
@@ -25,7 +30,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="../assets/bootkeh.css?v=9c3fa812">
   <link rel="stylesheet" href="../assets/bootkeh-medieval.css?v=23c27a0d">
-  <link rel="stylesheet" href="../assets/bootkeh-live.css?v=b74868db">
+  <link rel="stylesheet" href="../assets/bootkeh-live.css?v=2a73823a">
 </head>
 <body class="bootkeh-body">
 
@@ -39,7 +44,7 @@
       <div class="bootkeh-logo-wrap">
         <span class="bootkeh-logo-icon">🕰️</span>
         <span class="bootkeh-title">Bootkeh</span>
-        <span class="bk-ver" id="bkVersion" data-v="fdf9a0"></span>
+        <span class="bk-ver" id="bkVersion" data-v="248b2f"></span>
       </div>
     </div>
 
@@ -370,6 +375,6 @@
   <script src="../assets/bootkeh-sets.js?v=e3da8048"></script>
   <script src="../assets/bootkeh-rules.js?v=a69fba06"></script>
   <script src="../assets/bootkeh-live.js?v=cd776f03"></script>
-  <script src="../assets/bootkeh.js?v=5934a5b1"></script>
+  <script src="../assets/bootkeh.js?v=544b6596"></script>
 </body>
 </html>

@@ -1909,6 +1909,7 @@
     if (!m) return;
     renderSavedPlayersList();
     m.classList.add("open");
+    document.documentElement.style.overflow = "hidden";   // the page behind doesn't scroll — only the list
     try { history.pushState({ bkTab: state.activeTab || "setup", bkModal: 1 }, ""); } catch (e) {}   // the phone's Back closes it
   }
 
@@ -1916,6 +1917,7 @@
     const m = $("#savedPlayersModal");
     if (!m || !m.classList.contains("open")) return;
     m.classList.remove("open");
+    document.documentElement.style.overflow = "";
     if (!fromHistory && history.state && history.state.bkModal) history.back();
   }
 
