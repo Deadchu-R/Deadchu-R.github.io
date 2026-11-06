@@ -8,6 +8,8 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **My role sets** (assets/bootkeh-sets.js): save the set you built into the "Role set" list ("My sets", delete too); import a set from a picture of a script sheet (OCR in the browser with Tesseract.js — the Crimson Guard sheet reads 20/20) or from Script Tool / botcscripts.com JSON (official ids map to ours). "Bad Moon Rising" added to the list.
+  - **Players** is a shutter like Roles and Game world; phone numbers removed (players join with the group link / QR code). Default player list: Sit's group (Blam, Eden, Jonch, Shai, Danino, Gersh, Gil, Tama, Ilya, Tal, Michelle, Benny).
   - **Bottom-bar bubble fixed on real phones:** it is now sized and moved as a share of the whole bar (1/4 per tab) instead of pixel measurements, so phone zoom no longer makes it huge or puts it in the wrong place.
   - **Choosing a character** on the player's phone (Philosopher, Pit-Hag, Gambler, Cerenovus, Courtier), from the game's roles.
   - **Storyteller decisions:** after a choice, the storyteller gets a decision card with ready options (Fortune Teller yes/no with the truth marked — red herring and poison included; Ravenkeeper, Dreamer, Gambler, Cerenovus, Pit-Hag role change, Philosopher ability + the real holder made drunk, Courtier, Snake Charmer swap, the Imp killing itself → pick the new Imp) — each option sends messages to the right players and changes the game; plus "your own call" to message the relevant players, and a "message chosen players" tool in every phase.

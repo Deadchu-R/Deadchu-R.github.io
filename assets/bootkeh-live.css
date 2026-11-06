@@ -428,3 +428,12 @@ html, body { overflow-x: clip; max-width: 100%; }
   body.bootkeh-body { padding-bottom: 104px !important; }
   .bk-picked { bottom: 96px !important; }
 }
+
+/* ---------- my sets ---------- */
+.bk-set-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.bk-set-tools .bk-btn { flex: 1 1 auto; justify-content: center; }
+.bk-set-roles { display: flex; flex-wrap: wrap; gap: 6px; max-height: 40vh; overflow: auto; }
+.bk-set-roles button { appearance: none; padding: 7px 10px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .15); background: rgba(255, 255, 255, .06); color: #f3e7cb; font: 600 13px/1 var(--bk-font-sans); cursor: pointer; }
+.bk-set-roles button i { font-style: normal; opacity: .55; }
+.bk-set-roles .townsfolk { border-color: rgba(56, 189, 248, .5); } .bk-set-roles .outsider { border-color: rgba(45, 212, 191, .5); }
+.bk-set-roles .minion { border-color: rgba(251, 146, 60, .55); } .bk-set-roles .demon { border-color: rgba(239, 68, 68, .6); }

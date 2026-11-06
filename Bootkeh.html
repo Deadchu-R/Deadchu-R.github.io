@@ -118,6 +118,14 @@
                 <option value="custom">מותאם אישית</option>
               </select>
               <button type="button" class="bk-btn bk-pick-roles-btn" onclick="window.Bootkeh.openRolePicker()">✎ <span>בחירת התפקידים בעצמך</span></button>
+              <!-- my sets: save the set you built, import a set from a picture of a script sheet or from its JSON (assets/bootkeh-sets.js) -->
+              <div class="bk-set-tools">
+                <button type="button" class="bk-btn sm" onclick="window.BKSets.saveCurrent()">💾 <span>שמור כסט</span></button>
+                <button type="button" class="bk-btn sm" onclick="window.BKSets.pickImage()">📷 <span>סט מתמונה</span></button>
+                <button type="button" class="bk-btn sm" onclick="window.BKSets.pasteJSON()">{ } <span>סט מ־JSON</span></button>
+                <button type="button" class="bk-btn sm" id="bkSetDel" hidden onclick="window.BKSets.deleteCurrent()">🗑 <span>מחק סט</span></button>
+              </div>
+              <div id="bkSetStatus" class="bk-hint"></div>
             </div>
             <div class="bk-roles-box" id="bkRolesBox">
               <div class="bk-label" style="margin:14px 0 6px;">בחירה ידנית <span id="bkPickedCount" class="bk-picked-count"></span></div>
@@ -165,31 +173,20 @@
           </div>
         </details>
 
-        <!-- Player Names & WhatsApp Roster -->
-        <div style="margin-top:24px;border-top:1px solid rgba(212,175,55,0.25);padding-top:20px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-            <div>
-              <label class="bk-label" style="margin:0;font-size:15px;">שחקנים וטלפונים</label>
-              <div id="rosterCountSummary" style="font-size:12px;color:var(--bk-text-muted);margin-top:3px;">
-                <b id="rosterCountVal" style="color:var(--bk-gold-light);">8</b> מושבים. הטלפון משמש לשליחת התפקיד ב־WhatsApp.
-              </div>
+        <!-- Players: a shutter like Roles / Game world. Names only — players get their role through the group link / QR code -->
+        <details class="bk-panel" id="bkPanelPlayers">
+          <summary><span class="bk-panel-ic" aria-hidden="true">👥</span><span class="bk-panel-t"><b>שחקנים</b><small id="bkPanelPlayersSum"></small></span><span class="bk-panel-chev" aria-hidden="true"></span></summary>
+          <div class="bk-panel-body">
+            <div id="rosterCountSummary" class="bk-hint" style="margin-bottom:10px;"><b id="rosterCountVal" style="color:var(--bk-gold-light);">8</b> מושבים.</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.autoFillRosterFromSaved()"><span>מלא מהרשימה השמורה</span></button>
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.clearRoster()"><span>נקה שמות</span></button>
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSavedPlayersModal()"><span>רשימת שחקנים</span></button>
             </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.autoFillRosterFromSaved()">
-                <span>מלא מהרשימה השמורה</span>
-              </button>
-              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.clearRoster()">
-                <span>נקה שמות</span>
-              </button>
-              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSavedPlayersModal()">
-                <span>רשימת שחקנים</span>
-              </button>
-            </div>
+            <!-- Dynamic Roster Inputs Generated According to Slider (5 to 15) -->
+            <div id="playerRosterInputs" class="bk-roster-grid"></div>
           </div>
-
-          <!-- Dynamic Roster Inputs Generated According to Slider (5 to 15) -->
-          <div id="playerRosterInputs" class="bk-roster-grid"></div>
-        </div>
+        </details>
 
         <div style="margin-top:26px;display:flex;justify-content:center;">
           <button type="button" class="bk-btn pri" style="padding:14px 34px;font-size:16px;font-weight:800;letter-spacing:0.5px;" onclick="window.Bootkeh.generateGame()">
@@ -369,6 +366,7 @@
   <script src="assets/bootkeh-roles-extra.js?v=20261106_30"></script>
   <script src="assets/bootkeh-themes.js?v=20261106_30"></script>
   <script src="assets/bootkeh-cloud.js?v=20261106_30"></script>
+  <script src="assets/bootkeh-sets.js?v=1"></script>
   <script src="assets/bootkeh-rules.js?v=1"></script>
   <script src="assets/bootkeh-live.js?v=20261106_30"></script>
   <script src="assets/bootkeh.js?v=20261106_30"></script>

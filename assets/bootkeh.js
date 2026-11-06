@@ -457,6 +457,7 @@
     attachEventListeners();
     attachSwipe();
     attachTabBar();
+    if (window.BKSets) window.BKSets.renderSelect();
     initPanels();
     generateGame(false); // prepare initial game data silently
     // a live game made on this device is still running: bring back that exact deal (same seats, roles and links)
@@ -486,23 +487,13 @@
   function loadSavedPlayers() {
     try {
       const s = localStorage.getItem("bootkeh_saved_players");
-      state.savedPlayers = s ? JSON.parse(s) : [
-        { id: "p1", name: "רועי / Roee", phone: "053-337-4350", notes: "Storyteller / Player" },
-        { id: "p2", name: "דני / Dan", phone: "", notes: "Likes Minions" },
-        { id: "p3", name: "שרה / Sarah", phone: "", notes: "Good investigator" },
-        { id: "p4", name: "מיכאל / Mike", phone: "", notes: "Always bluffing" },
-        { id: "p5", name: "עומר / Omer", phone: "", notes: "" },
-        { id: "p6", name: "טל / Tal", phone: "", notes: "" },
-        { id: "p7", name: "נועה / Noa", phone: "", notes: "" },
-        { id: "p8", name: "יוסי / Yossi", phone: "", notes: "" },
-        { id: "p9", name: "איתי / Itay", phone: "", notes: "" },
-        { id: "p10", name: "יעל / Yael", phone: "", notes: "" },
-        { id: "p11", name: "מאיה / Maya", phone: "", notes: "" },
-        { id: "p12", name: "אור / Or", phone: "", notes: "" },
-        { id: "p13", name: "גיא / Guy", phone: "", notes: "" },
-        { id: "p14", name: "שירה / Shira", phone: "", notes: "" },
-        { id: "p15", name: "עדי / Adi", phone: "", notes: "" }
-      ];
+      // default list: Sit's group (from github.com/ItaiSitnik/Main, BOTC/main.py). Names only — no phone numbers.
+      const SIT = ["Blam", "Eden", "Jonch", "Shai", "Danino", "Gersh", "Gil", "Tama", "Ilya", "Tal", "Michelle", "Benny"]
+        .map((name, i) => ({ id: "sit" + (i + 1), name, phone: "", notes: "" }));
+      let list = s ? JSON.parse(s) : null;
+      // the old built-in sample list (p1… "רועי / Roee") is replaced by Sit's list once
+      if (!list || (list[0] && list[0].id === "p1" && /Roee/.test(list[0].name) && list.length === 15)) { list = SIT; try { localStorage.setItem("bootkeh_saved_players", JSON.stringify(list)); } catch (e) {} }
+      state.savedPlayers = list;
     } catch (_) {
       state.savedPlayers = [];
     }
@@ -594,7 +585,7 @@
   }
 
   function getScript(id) {
-    return (window.BOOTKEH_SCRIPTS || {})[id] || null;
+    return (window.BOOTKEH_SCRIPTS || {})[id] || (window.BKSets && String(id).startsWith("u_") ? window.BKSets.get(id) : null) || null;   // built-in or my saved set
   }
 
   function getTheme(id) {
@@ -614,9 +605,9 @@
     const summaryEl = $("#rosterCountSummary");
     if (summaryEl) {
       if (state.lang === "he") {
-        summaryEl.innerHTML = `<b style="color:var(--bk-gold-light);">${count}</b> מושבים. הטלפון משמש לשליחת התפקיד ב־WhatsApp.`;
+        summaryEl.innerHTML = `<b style="color:var(--bk-gold-light);">${count}</b> מושבים. השמות מופיעים בטלפונים — כל שחקן לוחץ על השם שלו בקישור הקבוצתי.`;
       } else {
-        summaryEl.innerHTML = `<b style="color:var(--bk-gold-light);">${count}</b> seats. The phone is used to send the role on WhatsApp.`;
+        summaryEl.innerHTML = `<b style="color:var(--bk-gold-light);">${count}</b> seats. The names show on the phones — each player taps their own name on the group link.`;
       }
     }
 
@@ -624,7 +615,6 @@
     for (let i = 0; i < count; i++) {
       const item = state.roster[i] || { name: "", phone: "" };
       const placeholderName = state.lang === "he" ? `שחקן ${i + 1}` : `Player ${i + 1}`;
-      const placeholderPhone = state.lang === "he" ? "טלפון לווצאפ (05...)" : "Phone (05...)";
 
       const savedOptions = state.savedPlayers.map(sp => 
         `<option value="${sp.id}">${esc(sp.name)}</option>`
@@ -634,7 +624,6 @@
         <div class="bk-roster-row">
           <div class="bk-roster-seat">#${i + 1}</div>
           <input type="text" class="bk-input bk-roster-name-input" value="${esc(item.name)}" placeholder="${placeholderName}" oninput="window.Bootkeh.updateRosterItem(${i}, 'name', this.value)">
-          <input type="text" class="bk-input bk-roster-phone-input" value="${esc(item.phone)}" placeholder="${placeholderPhone}" oninput="window.Bootkeh.updateRosterItem(${i}, 'phone', this.value)">
           <select class="bk-roster-quick-pick" onchange="window.Bootkeh.quickAssignRosterSeat(${i}, this.value)">
             <option value="">👤 ${state.lang === "he" ? "שמור..." : "Saved..."}</option>
             ${savedOptions}
@@ -844,6 +833,9 @@
       r.textContent = `${custom ? (he ? "מותאם אישית" : "Custom") : getScriptTitle()} · ${n} ${he ? "תפקידים" : "roles"}`;
     }
     if (t) t.textContent = getThemeTitle();
+    const pl = document.getElementById("bkPanelPlayersSum");
+    if (pl) { const n = parseInt(state.playerCount, 10) || 8, named = (state.roster || []).slice(0, n).filter(x => x && x.name && x.name.trim()).length;
+      pl.textContent = he ? `${n} מושבים · ${named ? `${named} עם שם` : "בלי שמות עדיין"}` : `${n} seats · ${named ? `${named} named` : "no names yet"}`; }
   }
 
   // "Pick the roles yourself": open the role picker and start it from the chosen set (so you edit that list).
@@ -903,6 +895,7 @@
 
   function setScript(scriptId) {
     state.scriptId = scriptId;
+    if (window.BKSets) setTimeout(() => window.BKSets.renderSelect(), 0);   // show / hide "delete set"
     if (scriptId !== "custom") {
       const script = getScript(scriptId);
       if (script && script.roles) {
@@ -2007,6 +2000,8 @@
     getThemeTitle,
     getRole,
     openRolePicker,
+    renderSetupView,
+    getScriptRoles: () => { const sc = getScript(state.scriptId); return sc ? sc.roles.slice() : state.customRoles.slice(); },
     useAlt,
     goBack,
     setThemeFam,
