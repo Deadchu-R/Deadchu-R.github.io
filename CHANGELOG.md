@@ -8,6 +8,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Players stay connected after a refresh:** the personal key is kept on the phone twice (localStorage + a cookie, for in-app browsers that clear one); on the group link a "taken" name can be tapped again — the same phone goes straight back to its page, another phone is told to ask the storyteller. The storyteller can copy / resend each player's personal link (🔗) from the send-to-all panel. (Not by IP: everyone at the table shares the same Wi-Fi IP.)
   - **Fix: the QR code / links opened the main site.** Links were built from the page address, so from roeetal.com/Bootkeh (no slash) they pointed at "/". They now always point at /Bootkeh/; and the main page forwards any old link (?g=…&k= / &join=) to the Bootkeh page.
   - **Fix: windows taller than the phone screen.** With the phone-zoom fix, vh units were zoomed too (2.4× too tall). Heights now use --bk-vh, the real visible screen height set in Bootkeh.html; the page behind the saved-players window no longer scrolls.
   - **Fix: roeetal.com/Bootkeh (no slash) showed old files.** GitHub Pages serves that address from Bootkeh.html itself, whose ?v= marks were never updated, so phones kept old cached styles/scripts (the saved-players window without scrolling, phone fields…). build.py now stamps Bootkeh.html too (file hashes + version code, stable between builds) and writes bootkeh-version.json for the reload-when-newer check.

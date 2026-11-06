@@ -665,7 +665,7 @@
 
   // Open the player app for ?g=…&k=…
   async function openPlayer(gid, k) {
-    PL.gid = gid; PL.key = k;
+    PL.gid = gid; PL.key = k; seatMem.set(gid, k);
     try { PL.alerts = localStorage.getItem("bk_alerts") === "1"; } catch (e) {}
     document.body.classList.add("bkp-mode");   // hides the storyteller screens (see bootkeh-live.css)
     if (!document.getElementById("bkpToast")) { const t = document.createElement("div"); t.id = "bkpToast"; t.className = "bkp-toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
@@ -856,7 +856,9 @@
         <div class="bk-qr" id="bkQr" aria-label="QR"></div>
         <div class="bk-sendall-bar"><i style="width:${Math.round(taken / Math.max(1, ps.length) * 100)}%"></i></div>
         <div class="bk-sendall-count">${taken} / ${ps.length} ${tr("הצטרפו", "joined")}</div>
-        <div class="bk-group-list">${ps.map(p => `<span class="${ST.taken[p.seat] ? "on" : ""}">${p.seat}. ${esc(p.name)}${ST.taken[p.seat] ? ` ✓ <button type="button" data-free="${p.seat}" title="${tr("שחרר מושב", "Free seat")}">↺</button>` : ""}</span>`).join("")}</div>
+        <div class="bk-group-list">${ps.map(p => `<span class="${ST.taken[p.seat] ? "on" : ""}">${p.seat}. ${esc(p.name)}${ST.taken[p.seat] ? " ✓" : ""}
+          <button type="button" data-link="${p.seat}" title="${tr("הקישור האישי שלו — להעתקה / שליחה מחדש", "Their personal link — copy / resend")}">🔗</button>${ST.taken[p.seat] ? `<button type="button" data-free="${p.seat}" title="${tr("שחרר מושב", "Free seat")}">↺</button>` : ""}</span>`).join("")}</div>
+        <p class="bk-hint">${tr("🔗 = הקישור האישי של השחקן (אם החליף טלפון או לא מצליח להיכנס). ↺ = שחרור מושב שנלקח בטעות.", "🔗 = the player's personal link (if they changed phone or can't get in). ↺ = free a seat taken by mistake.")}</p>
         <div class="bk-join ${all ? "all" : ""}">${all ? tr("כולם הצטרפו — אפשר להתחיל!", "Everyone joined — you can start!") : tr(`ממתינים ל־${ps.length - taken} שחקנים…`, `Waiting for ${ps.length - taken} players…`)}</div>
         <button type="button" class="bk-btn pri bk-wide bk-big" data-act="start">${all ? tr("התחל — לילה 1", "Start — Night 1") : tr("התחל בכל זאת (בדיקה)", "Start anyway (test)")}</button>
         <details class="bk-hint"><summary>${tr("לשלוח לכל אחד בפרטי במקום?", "Send privately to each one instead?")}</summary>
@@ -869,6 +871,11 @@
       ov.querySelector('[data-act="start"]').onclick = async () => { ov.remove(); B().setTab("board"); await attach(); if (!ST.game || ST.game.phase === "lobby") await setPhase("night"); };
       ov.querySelector('[data-act="each"]').onclick = () => { ov.remove(); B().sendEachWhatsapp(); };
       ov.querySelectorAll("[data-free]").forEach(b => b.onclick = () => C().releaseSeat(g.gameId, +b.dataset.free).catch(e => alert(e.message || e)));
+      ov.querySelectorAll("[data-link]").forEach(b => b.onclick = () => {
+        const seat = +b.dataset.link, url = g.links[seat], who = (ps.find(p => p.seat === seat) || {}).name || "";
+        if (navigator.share) navigator.share({ title: who, text: tr(`${who} — הדף האישי שלך במשחק:`, `${who} — your personal page:`), url }).catch(() => {});
+        else { navigator.clipboard && navigator.clipboard.writeText(url); b.textContent = "✓"; setTimeout(() => b.textContent = "🔗", 1200); }
+      });
       drawQr(g.join);
     };
     GS.draw = draw; draw();
@@ -886,18 +893,31 @@
     qrLib.then(() => { box.innerHTML = ""; new window.QRCode(box, { text, width: 180, height: 180, colorDark: "#1a0f08", colorLight: "#f3e7cb", correctLevel: window.QRCode.CorrectLevel.M }); }).catch(() => { box.remove(); });
   }
 
+  // A player's personal key for a game, kept on this phone in two places (some in-app browsers clear one of them).
+  // Not by IP: everyone at the table shares the same Wi-Fi IP, and on mobile data it keeps changing.
+  const seatMem = {
+    get(gid) {
+      try { const k = localStorage.getItem("bk_seat_" + gid); if (k) return k; } catch (e) {}
+      const m = new RegExp("(?:^|; )bk_seat_" + gid.replace(/[^\w-]/g, "") + "=([^;]+)").exec(document.cookie); return m ? decodeURIComponent(m[1]) : null;
+    },
+    set(gid, k) {
+      try { localStorage.setItem("bk_seat_" + gid, k); } catch (e) {}
+      try { document.cookie = "bk_seat_" + gid.replace(/[^\w-]/g, "") + "=" + encodeURIComponent(k) + "; max-age=" + 13 * 3600 + "; path=/; SameSite=Lax; Secure"; } catch (e) {}
+    }
+  };
+
   // Player side of the group link: …/Bootkeh/?g=<game>&join=1
   const LB = { gid: null, sel: null, taken: {}, busy: false, game: null };
   async function openLobby(gid) {
     LB.gid = gid;
-    try { const k = localStorage.getItem("bk_seat_" + gid); if (k) { location.replace(location.pathname + `?g=${gid}&k=${k}`); return; } } catch (e) {}
+    { const k = seatMem.get(gid); if (k) { location.replace(location.pathname + `?g=${gid}&k=${k}`); return; } }
     document.body.classList.add("bkp-mode");
     let root = document.getElementById("bkPlayerApp");
     if (!root) { root = document.createElement("div"); root.id = "bkPlayerApp"; root.className = "bkp"; document.body.appendChild(root); }
     root.innerHTML = `<div class="bkp-load">…</div>`;
     if (!C()) return;
     await C().watchGame(gid, st => { LB.game = st; drawLobby(); });
-    await C().watchTaken(gid, t => { LB.taken = Object.assign({}, t); if (LB.sel && t[LB.sel] && !LB.busy) LB.sel = null; drawLobby(); });
+    await C().watchTaken(gid, t => { LB.taken = Object.assign({}, t); drawLobby(); });
   }
   function drawLobby() {
     const root = document.getElementById("bkPlayerApp"); if (!root) return;
@@ -909,9 +929,10 @@
         <button type="button" class="bkp-bell" onclick="window.BKLive.openRoles()" aria-label="${T("התפקידים במשחק", "Roles in this game")}" title="${T("התפקידים במשחק", "Roles in this game")}">📜</button></header>
       <div class="bkp-notice">${T(`${free} מקומות פנויים · השמות שנלקחו מתעדכנים בזמן אמת`, `${free} seats free · taken names update live`)}</div>
       <p class="bkp-hint">${T("לחץ על השם שלך. אחרי זה המושב ננעל לטלפון הזה ותקבל רק את התפקיד שלך.", "Tap your name. The seat then locks to this phone and you'll see only your own role.")}</p>
-      <div class="bkp-pick">${(s.seats || []).map(x => `<button type="button" class="${LB.sel === x.seat ? "sel" : ""}${LB.taken[x.seat] ? " taken" : ""}" data-seat="${x.seat}"${LB.taken[x.seat] ? " disabled" : ""}>
+      <div class="bkp-pick">${(s.seats || []).map(x => `<button type="button" class="${LB.sel === x.seat ? "sel" : ""}${LB.taken[x.seat] ? " taken" : ""}" data-seat="${x.seat}">
         <i>${x.seat}</i><span>${esc(x.name)}</span>${LB.taken[x.seat] ? `<small>${T("תפוס", "taken")}</small>` : ""}</button>`).join("")}</div>
-      ${LB.sel ? `<button type="button" class="bkp-reveal" id="bkpClaim"${LB.busy ? " disabled" : ""}>${LB.busy ? "…" : T("כן, זה אני — ", "Yes, that's me — ") + esc(((s.seats || []).find(x => x.seat === LB.sel) || {}).name || "")}</button>` : ""}
+      <p class="bkp-hint">${T("יצאת או רעננת? לחץ שוב על השם שלך — מאותו טלפון תחזור ישר לדף שלך.", "Left or refreshed? Tap your name again — from the same phone you go straight back to your page.")}</p>
+      ${LB.sel ? `<button type="button" class="bkp-reveal" id="bkpClaim"${LB.busy ? " disabled" : ""}>${LB.busy ? "…" : (LB.taken[LB.sel] ? T("זה אני — חזור לדף שלי · ", "That's me — back to my page · ") : T("כן, זה אני — ", "Yes, that's me — ")) + esc(((s.seats || []).find(x => x.seat === LB.sel) || {}).name || "")}</button>` : ""}
       <p class="bkp-hint" id="bkpLobbyMsg">${esc(LB.msg || "")}</p>`;
     root.querySelectorAll("[data-seat]").forEach(b => b.onclick = () => { LB.sel = +b.dataset.seat; LB.msg = ""; drawLobby(); });
     const go = document.getElementById("bkpClaim");
@@ -919,11 +940,11 @@
       LB.busy = true; drawLobby();
       try {
         const k = await C().claimSeat(LB.gid, LB.sel);
-        try { localStorage.setItem("bk_seat_" + LB.gid, k); } catch (e) {}
+        seatMem.set(LB.gid, k);
         location.replace(location.pathname + `?g=${LB.gid}&k=${k}`);
       } catch (e) {
         LB.taken[LB.sel] = true; LB.sel = null; LB.busy = false;
-        LB.msg = T("המושב הזה כבר נלקח. אם זה אתה — בקש ממספר הסיפורים לשחרר אותו.", "That seat is already taken. If it's yours, ask the storyteller to free it.");
+        LB.msg = T("המושב הזה נלקח מטלפון אחר. אם זה אתה — בקש ממספר הסיפורים לשלוח לך שוב את הקישור האישי שלך (או לשחרר את המושב).", "That seat was taken from another phone. If it's yours, ask the storyteller to resend your personal link (or free the seat).");
         drawLobby();
       }
     };
