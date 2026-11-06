@@ -8,8 +8,9 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="assets/bootkeh.css?v=20261106_03">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="assets/bootkeh.css?v=20261106_10">
+  <link rel="stylesheet" href="assets/bootkeh-medieval.css?v=20261106_10">
 </head>
 <body class="bootkeh-body">
 
@@ -107,6 +108,8 @@
                 </button>
               </div>
               <input type="text" id="customThemeInput" class="bk-input" placeholder="או הקלד עולם חופשי משלך (למשל: ספינת פיראטים טרופה 1690)..." oninput="window.Bootkeh.setCustomTheme(this.value)" style="margin-bottom:10px;">
+              <!-- Theme generator: history / movies / RPG (assets/bootkeh-themes.js) -->
+              <div id="bkThemeGen" class="bk-themegen" style="margin:10px 0 12px;"></div>
               <div id="themeGrid" class="bk-theme-grid"></div>
             </div>
           </div>
@@ -124,11 +127,13 @@
               <button type="button" class="bk-btn sm" onclick="window.Bootkeh.deselectAllRoles()">✕ נקה הכל</button>
             </div>
             <div class="bk-role-filter-chips">
-              <button type="button" class="bk-role-filter-chip active" id="chip-filter-all" onclick="window.Bootkeh.setRoleFilterCat('all')">הכל (96)</button>
+              <button type="button" class="bk-role-filter-chip active" id="chip-filter-all" onclick="window.Bootkeh.setRoleFilterCat('all')">הכל</button>
               <button type="button" class="bk-role-filter-chip" id="chip-filter-townsfolk" onclick="window.Bootkeh.setRoleFilterCat('townsfolk')">תושבי העיירה 💙</button>
               <button type="button" class="bk-role-filter-chip" id="chip-filter-outsider" onclick="window.Bootkeh.setRoleFilterCat('outsider')">אאוטסיידרים 🏮</button>
               <button type="button" class="bk-role-filter-chip" id="chip-filter-minion" onclick="window.Bootkeh.setRoleFilterCat('minion')">משרתים 👺</button>
               <button type="button" class="bk-role-filter-chip" id="chip-filter-demon" onclick="window.Bootkeh.setRoleFilterCat('demon')">שדים 😈</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-traveller" onclick="window.Bootkeh.setRoleFilterCat('traveller')">נוסעים 🧳</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-fabled" onclick="window.Bootkeh.setRoleFilterCat('fabled')">אגדיים ✨</button>
             </div>
             <div id="customRolesMatrix"></div>
           </div>
@@ -229,6 +234,7 @@
     <!-- ================= VIEW 4: PLAYER CARDS & WHATSAPP ================= -->
     <section id="view-cards" class="bootkeh-view">
       <!-- WhatsApp Dispatch Center Banner -->
+      <div id="bkLiveBox"></div>
       <div class="bk-dispatch-banner">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
           <div>
@@ -313,6 +319,7 @@
           <div id="portalFirstNight"></div>
         </div>
 
+        <div id="portalExpiry" style="margin-top:12px;font-size:12px;opacity:.8;"></div>
         <div style="display:flex;gap:8px;margin-top:20px;">
           <button type="button" class="bk-btn sm" style="flex:1;" onclick="window.Bootkeh.toggleCurtain()">
             <span>🙈 הסתר מסך</span>
@@ -326,7 +333,10 @@
   </div>
 
   <!-- Scripts -->
-  <script src="assets/bootkeh-data.js?v=20261106_03"></script>
-  <script src="assets/bootkeh.js?v=20261106_03"></script>
+  <script src="assets/bootkeh-data.js?v=20261106_10"></script>
+  <script src="assets/bootkeh-roles-extra.js?v=20261106_10"></script>
+  <script src="assets/bootkeh-themes.js?v=20261106_10"></script>
+  <script src="assets/bootkeh-cloud.js?v=20261106_10"></script>
+  <script src="assets/bootkeh.js?v=20261106_10"></script>
 </body>
 </html>

@@ -302,16 +302,26 @@
     updateLanguage();
     renderSetupView();
     renderRosterInputs();
+    renderThemeGen();
     attachEventListeners();
     generateGame(false); // prepare initial game data silently
+    // a live game made on this device is still running: bring back that exact deal (same seats, roles and links)
+    const liveSaved = window.BKCloud && window.BKCloud.saved();
+    if (liveSaved && Array.isArray(liveSaved.players) && liveSaved.players.length) {
+      state.players = liveSaved.players.map(x => Object.assign({}, x, { role: getRole(x.roleId) || getRole("empath") }));
+      state.playerCount = state.players.length;
+    }
 
     // Check if opening as player from WhatsApp link (?player=seat_1 or #p=seat_1)
     const urlParams = new URLSearchParams(window.location.search);
     const playerParam = urlParams.get("player") || urlParams.get("p");
-    if (playerParam) {
+    if (urlParams.get("g") && urlParams.get("k")) {
+      openLivePortal(urlParams.get("g"), urlParams.get("k"));
+    } else if (playerParam) {
       openPlayerPortal(playerParam);
     } else {
       setTab("setup");     // start on Setup view as requested
+      if (window.BKCloud && window.BKCloud.saved()) window.BKCloud.cleanup();   // delete this storyteller's expired games
     }
   }
 
@@ -369,6 +379,7 @@
     renderBoardView();
     renderSheetView();
     renderCardsView();
+    renderThemeGen();
   }
 
   function toggleLanguage() {
@@ -536,10 +547,12 @@
       townsfolk: { title_en: "Townsfolk", title_he: "תושבי העיירה", color: "#38bdf8" },
       outsider: { title_en: "Outsiders", title_he: "אאוטסיידרים", color: "#2dd4bf" },
       minion: { title_en: "Minions", title_he: "משרתים", color: "#fb923c" },
-      demon: { title_en: "Demons", title_he: "שדים", color: "#ef4444" }
+      demon: { title_en: "Demons", title_he: "שדים", color: "#ef4444" },
+      traveller: { title_en: "Travellers (added by hand, not dealt)", title_he: "נוסעים (מוסיפים ידנית, לא מחולקים)", color: "#c084fc" },
+      fabled: { title_en: "Fabled (Storyteller rules)", title_he: "אגדיים (חוקים למספר הסיפור)", color: "#facc15" }
     };
 
-    const categories = filterCat === "all" ? ["townsfolk", "outsider", "minion", "demon"] : [filterCat];
+    const categories = filterCat === "all" ? ["townsfolk", "outsider", "minion", "demon", "traveller", "fabled"] : [filterCat];
 
     let html = "";
     let totalShown = 0;
@@ -588,6 +601,8 @@
     }
 
     matrix.innerHTML = html;
+    const allChip = document.getElementById("chip-filter-all");
+    if (allChip) allChip.textContent = (state.lang === "he" ? "הכל" : "All") + ` (${allRoles.length})`;
   }
 
   function onRoleSearch(val) {
@@ -675,6 +690,44 @@
 
     renderSetupView();
     renderBoardView();
+  }
+
+  // ---- Theme generator (history / movies / RPG): shows a parchment with the world, the Demon, and an opening to read aloud
+  function renderThemeGen() {
+    const box = document.getElementById("bkThemeGen"); if (!box || !window.BKThemes) return;
+    const he = state.lang === "he", fam = state.themeFam || "any", g = state.genTheme, L = g ? (he ? g.he : g.en) : null;
+    const cats = [["any", he ? "🎲 הכול" : "🎲 Any"], ["history", he ? "📜 היסטוריה" : "📜 History"], ["movies", he ? "🎬 סרטים" : "🎬 Movies"], ["rpg", he ? "🐉 משחקי תפקידים" : "🐉 RPG"]];
+    box.innerHTML = `
+      <div class="bk-themegen-cats">${cats.map(([k, t]) => `<button type="button" class="bk-themegen-cat${fam === k ? " on" : ""}" onclick="window.Bootkeh.setThemeFam('${k}')">${t}</button>`).join("")}
+        <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.genTheme()">✨ ${he ? "צור תמה" : "Generate theme"}</button></div>
+      ${L ? `<div class="bk-scroll">
+        <div class="bk-scroll-sub">${esc(he ? g.familyLabel.he : g.familyLabel.en)}</div>
+        <h3>${g.icon} ${esc(L.title)}</h3>
+        <p>${esc(L.setting)} ${esc(L.twist)}</p>
+        <dl><dt>${he ? "העיירה" : "The town"}</dt><dd>${esc(L.town)}</dd><dt>${he ? "השד" : "The Demon"}</dt><dd>${esc(L.demon)}</dd><dt>${he ? "המשרתים" : "Minions"}</dt><dd>${esc(L.minions)}</dd></dl>
+        <p><i>“${esc(L.opening)}”</i></p>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.useGenTheme()">🏰 ${he ? "השתמש בתמה הזאת" : "Use this theme"}</button>
+          <button type="button" class="bk-btn sm" onclick="window.Bootkeh.genTheme()">🔄 ${he ? "אחרת" : "Another"}</button>
+          ${"speechSynthesis" in window ? `<button type="button" class="bk-btn sm" onclick="window.Bootkeh.readOpening()">🔊 ${he ? "הקרא פתיחה" : "Read the opening"}</button>` : ""}
+        </div></div>` : `<div style="font-size:12.5px;color:var(--bk-text-muted);">${he ? `${window.BKThemes.count} עולמות: אירועים היסטוריים, ז'אנרים של סרטים ומשחקי תפקידים — עם פתיחה להקראה.` : `${window.BKThemes.count} worlds from history, film genres and RPGs — with an opening to read aloud.`}</div>`}`;
+  }
+  function setThemeFam(f) { state.themeFam = f; renderThemeGen(); }
+  function genTheme() { state.genTheme = window.BKThemes.generate(state.themeFam || "any", state.genTheme && state.genTheme.en.title); renderThemeGen(); }
+  // Use the generated theme for this game (title on the board, the sheet and the players' messages).
+  function useGenTheme() {
+    const g = state.genTheme; if (!g) return;
+    const L = state.lang === "he" ? g.he : g.en;
+    state.themeId = "custom_random";
+    state.customThemeTitle = `${g.icon} ${L.title}`;
+    state.customThemeDesc = `${L.setting} ${L.twist} — ${state.lang === "he" ? "השד" : "Demon"}: ${L.demon}.`;
+    const input = $("#customThemeInput"); if (input) input.value = state.customThemeTitle;
+    renderSetupView(); renderBoardView(); renderThemeGen();
+  }
+  function readOpening() {
+    const g = state.genTheme; if (!g || !("speechSynthesis" in window)) return;
+    const he = state.lang === "he", L = he ? g.he : g.en, u = new SpeechSynthesisUtterance(`${L.title}. ${L.setting} ${L.twist} ${L.opening}`);
+    u.lang = he ? "he-IL" : "en-GB"; u.rate = .92; speechSynthesis.cancel(); speechSynthesis.speak(u);
   }
 
   function setCustomTheme(val) {
@@ -882,6 +935,20 @@
   }
 
   // --- Seating Circle (Grimoire Board View) Rendering ---
+  // A throne drawn in SVG (gothic back with three finials, velvet panel, arms, seat). The velvet takes the seat's
+  // colour from CSS (--velvet): gold for unknown, blue for good, red for evil, grey when dead.
+  const THRONE_SVG = `<svg class="bk-throne" viewBox="0 0 100 124" aria-hidden="true">
+    <defs><linearGradient id="bkWood" x1="0" x2="1"><stop offset="0" stop-color="#3a2410"/><stop offset=".5" stop-color="#6b4420"/><stop offset="1" stop-color="#3a2410"/></linearGradient></defs>
+    <path d="M50 2 L56 12 L54 14 L62 22 L72 14 L74 24 L84 30 L84 92 L16 92 L16 30 L26 24 L28 14 L38 22 L46 14 L44 12Z" fill="url(#bkWood)" stroke="var(--trim)" stroke-width="2.2" stroke-linejoin="round"/>
+    <circle cx="50" cy="5" r="3.4" fill="var(--trim)"/><circle cx="27" cy="16" r="2.6" fill="var(--trim)"/><circle cx="73" cy="16" r="2.6" fill="var(--trim)"/>
+    <path d="M24 88 V40 Q24 28 50 24 Q76 28 76 40 V88Z" fill="var(--velvet)" stroke="var(--trim)" stroke-width="1.4"/>
+    <path d="M30 86 V44 Q30 34 50 31 Q70 34 70 44 V86" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+    <rect x="6" y="76" width="18" height="12" rx="4" fill="url(#bkWood)" stroke="var(--trim)" stroke-width="1.6"/>
+    <rect x="76" y="76" width="18" height="12" rx="4" fill="url(#bkWood)" stroke="var(--trim)" stroke-width="1.6"/>
+    <path d="M12 88 H88 L84 102 H16Z" fill="var(--velvet)" stroke="var(--trim)" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M18 102 V120 M82 102 V120 M30 102 V114 M70 102 V114" stroke="#3a2410" stroke-width="5" stroke-linecap="round"/>
+  </svg>`;
+
   function renderBoardView() {
     const container = $("#seatingCircle");
     if (!container) return;
@@ -915,10 +982,11 @@
       const statusClass = p.isAlive ? "" : "dead";
 
       html += `
-        <div class="bootkeh-seat-node ${alignClass} ${statusClass}" 
+        <div class="bootkeh-seat-node bk-throne-seat ${alignClass} ${statusClass}" 
              style="left:${x}px;top:${y}px;" 
              onclick="window.Bootkeh.openPlayerDetailsModal('${p.id}')"
              title="${esc(p.name)} (${esc(roleName)})">
+          ${THRONE_SVG}
           <span class="bootkeh-seat-num">#${p.seat}</span>
           <span class="bootkeh-seat-icon">${icon}</span>
           <span class="bootkeh-seat-name">${esc(p.name)}</span>
@@ -937,6 +1005,7 @@
   }
 
   function getThemeTitle() {
+    if (String(state.themeId || "").startsWith("custom") && state.customThemeTitle) return state.customThemeTitle;
     const th = getTheme(state.themeId);
     if (!th) return "Ravenswood Bluff";
     return state.lang === "he" ? th.title_he : th.title_en;
@@ -1036,6 +1105,9 @@
       progressBar.style.width = `${pct}%`;
     }
 
+    const liveBox = document.getElementById("bkLiveBox");
+    if (liveBox) liveBox.innerHTML = liveBoxHTML();
+    const live = liveGame();
     grid.innerHTML = state.players.map(p => {
       const r = p.role;
       const roleName = state.lang === "he" ? r.name_he : r.name_en;
@@ -1067,7 +1139,11 @@
             </div>
             <div class="bootkeh-secret-info-box">
               <div class="bootkeh-secret-info-title">📜 ${t.firstNightTitle}</div>
-              <div>${esc(p.firstNightInfo)}</div>
+              <textarea id="bkInfo-${p.id}" class="bk-info-edit">${esc(p.firstNightInfo)}</textarea>
+              <div style="display:flex;gap:6px;margin-top:6px;align-items:center;">
+                <button type="button" id="bkInfoBtn-${p.id}" class="bk-btn sm" onclick="window.Bootkeh.pushInfo('${p.id}')">${live ? (state.lang === "he" ? "📤 עדכן בדף שלו" : "📤 Update their page") : (state.lang === "he" ? "💾 שמור" : "💾 Save")}</button>
+                ${live ? `<button type="button" id="bkCopy-${p.seat}" class="bk-btn sm" title="${state.lang === "he" ? "העתק קישור פרטי" : "Copy private link"}" onclick="window.Bootkeh.copyLiveLink(${p.seat})">🔗</button>` : ""}
+              </div>
             </div>
 
             <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;">
@@ -1147,15 +1223,17 @@
     }))));
 
     const baseUrl = `${window.location.origin}${window.location.pathname}`;
-    const directCardLink = `${baseUrl}?player=${p.id}#s=${sessionData}`;
+    // the private live page (expires / deleted at game end) when one was made; else the offline card link
+    const live = liveGame();
+    const directCardLink = live && live.links[p.seat] ? live.links[p.seat] : `${baseUrl}?player=${p.id}#s=${sessionData}`;
 
     if (state.lang === "he") {
-      msg += `\n\n🃏 *לצפייה בכרטיס הדמות הוויזואלי שלך בנייד:*\n${directCardLink}`;
+      msg += live ? `\n\n🃏 *הדף הסודי שלך (מתעדכן במהלך המשחק, נמחק בסופו):*\n${directCardLink}` : `\n\n🃏 *לצפייה בכרטיס הדמות הוויזואלי שלך בנייד:*\n${directCardLink}`;
     } else {
-      msg += `\n\n🃏 *View your secret visual character card on your phone:*\n${directCardLink}`;
+      msg += live ? `\n\n🃏 *Your secret page (updates during the game, deleted at the end):*\n${directCardLink}` : `\n\n🃏 *View your secret visual character card on your phone:*\n${directCardLink}`;
     }
 
-    const cleanPhone = (p.phone || "").replace(/[^0-9]/g, "");
+    const cleanPhone = waPhone(p.phone);
     let url = "";
     if (cleanPhone) {
       url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
@@ -1166,6 +1244,132 @@
     p.isSent = true;
     renderCardsView();
     window.open(url, "_blank");
+  }
+
+  // Phone number for WhatsApp links: digits only, international format (Israeli 05x… → 9725x…).
+  function waPhone(raw) {
+    let d = String(raw || "").replace(/[^0-9+]/g, "");
+    if (d.startsWith("+")) d = d.slice(1);
+    else if (d.startsWith("00")) d = d.slice(2);
+    else if (d.startsWith("0")) d = "972" + d.slice(1);
+    return d.replace(/\D/g, "");
+  }
+
+  // ---- Live private pages (temporary sub-sites per player) — see assets/bootkeh-cloud.js ----
+  // The live game for the current seating (only if the seats/roles haven't been re-dealt since it was made).
+  function liveGame() {
+    const g = window.BKCloud && window.BKCloud.saved();
+    return g && g.sig === playersSig() ? g : null;
+  }
+  // A fingerprint of the dealt game, so links are never sent for an older deal.
+  function playersSig() { return state.players.map(p => `${p.seat}:${p.name}:${p.role && p.role.id}`).join("|"); }
+
+  // Make (or remake) the private player pages for this game.
+  async function createLiveGame() {
+    if (!window.BKCloud) return;
+    const he = state.lang === "he", hours = +(document.getElementById("bkLiveHours") || {}).value || 6;
+    const st = document.getElementById("bkLiveStatus"); if (st) st.textContent = he ? "יוצר דפים פרטיים…" : "Creating private pages…";
+    try {
+      const old = liveGame(); if (old) await window.BKCloud.endGame(old.gameId).catch(() => {});
+      const g = await window.BKCloud.createGame(getThemeTitle(), state.players.map(p => ({ seat: p.seat, name: p.name, role: p.role, alignment: p.alignment, info: p.firstNightInfo })), hours, state.lang);
+      g.sig = playersSig(); state.liveSig = g.sig;
+      // keep the deal on this device, so a refresh brings back the same game with its links
+      g.players = state.players.map(p => ({ id: p.id, seat: p.seat, name: p.name, phone: p.phone, roleId: p.role && p.role.id, alignment: p.alignment, firstNightInfo: p.firstNightInfo, isAlive: p.isAlive, isSent: p.isSent }));
+      try { localStorage.setItem("bk_live_game", JSON.stringify(g)); } catch (e) {}
+      renderCardsView();
+    } catch (e) { if (st) st.textContent = (he ? "לא הצלחתי ליצור דפים: " : "Couldn't create pages: ") + (e.message || e); }
+  }
+
+  // End the game: delete all private pages.
+  async function endLiveGame() {
+    const g = window.BKCloud && window.BKCloud.saved(); if (!g) return;
+    const he = state.lang === "he";
+    if (!confirm(he ? "לסיים את המשחק ולמחוק את כל הדפים הפרטיים? הקישורים יפסיקו לעבוד." : "End the game and delete all private pages? The links will stop working.")) return;
+    try { await window.BKCloud.endGame(g.gameId); } catch (e) { alert(e.message || e); }
+    state.liveSig = null; renderCardsView();
+  }
+
+  // Send each player's info to their live page (after the storyteller edited it).
+  async function pushInfo(playerId) {
+    const p = state.players.find(x => x.id === playerId), g = liveGame();
+    const ta = document.getElementById("bkInfo-" + playerId);
+    if (!p || !ta) return;
+    p.firstNightInfo = ta.value;
+    if (!g) { renderCardsView(); return; }
+    try { await window.BKCloud.updateInfo(g.gameId, g.keys[p.seat], ta.value); flashSaved(playerId); }
+    catch (e) { alert(e.message || e); }
+  }
+  function flashSaved(id) { const b = document.getElementById("bkInfoBtn-" + id); if (b) { const t = b.textContent; b.textContent = "✓"; setTimeout(() => b.textContent = t, 1200); } }
+
+  // Copy one player's private link.
+  function copyLiveLink(seat) {
+    const g = liveGame(); if (!g) return;
+    navigator.clipboard && navigator.clipboard.writeText(g.links[seat]);
+    const b = document.getElementById("bkCopy-" + seat); if (b) { b.textContent = "✓"; setTimeout(() => b.textContent = "🔗", 1200); }
+  }
+
+  // Open WhatsApp for every player that wasn't sent yet, one after another (each tap opens the next chat).
+  function sendNextWhatsapp() {
+    const next = state.players.find(p => !p.isSent);
+    if (next) sendWhatsapp(next.id);
+    else alert(state.lang === "he" ? "כל השחקנים קיבלו הודעה ✓" : "Everyone got their message ✓");
+  }
+
+  // The box above the cards: make links, how long they live, end game.
+  function liveBoxHTML() {
+    const he = state.lang === "he", g = liveGame();
+    const until = g ? new Date(g.expiresAt).toLocaleTimeString(he ? "he-IL" : "en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
+    return `<div class="bk-card bk-live" style="margin-bottom:16px;">
+      <div class="bk-live-row">
+        <b style="font-family:var(--bk-font-serif);color:var(--bk-gold-light);font-size:16px;">🏰 ${he ? "דפים פרטיים זמניים לשחקנים" : "Temporary private player pages"}</b>
+        <span class="bk-live-pill ${g ? "" : "off"}">${g ? (he ? `פעיל עד ${until}` : `Live until ${until}`) : (he ? "לא פעיל" : "Not live")}</span>
+      </div>
+      <div style="font-size:12.5px;color:var(--bk-text-muted);line-height:1.5;">${he
+        ? "כל שחקן מקבל קישור אישי שמראה רק את התפקיד שלו ואת המידע שלו, ומתעדכן כשאתה משנה את המידע. הדפים נמחקים כשאתה מסיים את המשחק, או לבד אחרי הזמן שבחרת."
+        : "Each player gets a personal link that shows only their role and info, and updates when you change it. The pages are deleted when you end the game, or by themselves after the time you pick."}</div>
+      <div class="bk-live-row">
+        <label style="font-size:13px;color:#f1dfb5;">${he ? "נמחק אחרי" : "Expires after"}
+          <select id="bkLiveHours" style="margin-inline-start:6px;"><option value="3">3 ${he ? "שעות" : "hours"}</option><option value="6" selected>6 ${he ? "שעות" : "hours"}</option><option value="12">12 ${he ? "שעות" : "hours"}</option></select></label>
+        <button type="button" class="bk-btn pri sm" onclick="window.Bootkeh.createLiveGame()">🔗 ${g ? (he ? "צור מחדש" : "Recreate") : (he ? "צור דפים פרטיים" : "Create private pages")}</button>
+        <button type="button" class="bk-btn sm whatsapp" onclick="window.Bootkeh.sendNextWhatsapp()">💬 ${he ? "שלח לבא בתור ב־WhatsApp" : "WhatsApp the next player"}</button>
+        ${g ? `<button type="button" class="bk-btn sm" onclick="window.Bootkeh.endLiveGame()">🏁 ${he ? "סיים משחק ומחק דפים" : "End game & delete pages"}</button>` : ""}
+        <span id="bkLiveStatus" style="font-size:12px;color:var(--bk-text-muted);"></span>
+      </div>
+    </div>`;
+  }
+
+  // Player side: open the live private page ?g=…&k=… and keep it updated.
+  async function openLivePortal(gameId, key) {
+    const topbar = $(".bootkeh-topbar"), nav = $(".bootkeh-nav-tabs"), main = $(".bootkeh-main");
+    [topbar, nav, main].forEach(x => { if (x) x.style.display = "none"; });
+    const portal = $("#playerPortalView"); if (!portal) return;
+    portal.style.display = "flex";
+    const set = (id, v, html) => { const el = document.getElementById(id); if (el) el[html ? "innerHTML" : "textContent"] = v; };
+    set("portalRoleName", "…");
+    if (!window.BKCloud) return;
+    window.BKCloud.watchPlayer(gameId, key, (d, why) => {
+      if (!d) {
+        const he = (navigator.language || "he").startsWith("he");
+        set("portalPlayerBadge", "");
+        set("portalRoleIcon", "🕯️");
+        set("portalRoleName", why === "offline" ? (he ? "אין חיבור" : "Offline") : (he ? "המשחק הסתיים" : "This game has ended"));
+        set("portalCategoryPill", "");
+        set("portalRoleAbility", he ? "הדף הזה היה זמני ונמחק. תודה ששיחקת!" : "This page was temporary and has been removed. Thanks for playing!");
+        set("portalFirstNight", "—");
+        const c = $("#portalCurtain"); if (c) c.style.display = "none";
+        return;
+      }
+      const he = d.lang !== "en";
+      set("portalPlayerBadge", `${he ? "מושב" : "Seat"} #${d.seat} · ${d.name}`);
+      set("portalRoleIcon", d.icon || "🎭");
+      set("portalRoleName", he ? (d.name_he || d.name_en) : (d.name_en || d.name_he));
+      set("portalCategoryPill", `<span class="bk-dist-pill ${esc(d.type)}">${esc(String(d.type || "").toUpperCase())}</span> <span class="bk-dist-pill ${esc(d.alignment)}">${d.alignment === "evil" ? (he ? "רעים 😈" : "Evil 😈") : (he ? "טובים 🛡️" : "Good 🛡️")}</span>`, true);
+      set("portalRoleAbility", he ? (d.ability_he || d.ability_en) : (d.ability_en || d.ability_he));
+      set("portalFirstNight", d.info || (he ? "אין מידע כרגע." : "No info right now."));
+      const exp = d.expiresAt && d.expiresAt.toMillis ? new Date(d.expiresAt.toMillis()) : null;
+      const note = document.getElementById("portalExpiry");
+      if (note && exp) note.textContent = (he ? "⌛ הדף נמחק ב־" : "⌛ This page is deleted at ") + exp.toLocaleTimeString(he ? "he-IL" : "en-GB", { hour: "2-digit", minute: "2-digit" });
+    });
   }
 
   function sendSms(playerId) {
@@ -1378,6 +1582,15 @@
   // --- Public API ---
   window.Bootkeh = {
     init,
+    createLiveGame,
+    endLiveGame,
+    setThemeFam,
+    genTheme,
+    useGenTheme,
+    readOpening,
+    pushInfo,
+    copyLiveLink,
+    sendNextWhatsapp,
     setTab,
     toggleLanguage,
     setTheme,

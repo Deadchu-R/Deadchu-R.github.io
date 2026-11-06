@@ -1,11 +1,41 @@
 rules_version = '2';
-// CVEditor (roeetal.com/CVEditor): every signed-in user has one private document, vaults/<their uid>.
-// Only that user can read or write it. Everything else is closed.
+// roeetal.com Firebase rules.
+//  - CVEditor: every signed-in user has one private document, vaults/<their uid>. Only that user can read/write it.
+//  - Bootkeh live games: bk_games/<gameId> and bk_games/<gameId>/p/<secretKey>.
+//      only the storyteller who made a game (owner) can write or delete it; games live at most 13 hours;
+//      a player page can be read by anyone who has its secret key (no listing), and only until it expires.
+//  Everything else is closed.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /vaults/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+
+    match /bk_games/{gameId} {
+      allow list: if request.auth != null && resource.data.owner == request.auth.uid;
+      allow get: if request.auth != null && resource.data.owner == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt < request.time + duration.value(13, 'h');
+      allow update, delete: if request.auth != null && resource.data.owner == request.auth.uid;
+
+      match /p/{key} {
+        allow get: if resource.data.expiresAt > request.time
+          || (request.auth != null && resource.data.owner == request.auth.uid);
+        allow list: if request.auth != null && resource.data.owner == request.auth.uid;
+        allow create: if request.auth != null
+          && request.resource.data.owner == request.auth.uid
+          && request.resource.data.expiresAt is timestamp
+          && request.resource.data.expiresAt < request.time + duration.value(13, 'h')
+          && request.resource.data.size() < 40;
+        allow update: if request.auth != null && resource.data.owner == request.auth.uid
+          && request.resource.data.owner == resource.data.owner
+          && request.resource.data.expiresAt == resource.data.expiresAt;
+        allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

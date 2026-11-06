@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+  <!-- Bootkeh background: a medieval town at night with a castle and a clock tower. Drawn for roeetal.com (no outside art). -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#05060c"/>
+      <stop offset=".55" stop-color="#140b1c"/>
+      <stop offset="1" stop-color="#2a0d12"/>
+    </linearGradient>
+    <radialGradient id="moonGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff4d6" stop-opacity=".55"/>
+      <stop offset=".35" stop-color="#f3d9a4" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#f3d9a4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="clockGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffd27a" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#ff9a3c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b1d2a" stop-opacity="0"/>
+      <stop offset="1" stop-color="#3b1d2a" stop-opacity=".75"/>
+    </linearGradient>
+    <pattern id="win" width="34" height="40" patternUnits="userSpaceOnUse">
+      <rect x="13" y="14" width="6" height="10" rx="3" fill="#ffb347" opacity=".7"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+
+  <!-- stars -->
+  <g fill="#fff" opacity=".7">
+    <circle cx="120" cy="80" r="1.3"/><circle cx="260" cy="150" r="1"/><circle cx="410" cy="60" r="1.4"/><circle cx="520" cy="190" r=".9"/>
+    <circle cx="690" cy="90" r="1.2"/><circle cx="860" cy="40" r="1"/><circle cx="980" cy="130" r="1.3"/><circle cx="1120" cy="70" r="1"/>
+    <circle cx="1240" cy="170" r="1.2"/><circle cx="1380" cy="100" r="1"/><circle cx="1500" cy="50" r="1.4"/><circle cx="1550" cy="210" r=".9"/>
+    <circle cx="60" cy="230" r=".9"/><circle cx="340" cy="250" r="1"/><circle cx="760" cy="230" r=".8"/><circle cx="1450" cy="280" r="1"/>
+  </g>
+
+  <!-- moon -->
+  <circle cx="1270" cy="170" r="210" fill="url(#moonGlow)"/>
+  <circle cx="1270" cy="170" r="62" fill="#f6e7c1"/>
+  <circle cx="1292" cy="156" r="58" fill="#140b1c" opacity=".12"/>
+  <circle cx="1248" cy="150" r="9" fill="#e3cf9f"/><circle cx="1282" cy="196" r="12" fill="#e3cf9f"/><circle cx="1300" cy="150" r="6" fill="#e3cf9f"/>
+
+  <!-- far hills -->
+  <path d="M0 640 C180 600 320 610 470 585 S760 560 900 590 1180 560 1320 585 1500 600 1600 580 V900 H0Z" fill="#170c17"/>
+
+  <!-- castle (left) -->
+  <g fill="#0b070c">
+    <rect x="120" y="470" width="300" height="260"/>
+    <path d="M120 470 h300 v-18 h-22 v12 h-20 v-12 h-22 v12 h-20 v-12 h-22 v12 h-20 v-12 h-22 v12 h-20 v-12 h-22 v12 h-20 v-12 h-22 v12 h-20 v-12 h-28z"/>
+    <rect x="90" y="380" width="80" height="350"/>
+    <path d="M84 380 L130 300 L176 380Z"/>
+    <rect x="370" y="400" width="74" height="330"/>
+    <path d="M364 400 L407 318 L450 400Z"/>
+    <rect x="215" y="350" width="110" height="380"/>
+    <path d="M207 350 L270 230 L333 350Z"/>
+    <path d="M270 230 v-40" stroke="#0b070c" stroke-width="3"/>
+    <path d="M270 192 l26 8 -26 8z" fill="#5a1220"/>
+    <path d="M240 730 v-80 a30 30 0 0 1 60 0 v80z" fill="#1d0f12"/>
+  </g>
+  <g fill="#ffb347" opacity=".65">
+    <rect x="125" y="420" width="8" height="14" rx="4"/><rect x="398" y="440" width="8" height="14" rx="4"/>
+    <rect x="258" y="400" width="10" height="18" rx="5"/><rect x="278" y="460" width="8" height="14" rx="4"/>
+    <rect x="160" y="520" width="7" height="12" rx="3.5"/><rect x="340" y="540" width="7" height="12" rx="3.5"/>
+  </g>
+
+  <!-- clock tower (centre right) -->
+  <g fill="#0d080e">
+    <rect x="860" y="300" width="130" height="440"/>
+    <rect x="845" y="285" width="160" height="22"/>
+    <path d="M845 285 L925 140 L1005 285Z"/>
+    <rect x="921" y="90" width="8" height="55"/>
+    <path d="M925 78 l12 14 h-24z"/>
+    <rect x="870" y="420" width="110" height="10"/>
+    <rect x="880" y="470" width="14" height="40" rx="7" fill="#ffb347" opacity=".55"/>
+    <rect x="956" y="470" width="14" height="40" rx="7" fill="#ffb347" opacity=".55"/>
+    <rect x="918" y="560" width="14" height="40" rx="7" fill="#ffb347" opacity=".4"/>
+  </g>
+  <circle cx="925" cy="355" r="80" fill="url(#clockGlow)"/>
+  <circle cx="925" cy="355" r="42" fill="#f2d49a" stroke="#6b3a12" stroke-width="5"/>
+  <g stroke="#3a1d0a" stroke-width="3" stroke-linecap="round">
+    <path d="M925 355 L925 326"/><path d="M925 355 L946 366"/>
+  </g>
+  <g fill="#3a1d0a">
+    <circle cx="925" cy="319" r="2.6"/><circle cx="961" cy="355" r="2.6"/><circle cx="925" cy="391" r="2.6"/><circle cx="889" cy="355" r="2.6"/>
+    <circle cx="925" cy="355" r="4"/>
+  </g>
+
+  <!-- town houses (their lit windows are clipped to the house shapes) -->
+  <clipPath id="housesClip">
+    <path d="M440 740 V600 l45 -50 45 50 V740Z"/>
+    <path d="M530 740 V620 l35 -40 35 40 V740Z"/>
+    <path d="M600 740 V585 l55 -60 55 60 V740Z"/>
+    <path d="M710 740 V630 l40 -45 40 45 V740Z"/>
+    <path d="M790 740 V610 l35 -40 35 40 V740Z"/>
+    <path d="M990 740 V620 l40 -45 40 45 V740Z"/>
+    <path d="M1070 740 V595 l50 -55 50 55 V740Z"/>
+    <path d="M1170 740 V630 l38 -42 38 42 V740Z"/>
+    <path d="M1246 740 V605 l52 -58 52 58 V740Z"/>
+    <path d="M1350 740 V625 l40 -45 40 45 V740Z"/>
+    <path d="M1430 740 V600 l50 -55 50 55 V740Z"/>
+    <path d="M1530 740 V630 l35 -40 35 40 V740Z"/>
+    <rect x="1380" y="560" width="10" height="40"/>
+    </clipPath>
+  <g fill="#120a10">
+    <path d="M440 740 V600 l45 -50 45 50 V740Z"/>
+    <path d="M530 740 V620 l35 -40 35 40 V740Z"/>
+    <path d="M600 740 V585 l55 -60 55 60 V740Z"/>
+    <path d="M710 740 V630 l40 -45 40 45 V740Z"/>
+    <path d="M790 740 V610 l35 -40 35 40 V740Z"/>
+    <path d="M990 740 V620 l40 -45 40 45 V740Z"/>
+    <path d="M1070 740 V595 l50 -55 50 55 V740Z"/>
+    <path d="M1170 740 V630 l38 -42 38 42 V740Z"/>
+    <path d="M1246 740 V605 l52 -58 52 58 V740Z"/>
+    <path d="M1350 740 V625 l40 -45 40 45 V740Z"/>
+    <path d="M1430 740 V600 l50 -55 50 55 V740Z"/>
+    <path d="M1530 740 V630 l35 -40 35 40 V740Z"/>
+    <rect x="1380" y="560" width="10" height="40"/>
+    </g>
+  <rect x="440" y="560" width="1160" height="180" fill="url(#win)" opacity=".55" clip-path="url(#housesClip)"/>
+
+
+  <!-- ground + mist -->
+  <path d="M0 720 C260 700 520 735 800 715 S1340 705 1600 725 V900 H0Z" fill="#090509"/>
+  <rect x="0" y="560" width="1600" height="340" fill="url(#mist)"/>
+
+  <!-- crows -->
+  <g fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" opacity=".85">
+    <path d="M1080 230 q8 -8 16 0 q8 -8 16 0"/><path d="M1130 260 q6 -6 12 0 q6 -6 12 0"/><path d="M640 200 q7 -7 14 0 q7 -7 14 0"/>
+  </g>
+</svg>

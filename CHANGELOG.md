@@ -7,6 +7,18 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
 ## 2026-11-06
+- **Bootkeh (Blood on the Clocktower):**
+  - **Medieval look across the sub-site.** A night town with a castle and a glowing clock tower behind every page (`assets/bootkeh-castle.svg`, drawn for the site). Stone-and-gold panels, banner tabs, wax-seal buttons, and a parchment player page (`assets/bootkeh-medieval.css`).
+  - **Seating:** a round oak council table with every seat drawn as a throne. The velvet is gold, blue (good), red (evil) or grey (dead).
+  - **Temporary private player pages (Firestore, `assets/bootkeh-cloud.js`):** each player's link shows only their own role and info, and updates live when the storyteller edits it.
+    - The pages are deleted at "End game", or stop working after 3/6/12 hours.
+    - Only the storyteller (anonymous sign-in) can write; a page is readable only with its secret key and only until it expires (`firestore.rules`).
+  - **WhatsApp:**
+    - Israeli numbers are converted (05x → 9725x) so the chat opens.
+    - The message carries the role, the info and the private link.
+    - "WhatsApp the next player" walks through everyone.
+  - **Theme generator (`assets/bootkeh-themes.js`):** 36 worlds from history, film genres and RPGs. Each comes with the town, the Demon, the Minions, a twist and an opening (which can be read aloud).
+  - **All characters:** 171 roles, now including Travellers and Fabled, in Advanced settings (`assets/bootkeh-roles-extra.js`, short summaries in our own words). Acrobat fixed to Townsfolk.
 - **CV Studio:** a single Design place, the Design tab (the duplicate Designs box in the side menu is removed). It is ordered as:
   1. Template (gallery of 13, columns, photo/icons, drag-arrange);
   2. Main color & background;
