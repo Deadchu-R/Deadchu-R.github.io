@@ -6,7 +6,7 @@
 |---|---|---|
 | Not signed in | the example résumé (John Doe, IT, University of Haifa). Never the owner's data. | nowhere (it's a demo); the edits are kept if they sign in right after |
 | Signed in with Google | only their own résumés | Cloud Firestore `vaults/<uid>`, readable and writable **only** by that user (`firestore.rules`) |
-| The owner (his verified Google accounts; `OWNER_EMAIL_HASHES` in cveditor.js holds only their SHA-256 hashes) | his own résumés. On first sign-in they are copied from `content/cv.json`. He also gets "Publish to main website CV". | same, his own vault |
+| The owner (only his verified Google account roeetal17; `OWNER_EMAIL_HASHES` in cveditor.js holds just its SHA-256 hash) | his own résumés. On first sign-in they are copied from `content/cv.json`. He also gets "Publish to main website CV". | same, his own vault |
 
 Nobody can open anyone else's vault, the owner included. The Firestore rules enforce this on Google's servers, not the page's code.
 

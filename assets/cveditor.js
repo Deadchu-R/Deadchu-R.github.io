@@ -3810,6 +3810,19 @@
     let cvs = {};
     try { cvs = await window.RTCloud.load(gu.uid); }
     catch (e) { showToast("Couldn't load your résumés: " + (e.message || e)); }
+    // Clean-up: an earlier version treated a second account of the owner as the owner and copied the site's
+    // résumés into it. A normal user never keeps copies of the site's résumés.
+    if (!state.currentUser.owner && Object.keys(cvs).length) {
+      const site = await fetchSiteCvs();
+      const siteNames = new Set(Object.values(site).map(v => v && v.person && v.person.name).filter(Boolean));
+      let removed = 0;
+      for (const k of Object.keys(cvs)) {
+        const c = cvs[k];
+        if (site[k] && c && c.person && siteNames.has(c.person.name)) { delete cvs[k]; removed++; }
+      }
+      if (removed && !Object.keys(cvs).length) cvs = {};
+      if (removed) window.RTCloud.save(gu.uid, cvs).catch(() => {});
+    }
     if (!Object.keys(cvs).length) {
       // first sign-in: the owner starts from the site's résumés; others keep what they made here, or start from the example
       if (isRoeeUser()) cvs = await fetchSiteCvs();
@@ -3849,10 +3862,10 @@
 
   // The site owner: signed in with Google (verified) as the owner's address. This only changes what the UI offers;
   // the data itself is protected by the Firestore rules (each user can open only their own vault).
-  // The owner's Google addresses, stored only as SHA-256 hashes so the code doesn't publish them.
+  // The owner's Google address (only one), stored as a SHA-256 hash so the code doesn't publish it.
+  // Every other account — including the owner's other Google accounts — is a normal user with its own résumés.
   const OWNER_EMAIL_HASHES = [
-    "21e9a2d8b958f2e90dbb9a70748001e41e4ed2f4ab96b7fa2263a46c40c30c55",
-    "d3d450b638535a86b38b3f512ee147adfd47db807c84e59163c158834e5c3de3"
+    "21e9a2d8b958f2e90dbb9a70748001e41e4ed2f4ab96b7fa2263a46c40c30c55"
   ];
   // True when this (verified) email is one of the owner's.
   async function isOwnerEmail(email) {

@@ -7,6 +7,7 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
 ## 2026-11-06
+- **CVEditor:** only roeetal17 is the owner. Every other Google account, including the owner's second account, gets its own empty-start résumés. Copies of the site's résumés that an earlier version put into the second account are removed automatically on sign-in.
 - **CVEditor:** Firebase project `roeetal-cv` set up:
   - Google sign-in on;
   - domains roeetal.com / www.roeetal.com allowed;
