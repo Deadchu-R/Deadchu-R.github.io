@@ -443,3 +443,16 @@ html, body { overflow-x: clip; max-width: 100%; }
 .bootkeh-modal { max-height: calc(100dvh - 24px); display: flex !important; flex-direction: column; overflow: hidden; width: min(560px, 100%); }
 .bootkeh-modal-header { position: sticky; top: 0; z-index: 2; display: flex !important; align-items: center; gap: 10px; flex: none; }
 .bootkeh-modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; flex: 1; min-height: 0; }
+
+/* ---------- player rows: name gets the room, "saved" is a small picker ---------- */
+.bk-roster-row { display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.bk-roster-row .bk-roster-name-input { width: 100%; min-width: 0; }
+.bk-roster-row .bk-roster-quick-pick { width: 96px; max-width: 30vw; min-width: 0; text-overflow: ellipsis; }
+.bk-roster-phone-input { display: none !important; }
+@media (max-width: 760px) {
+  .bk-roster-grid { gap: 8px !important; }
+  .bk-roster-row { padding: 8px !important; border-radius: 14px !important; }
+  .bk-roster-row .bk-roster-quick-pick { width: 64px; padding-inline: 8px !important; font-size: 18px !important; }   /* just the 👤 icon */
+  .bk-roster-row .bk-roster-quick-pick option { font-size: 16px; }
+  .bk-roster-seat { min-width: 40px; }
+}

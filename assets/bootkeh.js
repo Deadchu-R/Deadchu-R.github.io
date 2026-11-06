@@ -633,8 +633,8 @@
         <div class="bk-roster-row">
           <div class="bk-roster-seat">#${i + 1}</div>
           <input type="text" class="bk-input bk-roster-name-input" value="${esc(item.name)}" placeholder="${placeholderName}" oninput="window.Bootkeh.updateRosterItem(${i}, 'name', this.value)">
-          <select class="bk-roster-quick-pick" onchange="window.Bootkeh.quickAssignRosterSeat(${i}, this.value)">
-            <option value="">👤 ${state.lang === "he" ? "שמור..." : "Saved..."}</option>
+          <select class="bk-roster-quick-pick" title="${state.lang === "he" ? "בחר מהשחקנים השמורים" : "Pick a saved player"}" aria-label="${state.lang === "he" ? "בחר מהשחקנים השמורים" : "Pick a saved player"}" onchange="window.Bootkeh.quickAssignRosterSeat(${i}, this.value)">
+            <option value="">👤</option>
             ${savedOptions}
           </select>
         </div>
@@ -1627,6 +1627,17 @@
   // and when the page on the server was last updated, so it's easy to see the new version arrived.
   function showVersion() {
     const el = document.getElementById("bkVersion"); if (!el) return;
+    // phones sometimes keep an old copy of the page: if a newer version is online, reload once (not in a loop)
+    if (el.dataset.v && !el.dataset.v.startsWith("__") && !showVersion.checked) {
+      showVersion.checked = true;
+      fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => {
+        if (!j || !j.v || j.v === el.dataset.v) return;
+        let tried = ""; try { tried = sessionStorage.getItem("bk_reload_for") || ""; } catch (e) {}
+        if (tried === j.v) return;
+        try { sessionStorage.setItem("bk_reload_for", j.v); } catch (e) {}
+        location.reload();
+      }).catch(() => {});
+    }
     const v = el.dataset.v && !el.dataset.v.startsWith("__") ? el.dataset.v : "dev";
     const d = new Date(document.lastModified), ok = !isNaN(d) && Date.now() - d > 5000;
     const when = ok ? d.toLocaleString(state.lang === "he" ? "he-IL" : "en-GB", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";

@@ -8,6 +8,8 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Always the newest version:** build.py writes Bootkeh/version.json; when a phone opens an older cached copy of the page, it reloads itself once.
+  - **Player rows fit the phone:** name takes the room, the saved-player picker is a small 👤 button; no phone fields anywhere.
   - **Language button switches everything** (assets/bootkeh-i18n.js for the fixed texts + every screen redrawn), and it is labelled with the other language ("English" / "עברית").
   - **Saved players window** fits the screen and scrolls, with a "‹ Back" header that stays on top; the phone's Back closes it; no phone fields.
   - **My role sets** (assets/bootkeh-sets.js): save the set you built into the "Role set" list ("My sets", delete too); import a set from a picture of a script sheet (OCR in the browser with Tesseract.js — the Crimson Guard sheet reads 20/20) or from Script Tool / botcscripts.com JSON (official ids map to ours). "Bad Moon Rising" added to the list.

@@ -1254,6 +1254,8 @@ def build_bootkeh():
     stamp = hashlib.md5(("|".join(ver("assets/" + f) for f in files) + ver("Bootkeh.html")).encode()).hexdigest()[:6]
     sub_bk_html = sub_bk_html.replace("__BK_VERSION__", stamp)
     (sub_bk / "index.html").write_text(sub_bk_html, encoding="utf-8")
+    # the page compares itself with this file on load and reloads once when a newer version is online (showVersion in bootkeh.js)
+    (sub_bk / "version.json").write_text('{"v":"' + stamp + '"}\n', encoding="utf-8")
 
 
 def build_cveditor():
