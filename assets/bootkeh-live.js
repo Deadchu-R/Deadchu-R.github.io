@@ -88,7 +88,7 @@
   // Storyteller — the game flow:  send to everyone → night 1 → dawn (who died) → day → accusations → night 2 → …
   // Every step updates every phone at once (phase + an announcement), and everything can still be changed by hand.
   // =============================================================================================
-  const ST = { game: null, players: {}, taken: {}, unGame: null, unPlayers: null, unTaken: null, gid: null, draft: {}, deaths: {}, edit: {}, ieOpen: false, chips: {}, executed: null };
+  const ST = { game: null, players: {}, taken: {}, unGame: null, unPlayers: null, unTaken: null, gid: null, draft: {}, deaths: {}, edit: {}, ieOpen: false, chips: {}, executed: null, dec: {}, decDone: {}, rcpt: {}, pendingKills: [], poisonExtra: [] };
 
   // Start listening to the live game made on this device (called when the Game tab is shown).
   async function attach() {
@@ -135,6 +135,7 @@
   }
   function mirrorLocal(seats) {
     for (const p of players()) { const s = seats.find(x => x.seat === p.seat); if (s) { p.isAlive = s.alive; p.ghost = s.ghost; } }
+    B().saveLive && B().saveLive();
     B().renderBoardView && B().renderBoardView();
   }
 
@@ -146,7 +147,7 @@
     let day = st.day || 1;
     if (phase === "night" && ["day", "nominate", "dawn"].includes(from)) day += 1;
     const isHe = he(), patch = Object.assign({ phase, day }, extra || {});
-    if (phase === "night") { patch.nom = null; ST.draft = {}; }
+    if (phase === "night") { patch.nom = null; ST.draft = {}; ST.poisonExtra = []; }
     // a new day: nobody has accused or been accused yet, nobody is on the block (official rules)
     if ((phase === "day" || phase === "dawn") && !["day", "nominate"].includes(from)) patch.today = { by: {}, on: {}, block: null };
     if (!patch.notice) {
@@ -303,9 +304,14 @@
   //  wake → their phone asks them to choose (role rules from BKRules.action) → you see the choice → tap / write the
   //  answer and send it to that player → they tap "Got it" (✓) → next. Choices are kept for the dawn helper.
   function runState(st) {
-    if (!ST.run || ST.run.night !== st.day) ST.run = { night: st.day, i: 0, woke: {}, sent: {} };
+    if (!ST.run || ST.run.night !== st.day) {
+      // the wake order is fixed when the night starts (a role change during the night must not reshuffle it)
+      const order = orderedForNight(st).filter(p => ST.wakeNo[p.seat]).map(p => p.seat);
+      ST.run = { night: st.day, i: 0, woke: {}, sent: {}, order };
+    }
     return ST.run;
   }
+  function wokeList(st) { const run = runState(st); return run.order.map(seat => players().find(p => p.seat === seat)).filter(Boolean); }
   const nameOfSeat = seat => ((players().find(p => p.seat === seat) || {}).name || String(seat)).split(" / ")[0];
   function actsTonight() {
     const run = ST.run || { woke: {} }, out = {};
@@ -315,11 +321,12 @@
   function runnerHTML(st) {
     const R = window.BKRules; if (!R) return "";
     const run = runState(st), first = (st.day || 1) === 1;
-    const woke = orderedForNight(st).filter(p => ST.wakeNo[p.seat]);
+    const woke = wokeList(st);
     if (!woke.length) return `<p class="bk-hint">${tr("אף אחד לא מתעורר הלילה.", "Nobody wakes tonight.")}</p>`;
     if (run.i >= woke.length) return `<section class="bk-run done"><b>${tr("כל מי שמתעורר סיים ✓", "Everyone who wakes is done ✓")}</b>
       <button type="button" class="bk-btn bk-wide" onclick="window.BKLive.runGo(-1)">${tr("‹ חזרה לשחקן האחרון", "‹ Back to the last player")}</button></section>`;
-    const p = woke[run.i], r = p.role, th = p.thinks && B().getRole(p.thinks), a = R.action(p, first, he() ? "he" : "en"), id = run.woke[p.seat];
+    const p = woke[run.i], r = p.role, th = p.thinks && B().getRole(p.thinks), id = run.woke[p.seat];
+    const a = (id && run.wakeA && run.wakeA[p.seat]) || R.action(p, first, he() ? "he" : "en");   // as it was when they were woken
     const doc = ST.players[p.seat] || {}, act = doc.act && doc.act.wake === id ? doc.act : null, sentAt = run.sent[p.seat];
     const seen = sentAt && doc.seen && doc.seen.at >= sentAt;
     const v = ST.draft[p.seat] != null ? ST.draft[p.seat] : (first ? (p.firstNightInfo || "") : "");
@@ -330,7 +337,8 @@
       <p class="bk-hint">${esc(a.text)}</p>
       <ol class="bk-run-steps">
         <li class="${id ? "ok" : "now"}">${id ? tr("הוער ✓", "Woken ✓") : `<button type="button" class="bk-btn pri bk-big bk-wide" onclick="window.BKLive.runWake()">${tr(`העיר את ${esc(String(p.name).split(" / ")[0])}`, `Wake ${esc(p.name)}`)}</button>`}</li>
-        ${id ? `<li class="${act ? "ok" : "now"}">${act ? (a.n ? tr("בחר: ", "Chose: ") + (act.targets.length ? act.targets.map(nameOfSeat).join(", ") : tr("דילג", "skipped")) : tr("ער ✓", "Awake ✓")) : tr("ממתין שיבחר בטלפון…", "Waiting for their choice…")}</li>` : ""}
+        ${id ? `<li class="${act ? "ok" : "now"}">${act ? (a.n || a.r ? tr("בחר: ", "Chose: ") + ((act.targets || []).map(nameOfSeat).concat((act.roles || []).map(rid => { const x = B().getRole(rid); return x ? (x.icon || "") + " " + (he() ? x.name_he : x.name_en) : rid; })).join(", ") || tr("דילג", "skipped")) : tr("ער ✓", "Awake ✓")) : tr("ממתין שיבחר בטלפון…", "Waiting for their choice…")}</li>
+          ${act ? decisionsHTML(p, act) : ""}` : ""}
         ${id ? `<li class="${sentAt ? (seen ? "ok" : "now") : "now"}">
           <textarea id="bkNight-${p.seat}" rows="2" oninput="window.BKLive.draft(${p.seat}, this.value)" placeholder="${tr("התשובה שלו…", "Their answer…")}">${esc(v)}</textarea>
           ${chipsFor(p, "night")}
@@ -341,21 +349,78 @@
         <button type="button" class="bk-btn ${seen || (id && !a.n && sentAt) ? "pri" : ""} bk-big" style="flex:2" onclick="window.BKLive.runGo(1)">${tr("הבא — להרדים ולהעיר את הבא ›", "Next — back to sleep, wake the next ›")}</button></div>
     </section>`;
   }
+  // Decisions that are the storyteller's to make (BKRules.decide): ready options + "custom" to the relevant players.
+  function decisionsHTML(p, act) {
+    const R = window.BKRules; if (!R) return "";
+    const ctx = Object.assign(rulesCtx(), { poisoned: poisonedTonight() });
+    const list = R.decide(p, act, ctx); ST.dec[p.seat] = list;
+    const rel = [p.seat].concat(act.targets || []).filter((x, i, a) => a.indexOf(x) === i);
+    const done = ST.decDone[p.seat + ":" + act.at] || {};
+    return `<li class="bk-dec-wrap">${list.map((d, i) => `<div class="bk-dec${done[i] != null ? " done" : ""}"><b>⚖️ ${esc(d.title)}</b><p>${esc(d.text)}</p>
+        ${d.options.length ? `<div class="bk-dec-opts">${d.options.map((o, j) => `<button type="button" class="bk-btn sm ${o.truth === true ? "t" : o.truth === false ? "f" : ""}${done[i] === j ? " on" : ""}" onclick="window.BKLive.decide(${p.seat}, ${i}, ${j}, ${act.at})">${o.truth === true ? "✓ " : o.truth === false ? "✗ " : ""}${esc(o.label)}</button>`).join("")}</div>` : ""}</div>`).join("")}
+      <details class="bk-dec bk-custom"><summary>${tr("✎ החלטה משלך — הודעה לשחקנים הרלוונטיים", "✎ Your own call — message the relevant players")}</summary>
+        ${recipientsHTML("c" + p.seat, rel)}
+        <textarea id="bkCustom-${p.seat}" rows="2" placeholder="${tr("מה לשלוח…", "What to send…")}"></textarea>
+        <button type="button" class="bk-btn sm pri" onclick="window.BKLive.sendCustom('c${p.seat}', 'bkCustom-${p.seat}')">${tr("שלח לנבחרים", "Send to the chosen")}</button></details></li>`;
+  }
+  // who the Poisoner / Pukka poisoned tonight (from the choices so far) — for "is this player's ability working?"
+  function poisonedTonight() {
+    const acts = actsTonight(), out = [];
+    for (const [seat, t] of Object.entries(acts)) { const q = players().find(x => x.seat === +seat); if (q && ["poisoner", "pukka"].includes(q.role.id)) out.push(...t); }
+    return out.concat(ST.poisonExtra || []);
+  }
+  // pick players to send to (chips); default = the given seats
+  function recipientsHTML(id, def) {
+    if (!ST.rcpt[id]) ST.rcpt[id] = new Set(def || []);
+    const sel = ST.rcpt[id];
+    return `<div class="bk-rcpt">${players().map(q => `<button type="button" class="${sel.has(q.seat) ? "on" : ""}" onclick="window.BKLive.toggleRcpt('${id}', ${q.seat})">${q.seat}. ${esc(String(q.name).split(" / ")[0])}</button>`).join("")}</div>`;
+  }
+  function toggleRcpt(id, seat) { const s0 = ST.rcpt[id] || (ST.rcpt[id] = new Set()); s0.has(seat) ? s0.delete(seat) : s0.add(seat); render(); }
+  async function sendCustom(id, taId) {
+    const ta = document.getElementById(taId), text = ta && ta.value.trim(), to = [...(ST.rcpt[id] || [])]; if (!text || !to.length) return;
+    const st = ST.game || {}, label = tr("הודעה · ", "Message · ") + phaseName(st, he());
+    await C().pushInfos(ST.gid, to.map(seat => ({ key: key(seat), text, label })).filter(x => x.key));
+    ta.value = ""; toast(tr(`✓ נשלח ל־${to.length}`, `✓ Sent to ${to.length}`));
+  }
+  // apply a decision option: send its messages and change the game (roles, deaths, drunk/poisoned)
+  async function decideOpt(seat, i, j, at) {
+    const d = (ST.dec[seat] || [])[i], o = d && d.options[j]; if (!o) return;
+    const st = ST.game || {}, label = phaseName(st, he());
+    if (o.msgs && o.msgs.length) await C().pushInfos(ST.gid, o.msgs.map(m => ({ key: key(m.seat), text: m.text, label })).filter(x => x.key));
+    for (const e of o.effects || []) await applyEffect(e);
+    const k = seat + ":" + at; ST.decDone[k] = Object.assign({}, ST.decDone[k], { [i]: j }); render();
+  }
+  async function applyEffect(e) {
+    const p = players().find(x => x.seat === e.seat); if (!p) return;
+    const k = key(p.seat);   // read before the deal changes
+    if (e.kind === "role") {
+      const r = B().getRole(e.role); if (!r) return;
+      if (e.keepTrue) p.thinks = r.id;                     // the Philosopher keeps being the Philosopher, with that ability
+      else { p.role = r; p.thinks = null; p.alignment = ["minion", "demon"].includes(r.type) ? "evil" : "good"; }
+      B().saveLive && B().saveLive();   // the saved game follows the change (so it is still "this game")
+      await C().setRole(ST.gid, k, r, ["minion", "demon"].includes(((e.keepTrue ? p.role : r) || {}).type) ? "evil" : "good");
+      B().renderBoardView && B().renderBoardView();
+    }
+    if (e.kind === "kill") { ST.pendingKills = (ST.pendingKills || []).concat(p.seat); }
+    if (e.kind === "drunk") { p.isDrunk = true; B().saveLive && B().saveLive(); }
+    if (e.kind === "poison") { ST.poisonExtra = (ST.poisonExtra || []).concat(p.seat); }
+  }
+
   async function runWake() {
-    const st = ST.game || {}, run = runState(st), first = (st.day || 1) === 1, woke = orderedForNight(st).filter(p => ST.wakeNo[p.seat]), p = woke[run.i]; if (!p) return;
+    const st = ST.game || {}, run = runState(st), first = (st.day || 1) === 1, woke = wokeList(st), p = woke[run.i]; if (!p) return;
     const a = window.BKRules.action(p, first, he() ? "he" : "en"), id = "w" + Date.now();
-    run.woke[p.seat] = id; render();
-    await C().wake(ST.gid, key(p.seat), { id, n: a.n || 0, self: !!a.self, dead: !!a.dead, once: !!a.once, text: a.text, night: st.day || 1 });
+    run.woke[p.seat] = id; (run.wakeA = run.wakeA || {})[p.seat] = a; render();
+    await C().wake(ST.gid, key(p.seat), { id, n: a.n || 0, r: a.r || 0, kinds: a.kinds || null, self: !!a.self, dead: !!a.dead, once: !!a.once, text: a.text, night: st.day || 1 });
   }
   async function runSend() {
-    const st = ST.game || {}, run = runState(st), woke = orderedForNight(st).filter(p => ST.wakeNo[p.seat]), p = woke[run.i]; if (!p) return;
+    const st = ST.game || {}, run = runState(st), woke = wokeList(st), p = woke[run.i]; if (!p) return;
     const ta = document.getElementById("bkNight-" + p.seat), text = ta ? ta.value.trim() : ""; if (!text) return;
     const at = Date.now(); run.sent[p.seat] = at - 1;
     await C().pushInfos(ST.gid, [{ key: key(p.seat), text, label: phaseName(st, he()) }]);
     p.firstNightInfo = text; render();
   }
   async function runGo(step) {
-    const st = ST.game || {}, run = runState(st), woke = orderedForNight(st).filter(p => ST.wakeNo[p.seat]), p = woke[run.i];
+    const st = ST.game || {}, run = runState(st), woke = wokeList(st), p = woke[run.i];
     if (p && step > 0 && run.woke[p.seat]) C().wake(ST.gid, key(p.seat), null).catch(() => {});   // back to sleep
     run.i = Math.max(0, Math.min(woke.length, run.i + step)); render();
   }
@@ -490,7 +555,7 @@
 
     let dawnNotes = "";
     if (st.phase === "dawn" && window.BKRules) {
-      if (ST.dawnFor !== st.day) { ST.dawnFor = st.day; const res = window.BKRules.resolveNight(players(), actsTonight(), he() ? "he" : "en"); ST.deaths = {}; res.deaths.forEach(x => ST.deaths[x] = true); ST.dawnRes = res; }
+      if (ST.dawnFor !== st.day) { ST.dawnFor = st.day; const res = window.BKRules.resolveNight(players(), actsTonight(), he() ? "he" : "en"); ST.deaths = {}; res.deaths.forEach(x => ST.deaths[x] = true); (ST.pendingKills || []).forEach(x => ST.deaths[x] = true); ST.pendingKills = []; ST.dawnRes = res; }
       const res = ST.dawnRes || { notes: [] }, acts = actsTonight();
       dawnNotes = `<div class="bk-dawn-sum">${Object.keys(acts).length ? `<b>${tr("מה בחרו הלילה:", "Tonight's choices:")}</b><ul>${Object.entries(acts).map(([seat, t]) => { const q = players().find(x => x.seat === +seat), rr = q && q.role; return `<li>${esc(String(q ? q.name : seat).split(" / ")[0])} (${esc(rr ? (he() ? rr.name_he : rr.name_en) : "")}) → ${t.length ? t.map(nameOfSeat).join(", ") : tr("דילג", "skipped")}</li>`; }).join("")}</ul>` : ""}
         ${res.notes.length ? `<ul class="bk-dawn-notes">${res.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
@@ -535,6 +600,11 @@
       ${st.phase === "end" ? `<div class="bk-win ${st.winner}"><b>${st.winner === "good" ? tr("🏆 הטובים ניצחו", "🏆 Good won") : tr("😈 הרעים ניצחו", "😈 Evil won")}</b><span>${tr("כל התפקידים נחשפו בטלפונים של השחקנים.", "All roles are now revealed on the players' phones.")}</span></div>` : stepsHTML(st)}
       ${st.phase === "end" ? "" : body}
       ${st.phase !== "night" ? infoEditorHTML(st) : ""}
+      <details class="bk-lp-sec bk-ie"><summary><h4>${tr("הודעה לשחקנים נבחרים", "Message chosen players")}</h4><small>${tr("פרטי — רק להם", "private — only them")}</small></summary>
+        ${recipientsHTML("any", [])}
+        <textarea id="bkCustomAny" rows="2" placeholder="${tr("למשל: אתם שניכם משרתים — אל תגלו", "e.g. a private note to these players")}"></textarea>
+        <button type="button" class="bk-btn pri" onclick="window.BKLive.sendCustom('any', 'bkCustomAny')">${tr("שלח לנבחרים", "Send to the chosen")}</button>
+      </details>
       <section class="bk-lp-sec"><h4>${tr("הודעה לכולם", "Announcement")}</h4>
         <div class="bk-row"><input id="bkLiveNotice" type="text" maxlength="300" placeholder="${tr("למשל: עוד 2 דקות להצבעה", "e.g. 2 minutes to the vote")}">
           <button type="button" class="bk-btn" onclick="window.BKLive.announce()">${tr("שלח", "Send")}</button></div>
@@ -615,7 +685,7 @@
     }
     if (d && d.wake && d.wake.id !== PL.lastWake) {
       if (PL.lastWake !== undefined) { const isHe = d.lang !== "en"; alertPlayer(isHe ? "התעוררת!" : "Wake up!", d.wake.text || ""); }
-      PL.lastWake = d.wake.id; PL.pick = [];
+      PL.lastWake = d.wake.id; PL.pick = []; PL.rpick = [];
     } else if (d && !d.wake) PL.lastWake = PL.lastWake === undefined ? null : PL.lastWake;
     if (d) { PL.lastInfo = d.info; PL.seenOnce = true; }
     renderPlayer();
@@ -627,25 +697,35 @@
     if (i >= 0) PL.pick.splice(i, 1); else { PL.pick.push(seat); while (PL.pick.length > (w.n || 1)) PL.pick.shift(); }
     renderPlayer();
   }
+  function pickRole(id) {
+    const w = PL.me && PL.me.wake; if (!w) return;
+    PL.rpick = PL.rpick || []; const i = PL.rpick.indexOf(id);
+    if (i >= 0) PL.rpick.splice(i, 1); else { PL.rpick.push(id); while (PL.rpick.length > (w.r || 1)) PL.rpick.shift(); }
+    renderPlayer();
+  }
   async function sendPick() {
     const w = PL.me && PL.me.wake; if (!w) return;
-    try { await C().act(PL.gid, PL.key, w.id, PL.pick || []); if (navigator.vibrate) navigator.vibrate(30); } catch (e) { alert(e.message || e); }
+    try { await C().act(PL.gid, PL.key, w.id, PL.pick || [], PL.rpick || []); if (navigator.vibrate) navigator.vibrate(30); } catch (e) { alert(e.message || e); }
   }
   async function gotIt() {
     const d = PL.me; if (!d) return; const last = (d.log || []).slice(-1)[0];
     try { await C().seen(PL.gid, PL.key, last ? last.at : Date.now()); } catch (e) { alert(e.message || e); }
   }
+  const isHeG = () => !PL.me || PL.me.lang !== "en";
   function nightCardsHTML(d, s, T) {
     let html = "";
     const w = d.wake, answered = w && d.act && d.act.wake === w.id;
     if (w && !answered) {
       const seats = ((s && s.seats) || []).filter(x => (w.self || x.seat !== d.seat) && (w.dead ? !x.alive : x.alive || x.seat === d.seat));
-      const pick = PL.pick || [];
+      const pick = PL.pick || [], rpick = PL.rpick || [], nr = w.r || 0;
+      const roleList = ((s && s.script) || []).filter(r => !w.kinds || w.kinds.includes(r.type));
+      const done = pick.length === (w.n || 0) && rpick.length === nr, skip = w.once && !pick.length && !rpick.length, any = w.n || nr;
       html += `<section class="bkp-card bkp-wake"><div class="bkp-wake-top">🌙 <b>${T("התעוררת!", "You are awake!")}</b></div>
         <p class="bkp-wake-text">${esc(w.text || "")}</p>
-        ${w.n ? `<div class="bkp-pickgrid">${seats.map(x => `<button type="button" class="${pick.includes(x.seat) ? "on" : ""}" onclick="window.BKLive.pickSeat(${x.seat})"><i>${x.seat}</i>${esc(String(x.name).split(" / ")[0])}</button>`).join("")}</div>
-          <button type="button" class="bkp-reveal" ${pick.length === w.n || (w.once && pick.length === 0) ? "" : "disabled"} onclick="window.BKLive.sendPick()">${pick.length ? T(`אישור (${pick.length}/${w.n})`, `Confirm (${pick.length}/${w.n})`) : (w.once ? T("דלג הפעם", "Skip this time") : T(`בחר ${w.n}`, `Choose ${w.n}`))}</button>`
-        : `<button type="button" class="bkp-reveal" onclick="window.BKLive.sendPick()">${T("אני ער — מוכן למידע", "I'm awake — ready")}</button>`}
+        ${w.n ? `<small class="bkp-lbl">${T(`בחר ${w.n} ${w.n > 1 ? "שחקנים" : "שחקן"}`, `Choose ${w.n} player${w.n > 1 ? "s" : ""}`)}</small><div class="bkp-pickgrid">${seats.map(x => `<button type="button" class="${pick.includes(x.seat) ? "on" : ""}" onclick="window.BKLive.pickSeat(${x.seat})"><i>${x.seat}</i>${esc(String(x.name).split(" / ")[0])}</button>`).join("")}</div>` : ""}
+        ${nr ? `<small class="bkp-lbl">${T("בחר תפקיד", "Choose a character")}</small><div class="bkp-pickgrid bkp-rolegrid">${roleList.map(r => `<button type="button" class="${rpick.includes(r.id) ? "on" : ""} ${esc(r.type)}" onclick="window.BKLive.pickRole('${esc(r.id)}')"><span>${r.icon || ""}</span>${esc(isHeG() ? r.name_he || r.name_en : r.name_en || r.name_he)}</button>`).join("")}</div>` : ""}
+        ${any ? `<button type="button" class="bkp-reveal" ${done || skip ? "" : "disabled"} onclick="window.BKLive.sendPick()">${skip ? T("דלג הפעם", "Skip this time") : done ? T("אישור", "Confirm") : T("בחר כדי להמשיך", "Choose to continue")}</button>`
+          : `<button type="button" class="bkp-reveal" onclick="window.BKLive.sendPick()">${T("אני ער — מוכן למידע", "I'm awake — ready")}</button>`}
       </section>`;
     } else if (w && answered) {
       html += `<div class="bkp-night">✓ ${T("הבחירה נשלחה למספר הסיפורים. חכה לתשובה.", "Your choice was sent to the storyteller. Wait for the answer.")}</div>`;
@@ -849,7 +929,7 @@
     };
   }
 
-  window.BKLive = { endDay, declareWin, dismissWin: () => { ST.win = null; render(); }, runWake, runSend, runGo, pickSeat, sendPick, gotIt, useChip, sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
+  window.BKLive = { decide: decideOpt, toggleRcpt, sendCustom, pickRole, endDay, declareWin, dismissWin: () => { ST.win = null; render(); }, runWake, runSend, runGo, pickSeat, sendPick, gotIt, useChip, sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
     groupSend, openLobby, startFlow, toggleDeath, announceDawn, openRoles, closeRoles, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
     openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
 })();

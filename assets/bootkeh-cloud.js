@@ -135,9 +135,15 @@
     await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ wake: wake || null });
   };
   // Player: answer the wake-up (the seats they chose).
-  C.act = async (gameId, key, wakeId, targets) => {
+  C.act = async (gameId, key, wakeId, targets, roles) => {
     await C.ready;
-    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ act: { wake: wakeId, targets: (targets || []).slice(0, 4).map(Number), at: Date.now() } });
+    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ act: { wake: wakeId, targets: (targets || []).slice(0, 4).map(Number), roles: (roles || []).slice(0, 3).map(String), at: Date.now() } });
+  };
+  // Storyteller: a player's character changed (Pit-Hag, Snake Charmer swap, a Minion becomes the Imp…) — their card updates.
+  C.setRole = async (gameId, key, r, alignment) => {
+    await storyteller();
+    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ roleId: r.id || "", icon: r.icon || "", type: r.type || "", name_en: r.name_en || "", name_he: r.name_he || "",
+      ability_en: r.ability_en || "", ability_he: r.ability_he || "", alignment: alignment || "good", updatedAt: FV.FieldValue.serverTimestamp() });
   };
   // Player: "Got it" — they saw their latest info (the storyteller sees a ✓ and moves on).
   C.seen = async (gameId, key, infoAt) => {

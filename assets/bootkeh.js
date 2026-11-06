@@ -293,6 +293,52 @@
 
 
   // --- Initialization ---
+  // Bottom bar like Apple's: a floating glass bar with a bubble behind the current tab. Press and hold (or just slide)
+  // on the bar: the bubble follows the finger and grows like a lens, the tab under it lights up with a tiny tap of
+  // vibration, and letting go selects that tab. A plain tap still selects as before. Same idea as the main site's
+  // hold-and-slide section menu (assets/site.js, "jump menu").
+  function attachTabBar() {
+    const nav = document.querySelector(".bootkeh-nav-tabs"); if (!nav) return;
+    let pill = nav.querySelector(".bk-tab-pill");
+    if (!pill) { pill = document.createElement("span"); pill.className = "bk-tab-pill"; pill.setAttribute("aria-hidden", "true"); nav.prepend(pill); }
+    const btns = () => [...nav.querySelectorAll(".bootkeh-tab-btn")];
+    const place = (btn, x, live) => {   // put the bubble under a tab (or centred on x while dragging)
+      const nr = nav.getBoundingClientRect(), br = btn.getBoundingClientRect(), w = br.width;
+      let left = (x != null ? x - w / 2 : br.left) - nr.left;
+      left = Math.max(4, Math.min(nr.width - w - 4, left));
+      pill.style.width = w + "px"; pill.style.transform = `translate3d(${left}px,0,0)${live ? " scale(1.12, 1.06)" : ""}`;
+    };
+    window.__bkPlacePill = () => { const a = nav.querySelector(".bootkeh-tab-btn.active"); if (a) place(a); };
+    let d = null, ignoreClick = false;
+    const btnAt = x => { let best = null, bd = 1e9; for (const b of btns()) { const r = b.getBoundingClientRect(), c = (r.left + r.right) / 2, dd = Math.abs(c - x); if (dd < bd) { bd = dd; best = b; } } return best; };
+    const hl = b => { btns().forEach(x => x.classList.toggle("hl", x === b)); if (b && d && d.last !== b) { d.last = b; try { navigator.vibrate && navigator.vibrate(7); } catch (e) {} } };
+    nav.addEventListener("pointerdown", e => {
+      if (e.pointerType === "mouse" || !matchMedia("(max-width: 760px)").matches && !document.documentElement.classList.contains("bk-phone")) return;
+      d = { x: e.clientX, y: e.clientY, sliding: false, last: null };
+      d.timer = setTimeout(() => { if (d && !d.sliding) start(e.clientX); }, 260);   // a long press starts sliding too
+      try { nav.setPointerCapture(e.pointerId); } catch (er) {}
+    });
+    const start = x => { d.sliding = true; nav.classList.add("sliding"); pill.style.transition = "transform .12s ease-out, width .2s ease"; place(btnAt(x), x, true); hl(btnAt(x)); };
+    nav.addEventListener("pointermove", e => {
+      if (!d) return;
+      if (!d.sliding && Math.abs(e.clientX - d.x) > 8) start(e.clientX);
+      if (!d.sliding) return;
+      e.preventDefault();
+      const b = btnAt(e.clientX); place(b, e.clientX, true); hl(b);
+    });
+    const end = e => {
+      if (!d) return; clearTimeout(d.timer);
+      const was = d.sliding, b = was ? btnAt(e.clientX) : null; d = null;
+      nav.classList.remove("sliding"); btns().forEach(x => x.classList.remove("hl")); pill.style.transition = "";
+      if (was) { ignoreClick = true; setTimeout(() => ignoreClick = false, 350); if (b) { setTab(b.dataset.tab); window.scrollTo({ top: 0, behavior: "smooth" }); } window.__bkPlacePill(); }
+    };
+    nav.addEventListener("pointerup", end);
+    nav.addEventListener("pointercancel", () => { if (d) clearTimeout(d.timer); d = null; nav.classList.remove("sliding"); btns().forEach(x => x.classList.remove("hl")); window.__bkPlacePill(); });
+    nav.addEventListener("click", e => { if (ignoreClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+    addEventListener("resize", () => window.__bkPlacePill());
+    requestAnimationFrame(() => window.__bkPlacePill());
+  }
+
   // Phones: drag the page left / right to move between the main screens (Setup ↔ Board ↔ Roles ↔ Send), like the
   // Android home screen: the page follows the finger with the next screen sliding in beside it, and on release it
   // glides to the next screen (a long enough or quick enough drag) or springs back.
@@ -356,6 +402,9 @@
       setX(g.cur, g.dx, false);
       if (g.peek) setX(g.peek, g.dx - Math.sign(dx) * g.w, false);
       glow(tab, Math.min(1, Math.abs(g.dx) / (g.w * 0.5)));
+      const pillEl = document.querySelector(".bk-tab-pill"), a = tabBtn(state.activeTab), bb = tab && tabBtn(tab);
+      if (pillEl && a) { const nr = a.parentElement.getBoundingClientRect(), ra = a.getBoundingClientRect(), rb = bb ? bb.getBoundingClientRect() : ra, k = Math.min(1, Math.abs(g.dx) / g.w);
+        pillEl.style.transition = "none"; pillEl.style.transform = `translate3d(${ra.left - nr.left + (rb.left - ra.left) * k}px,0,0)`; }
     }
 
     const end = () => {
@@ -365,6 +414,8 @@
       const [t0, x0] = d.hist[0], [t1, x1] = d.hist[d.hist.length - 1], v = (x1 - x0) / Math.max(1, t1 - t0);   // px per ms
       const go = d.peek && ((Math.abs(d.dx) > d.w * 0.28 && Math.sign(v) !== -Math.sign(d.dx)) || (Math.abs(v) > 0.45 && Math.sign(v) === Math.sign(d.dx)));
       glow(null, 0);
+      const pillEl = document.querySelector(".bk-tab-pill"); if (pillEl) pillEl.style.transition = "";
+      setTimeout(() => window.__bkPlacePill && window.__bkPlacePill(), 0);
       const done = () => {
         d.cur.style.transform = ""; d.cur.style.transition = ""; d.cur.style.opacity = "";
         if (go) {
@@ -399,6 +450,7 @@
     renderPresets();
     attachEventListeners();
     attachSwipe();
+    attachTabBar();
     initPanels();
     generateGame(false); // prepare initial game data silently
     // a live game made on this device is still running: bring back that exact deal (same seats, roles and links)
@@ -494,6 +546,7 @@
     }
     state.activeTab = tab;
     renderBackBar(tab);
+    requestAnimationFrame(() => window.__bkPlacePill && window.__bkPlacePill());
     $$(".bootkeh-tab-btn").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
     });
@@ -1592,6 +1645,16 @@
   // A fingerprint of the dealt game, so links are never sent for an older deal.
   function playersSig() { return state.players.map(p => `${p.seat}:${p.name}:${p.role && p.role.id}`).join("|"); }
 
+  // Keep the running game on this device (the deal, who thinks what, who is alive), so a refresh brings it back —
+  // also after a character changes during the game (Pit-Hag, Snake Charmer, a new Imp…).
+  function saveLive(g) {
+    g = g || (window.BKCloud && window.BKCloud.saved()); if (!g) return;
+    g.sig = playersSig(); state.liveSig = g.sig;
+    g.players = state.players.map(p => ({ id: p.id, seat: p.seat, name: p.name, phone: p.phone, roleId: p.role && p.role.id, thinks: p.thinks || null, isDrunk: !!p.isDrunk, alignment: p.alignment, firstNightInfo: p.firstNightInfo, fnAlt: p.fnAlt || [], fnNote: p.fnNote || "", isAlive: p.isAlive, ghost: p.ghost, isSent: p.isSent }));
+    g.rules = state.rules || null;
+    try { localStorage.setItem("bk_live_game", JSON.stringify(g)); } catch (e) {}
+  }
+
   // Make (or remake) the private player pages for this game.
   async function createLiveGame() {
     if (!window.BKCloud) return;
@@ -1601,11 +1664,7 @@
       const old = liveGame(); if (old) await window.BKCloud.endGame(old.gameId).catch(() => {});
       const g = await window.BKCloud.createGame(getThemeTitle(), state.players.map(p => ({ seat: p.seat, name: p.name, role: shownRole(p), alignment: shownAlign(p), info: p.firstNightInfo })), hours, state.lang,
         { name: getScriptTitle(), author: (getScript(state.scriptId) || {}).author || "", roles: (state.poolIds || []).map(getRole).filter(Boolean) });
-      g.sig = playersSig(); state.liveSig = g.sig;
-      // keep the deal on this device, so a refresh brings back the same game with its links
-      g.players = state.players.map(p => ({ id: p.id, seat: p.seat, name: p.name, phone: p.phone, roleId: p.role && p.role.id, thinks: p.thinks || null, isDrunk: !!p.isDrunk, alignment: p.alignment, firstNightInfo: p.firstNightInfo, fnAlt: p.fnAlt || [], fnNote: p.fnNote || "", isAlive: p.isAlive, isSent: p.isSent }));
-      g.rules = state.rules || null;
-      try { localStorage.setItem("bk_live_game", JSON.stringify(g)); } catch (e) {}
+      saveLive(g);
       renderCardsView();
     } catch (e) { if (st) st.textContent = (he ? "לא הצלחתי ליצור דפים: " : "Couldn't create pages: ") + (e.message || e); }
   }
@@ -1927,6 +1986,7 @@
   window.Bootkeh = {
     _state: state,
     liveGame,
+    saveLive,
     renderBoardView,
     init,
     createLiveGame,

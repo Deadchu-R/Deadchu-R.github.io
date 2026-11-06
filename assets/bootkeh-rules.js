@@ -196,14 +196,16 @@
     poisoner: { n: 1, self: true, first: true, he: "בחר שחקן — הוא מורעל הלילה ומחר.", en: "Choose a player — they are poisoned tonight and tomorrow." },
     devils_advocate: { n: 1, self: true, first: true, he: "בחר שחקן חי (לא כמו אתמול) — אם יוצא להורג מחר, לא ימות.", en: "Choose a living player (not last night's) — if executed tomorrow, they don't die." },
     witch: { n: 1, self: true, first: true, he: "בחר שחקן — אם יאשים מחר, ימות.", en: "Choose a player — if they nominate tomorrow, they die." },
-    cerenovus: { n: 1, self: true, first: true, he: "בחר שחקן ותפקיד טוב (ספר למספר הסיפורים איזה).", en: "Choose a player and a good character (tell the storyteller which)." },
+    cerenovus: { n: 1, self: true, first: true, r: 1, kinds: ["townsfolk", "outsider"], he: "בחר שחקן ותפקיד טוב — הוא יהיה \"משוגע\" שהוא התפקיד הזה מחר.", en: "Choose a player and a good character — they must be \"mad\" about it tomorrow." },
+    pit_hag: { n: 1, self: true, r: 1, kinds: ["townsfolk", "outsider", "minion", "demon"], he: "בחר שחקן ותפקיד — הוא הופך לתפקיד הזה (אם הוא לא כבר במשחק).", en: "Choose a player and a character — they become it (if not in play)." },
+    courtier: { n: 0, r: 1, kinds: ["townsfolk", "outsider", "minion", "demon"], once: true, first: true, he: "פעם במשחק: בחר תפקיד — הוא שיכור 3 לילות וימים. (אפשר לדלג)", en: "Once per game: choose a character — they are drunk for 3 nights & 3 days. (You may skip)" },
     dreamer: { n: 1, self: false, first: true, he: "בחר שחקן (לא את עצמך) — תקבל שני תפקידים, אחד מהם שלו.", en: "Choose a player (not yourself) — learn 1 good and 1 evil character, one is theirs." },
     seamstress: { n: 2, self: false, first: true, once: true, he: "פעם במשחק: בחר שני שחקנים — תגלה אם הם באותו צד. (אפשר לדלג)", en: "Once per game: choose two players — learn if they are the same alignment. (You may skip)" },
     chambermaid: { n: 2, self: false, first: true, he: "בחר שני שחקנים חיים — תגלה כמה התעוררו הלילה.", en: "Choose two living players — learn how many woke tonight." },
     innkeeper: { n: 2, self: true, he: "בחר שני שחקנים — הם לא ימותו הלילה, אחד שיכור.", en: "Choose two players — they can't die tonight; one is drunk." },
     sailor: { n: 1, self: false, first: true, he: "בחר שחקן חי — אחד מכם שיכור עד מחר.", en: "Choose a living player — one of you is drunk until dusk." },
     exorcist: { n: 1, self: false, he: "בחר שחקן (לא כמו אתמול) — אם הוא השד, הוא לא יפעל הלילה.", en: "Choose a player (different to last night) — if the Demon, it doesn't act tonight." },
-    gambler: { n: 1, self: true, he: "בחר שחקן ונחש את התפקיד שלו (ספר למספר הסיפורים) — טעות = מוות.", en: "Choose a player and guess their character (tell the storyteller) — wrong = you die." },
+    gambler: { n: 1, self: true, r: 1, kinds: ["townsfolk", "outsider", "minion", "demon"], he: "בחר שחקן ונחש את התפקיד שלו — טעות = אתה מת.", en: "Choose a player and guess their character — wrong = you die." },
     professor: { n: 1, self: false, once: true, he: "פעם במשחק: בחר שחקן מת — אם הוא תושב, הוא חוזר לחיים.", en: "Once per game: choose a dead player — if Townsfolk, they are resurrected.", dead: true },
     ravenkeeper: { n: 1, self: true, he: "מתת הלילה: בחר שחקן — תגלה את התפקיד שלו.", en: "You died tonight: choose a player — learn their character." },
     imp: { n: 1, self: true, he: "בחר שחקן — הוא מת. (אם תבחר בעצמך, משרת יהפוך לשד)", en: "Choose a player — they die. (Choose yourself: a Minion becomes the Imp)" },
@@ -219,13 +221,13 @@
     lleech: { n: 1, self: true, first: true, he: "בחר שחקן — הוא מת (בלילה הראשון: בחר מארח).", en: "Choose a player — they die (night 1: choose your host)." },
     assassin: { n: 1, self: true, once: true, he: "פעם במשחק: בחר שחקן — הוא מת בכל מקרה. (אפשר לדלג)", en: "Once per game: choose a player — they die regardless. (You may skip)" },
     godfather: { n: 1, self: true, he: "אם אאוטסיידר מת היום: בחר שחקן — הוא מת.", en: "If an Outsider died today: choose a player — they die." },
-    philosopher: { n: 0, first: true, he: "פעם במשחק: אמור למספר הסיפורים איזה תפקיד טוב לקחת. (אפשר לדלג)", en: "Once per game: tell the storyteller which good character to become. (You may skip)" },
+    philosopher: { n: 0, first: true, r: 1, kinds: ["townsfolk", "outsider"], once: true, he: "פעם במשחק: בחר תפקיד טוב — תקבל את היכולת שלו. (אפשר לדלג)", en: "Once per game: choose a good character — gain its ability. (You may skip)" },
   };
   const DEMON_KILL = new Set(["imp", "vortox", "vigormortis", "no_dashii", "fang_gu", "zombuul", "shabaloth", "po", "lleech", "al_hadikhia"]);
   function action(p, first, lang) {
     const r = shown(p), a = ACT[r.id];
     if (!a || (first && !a.first)) return { n: 0, text: say(lang, "התעוררת. תסתכל במידע שלך.", "You are awake. Look at your info."), info: true };
-    return { n: a.n, self: !!a.self, dead: !!a.dead, once: !!a.once, text: L(lang) === "he" ? a.he : a.en };
+    return { n: a.n, r: a.r || 0, kinds: a.kinds || null, self: !!a.self, dead: !!a.dead, once: !!a.once, text: L(lang) === "he" ? a.he : a.en };
   }
 
   // --- dawn helper: from tonight's choices, who probably died / was protected / poisoned. acts: {seat: [targets]} ---
@@ -251,5 +253,56 @@
     return { deaths: [...deaths], poisoned: [...poisoned], protected: [...protectedS], notes };
   }
 
-  window.BKRules = { action, resolveNight, setup, shown, shownAlignment, firstNight, laterNight, quick, nightOrder, outsiderChange };
+  // --- the storyteller's decisions after a player chose (act = {targets:[seats], roles:[ids]}) ---
+  // Each decision: {title, text, options:[{label, truth?, msgs:[{seat,text}], effects:[{kind:"role"|"kill"|"drunk"|"poison", seat, role?}]}]}.
+  // The storyteller taps one option (messages go to those players, effects change the game) or writes their own.
+  function decide(p, act, ctx) {
+    const { players, lang } = ctx, rules = ctx.rules || {}, r = shown(p), out = [];
+    const T = act.targets || [], RR = (act.roles || []).map(role).filter(Boolean);
+    const P = seat => players.find(x => x.seat === seat), N = q => q ? String(q.name).split(" / ")[0] : "?";
+    const drunk = p.isDrunk || (ctx.poisoned || []).includes(p.seat);
+    const D = (title, text, options) => out.push({ title, text, options });
+    const msg = (seat, text) => ({ seat, text });
+    if (drunk) out.push({ title: say(lang, `${N(p)} שיכור/מורעל`, `${N(p)} is drunk/poisoned`), text: say(lang, "היכולת שלו לא עובדת באמת — תן לו תשובה שקרית או \"כאילו\" עבד.", "Their ability doesn't really work — give a false answer or pretend it worked."), options: [] });
+
+    if (r.id === "fortune_teller" && T.length === 2) {
+      const hit = T.some(t => { const q = P(t); return q && (q.role.type === "demon" || q.seat === rules.redHerring); });
+      const yes = say(lang, "כן — אחד מהשניים שבחרת הוא שד.", "Yes — one of the two you chose is a Demon."), no = say(lang, "לא — אף אחד מהשניים אינו שד.", "No — neither is a Demon.");
+      D(say(lang, "מגדת העתידות", "Fortune Teller"), say(lang, `בחרה ב־${T.map(t => N(P(t))).join(" ו־")}. ${hit ? "אחד מהם שד (או הפתיון)." : "אף אחד מהם לא שד."}`, `Chose ${T.map(t => N(P(t))).join(" and ")}. ${hit ? "One is a Demon (or the red herring)." : "Neither is a Demon."}`),
+        [{ label: say(lang, "כן", "Yes"), truth: drunk ? !hit : hit, msgs: [msg(p.seat, yes)] }, { label: say(lang, "לא", "No"), truth: drunk ? hit : !hit, msgs: [msg(p.seat, no)] }]);
+    }
+    if (r.id === "ravenkeeper" && T[0]) { const q = P(T[0]), fake = pick((ctx.pool || []).filter(x => x.id !== q.role.id));
+      D(say(lang, "שומר העורבים", "Ravenkeeper"), say(lang, `בחר ב־${N(q)} (${nm(q.role, lang)}).`, `Chose ${N(q)} (${nm(q.role, lang)}).`),
+        [{ label: nm(q.role, lang), truth: !drunk, msgs: [msg(p.seat, say(lang, `${N(q)} הוא ${nm(q.role, lang)}.`, `${N(q)} is the ${nm(q.role, lang)}.`))] }].concat(fake ? [{ label: nm(fake, lang), truth: drunk, msgs: [msg(p.seat, say(lang, `${N(q)} הוא ${nm(fake, lang)}.`, `${N(q)} is the ${nm(fake, lang)}.`))] }] : [])); }
+    if (r.id === "dreamer" && T[0]) { const q = P(T[0]), real = q.role, good = GOOD.includes(real.type);
+      const other = pick((ctx.pool || []).filter(x => (good ? EVIL : GOOD).includes(x.type))), pair = shuffle([real, other].filter(Boolean)).map(x => nm(x, lang)).join(say(lang, " או ", " or "));
+      D(say(lang, "החולם", "Dreamer"), say(lang, `בחר ב־${N(q)} (${nm(real, lang)}).`, `Chose ${N(q)} (${nm(real, lang)}).`), [{ label: pair, truth: !drunk, msgs: [msg(p.seat, say(lang, `${N(q)} הוא ${pair}.`, `${N(q)} is the ${pair}.`))] }]); }
+    if (r.id === "snake_charmer" && T[0]) { const q = P(T[0]);
+      if (q && q.role.type === "demon" && !drunk) D(say(lang, "לוחש הנחשים פגע בשד!", "Snake Charmer hit the Demon!"), say(lang, `${N(p)} ו־${N(q)} מחליפים תפקידים וצדדים; השד הישן (עכשיו לוחש) מורעל.`, `${N(p)} and ${N(q)} swap characters and alignments; the old Demon (now Snake Charmer) is poisoned.`),
+        [{ label: say(lang, "בצע החלפה", "Swap them"), msgs: [msg(p.seat, say(lang, `אתה עכשיו ${nm(q.role, lang)} — השד. עברת לצד הרע.`, `You are now the ${nm(q.role, lang)} — the Demon. You are evil.`)), msg(q.seat, say(lang, `אתה עכשיו לוחש הנחשים. עברת לצד הטוב (ואתה מורעל).`, `You are now the Snake Charmer. You are good (and poisoned).`))],
+          effects: [{ kind: "role", seat: p.seat, role: q.role.id }, { kind: "role", seat: q.seat, role: "snake_charmer" }, { kind: "poison", seat: q.seat }] }]);
+    }
+    if (r.id === "gambler" && T[0] && RR[0]) { const q = P(T[0]), right = q && q.role.id === RR[0].id;
+      D(say(lang, "המהמר", "Gambler"), say(lang, `ניחש ש־${N(q)} הוא ${nm(RR[0], lang)} — ${right ? "נכון" : `טעות (באמת ${nm(q.role, lang)})`}.`, `Guessed ${N(q)} is the ${nm(RR[0], lang)} — ${right ? "right" : `wrong (really ${nm(q.role, lang)})`}.`),
+        [{ label: say(lang, "נכון — כלום לא קורה", "Right — nothing happens"), truth: right || drunk, msgs: [] }, { label: say(lang, "טעה — המהמר מת", "Wrong — the Gambler dies"), truth: !right && !drunk, msgs: [], effects: [{ kind: "kill", seat: p.seat }] }]); }
+    if (r.id === "cerenovus" && T[0] && RR[0]) { const q = P(T[0]);
+      D(say(lang, "סרנובוס", "Cerenovus"), say(lang, `בחר ב־${N(q)} ובתפקיד ${nm(RR[0], lang)}.`, `Chose ${N(q)} and the ${nm(RR[0], lang)}.`),
+        [{ label: say(lang, `שלח ל־${N(q)}`, `Tell ${N(q)}`), msgs: drunk ? [] : [msg(q.seat, say(lang, `🧠 סרנובוס בחר בך: מחר אתה חייב להיות "משוגע" שאתה ${nm(RR[0], lang)} — אחרת אולי תוצא להורג.`, `🧠 The Cerenovus chose you: tomorrow you must be "mad" that you are the ${nm(RR[0], lang)} — or you might be executed.`))] }]); }
+    if (r.id === "pit_hag" && T[0] && RR[0]) { const q = P(T[0]), inPlay = players.some(x => x.role.id === RR[0].id), al = EVIL.includes(RR[0].type) ? "evil" : "good";
+      D(say(lang, "מכשפת הבור", "Pit-Hag"), say(lang, `רוצה להפוך את ${N(q)} ל־${nm(RR[0], lang)}.${inPlay ? " התפקיד כבר במשחק — אין שינוי." : ""}${RR[0].type === "demon" ? " שד חדש: אתה מחליט אם מישהו מת הלילה." : ""}`, `Wants ${N(q)} to become the ${nm(RR[0], lang)}.${inPlay ? " Already in play — no change." : ""}${RR[0].type === "demon" ? " A new Demon: you decide whether anyone dies tonight." : ""}`),
+        inPlay || drunk ? [{ label: say(lang, "אין שינוי", "No change"), msgs: [] }] : [{ label: say(lang, `${N(q)} הופך ל־${nm(RR[0], lang)}`, `${N(q)} becomes the ${nm(RR[0], lang)}`), msgs: [msg(q.seat, say(lang, `התפקיד שלך השתנה: אתה עכשיו ${nm(RR[0], lang)}${al === "evil" ? " (רע)" : ""}.`, `Your character changed: you are now the ${nm(RR[0], lang)}${al === "evil" ? " (evil)" : ""}.`))], effects: [{ kind: "role", seat: q.seat, role: RR[0].id }] }, { label: say(lang, "אין שינוי", "No change"), msgs: [] }]); }
+    if (r.id === "philosopher" && RR[0]) { const holder = players.find(x => x.role.id === RR[0].id && x !== p);
+      D(say(lang, "הפילוסוף", "Philosopher"), say(lang, `בחר ביכולת של ${nm(RR[0], lang)}.${holder ? ` ${N(holder)} מחזיק בתפקיד — הוא נהיה שיכור.` : ""}`, `Chose the ${nm(RR[0], lang)} ability.${holder ? ` ${N(holder)} has it — they become drunk.` : ""}`),
+        [{ label: say(lang, "תן לו את היכולת", "Give the ability"), msgs: [msg(p.seat, say(lang, `קיבלת את היכולת של ${nm(RR[0], lang)}: ${RR[0].ability_he}`, `You gained the ${nm(RR[0], lang)} ability: ${RR[0].ability_en}`))],
+          effects: (drunk ? [] : [{ kind: "role", seat: p.seat, role: RR[0].id, keepTrue: true }]).concat(holder && !drunk ? [{ kind: "drunk", seat: holder.seat }] : []) }]); }
+    if (r.id === "courtier" && RR[0]) { const holder = players.find(x => x.role.id === RR[0].id);
+      D(say(lang, "איש החצר", "Courtier"), say(lang, `בחר ב־${nm(RR[0], lang)}.${holder ? ` ${N(holder)} שיכור 3 לילות וימים.` : " התפקיד לא במשחק — אין השפעה."}`, `Chose the ${nm(RR[0], lang)}.${holder ? ` ${N(holder)} is drunk for 3 nights & days.` : " Not in play — no effect."}`),
+        [{ label: say(lang, "אישור", "OK"), msgs: [], effects: holder && !drunk ? [{ kind: "drunk", seat: holder.seat }] : [] }]); }
+    if (r.id === "imp" && T[0] === p.seat && !drunk) { const ms = players.filter(x => x.role.type === "minion" && x.isAlive !== false);
+      D(say(lang, "האימפ הרג את עצמו", "The Imp killed itself"), say(lang, "בחר איזה משרת חי הופך לאימפ (עדיפות לגברת בארגמן).", "Choose which living Minion becomes the Imp (the Scarlet Woman first)."),
+        ms.map(m => ({ label: say(lang, `${N(m)} הופך לאימפ`, `${N(m)} becomes the Imp`), msgs: [msg(m.seat, say(lang, "😈 אתה עכשיו האימפ — השד.", "😈 You are now the Imp — the Demon."))], effects: [{ kind: "role", seat: m.seat, role: "imp" }, { kind: "kill", seat: p.seat }] }))); }
+    return out;
+  }
+
+  window.BKRules = { decide, action, resolveNight, setup, shown, shownAlignment, firstNight, laterNight, quick, nightOrder, outsiderChange };
 })();
