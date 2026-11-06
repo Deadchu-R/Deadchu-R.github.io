@@ -8,6 +8,9 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Live game on every phone:** the storyteller runs the game from the board tab — night / day / accusations, announcements, and an accusation with a live vote (players vote on their page, or the storyteller taps hands raised at the table), then execute or spare; who is alive updates for everyone.
+  - **Night info for all at once:** one box per player (dead players listed apart), "Send to all" puts it on every page and keeps the older nights in their history; optional WhatsApp queue with the night's text.
+  - **Player app:** new phone-first page with the phase, alerts (vibration, sound, notification) when someone is accused or the storyteller announces, vote buttons, the accused's defence, the town list and a hidden role card.
   - **Saved games:** save the current setup (roles, player count, world) under a name and load it with one tap (this device).
   - **Random roles:** a balanced random set for the player count.
   - **Re-deal:** same players, new roles.

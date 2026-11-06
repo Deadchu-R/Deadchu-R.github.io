@@ -50,7 +50,10 @@
     hours = Math.min(12, Math.max(1, +hours || 6));
     const exp = FV.Timestamp.fromMillis(Date.now() + hours * 3600e3);
     const gameId = rid(10), b = db.batch(), base = location.origin + location.pathname.replace(/[^/]*$/, ""), links = {}, keys = {};
-    b.set(db.collection("bk_games").doc(gameId), { owner: uid, title: String(title || "").slice(0, 120), createdAt: FV.FieldValue.serverTimestamp(), expiresAt: exp });
+    // the shared, public part of the game (phase, who is alive, the current accusation, announcements)
+    const seats = players.map(p => ({ seat: p.seat, name: String(p.name || "").slice(0, 60), alive: p.alive !== false, ghost: true }));
+    b.set(db.collection("bk_games").doc(gameId), { owner: uid, title: String(title || "").slice(0, 120), createdAt: FV.FieldValue.serverTimestamp(), expiresAt: exp,
+      lang: lang || "he", state: { phase: "night", day: 1, seats, nom: null, notice: null, rev: 1 } });
     for (const p of players) {
       const key = rid(16); keys[p.seat] = key;
       const r = p.role || {};
@@ -58,6 +61,8 @@
         owner: uid, expiresAt: exp, seat: p.seat, name: String(p.name || "").slice(0, 60), lang: lang || "he", title: String(title || "").slice(0, 120),
         roleId: r.id || "", icon: r.icon || "", type: r.type || "", name_en: r.name_en || "", name_he: r.name_he || "",
         ability_en: r.ability_en || "", ability_he: r.ability_he || "", alignment: p.alignment || "good", info: String(p.info || "").slice(0, 2000),
+        log: p.info ? [{ label: lang === "en" ? "Night 1" : "לילה 1", text: String(p.info).slice(0, 2000), at: Date.now() }] : [],
+        vote: null, defense: null,
         updatedAt: FV.FieldValue.serverTimestamp()
       });
       links[p.seat] = `${base}?g=${gameId}&k=${key}`;
@@ -72,6 +77,51 @@
   C.updateInfo = async (gameId, key, info) => {
     await storyteller();
     await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ info: String(info || "").slice(0, 2000), updatedAt: FV.FieldValue.serverTimestamp() });
+  };
+
+  // Storyteller: change the shared game state (phase, seats, accusation, notice). patch = {phase:…, day:…, …}
+  C.setState = async (gameId, patch) => {
+    await storyteller();
+    const u = { "state.rev": FV.FieldValue.increment(1) };
+    for (const [k, v] of Object.entries(patch)) u["state." + k] = v;
+    await db.collection("bk_games").doc(gameId).update(u);
+  };
+
+  // Storyteller: send each player their info for this phase in one go. items: [{key, text, label}]
+  C.pushInfos = async (gameId, items) => {
+    await storyteller();
+    const b = db.batch();
+    for (const it of items) {
+      const ref = db.collection("bk_games").doc(gameId).collection("p").doc(it.key);
+      b.update(ref, { info: String(it.text || "").slice(0, 2000), log: FV.FieldValue.arrayUnion({ label: String(it.label || "").slice(0, 40), text: String(it.text || "").slice(0, 2000), at: Date.now() }), updatedAt: FV.FieldValue.serverTimestamp() });
+    }
+    await b.commit();
+  };
+
+  // Storyteller: watch all player pages of the game (their votes and defences). cb({seat: data})
+  C.watchPlayers = async (gameId, cb) => {
+    const uid = await storyteller();
+    return db.collection("bk_games").doc(gameId).collection("p").where("owner", "==", uid).onSnapshot(q => {
+      const out = {}; q.forEach(d => { const x = d.data(); out[x.seat] = x; }); cb(out);
+    }, e => console.warn("watchPlayers", e.message));
+  };
+
+  // Anyone with the link (storyteller or player): watch the shared game state. cb(state|null)
+  C.watchGame = async (gameId, cb) => {
+    await C.ready; if (!C.ok) { cb(null); return () => {}; }
+    return db.collection("bk_games").doc(gameId).onSnapshot(d => cb(d.exists ? Object.assign({ title: d.data().title, lang: d.data().lang }, d.data().state || {}) : null), () => cb(null));
+  };
+
+  // Player: vote on the open accusation ("yes" / "no"), from their own private page.
+  C.vote = async (gameId, key, nomId, v) => {
+    await C.ready;
+    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ vote: { nom: nomId, v: v === "yes" ? "yes" : "no", at: Date.now() } });
+  };
+
+  // Player: write a defence (or an accusation speech) for the open accusation.
+  C.defend = async (gameId, key, nomId, text) => {
+    await C.ready;
+    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ defense: { nom: nomId, text: String(text || "").slice(0, 600), at: Date.now() } });
   };
 
   // End the game: delete every page of it (links stop working right away).

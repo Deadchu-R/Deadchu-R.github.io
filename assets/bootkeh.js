@@ -396,7 +396,7 @@
     $$(".bootkeh-view").forEach(v => {
       v.classList.toggle("active", v.id === `view-${tab}`);
     });
-    if (tab === "board") renderBoardView();
+    if (tab === "board") { renderBoardView(); if (window.BKLive) window.BKLive.attach(); }
     if (tab === "sheet") renderSheetView();
     if (tab === "cards") renderCardsView();
   }
@@ -1304,8 +1304,10 @@
 
   // ---- Send to everyone: WhatsApp only lets a person press Send for each chat, so this opens the chats one after
   // another from one panel — one tap per player, no searching. ----
-  function sendAllWhatsapp() {
+  // night = {night: "לילה 2", items: [{seat, text}]} sends that night's info instead of the role message.
+  function sendAllWhatsapp(night) {
     const he = state.lang === "he";
+    if (night && night.items) return sendNightWhatsapp(night);
     let ov = document.getElementById("bkSendAll");
     if (!ov) { ov = document.createElement("div"); ov.id = "bkSendAll"; ov.className = "bk-sendall"; document.body.appendChild(ov); }
     const draw = () => {
@@ -1322,6 +1324,32 @@
       </div>`;
       ov.querySelector(".bk-sendall-x").onclick = () => ov.remove();
       const go = ov.querySelector(".bk-sendall-go"); if (go) go.onclick = () => { sendWhatsapp(next.id); draw(); };
+    };
+    draw();
+  }
+
+  // The same one-tap-per-chat panel, for one night's info (only to players who got info this night).
+  function sendNightWhatsapp(night) {
+    const he = state.lang === "he", g = liveGame(), sent = new Set();
+    let ov = document.getElementById("bkSendAll");
+    if (!ov) { ov = document.createElement("div"); ov.id = "bkSendAll"; ov.className = "bk-sendall"; document.body.appendChild(ov); }
+    const list = night.items.map(i => ({ p: state.players.find(x => x.seat === i.seat), text: i.text })).filter(x => x.p);
+    const draw = () => {
+      const next = list.find(x => !sent.has(x.p.seat));
+      ov.innerHTML = `<div class="bk-sendall-card" role="dialog">
+        <div class="bk-sendall-top"><b>${esc(night.night)} · WhatsApp</b><button type="button" class="bk-sendall-x" aria-label="${he ? "סגור" : "Close"}">×</button></div>
+        <div class="bk-sendall-bar"><i style="width:${Math.round(sent.size / Math.max(1, list.length) * 100)}%"></i></div>
+        <div class="bk-sendall-count">${sent.size} / ${list.length}</div>
+        ${next ? `<button type="button" class="bk-btn pri bk-sendall-go">${he ? "שלח ל" : "Send to "}${esc(next.p.name)}</button>` : `<p style="font-size:16px;margin:10px 0;">✓ ${he ? "נשלח לכולם" : "All sent"}</p>`}
+        <div class="bk-sendall-list">${list.map(x => `<span class="${sent.has(x.p.seat) ? "on" : ""}">${x.p.seat}. ${esc(x.p.name)}</span>`).join("")}</div></div>`;
+      ov.querySelector(".bk-sendall-x").onclick = () => ov.remove();
+      const go = ov.querySelector(".bk-sendall-go");
+      if (go) go.onclick = () => {
+        const link = g && g.links[next.p.seat];
+        const msg = `${night.night}\n${next.text}${link ? "\n\n" + link : ""}`;
+        window.open(`https://wa.me/${waPhone(next.p.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
+        sent.add(next.p.seat); draw();
+      };
     };
     draw();
   }
@@ -1421,6 +1449,7 @@
 
   // Player side: open the live private page ?g=…&k=… and keep it updated.
   async function openLivePortal(gameId, key) {
+    if (window.BKLive) return window.BKLive.openPlayer(gameId, key);   // the live player app (assets/bootkeh-live.js)
     const topbar = $(".bootkeh-topbar"), nav = $(".bootkeh-nav-tabs"), main = $(".bootkeh-main");
     [topbar, nav, main].forEach(x => { if (x) x.style.display = "none"; });
     const portal = $("#playerPortalView"); if (!portal) return;
@@ -1662,6 +1691,9 @@
 
   // --- Public API ---
   window.Bootkeh = {
+    _state: state,
+    liveGame,
+    renderBoardView,
     init,
     createLiveGame,
     endLiveGame,
@@ -1723,6 +1755,7 @@
       if (confirmKill) {
         p.isAlive = !p.isAlive;
         renderBoardView();
+        if (window.BKLive) window.BKLive.syncSeats();   // everyone's phone sees who is alive
       }
     }
   };
