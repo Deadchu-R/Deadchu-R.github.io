@@ -5,7 +5,7 @@ Left out: the Action's `Rebuild site [skip ci]` commits and generated files (bui
 Authors: `Claude` = AI coding sessions; `Roee Tal` = the owner's account (his own edits, other AI agents working as him,
 and `Edit on the site: …` commits made by the visual editor's Publish button).
 
-Total: 196 commits.
+Total: 198 commits.
 
 ## 2026-10-31
 
@@ -996,7 +996,17 @@ Bootkeh: start on setup view, add 404 smart routing for lowercase /bootkeh and /
 
 files: 404.html, assets/bootkeh.js, docs/COMMITS.md
 
-### d22d9a4 · 2026-11-06 · Roee Tal
+### 427fb6e · 2026-11-06 · Roee Tal
+Résumé: 5 new templates (Chicago, Executive, Bold Top, Corporate, Monogram); CV Studio: résumé-only Designs gallery, drag on the Layout board, Switch account
+
+files: CHANGELOG.md, CVEditor.html, CVEditor/index.html, assets/cv.css, assets/cv.js, assets/cveditor-cloud.js, assets/cveditor.css, assets/cveditor.js, docs/CONTENT.md
+
+### 84995a4 · 2026-11-06 · Roee Tal
 Bootkeh: dynamic 15-player roster, WhatsApp dispatch dashboard, and gothic redesign
 
-files: 404.html, Bootkeh.html, Bootkeh/index.html, CHANGELOG.md, assets/bootkeh.css, assets/bootkeh.js
+files: 404.html, Bootkeh.html, Bootkeh/index.html, CHANGELOG.md, assets/bootkeh.css, assets/bootkeh.js, docs/COMMITS.md
+
+### 13bf83c · 2026-11-06 · Roee Tal
+Bootkeh: personal player portal, castle thrones, 96 roles with search, and random themes
+
+files: Bootkeh.html, Bootkeh/index.html, CHANGELOG.md, assets/bootkeh-data.js, assets/bootkeh.css, assets/bootkeh.js, tools/generate_bootkeh_roles.py

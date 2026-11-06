@@ -11,8 +11,13 @@
     playerCount: 8,
     scriptId: "crimson_guard",
     themeId: "victorian_1800",
+    customThemeTitle: "",
+    customThemeDesc: "",
     storytellerName: "רועי / Sit",
     customRoles: [],
+    roleSearchQuery: "",
+    roleFilterCat: "all",
+    curtainOpen: false,
     players: [],
     savedPlayers: [],
     roster: Array(15).fill(null).map((_, i) => ({ name: "", phone: "" })),
@@ -201,6 +206,92 @@
     }
   };
 
+  // --- Personal Player Secret View (הדף הסודי של השחקן שנפתח מה-WhatsApp) ---
+  function openPlayerPortal(playerId) {
+    // Hide main app navigation and views
+    const topbar = $(".bootkeh-topbar");
+    const nav = $(".bootkeh-nav-tabs");
+    const main = $(".bootkeh-main");
+    if (topbar) topbar.style.display = "none";
+    if (nav) nav.style.display = "none";
+    if (main) main.style.display = "none";
+
+    const portal = $("#playerPortalView");
+    if (!portal) return;
+    portal.style.display = "flex";
+
+    // Decode session from hash if available
+    let player = state.players.find(p => p.id === playerId);
+    if (!player && window.location.hash) {
+      try {
+        const hashStr = window.location.hash.substring(1);
+        const match = hashStr.match(/s=([A-Za-z0-9+/=]+)/);
+        if (match) {
+          const decoded = JSON.parse(atob(match[1]));
+          const role = getRole(decoded.roleId) || getRole("empath");
+          player = {
+            id: playerId,
+            seat: decoded.seat,
+            name: decoded.name,
+            roleId: decoded.roleId,
+            role,
+            alignment: decoded.alignment,
+            firstNightInfo: decoded.info
+          };
+        }
+      } catch (_) {}
+    }
+
+    if (!player) {
+      player = state.players[0] || {
+        seat: 1,
+        name: "שחקן 1",
+        role: getRole("empath"),
+        alignment: "good",
+        firstNightInfo: "אין מידע התחלתי מיוחד הלילה."
+      };
+    }
+
+    const r = player.role || getRole("empath");
+    const roleName = state.lang === "he" ? r.name_he : r.name_en;
+    const ability = state.lang === "he" ? r.ability_he : r.ability_en;
+    const team = player.alignment === "evil" ? (state.lang === "he" ? "רעים 😈" : "Evil 😈") : (state.lang === "he" ? "טובים 🛡️" : "Good 🛡️");
+
+    const badgeEl = $("#portalPlayerBadge");
+    if (badgeEl) badgeEl.textContent = `${state.lang === "he" ? "מושב" : "Seat"} #${player.seat} · ${player.name}`;
+
+    const iconEl = $("#portalRoleIcon");
+    if (iconEl) iconEl.textContent = r.icon;
+
+    const nameEl = $("#portalRoleName");
+    if (nameEl) nameEl.textContent = roleName;
+
+    const pillEl = $("#portalCategoryPill");
+    if (pillEl) {
+      pillEl.innerHTML = `
+        <span class="bk-dist-pill ${r.type}">${r.type.toUpperCase()}</span>
+        <span class="bk-dist-pill ${player.alignment}">${team}</span>
+      `;
+    }
+
+    const abilityEl = $("#portalRoleAbility");
+    if (abilityEl) abilityEl.textContent = ability;
+
+    const fnEl = $("#portalFirstNight");
+    if (fnEl) fnEl.textContent = player.firstNightInfo || (state.lang === "he" ? "אין מידע מיוחד בלילה הראשון. בהצלחה!" : "No special first-night info. Good luck!");
+
+    // Initially show curtain overlay for privacy
+    const curtain = $("#portalCurtain");
+    if (curtain) curtain.style.display = "flex";
+  }
+
+  function toggleCurtain() {
+    const curtain = $("#portalCurtain");
+    if (!curtain) return;
+    curtain.style.display = curtain.style.display === "none" ? "flex" : "none";
+  }
+
+
   // --- Initialization ---
   function init() {
     loadSavedPlayers();
@@ -213,7 +304,15 @@
     renderRosterInputs();
     attachEventListeners();
     generateGame(false); // prepare initial game data silently
-    setTab("setup");     // start on Setup view as requested
+
+    // Check if opening as player from WhatsApp link (?player=seat_1 or #p=seat_1)
+    const urlParams = new URLSearchParams(window.location.search);
+    const playerParam = urlParams.get("player") || urlParams.get("p");
+    if (playerParam) {
+      openPlayerPortal(playerParam);
+    } else {
+      setTab("setup");     // start on Setup view as requested
+    }
   }
 
   function loadSavedPlayers() {
@@ -430,34 +529,95 @@
     const matrix = $("#customRolesMatrix");
     if (!matrix) return;
     const allRoles = window.BOOTKEH_ROLES || [];
+    const query = (state.roleSearchQuery || "").toLowerCase().trim();
+    const filterCat = state.roleFilterCat || "all";
+
     const catMap = {
       townsfolk: { title_en: "Townsfolk", title_he: "תושבי העיירה", color: "#38bdf8" },
       outsider: { title_en: "Outsiders", title_he: "אאוטסיידרים", color: "#2dd4bf" },
-      minion: { title_en: "Minions", title_he: "משרתים", color: "#f97316" },
+      minion: { title_en: "Minions", title_he: "משרתים", color: "#fb923c" },
       demon: { title_en: "Demons", title_he: "שדים", color: "#ef4444" }
     };
 
+    const categories = filterCat === "all" ? ["townsfolk", "outsider", "minion", "demon"] : [filterCat];
+
     let html = "";
-    ["townsfolk", "outsider", "minion", "demon"].forEach(cat => {
-      const rolesInCat = allRoles.filter(r => r.type === cat);
-      html += `
-        <div class="bk-role-matrix-category">
-          <div class="bk-role-matrix-title" style="color:${catMap[cat].color};">
-            <span>${state.lang === "he" ? catMap[cat].title_he : catMap[cat].title_en}</span>
-            <span style="font-size:11px;opacity:0.7;">(${rolesInCat.length})</span>
+    let totalShown = 0;
+
+    categories.forEach(cat => {
+      let rolesInCat = allRoles.filter(r => r.type === cat);
+
+      if (query) {
+        rolesInCat = rolesInCat.filter(r => {
+          const matchName = (r.name_he && r.name_he.toLowerCase().includes(query)) ||
+                            (r.name_en && r.name_en.toLowerCase().includes(query)) ||
+                            (r.id && r.id.toLowerCase().includes(query));
+          const matchAbility = (r.ability_he && r.ability_he.toLowerCase().includes(query)) ||
+                               (r.ability_en && r.ability_en.toLowerCase().includes(query));
+          return matchName || matchAbility;
+        });
+      }
+
+      totalShown += rolesInCat.length;
+
+      if (rolesInCat.length > 0) {
+        html += `
+          <div class="bk-role-matrix-category">
+            <div class="bk-role-matrix-title" style="color:${catMap[cat].color};">
+              <span>${state.lang === "he" ? catMap[cat].title_he : catMap[cat].title_en}</span>
+              <span style="font-size:11px;opacity:0.75;">(${rolesInCat.length})</span>
+            </div>
+            <div class="bk-role-chips">
+              ${rolesInCat.map(r => {
+                const isSelected = state.customRoles.includes(r.id);
+                return `
+                  <div class="bk-role-chip ${cat} ${isSelected ? 'selected' : ''}" id="chip-${r.id}" onclick="window.Bootkeh.toggleRoleSelection('${r.id}')" title="${esc(state.lang === 'he' ? r.ability_he : r.ability_en)}">
+                    <span>${r.icon}</span>
+                    <span>${esc(state.lang === "he" ? r.name_he : r.name_en)}</span>
+                  </div>
+                `;
+              }).join("")}
+            </div>
           </div>
-          <div class="bk-role-chips">
-            ${rolesInCat.map(r => `
-              <div class="bk-role-chip ${cat}" id="chip-${r.id}" onclick="window.Bootkeh.toggleRoleSelection('${r.id}')">
-                <span>${r.icon}</span>
-                <span>${state.lang === "he" ? r.name_he : r.name_en}</span>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      `;
+        `;
+      }
     });
+
+    if (totalShown === 0) {
+      html = `<div style="text-align:center;padding:24px;color:var(--bk-text-muted);font-size:13px;">לא נמצאו תפקידים התואמים לחיפוש "${esc(query)}"</div>`;
+    }
+
     matrix.innerHTML = html;
+  }
+
+  function onRoleSearch(val) {
+    state.roleSearchQuery = val;
+    initCustomRolesMatrix();
+  }
+
+  function setRoleFilterCat(cat) {
+    state.roleFilterCat = cat;
+    $$(".bk-role-filter-chip").forEach(btn => {
+      btn.classList.toggle("active", btn.getAttribute("id") === `chip-filter-${cat}`);
+    });
+    initCustomRolesMatrix();
+  }
+
+  function selectAllRoles() {
+    const allRoles = window.BOOTKEH_ROLES || [];
+    state.customRoles = allRoles.map(r => r.id);
+    state.scriptId = "custom";
+    const scriptSelect = $("#scriptSelect");
+    if (scriptSelect) scriptSelect.value = "custom";
+    initCustomRolesMatrix();
+  }
+
+  function deselectAllRoles() {
+    state.customRoles = [];
+    state.scriptId = "custom";
+    const scriptSelect = $("#scriptSelect");
+    if (scriptSelect) scriptSelect.value = "custom";
+    initCustomRolesMatrix();
   }
 
   function updateCustomRoleChips() {
@@ -497,6 +657,38 @@
     state.themeId = themeId;
     renderSetupView();
   }
+
+  // --- Thematic Scenario Generator ---
+  function generateRandomTheme() {
+    const gen = window.BOOTKEH_THEME_GENERATOR;
+    if (!gen || !gen.eras || !gen.demon_threats) return;
+
+    const randomEra = gen.eras[Math.floor(Math.random() * gen.eras.length)];
+    const randomThreat = gen.demon_threats[Math.floor(Math.random() * gen.demon_threats.length)];
+
+    state.themeId = "custom_random";
+    state.customThemeTitle = state.lang === "he" ? `${randomEra.icon} ${randomEra.he}` : `${randomEra.icon} ${randomEra.en}`;
+    state.customThemeDesc = state.lang === "he" ? `עולם המשחק: ${randomEra.he}. איום השד: ${randomThreat.he}.` : `Setting: ${randomEra.en}. Demon threat: ${randomThreat.en}.`;
+
+    const input = $("#customThemeInput");
+    if (input) input.value = state.customThemeTitle;
+
+    renderSetupView();
+    renderBoardView();
+  }
+
+  function setCustomTheme(val) {
+    if (!val) {
+      state.customThemeTitle = "";
+      state.customThemeDesc = "";
+      return;
+    }
+    state.themeId = "custom_user";
+    state.customThemeTitle = val;
+    state.customThemeDesc = state.lang === "he" ? `עולם מותאם אישית: ${val}` : `Custom lore: ${val}`;
+    renderBoardView();
+  }
+
 
   // --- Game Generation Core Logic ---
   function generateGame(autoSwitch = true) {
@@ -882,6 +1074,9 @@
               <button type="button" class="bk-btn whatsapp sm" style="flex:1;justify-content:center;" onclick="window.Bootkeh.sendWhatsapp('${p.id}')">
                 <span>💬 ${t.shareWhatsapp}</span>
               </button>
+              <button type="button" class="bk-btn sm" style="padding:6px 10px;" onclick="window.Bootkeh.sendSms('${p.id}')" title="שלח ב-SMS">
+                <span>📱</span>
+              </button>
               <button type="button" class="bk-btn sm" onclick="window.Bootkeh.copySecretText('${p.id}')" title="${t.copySecret}">
                 <span>📋</span>
               </button>
@@ -942,6 +1137,24 @@
             `🤫 _Keep this completely secret! Good luck!_`;
     }
 
+    // Encode session data for direct mobile link
+    const sessionData = btoa(unescape(encodeURIComponent(JSON.stringify({
+      seat: p.seat,
+      name: p.name,
+      roleId: r.id,
+      alignment: p.alignment,
+      info: p.firstNightInfo
+    }))));
+
+    const baseUrl = `${window.location.origin}${window.location.pathname}`;
+    const directCardLink = `${baseUrl}?player=${p.id}#s=${sessionData}`;
+
+    if (state.lang === "he") {
+      msg += `\n\n🃏 *לצפייה בכרטיס הדמות הוויזואלי שלך בנייד:*\n${directCardLink}`;
+    } else {
+      msg += `\n\n🃏 *View your secret visual character card on your phone:*\n${directCardLink}`;
+    }
+
     const cleanPhone = (p.phone || "").replace(/[^0-9]/g, "");
     let url = "";
     if (cleanPhone) {
@@ -953,6 +1166,32 @@
     p.isSent = true;
     renderCardsView();
     window.open(url, "_blank");
+  }
+
+  function sendSms(playerId) {
+    const p = state.players.find(x => x.id === playerId);
+    if (!p) return;
+    const r = p.role;
+    const roleName = state.lang === "he" ? r.name_he : r.name_en;
+    const cleanPhone = (p.phone || "").replace(/[^0-9]/g, "");
+
+    const sessionData = btoa(unescape(encodeURIComponent(JSON.stringify({
+      seat: p.seat,
+      name: p.name,
+      roleId: r.id,
+      alignment: p.alignment,
+      info: p.firstNightInfo
+    }))));
+    const directCardLink = `${window.location.origin}${window.location.pathname}?player=${p.id}#s=${sessionData}`;
+
+    const text = state.lang === "he"
+      ? `דם על מגדל השעון: שלום ${p.name}! תפקידך: ${roleName} (${r.icon}). מידע לילה: ${p.firstNightInfo}. כרטיס מלא: ${directCardLink}`
+      : `Clocktower: Hi ${p.name}! Role: ${roleName}. Card: ${directCardLink}`;
+
+    const smsUrl = cleanPhone ? `sms:${cleanPhone}?body=${encodeURIComponent(text)}` : `sms:?body=${encodeURIComponent(text)}`;
+    p.isSent = true;
+    renderCardsView();
+    window.open(smsUrl, "_blank");
   }
 
   function copySecretText(playerId) {
@@ -1164,6 +1403,15 @@
     autoFillRosterFromSaved,
     clearRoster,
     toggleSentStatus,
+    onRoleSearch,
+    setRoleFilterCat,
+    selectAllRoles,
+    deselectAllRoles,
+    generateRandomTheme,
+    setCustomTheme,
+    openPlayerPortal,
+    toggleCurtain,
+    sendSms,
     printSheet() {
       window.print();
     },

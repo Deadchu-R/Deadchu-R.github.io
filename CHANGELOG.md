@@ -51,6 +51,13 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
   The config is in `assets/cveditor-firebase.json`, so Google sign-in is live. The owner is recognised by SHA-256 hashes of his addresses, so no email is in the code. The old fake email login and owner-password paths are switched off.
 
 ### Bootkeh
+- **Bootkeh:** Personal Player Secret Portal, Castle Thrones, 96-role database with bilingual search, and procedural theme generator:
+  - Personal Player Secret Portal: WhatsApp/SMS links now include a direct mobile link for each player (`?player=seat_X`), opening a dedicated visual Castle Tarot card on their phone showing their role art, alignment, ability, and secret first-night info with a toggleable "Privacy Curtain" to prevent neighboring players from peeking!
+  - Castle Council Great Hall Seating: circular seating now features 3D Ornate Gothic Castle Thrones with velvet cushions, heraldic player banners, and phantom ghost-light shrouds for executed players.
+  - Blood-Dripping Clocktower Background: atmospheric backdrop featuring a gothic Clocktower with blood streaks, full blood moon, and flickering torchlight sconces.
+  - Complete 96-Character Database: extracted and incorporated all official and experimental roles across Trouble Brewing, Bad Moon Rising, Sects & Violets, Crimson Guard, and Carousels (96 total roles!).
+  - Bilingual Role Search & Filter Matrix: instant real-time search across Hebrew & English names and abilities/skills, with category filter pills and select/clear all buttons.
+  - Procedural Thematic Scenario Generator: "חולל תמה אקראית" button that generates infinite historical, fantasy, and sci-fi eras and demonic plot hooks, plus a free-form custom theme input.
 - **Bootkeh:** Gothic atmospheric redesign, dynamic 15-player roster, and WhatsApp Dispatch Center:
   - Dynamic Roster for up to 15 Players: roster input list now dynamically scales from 5 to 15 seats with the slider in real-time, allowing all 15 players to have custom names, phone numbers, and one-click seating from saved players.
   - WhatsApp Dispatch Center: dedicated dispatch dashboard with live progress counter (e.g. 15/15 sent), status badges (✅ נשלח ב-WhatsApp / ⏳ טרם נשלח), quick-copy clipboard buttons, and manual toggle.

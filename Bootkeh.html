@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="assets/bootkeh.css?v=20261106_02">
+  <link rel="stylesheet" href="assets/bootkeh.css?v=20261106_03">
 </head>
 <body class="bootkeh-body">
 
@@ -100,18 +100,38 @@
           <!-- Right Column: Thematic Setting & Flavor -->
           <div>
             <div class="bk-form-group">
-              <label class="bk-label">עולם המשחק והתמה (Thematic Flavor):</label>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <label class="bk-label" style="margin:0;">עולם המשחק והתמה (Thematic Flavor):</label>
+                <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.generateRandomTheme()">
+                  <span>🎲 חולל תמה אקראית!</span>
+                </button>
+              </div>
+              <input type="text" id="customThemeInput" class="bk-input" placeholder="או הקלד עולם חופשי משלך (למשל: ספינת פיראטים טרופה 1690)..." oninput="window.Bootkeh.setCustomTheme(this.value)" style="margin-bottom:10px;">
               <div id="themeGrid" class="bk-theme-grid"></div>
             </div>
           </div>
         </div>
 
-        <!-- Advanced Role Matrix Dropdown -->
+        <!-- Advanced Role Matrix Dropdown with Search & Filters -->
         <details style="margin-top:16px;" class="bk-form-group">
           <summary class="bk-label" style="cursor:pointer;padding:8px 0;user-select:none;">
-            <span>⚙️ הגדרות מתקדמות: בחר במדויק אילו תפקידים יהיו בכל אחת מ-4 הקטגוריות ▾</span>
+            <span>⚙️ הגדרות מתקדמות: חיפוש ובחירת כל התפקידים שנוצרו למשחק (96 תפקידים!) ▾</span>
           </summary>
-          <div id="customRolesMatrix" style="padding-top:12px;"></div>
+          <div style="padding-top:14px;">
+            <div class="bk-role-search-wrap">
+              <input type="text" id="roleSearchInput" class="bk-input" placeholder="🔍 חפש תפקיד או יכולת (למשל: רוצח, מורעל, Demon, Poisoner, להרוג)..." oninput="window.Bootkeh.onRoleSearch(this.value)" style="flex:1;">
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.selectAllRoles()">✓ בחר הכל (96)</button>
+              <button type="button" class="bk-btn sm" onclick="window.Bootkeh.deselectAllRoles()">✕ נקה הכל</button>
+            </div>
+            <div class="bk-role-filter-chips">
+              <button type="button" class="bk-role-filter-chip active" id="chip-filter-all" onclick="window.Bootkeh.setRoleFilterCat('all')">הכל (96)</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-townsfolk" onclick="window.Bootkeh.setRoleFilterCat('townsfolk')">תושבי העיירה 💙</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-outsider" onclick="window.Bootkeh.setRoleFilterCat('outsider')">אאוטסיידרים 🏮</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-minion" onclick="window.Bootkeh.setRoleFilterCat('minion')">משרתים 👺</button>
+              <button type="button" class="bk-role-filter-chip" id="chip-filter-demon" onclick="window.Bootkeh.setRoleFilterCat('demon')">שדים 😈</button>
+            </div>
+            <div id="customRolesMatrix"></div>
+          </div>
         </details>
 
         <!-- Player Names & WhatsApp Roster -->
@@ -264,8 +284,49 @@
     </div>
   </div>
 
+  <!-- ================= PERSONAL PLAYER SECRET PORTAL (כשפותחים דרך הוואצאפ) ================= -->
+  <div id="playerPortalView" style="display:none;" class="bootkeh-portal-root">
+    <div id="playerPortalCard" class="bootkeh-portal-card">
+      <!-- Privacy Curtain Overlay -->
+      <div id="portalCurtain" class="bootkeh-curtain-overlay" onclick="window.Bootkeh.toggleCurtain()">
+        <span style="font-size:54px;margin-bottom:12px;">🚪</span>
+        <h3 style="font-family:var(--bk-font-serif);color:#fff;font-size:22px;margin-bottom:6px;">מסך פרטיות נעול</h3>
+        <p style="font-size:13px;color:var(--bk-text-muted);max-width:280px;line-height:1.4;">
+          הקש על המסך כדי לחשוף את כרטיס הדמות הסודי שלך. הקש שוב כדי להסתיר אותו משכניך לשולחן!
+        </p>
+        <button type="button" class="bk-btn pri sm" style="margin-top:14px;">👁️ הצג את הכרטיס שלי</button>
+      </div>
+
+      <div class="bootkeh-portal-header">
+        <div id="portalPlayerBadge" style="font-size:12px;font-weight:800;color:var(--bk-gold-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;"></div>
+        <div id="portalRoleIcon" class="bootkeh-portal-icon"></div>
+        <div id="portalRoleName" class="bootkeh-portal-name"></div>
+        <div id="portalCategoryPill" style="margin-top:8px;"></div>
+      </div>
+      <div class="bootkeh-portal-body">
+        <div style="font-size:14px;line-height:1.5;color:#e2e8f0;margin-bottom:16px;">
+          <b style="color:var(--bk-gold);display:block;margin-bottom:4px;font-size:13px;">📜 יכולת הדמות שלך:</b>
+          <span id="portalRoleAbility"></span>
+        </div>
+        <div class="bootkeh-secret-info-box">
+          <div class="bootkeh-secret-info-title">🌙 מידע התחלתי ללילה הראשון:</div>
+          <div id="portalFirstNight"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:20px;">
+          <button type="button" class="bk-btn sm" style="flex:1;" onclick="window.Bootkeh.toggleCurtain()">
+            <span>🙈 הסתר מסך</span>
+          </button>
+          <a href="Bootkeh.html" class="bk-btn sm" style="text-decoration:none;">
+            <span>🏰 כניסת מספר סיפורים</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
-  <script src="assets/bootkeh-data.js?v=20261106_02"></script>
-  <script src="assets/bootkeh.js?v=20261106_02"></script>
+  <script src="assets/bootkeh-data.js?v=20261106_03"></script>
+  <script src="assets/bootkeh.js?v=20261106_03"></script>
 </body>
 </html>
