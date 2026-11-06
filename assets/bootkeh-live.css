@@ -361,3 +361,39 @@ html, body { overflow-x: clip; max-width: 100%; }
 .bk-st-note { display: block; font-style: normal; font-size: 12.5px; color: #fde68a; background: rgba(212, 175, 55, .1); border-radius: 8px; padding: 6px 9px; margin-bottom: 8px; }
 .bk-alt { display: grid; gap: 5px; margin-top: 6px; } .bk-alt small { color: var(--bk-text-muted); font-size: 11.5px; }
 .bk-alt button { appearance: none; text-align: start; padding: 7px 10px; border-radius: 8px; border: 1px dashed rgba(239, 68, 68, .5); background: rgba(0, 0, 0, .25); color: #fecaca; font: 12.5px/1.35 var(--bk-font-sans); cursor: pointer; }
+
+/* ---------- night runner (storyteller) ---------- */
+.bk-run { display: grid; gap: 10px; padding: 14px; border-radius: 16px; background: rgba(30, 41, 99, .28); border: 1px solid rgba(129, 140, 248, .45); }
+.bk-run.done { text-align: center; background: rgba(16, 185, 129, .14); border-color: rgba(16, 185, 129, .45); }
+.bk-run-top { display: flex; align-items: center; gap: 10px; } .bk-run-top > div { display: grid; flex: 1; } .bk-run-top b { font-size: 18px; } .bk-run-top small { color: var(--bk-text-muted); font-size: 13px; }
+.bk-run-n { font-size: 12px; color: var(--bk-text-muted); }
+.bk-run-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: rs; }
+.bk-run-steps li { counter-increment: rs; display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: rgba(0, 0, 0, .25); font-size: 14.5px; }
+.bk-run-steps li.ok { color: #a7f3d0; } .bk-run-steps li.now { box-shadow: 0 0 0 1px var(--bk-gold) inset; }
+.bk-seen { font-size: 13px; color: #fde68a; } .bk-run-steps li.ok .bk-seen { color: #a7f3d0; }
+.bk-dawn-sum { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: rgba(0, 0, 0, .25); font-size: 14px; }
+.bk-dawn-sum ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 3px; } .bk-dawn-notes li { color: #fde68a; }
+
+/* ---------- night on the player's phone ---------- */
+.bkp-wake { border-color: #818cf8; box-shadow: 0 0 0 1px #818cf8 inset, 0 0 30px rgba(129, 140, 248, .35); }
+.bkp-wake-top { font-size: 20px; } .bkp-wake-top b { font-family: var(--bk-font-serif); color: #c7d2fe; }
+.bkp-wake-text { margin: 0; font-size: 16px; line-height: 1.45; }
+.bkp-pickgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.bkp-pickgrid button { appearance: none; min-height: 54px; border-radius: 14px; border: 1px solid rgba(212, 175, 55, .3); background: rgba(0, 0, 0, .35); color: #f3e7cb;
+  font: 700 15px/1.2 var(--bk-font-sans); display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; }
+.bkp-pickgrid button i { font-style: normal; font-size: 12px; color: var(--bk-gold); } .bkp-pickgrid button.on { background: #3730a3; border-color: #c7d2fe; color: #fff; }
+.bkp-reveal:disabled { opacity: .45; }
+.bkp-new { border-color: var(--bk-gold); } .bkp-new small { color: var(--bk-gold); font-weight: 700; } .bkp-new p { margin: 0; font-size: 17px; line-height: 1.45; white-space: pre-wrap; }
+
+/* ---------- block / win / end of game ---------- */
+.bk-block, .bkp-block { padding: 10px 12px; border-radius: 12px; background: rgba(239, 68, 68, .12); border: 1px solid rgba(239, 68, 68, .45); font-size: 15px; }
+.bk-block small { display: block; color: var(--bk-text-muted); font-size: 12px; margin-top: 3px; }
+.bk-win { display: grid; gap: 8px; padding: 14px; border-radius: 14px; border: 1px solid var(--bk-gold); background: rgba(212, 175, 55, .12); }
+.bk-win.good { background: rgba(59, 130, 246, .16); border-color: #60a5fa; } .bk-win.evil { background: rgba(220, 38, 38, .16); border-color: #f87171; }
+.bk-win b { font: 800 18px/1.2 var(--bk-font-serif); }
+.bkp-end-card h2 { margin: 0; font: 800 26px/1.2 "Cinzel Decorative", var(--bk-font-serif); color: var(--bk-gold-light); text-align: center; }
+.bkp-end-card h3 { margin: 6px 0 0; font-size: 15px; color: #d8c9a6; }
+.bkp-reveal-list { display: grid; gap: 6px; }
+.bkp-reveal-list > div { display: grid; grid-template-columns: 24px 28px 1fr auto; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .05); }
+.bkp-reveal-list i { font-style: normal; font-size: 12px; color: var(--bk-gold); } .bkp-reveal-list .evil b { color: #fca5a5; } .bkp-reveal-list .good b { color: #93c5fd; }
+.bkp-reveal-list small { color: #d8c9a6; }

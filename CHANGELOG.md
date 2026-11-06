@@ -8,6 +8,9 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **The night, player by player:** in the official wake order the storyteller wakes one player; their phone asks them to choose (2 players for the Fortune Teller, 1 not yourself for the Monk, the Demon's kill…); the storyteller sees the choice live, taps a true/false answer and sends it to that player; the player taps "Got it" (✓) and the next one is woken. At dawn the deaths are pre-marked from the choices (Demon's target minus Monk/Innkeeper/Soldier protection, Assassin, Mayor note) and poisoned players are flagged.
+  - **Official day rules** (wiki + rulebook): only living players accuse; each player accuses and is accused at most once a day; votes are counted clockwise from after the accused; at least half of the living AND more than anyone so far puts the accused on the block, a tie clears it; one execution at the end of the day (optional). Minion/Demon info only with 7+ players, at its place in the night order; Virgin note.
+  - **End of the game:** the site notices when the Demon dies (Scarlet Woman with 5+ alive keeps it going), two players are left, or the Saint is executed; "Announce" ends the game and reveals every role on every phone.
   - **Rules, learned from a friend's storyteller generator (ItaiSitnik/Main, BOTC)** — new assets/bootkeh-rules.js:
     - the Drunk thinks it is a Townsfolk (and gets false info), the Lunatic thinks it is the Demon (gets made-up evil info; the Demon is told who the Lunatic is), the Marionette thinks it is good (the Demon knows, the Minions don't); players see the role they think, the storyteller sees both;
     - a fixed red herring for the Fortune Teller; Demon bluffs never include a role someone thinks they are; the Damsel is announced to the Minions;

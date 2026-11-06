@@ -32,12 +32,12 @@ service cloud.firestore {
           && request.resource.data.expiresAt < request.time + duration.value(13, 'h')
           && request.resource.data.size() < 40;
         // the storyteller may change anything but the owner and the expiry;
-        // a player (who knows the secret key = document id) may only set their vote and defence, until the page expires
+        // a player (who knows the secret key = document id) may only set their vote, defence, night choice and "seen", until the page expires
         allow update: if (request.auth != null && resource.data.owner == request.auth.uid
             && request.resource.data.owner == resource.data.owner
             && request.resource.data.expiresAt == resource.data.expiresAt)
           || (resource.data.expiresAt > request.time
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['vote', 'defense']));
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['vote', 'defense', 'act', 'seen']));
         allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
       }
 

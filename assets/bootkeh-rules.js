@@ -86,6 +86,11 @@
     const fakeOne = r2 => say(lang, `אחד מהשניים האלה הוא ${nm(r2, lang)}: ${fakePair(players, p, r2.id).join(" או ")}.`, `One of these two is the ${nm(r2, lang)}: ${fakePair(players, p, r2.id).join(" or ")}.`);
 
     // evil team info (the Lunatic gets made-up evil info; the Marionette isn't shown to the Minions)
+    const small = players.length < 7;   // official: no Minion / Demon info with 5–6 players
+    if (small && (real.type === "demon" || (real.type === "minion" && real.id !== "marionette"))) {
+      out.truth = say(lang, "במשחק של 5–6 שחקנים הרעים לא מכירים זה את זה.", "With 5–6 players, the evil team does not learn each other.");
+      return out;
+    }
     if (real.type === "demon") {
       const ms = minions;
       out.truth = say(lang, `המשרתים שלך: ${names(ms) || "אין"}. שלושה תפקידים שלא במשחק (בלופים בטוחים): ${bluffs.map(b => nm(b, lang)).join(", ")}.`,
@@ -175,9 +180,76 @@
   // who wakes tonight, in order: [{p, order}] — night 1 uses firstNight, later nights otherNight (from the role data)
   function nightOrder(players, first) {
     return players.map(p => { const r = shown(p), real = p.role; let o = first ? (r.firstNight || 0) : (r.otherNight || 0);
-      if (first && real.type === "minion") o = o || 5; if (first && real.type === "demon") o = o || 6;   // minion info, then demon info, early on night 1
+      // night 1 (official sheet): Dusk → Philosopher, Alchemist… → MINION INFO → Lunatic → DEMON INFO → everyone else
+      if (first && players.length >= 7 && real.type === "minion" && real.id !== "marionette") o = Math.min(o || 5, 5);
+      if (first && players.length >= 7 && real.type === "demon") o = Math.min(o || 9, 9);
       return { p, order: o }; }).filter(x => x.order > 0 && (first || x.p.isAlive !== false || ["ravenkeeper"].includes(shown(x.p).id))).sort((a, b) => a.order - b.order);
   }
 
-  window.BKRules = { setup, shown, shownAlignment, firstNight, laterNight, quick, nightOrder, outsiderChange };
+  // --- what a role does when woken: how many players to choose and the prompt on their phone ---
+  //  n = players to choose (0 = just wakes for info), self = may choose themselves, first = also on night 1
+  const ACT = {
+    fortune_teller: { n: 2, self: true, first: true, he: "בחר שני שחקנים — תגלה אם אחד מהם שד.", en: "Choose two players — learn if either is a Demon." },
+    monk: { n: 1, self: false, he: "בחר שחקן (לא את עצמך) — הוא מוגן מהשד הלילה.", en: "Choose a player (not yourself) — they are safe from the Demon tonight." },
+    snake_charmer: { n: 1, self: false, first: true, he: "בחר שחקן חי — אם הוא השד, תחליפו תפקידים.", en: "Choose a living player — if they are the Demon, you swap." },
+    butler: { n: 1, self: false, first: true, he: "בחר שחקן (לא את עצמך) — מחר תוכל להצביע רק אם הוא מצביע.", en: "Choose a player (not yourself) — tomorrow you may only vote if they do." },
+    poisoner: { n: 1, self: true, first: true, he: "בחר שחקן — הוא מורעל הלילה ומחר.", en: "Choose a player — they are poisoned tonight and tomorrow." },
+    devils_advocate: { n: 1, self: true, first: true, he: "בחר שחקן חי (לא כמו אתמול) — אם יוצא להורג מחר, לא ימות.", en: "Choose a living player (not last night's) — if executed tomorrow, they don't die." },
+    witch: { n: 1, self: true, first: true, he: "בחר שחקן — אם יאשים מחר, ימות.", en: "Choose a player — if they nominate tomorrow, they die." },
+    cerenovus: { n: 1, self: true, first: true, he: "בחר שחקן ותפקיד טוב (ספר למספר הסיפורים איזה).", en: "Choose a player and a good character (tell the storyteller which)." },
+    dreamer: { n: 1, self: false, first: true, he: "בחר שחקן (לא את עצמך) — תקבל שני תפקידים, אחד מהם שלו.", en: "Choose a player (not yourself) — learn 1 good and 1 evil character, one is theirs." },
+    seamstress: { n: 2, self: false, first: true, once: true, he: "פעם במשחק: בחר שני שחקנים — תגלה אם הם באותו צד. (אפשר לדלג)", en: "Once per game: choose two players — learn if they are the same alignment. (You may skip)" },
+    chambermaid: { n: 2, self: false, first: true, he: "בחר שני שחקנים חיים — תגלה כמה התעוררו הלילה.", en: "Choose two living players — learn how many woke tonight." },
+    innkeeper: { n: 2, self: true, he: "בחר שני שחקנים — הם לא ימותו הלילה, אחד שיכור.", en: "Choose two players — they can't die tonight; one is drunk." },
+    sailor: { n: 1, self: false, first: true, he: "בחר שחקן חי — אחד מכם שיכור עד מחר.", en: "Choose a living player — one of you is drunk until dusk." },
+    exorcist: { n: 1, self: false, he: "בחר שחקן (לא כמו אתמול) — אם הוא השד, הוא לא יפעל הלילה.", en: "Choose a player (different to last night) — if the Demon, it doesn't act tonight." },
+    gambler: { n: 1, self: true, he: "בחר שחקן ונחש את התפקיד שלו (ספר למספר הסיפורים) — טעות = מוות.", en: "Choose a player and guess their character (tell the storyteller) — wrong = you die." },
+    professor: { n: 1, self: false, once: true, he: "פעם במשחק: בחר שחקן מת — אם הוא תושב, הוא חוזר לחיים.", en: "Once per game: choose a dead player — if Townsfolk, they are resurrected.", dead: true },
+    ravenkeeper: { n: 1, self: true, he: "מתת הלילה: בחר שחקן — תגלה את התפקיד שלו.", en: "You died tonight: choose a player — learn their character." },
+    imp: { n: 1, self: true, he: "בחר שחקן — הוא מת. (אם תבחר בעצמך, משרת יהפוך לשד)", en: "Choose a player — they die. (Choose yourself: a Minion becomes the Imp)" },
+    pukka: { n: 1, self: true, first: true, he: "בחר שחקן — הוא מורעל. המורעל הקודם מת.", en: "Choose a player — they are poisoned. The previous one dies." },
+    vortox: { n: 1, self: true, he: "בחר שחקן — הוא מת.", en: "Choose a player — they die." },
+    vigormortis: { n: 1, self: true, he: "בחר שחקן — הוא מת.", en: "Choose a player — they die." },
+    no_dashii: { n: 1, self: true, he: "בחר שחקן — הוא מת.", en: "Choose a player — they die." },
+    fang_gu: { n: 1, self: true, he: "בחר שחקן — הוא מת.", en: "Choose a player — they die." },
+    zombuul: { n: 1, self: true, he: "אם אף אחד לא מת היום: בחר שחקן — הוא מת.", en: "If nobody died today: choose a player — they die." },
+    shabaloth: { n: 2, self: true, he: "בחר שני שחקנים — הם מתים.", en: "Choose two players — they die." },
+    po: { n: 1, self: true, he: "בחר שחקן — הוא מת (או אף אחד, ואז מחר שלושה).", en: "Choose a player — they die (or nobody, then three next time)." },
+    al_hadikhia: { n: 3, self: true, he: "בחר שלושה שחקנים.", en: "Choose three players." },
+    lleech: { n: 1, self: true, first: true, he: "בחר שחקן — הוא מת (בלילה הראשון: בחר מארח).", en: "Choose a player — they die (night 1: choose your host)." },
+    assassin: { n: 1, self: true, once: true, he: "פעם במשחק: בחר שחקן — הוא מת בכל מקרה. (אפשר לדלג)", en: "Once per game: choose a player — they die regardless. (You may skip)" },
+    godfather: { n: 1, self: true, he: "אם אאוטסיידר מת היום: בחר שחקן — הוא מת.", en: "If an Outsider died today: choose a player — they die." },
+    philosopher: { n: 0, first: true, he: "פעם במשחק: אמור למספר הסיפורים איזה תפקיד טוב לקחת. (אפשר לדלג)", en: "Once per game: tell the storyteller which good character to become. (You may skip)" },
+  };
+  const DEMON_KILL = new Set(["imp", "vortox", "vigormortis", "no_dashii", "fang_gu", "zombuul", "shabaloth", "po", "lleech", "al_hadikhia"]);
+  function action(p, first, lang) {
+    const r = shown(p), a = ACT[r.id];
+    if (!a || (first && !a.first)) return { n: 0, text: say(lang, "התעוררת. תסתכל במידע שלך.", "You are awake. Look at your info."), info: true };
+    return { n: a.n, self: !!a.self, dead: !!a.dead, once: !!a.once, text: L(lang) === "he" ? a.he : a.en };
+  }
+
+  // --- dawn helper: from tonight's choices, who probably died / was protected / poisoned. acts: {seat: [targets]} ---
+  function resolveNight(players, acts, lang) {
+    const by = id => players.filter(p => p.role.id === id && p.isAlive !== false), sel = p => (acts[p.seat] || []);
+    const poisoned = new Set(), protectedS = new Set(), deaths = new Set(), notes = [];
+    const nameOf = seat => (players.find(p => p.seat === seat) || {}).name || seat;
+    by("poisoner").forEach(p => sel(p).forEach(t => poisoned.add(t)));
+    by("pukka").forEach(p => sel(p).forEach(t => poisoned.add(t)));
+    const poisonedHere = p => poisoned.has(p.seat) || p.isDrunk;
+    by("monk").forEach(p => { if (!poisonedHere(p)) sel(p).forEach(t => protectedS.add(t)); });
+    by("innkeeper").forEach(p => { if (!poisonedHere(p)) sel(p).forEach(t => protectedS.add(t)); });
+    players.forEach(p => { if (p.role.id === "soldier" && !poisonedHere(p)) protectedS.add(p.seat); });
+    players.filter(p => DEMON_KILL.has(p.role.id) && p.isAlive !== false).forEach(d => sel(d).forEach(t => {
+      const tp = players.find(x => x.seat === t); if (!tp || tp.isAlive === false) return;
+      if (protectedS.has(t)) notes.push(say(lang, `השד בחר ב־${nameOf(t)}, אבל הוא מוגן — לא מת.`, `The Demon chose ${nameOf(t)}, but they are protected — no death.`));
+      else if (t === d.seat && d.role.id === "imp") notes.push(say(lang, `השד הרג את עצמו — משרת חי הופך לאימפ.`, `The Imp killed itself — a living Minion becomes the Imp.`));
+      else if (tp.role.id === "mayor" && !poisonedHere(tp)) notes.push(say(lang, `השד בחר בראש העיר (${nameOf(t)}) — אתה יכול להעביר את המוות לשחקן אחר.`, `The Demon chose the Mayor (${nameOf(t)}) — you may bounce the death.`));
+      else deaths.add(t);
+    }));
+    by("assassin").forEach(p => sel(p).forEach(t => deaths.add(t)));
+    poisoned.forEach(t => notes.push(say(lang, `${nameOf(t)} מורעל — תן לו מידע שקרי.`, `${nameOf(t)} is poisoned — give false info.`)));
+    return { deaths: [...deaths], poisoned: [...poisoned], protected: [...protectedS], notes };
+  }
+
+  window.BKRules = { action, resolveNight, setup, shown, shownAlignment, firstNight, laterNight, quick, nightOrder, outsiderChange };
 })();

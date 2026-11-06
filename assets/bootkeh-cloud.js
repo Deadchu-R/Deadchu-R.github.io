@@ -69,6 +69,7 @@
         ability_en: r.ability_en || "", ability_he: r.ability_he || "", alignment: p.alignment || "good", info: String(p.info || "").slice(0, 2000),
         log: p.info ? [{ label: lang === "en" ? "Night 1" : "לילה 1", text: String(p.info).slice(0, 2000), at: Date.now() }] : [],
         vote: null, defense: null,
+        wake: null, act: null, seen: null,
         updatedAt: FV.FieldValue.serverTimestamp()
       });
       links[p.seat] = `${base}?g=${gameId}&k=${key}`;
@@ -125,6 +126,23 @@
   C.vote = async (gameId, key, nomId, v) => {
     await C.ready;
     await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ vote: { nom: nomId, v: v === "yes" ? "yes" : "no", at: Date.now() } });
+  };
+
+  // ---- the night, step by step ----
+  // Storyteller: wake one player — their phone asks them to choose. wake = {id, n, text, self, dead} (null = go back to sleep)
+  C.wake = async (gameId, key, wake) => {
+    await storyteller();
+    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ wake: wake || null });
+  };
+  // Player: answer the wake-up (the seats they chose).
+  C.act = async (gameId, key, wakeId, targets) => {
+    await C.ready;
+    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ act: { wake: wakeId, targets: (targets || []).slice(0, 4).map(Number), at: Date.now() } });
+  };
+  // Player: "Got it" — they saw their latest info (the storyteller sees a ✓ and moves on).
+  C.seen = async (gameId, key, infoAt) => {
+    await C.ready;
+    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ seen: { at: infoAt || 0, when: Date.now() } });
   };
 
   // Player: write a defence (or an accusation speech) for the open accusation.
