@@ -60,10 +60,22 @@
   function fromText(text) {
     const lines = String(text || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
     const found = [];
-    for (const ln of lines) { const r = roleForLine(ln); if (r && !found.includes(r.id)) found.push(r.id); }
+    const add = r => { if (r && !found.includes(r.id)) found.push(r.id); };
+    for (const ln of lines) {
+      if (!/^[^A-Za-z\u0590-\u05ff]*[A-Z\u0590-\u05ff]/.test(ln)) { if (!/[A-Z]/.test(ln)) continue; }   // names start with a capital
+      const whole = /^[^A-Za-z\u0590-\u05ff]*[A-Z\u0590-\u05ff]/.test(ln) && roleForLine(ln); if (whole) { add(whole); continue; }
+      // two columns read as one line ("Snake Charmer Slayer", "Librarian Each day, if you…"): try every 1–3 word
+      // window, but not words in the middle of a sentence ("…they are drunk.")
+      const w = ln.split(/\s+/).filter(Boolean), skip = /^(are|is|the|a|an|be|as|if|of|you|your|their|they|was|were|by|to)$/i;
+      for (let i = 0; i < w.length; i++) {
+        if (i && skip.test(w[i - 1].replace(/[^a-z]/gi, ""))) continue;
+        if (!/^[A-Z\u0590-\u05ff]/.test(w[i].replace(/^[^A-Za-z\u0590-\u05ff]+/, ""))) continue;   // a name starts with a capital letter
+        for (let k = 3; k >= 1; k--) { if (i + k > w.length) continue; const r = roleForLine(w.slice(i, i + k).join(" ")); if (r) { add(r); i += k - 1; break; } }
+      }
+    }
     // title + "by author" from the first lines (e.g. "Return of the Crimson Guard by Sit")
     let name = "", author = "";
-    const top = lines.slice(0, 3).join(" ").replace(/\s+/g, " "), m = /^(.*?)\s+(?:by|jy|hy|bv|ky)\s+(.{1,40})$/i.exec(lines[0] || "") || /^(.*?)\s+by\s+(\S+)/i.exec(top);   // italic "by" is often read as "jy"
+    const top = lines.slice(0, 3).join(" ").replace(/\s+/g, " "), m = /^(.*?)\s+(?:by|jy|hy|bv|ky|ty|wy)\s*(.{2,40})$/i.exec(lines[0] || "") || /^(.*?)\s+by\s+(\S+)/i.exec(top);   // italic "by" is often read as "jy"
     if (m) { name = m[1].trim(); author = m[2].trim().replace(/[^\p{L}\p{N} .'-]/gu, ""); author = author.charAt(0).toUpperCase() + author.slice(1); } else if (lines[0] && !roleForLine(lines[0])) name = lines[0];
     return { name, author, ids: found };
   }
@@ -87,8 +99,15 @@
   }
   async function fromImage(file, onProgress) {
     const T = await loadTess();
-    const res = await T.recognize(file, "eng", { logger: m => { if (m.status === "recognizing text" && onProgress) onProgress(m.progress); } });
-    return fromText(res.data.text);
+    // "sparse text" reads each column's names on their own; the automatic layout is a second pass, and both are merged
+    let pass = 0, text = "";
+    const w = await T.createWorker("eng", 1, { logger: m => { if (m.status === "recognizing text" && onProgress) onProgress((pass + m.progress) / 2); } });
+    try {
+      await w.setParameters({ tessedit_pageseg_mode: "11" }); text += (await w.recognize(file)).data.text + "\n"; pass = 1;
+      await w.setParameters({ tessedit_pageseg_mode: "3" }); text += (await w.recognize(file)).data.text;
+    } finally { w.terminate(); }
+    const a = fromText(text);
+    return a;
   }
 
   // ---- the import / save window ----
@@ -107,10 +126,12 @@
         <label class="bk-hint">${tr("שם הסט", "Set name")}<input id="bkSetName" class="bk-input" value="${esc(draft.name)}" maxlength="60"></label>
         <label class="bk-hint">${tr("מחבר (לא חובה)", "Author (optional)")}<input id="bkSetAuthor" class="bk-input" value="${esc(draft.author)}" maxlength="40"></label>
         <button type="button" class="bk-btn pri bk-wide bk-big" data-act="save" ${rs.length ? "" : "disabled"}>${tr("שמור לרשימת הסטים והשתמש בו", "Save to my sets and use it")}</button>
+        <button type="button" class="bk-btn bk-wide" data-act="once" ${rs.length ? "" : "disabled"}>${tr("השתמש רק במשחק הזה (בלי לשמור)", "Use for this game only (don't save)")}</button>
       </div>`;
       ov.querySelector(".bk-sendall-x").onclick = () => ov.remove();
       ov.querySelectorAll("[data-id]").forEach(b => b.onclick = () => { draft.ids = draft.ids.filter(x => x !== b.dataset.id); keep(); draw(); });
       const keep = () => { const n = ov.querySelector("#bkSetName"), a = ov.querySelector("#bkSetAuthor"); if (n) draft.name = n.value; if (a) draft.author = a.value; };
+      ov.querySelector('[data-act="once"]').onclick = () => { keep(); ov.remove(); if (B() && B().useTempSet) B().useTempSet({ name: draft.name, author: draft.author, ids: draft.ids }); };
       ov.querySelector('[data-act="save"]').onclick = () => { keep(); const id = save(draft.name, draft.author, draft.ids); ov.remove(); use(id); };
     };
     draw();

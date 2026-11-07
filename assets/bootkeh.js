@@ -1345,7 +1345,7 @@
     const demons = scriptRoles.filter(r => r.type === "demon");
 
     const author = script ? script.author : "Storyteller";
-    const sheetTitle = script ? (state.lang === "he" ? script.name_he : script.name_en) : getThemeTitle();
+    const sheetTitle = state.scriptId === "custom" && state.tempSetName ? state.tempSetName : script ? (state.lang === "he" ? script.name_he : script.name_en) : getThemeTitle();
 
     function renderCategory(catKey, catBadgeTitle, rolesList, badgeClass = "") {
       if (rolesList.length === 0) return "";
@@ -2127,7 +2127,7 @@
           <button type="button" class="bk-btn pri" id="bkQuickApply">${T("הכנס שחקנים", "Fill in players")}</button>
         </div>
       </div>
-      <div class="bk-quick-msg" id="bkQuickMsg">${QS.msg}${QS.fresh.length ? ` <button type="button" class="bk-btn sm" id="bkQuickAdd">＋ ${T(`הוסף ${QS.fresh.length} חדשים לשחקנים השמורים`, `Add ${QS.fresh.length} new to saved players`)}</button>` : ""}</div>`;
+      <div class="bk-quick-msg" id="bkQuickMsg">${QS.msg}${QS.set ? ` <button type="button" class="bk-btn sm" id="bkQuickSaveSet">💾 ${T("שמור כסט קבוע", "Save as a set")}</button>` : ""}${QS.fresh.length ? ` <button type="button" class="bk-btn sm" id="bkQuickAdd">＋ ${T(`הוסף ${QS.fresh.length} חדשים לשחקנים השמורים`, `Add ${QS.fresh.length} new to saved players`)}</button>` : ""}</div>`;
     const f = box.querySelector("#bkQuickFile"), drop = box.querySelector("#bkQuickDrop");
     f.onchange = () => quickFiles([...f.files]);
     drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); f.click(); } };
@@ -2135,7 +2135,17 @@
     ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
     drop.addEventListener("drop", e => quickFiles([...(e.dataTransfer && e.dataTransfer.files || [])]));
     box.querySelector("#bkQuickApply").onclick = () => quickNames(box.querySelector("#bkQuickNames").value);
+    const ss = box.querySelector("#bkQuickSaveSet");
+    if (ss) ss.onclick = () => { const d = QS.set; QS.set = null; const id = window.BKSets.save(d.name || (he ? "סט מתמונה" : "Set from picture"), d.author || "", d.ids); window.BKSets.use(id); QS.msg = he ? `💾 הסט "${esc(d.name || "סט מתמונה")}" נשמר ברשימת הסטים` : `💾 Set "${esc(d.name || "Set from picture")}" saved to your sets`; renderQuick(); };
     const add = box.querySelector("#bkQuickAdd"); if (add) add.onclick = () => { addFreshToSaved(QS.fresh); QS.fresh = []; QS.msg += he ? " · נוספו לשמורים ✓" : " · added to saved ✓"; renderQuick(); };
+  }
+  // pick the roles read from a picture for this game, without saving a set
+  function useTempSet(d) {
+    state.customRoles = d.ids.slice(); state.scriptId = "custom"; state.tempSetName = d.name || "";
+    const sel = $("#scriptSelect"); if (sel) sel.value = "custom";
+    if (window.BKSets) window.BKSets.renderSelect();
+    try { initCustomRolesMatrix(); updateCustomRoleChips(); } catch (e) {}
+    renderSetupView(); updatePanels();
   }
   function quickMsg(m) { QS.msg = m; const el = document.getElementById("bkQuickMsg"); if (el) renderQuick(); }
   function quickNames(text) {
@@ -2154,9 +2164,10 @@
         try {
           const d = await window.BKSets.fromImage(file, p => { const el = document.getElementById("bkQuickMsg"); if (el) el.textContent = (he ? "קורא את התמונה… " : "Reading the picture… ") + Math.round(p * 100) + "%"; });
           if (!d.ids.length) { quickMsg(he ? "לא זיהיתי תפקידים בתמונה — נסה תמונה חדה וישרה יותר." : "No roles found in the picture — try a sharper, straighter one."); continue; }
-          const id = window.BKSets.save(d.name || (he ? "סט מתמונה" : "Set from picture"), d.author || "", d.ids);
-          window.BKSets.use(id);
-          quickMsg((he ? `✓ ${d.ids.length} תפקידים זוהו ונשמרו כסט` : `✓ ${d.ids.length} roles found and saved as a set`) + (d.name ? ` · ${esc(d.name)}` : ""));
+          // used for this game only — kept in the list of sets only if you press "Save as a set"
+          useTempSet(d);
+          QS.set = d;
+          quickMsg((he ? `✓ ${d.ids.length} תפקידים זוהו ונבחרו למשחק הזה (לא נשמר — ייעלם ברענון)` : `✓ ${d.ids.length} roles found and picked for this game (not saved — gone on refresh)`) + (d.name ? ` · ${esc(d.name)}` : ""));
         } catch (e) { quickMsg(he ? "לא הצלחתי לקרוא את התמונה." : "Couldn't read the picture."); }
       } else {
         const text = await file.text(); const ta = document.getElementById("bkQuickNames"); quickNames(text); if (ta) ta.value = text;
@@ -2264,6 +2275,7 @@
     matchSaved,
     applyNames,
     renderQuick,
+    useTempSet,
     photoFor,
     setStoryteller,
     savedFor,

@@ -473,14 +473,12 @@ html, body { overflow-x: clip; max-width: 100%; }
 
 /* ---------- desktop: everything a size bigger and easier to read ---------- */
 @media (min-width: 761px) {
-  html:not(.bk-phone) .bootkeh-main, html:not(.bk-phone) .bootkeh-topbar, html:not(.bk-phone) .bootkeh-nav-tabs,
-  html:not(.bk-phone) .bk-sendall, html:not(.bk-phone) .bootkeh-modal-backdrop { zoom: 1.14; }
+  html:not(.bk-phone) .bootkeh-main, html:not(.bk-phone) .bootkeh-topbar, html:not(.bk-phone) .bootkeh-nav-tabs { zoom: 1.14; }
   html:not(.bk-phone) .bk-hint, html:not(.bk-phone) .bk-label { font-size: 14.5px !important; line-height: 1.55; }
   html:not(.bk-phone) .bk-btn { min-height: 42px; }
 }
 @media (min-width: 1500px) {
-  html:not(.bk-phone) .bootkeh-main, html:not(.bk-phone) .bootkeh-topbar, html:not(.bk-phone) .bootkeh-nav-tabs,
-  html:not(.bk-phone) .bk-sendall, html:not(.bk-phone) .bootkeh-modal-backdrop { zoom: 1.25; }
+  html:not(.bk-phone) .bootkeh-main, html:not(.bk-phone) .bootkeh-topbar, html:not(.bk-phone) .bootkeh-nav-tabs { zoom: 1.25; }
 }
 
 /* ---------- desktop arrows between the main screens ---------- */
@@ -569,3 +567,17 @@ html.bk-tv-mode body > *:not(#bkTV) { display: none !important; }
 .bk-tv-msg { text-align: center; color: #f3e7cb; font: 600 22px/1.5 var(--bk-font-sans, sans-serif); } .bk-tv-msg b { font-size: 64px; display: block; }
 .bk-tv-hours { margin: 6px 0 10px; }
 .bk-seg button.on { background: rgba(212,175,55,.22); color: #fff; }
+
+/* ---------- windows on a computer: a little bigger, but never taller than the screen (they scroll inside) ----------
+   (zooming the full-screen backdrop made it taller than the window, so the window's own top and Back were cut off) */
+.bk-sendall { overflow-y: auto; }
+.bootkeh-modal, .bk-sendall-card { --bkz: 1; }
+@media (min-width: 761px) {
+  html:not(.bk-phone) .bootkeh-modal, html:not(.bk-phone) .bk-sendall-card { --bkz: 1.06; zoom: var(--bkz); }
+  html:not(.bk-phone) .bootkeh-modal { max-height: calc((var(--bk-vh, 100vh) - 48px) / var(--bkz)) !important; width: min(520px, calc((100vw - 48px) / var(--bkz))); }
+  html:not(.bk-phone) .bk-sendall-card { max-height: calc((var(--bk-vh, 100vh) - 48px) / var(--bkz)); overflow-y: auto; }
+  html:not(.bk-phone) .bootkeh-modal-body { padding: 16px 18px; }
+  html:not(.bk-phone) .bk-sp-row { padding: 6px 10px; margin-bottom: 6px; }
+  html:not(.bk-phone) .bk-sp-row .bk-avatar.lg { width: 38px; height: 38px; font-size: 15px; }
+}
+.bootkeh-modal { max-height: calc(var(--bk-vh, 100vh) - 24px); }

@@ -8,6 +8,8 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Reading a roles sheet from a picture:** the two columns are now read separately (sparse-text OCR + a second pass, merged) and a line that holds two names is split — the Crimson Guard sheet that gave 4 roles now gives all 20. A set read from a picture is used for this game only (gone on refresh) unless you press "Save as a set".
+  - **Windows on a computer:** the saved-players window (and the other windows) fit the screen and scroll inside, so Back is always reachable; slightly smaller on desktop.
   - **Desktop & settings:** bigger, more readable text on computers; ‹ › arrows (and keyboard ←/→) between the main screens; dark styled dropdowns (no more white on white); a ⚙ Settings window with a developer mode (start without everyone, open every player in its own tab to test); each player's tab is titled with their name; alerts vibrate only, no sound.
   - **People with photos:** add a photo to each saved player (shown on the board, the seat list, the lobby, the players' pages and the send panel); pick the storyteller (👑) from the list — they get no seat and players see who runs the game; up to 16 people.
   - **Quick setup:** at the top of New game, drop / paste a picture of a roles sheet (read into a saved set) and a players list (text or file) — the player count, the names (matched to saved players across Hebrew/English, with photos) and the storyteller are filled in.
