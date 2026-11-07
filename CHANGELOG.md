@@ -8,6 +8,11 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **🌙 The night for everyone at once:** one button sends every player whose character chooses tonight (Demon, Poisoner, Monk, Devil's Advocate, Fortune Teller…) their choice on the phone — players, characters or skip — all at the same time; when all have chosen, each player's info is written by the rules from those choices and sent automatically. "End the night" now announces the deaths from the choices in one tap (or check first).
+  - **Abilities follow the game:** a once-per-game ability is marked **Spent** on the player's page and not offered again; the Devil's Advocate's pick survives execution; day abilities from the phone — Slayer (the Demon dies), Psychopath (the target dies), Klutz (picks evil → evil wins) — update everyone at once.
+  - **Players nominate from their phone:** "⚖️ Nominate a player" opens the accusation for everyone (with the usual rules: alive, once a day, one at a time).
+  - **Ready announcements** (one minute to the vote, night N, back to the table, break…) next to the free text.
+  - **Players list on every phone:** alive and dead (with ghost vote), and a private note next to each player, kept only on that phone.
   - **The storyteller never sits:** while there is a storyteller they can't be in the seats — choosing them as storyteller gives their seat to the next saved person, the seat picker refuses them, and a pasted list skips them. "No storyteller" option added. Picking a saved player who already sits elsewhere swaps the two seats instead of seating them twice.
   - **Reading a roles sheet from a picture:** the two columns are now read separately (sparse-text OCR + a second pass, merged) and a line that holds two names is split — the Crimson Guard sheet that gave 4 roles now gives all 20. A set read from a picture is used for this game only (gone on refresh) unless you press "Save as a set".
   - **Windows on a computer:** the saved-players window (and the other windows) fit the screen and scroll inside, so Back is always reachable; slightly smaller on desktop.

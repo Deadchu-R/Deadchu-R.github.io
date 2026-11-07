@@ -144,6 +144,17 @@
     await C.ready;
     await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ act: { wake: wakeId, targets: (targets || []).slice(0, 4).map(Number), roles: (roles || []).slice(0, 3).map(String), at: Date.now() } });
   };
+  // Player, by day: nominate someone, or use a day ability (Slayer, Psychopath, Klutz…). kind = "nom" | "day"
+  C.dayAct = async (gameId, key, kind, targets) => {
+    await C.ready;
+    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update({ act: { wake: null, kind: String(kind).slice(0, 12), targets: (targets || []).slice(0, 4).map(Number), roles: [], at: Date.now() } });
+  };
+  // Storyteller: set a few fields of a player's page (e.g. {spent: true} when a once-per-game ability is used)
+  C.setFields = async (gameId, key, fields) => {
+    await storyteller();
+    const ok = {}; for (const k of ["spent"]) if (k in fields) ok[k] = fields[k];
+    await db.collection("bk_games").doc(gameId).collection("p").doc(key).update(ok);
+  };
   // Storyteller: a player's character changed (Pit-Hag, Snake Charmer swap, a Minion becomes the Imp…) — their card updates.
   C.setRole = async (gameId, key, r, alignment) => {
     await storyteller();

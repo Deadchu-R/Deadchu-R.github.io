@@ -159,7 +159,7 @@
     try {
       [ST.unGame, ST.unPlayers, ST.unTaken].forEach(u => u && u());
       ST.unGame = await C().watchGame(g.gameId, s => { ST.game = s; render(); });
-      ST.unPlayers = await C().watchPlayers(g.gameId, ps => { ST.players = ps; render(); });
+      ST.unPlayers = await C().watchPlayers(g.gameId, ps => { ST.players = ps; render(); processActs(); });
       ST.unTaken = await C().watchTaken(g.gameId, t => {
         const before = Object.keys(ST.taken).length; ST.taken = t; render(); redrawGroup();
         const n = players().length, now = Object.keys(t).length;
@@ -225,6 +225,10 @@
   function toggleDeath(seat) { ST.deaths[seat] = !ST.deaths[seat]; render(); }
   async function announceDawn() {
     const st = ST.game || {}, seats = (st.seats || []).map(s => Object.assign({}, s));
+    // for the day: who is poisoned, and whom the Devil's Advocate protects from execution
+    const pois = poisonedTonight(), acts = actsTonight();
+    ST.dayPoison = pois; ST.daProtect = [];
+    for (const [sx, tg] of Object.entries(acts)) { const q = players().find(x => x.seat === +sx); if (q && q.role.id === "devils_advocate" && q.isAlive !== false && !q.isDrunk && !pois.includes(q.seat)) ST.daProtect.push(...tg); }
     const died = seats.filter(s => ST.deaths[s.seat] && s.alive); died.forEach(s => { s.alive = false; });
     ST.deaths = {}; mirrorLocal(seats);
     const text = died.length ? tr(`בוקר, יום ${st.day}. הלילה ${died.length > 1 ? "מתו" : "מת/ה"}: ${names(died)}.`, `Morning, day ${st.day}. Died tonight: ${names(died)}.`)
@@ -233,6 +237,19 @@
     checkWin(seats);
   }
 
+  // End the night in one tap: the deaths come from tonight's choices (+ the storyteller's decisions) and everyone is told
+  async function endNightAuto() {
+    const st = ST.game || {}; if (window.BKRules) { const res = window.BKRules.resolveNight(players(), actsTonight(), he() ? "he" : "en");
+      ST.deaths = {}; res.deaths.forEach(x => ST.deaths[x] = true); (ST.pendingKills || []).forEach(x => ST.deaths[x] = true); ST.pendingKills = []; ST.dawnFor = st.day; ST.dawnRes = res; }
+    await announceDawn();
+  }
+  function presets(st) {
+    const d = (st && st.day) || 1;
+    return [tr("נשארה דקה להצבעה ⏳", "One minute to the vote ⏳"), tr("עוד 5 דקות לסוף הדיון", "5 minutes left to talk"), tr("כולם לחזור לשולחן 🪑", "Everyone back to the table 🪑"),
+      tr(`לילה ${d} — עצמו עיניים 🌙`, `Night ${d} — close your eyes 🌙`), tr("בוקר טוב — פקחו עיניים ☀️", "Good morning — open your eyes ☀️"), tr("ההאשמות נפתחות עכשיו ⚖️", "Nominations open now ⚖️"),
+      tr("שקט בבקשה — מספר הסיפורים מדבר", "Quiet please — the storyteller is talking"), tr("הפסקה של 5 דקות ☕", "5-minute break ☕"), tr("מי שמת — עדיין יש לו הצבעה אחת 👻", "The dead still have one vote 👻")];
+  }
+  async function announcePreset(i) { const x = presets(ST.game)[i]; if (x) { await C().setState(ST.gid, { notice: notice(x) }); toast("📣 " + x); } }
   async function announce() {
     const ta = document.getElementById("bkLiveNotice"); const text = ta && ta.value.trim(); if (!text) return;
     await C().setState(ST.gid, { notice: notice(text) });
@@ -244,6 +261,9 @@
   async function openNom() {
     const by = +document.getElementById("bkNomBy").value, on = +document.getElementById("bkNomOn").value;
     if (!on || !by) return;
+    await openNomFor(by, on);
+  }
+  async function openNomFor(by, on) {
     const st = ST.game || {}, today = st.today || { by: {}, on: {}, block: null };
     const s = (st.seats || []).find(x => x.seat === on), b = (st.seats || []).find(x => x.seat === by);
     const byP = { ...today.by, [by]: true }, onP = { ...today.on, [on]: true };
@@ -296,7 +316,9 @@
   async function endDay(executeIt) {
     const st = ST.game || {}, today = st.today || {}, b = today.block, seats = (st.seats || []).map(s => Object.assign({}, s));
     let text;
-    if (executeIt && b && b.seat) { const s = seats.find(x => x.seat === b.seat); if (s) s.alive = false; ST.executed = { seat: b.seat, day: st.day || 1 };
+    if (executeIt && b && b.seat && (ST.daProtect || []).includes(b.seat)) { ST.executed = { seat: b.seat, day: st.day || 1 };
+      text = tr(`${b.name} הוצא/ה להורג — אבל לא מת/ה!`, `${b.name} was executed — but does not die!`); executeIt = false; }
+    else if (executeIt && b && b.seat) { const s = seats.find(x => x.seat === b.seat); if (s) s.alive = false; ST.executed = { seat: b.seat, day: st.day || 1 };
       text = tr(`${b.name} הוצא/ה להורג.`, `${b.name} was executed.`); }
     else text = tr("היום אף אחד לא הוצא להורג.", "Nobody was executed today.");
     mirrorLocal(seats);
@@ -499,9 +521,11 @@
   function autoText(p) {
     const st = ST.game || {}, R = window.BKRules, first = (st.day || 1) === 1;
     if (p.isAlive === false && !(ST.deaths && ST.deaths[p.seat] && p.role.id === "ravenkeeper")) return nightDefault(p);
-    if (first) return p.firstNightInfo || "";
-    if (!R) return "";
+    if (!R) return first ? p.firstNightInfo || "" : "";
     const bad = p.isDrunk || poisonedTonight().includes(p.seat), t = actsTonight()[p.seat] || [], tg = t.map(x => players().find(q => q.seat === x)).filter(Boolean);
+    const id0 = (p.thinks && B().getRole(p.thinks) ? p.thinks : p.role.id);
+    // night 1: the dealt info, except for those who chose tonight (Fortune Teller, Seamstress…) — answered from their picks
+    if (first && !(tg.length && ["fortune_teller", "seamstress"].includes(id0))) return p.firstNightInfo || "";
     const evil = q => q.alignment === "evil", demon = q => q.role && q.role.type === "demon", rh = (B()._state.rules || {}).redHerring;
     const id = (p.thinks && B().getRole(p.thinks) ? p.thinks : p.role.id);
     let truth = null;
@@ -525,11 +549,138 @@
     render();
     if (send) setTimeout(() => sendNight(false), 0);
   }
+  // =============================================================================================
+  // 🌙 The night for everyone at once: every player whose character chooses tonight gets the choice on their phone
+  // (players / characters / skip), all at the same time. When everyone has answered, each player's info is written by
+  // the rules from those choices (poisoned → false, Fortune Teller from their picks…) and sent to every phone.
+  // Once-per-game abilities are marked "Spent" after use and are not offered again.
+  // =============================================================================================
+  const shownId = p => (window.BKRules ? window.BKRules.shown(p).id : p.role.id);
+  const isSpent = seat => !!((ST.players[seat] && ST.players[seat].spent) || (ST.spentLocal || {})[seat]);
+  async function markSpent(seat) {
+    if (isSpent(seat)) return; (ST.spentLocal = ST.spentLocal || {})[seat] = true;
+    try { await C().setFields(ST.gid, key(seat), { spent: true }); } catch (e) { console.warn(e); }
+  }
+  function bcastChoosers(st) {
+    const R = window.BKRules, first = (st.day || 1) === 1, out = [];
+    for (const p of wokeList(st)) {
+      if (shownId(p) === "ravenkeeper") continue;   // wakes only if they die tonight (see the night runner)
+      const a = R.action(p, first, he() ? "he" : "en");
+      if (!(a.n || a.r)) continue;
+      if (a.once && isSpent(p.seat)) continue;
+      out.push({ p, a });
+    }
+    return out;
+  }
+  async function broadcastNight() {
+    const st = ST.game || {}, run = runState(st), list = bcastChoosers(st);
+    ST.bcast = { night: st.day, ids: {}, done: false };
+    for (const { p, a } of list) {
+      const id = "w" + Date.now() + "_" + p.seat;
+      run.woke[p.seat] = id; (run.wakeA = run.wakeA || {})[p.seat] = a; ST.bcast.ids[p.seat] = id;
+    }
+    render();
+    await Promise.all(list.map(({ p, a }) => C().wake(ST.gid, key(p.seat), { id: ST.bcast.ids[p.seat], n: a.n || 0, r: a.r || 0, kinds: a.kinds || null, self: !!a.self, dead: !!a.dead, once: !!a.once, text: a.text, night: st.day || 1 }).catch(e => console.warn(e))));
+    toast(list.length ? tr(`🌙 נשלח ל־${list.length} שחקנים לבחור. כשכולם יבחרו — המידע יישלח לכולם.`, `🌙 ${list.length} players were asked to choose. When all have chosen, everyone gets their info.`) : tr("אף אחד לא בוחר הלילה — שולח מידע.", "Nobody chooses tonight — sending info."));
+    checkBcast();
+  }
+  function bcastWaiting() {
+    const b = ST.bcast; if (!b) return [];
+    return Object.entries(b.ids).filter(([seat, id]) => { const a = ST.players[seat] && ST.players[seat].act; return !(a && a.wake === id); }).map(([seat]) => +seat);
+  }
+  // all answered → write and send everyone's info, put the choosers back to sleep
+  async function checkBcast(force) {
+    const b = ST.bcast, st = ST.game || {}; if (!b || b.done || b.night !== st.day || st.phase !== "night") return;
+    if (!force && bcastWaiting().length) return;
+    b.done = true;
+    autoNight(false);
+    await sendNight(false).catch(e => console.warn(e));
+    await Promise.all(Object.keys(b.ids).map(seat => C().wake(ST.gid, key(+seat), null).catch(() => {})));
+    toast(tr("✓ כולם בחרו — המידע של הלילה נשלח לכל השחקנים.", "✓ Everyone chose — tonight's info was sent to every player."));
+  }
+  function bcastHTML(st) {
+    const b = ST.bcast && ST.bcast.night === st.day ? ST.bcast : null;
+    if (!b) return `<div class="bk-lp-sec bk-bcast"><button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.broadcastNight()">🌙 ${tr("שלח את הלילה לכולם", "Send the night to everyone")}</button>
+      <small class="bk-hint">${tr("כל מי שבוחר הלילה (שד, מרעיל, נזיר, פרקליט השטן, מגדת עתידות…) מקבל את הבחירה בטלפון — כפתורים, שחקנים או תפקידים — כולם בבת אחת. כשכולם בחרו, המידע של כל שחקן נכתב לפי החוקים ונשלח אוטומטית. יכולת חד־פעמית שנוצלה מסומנת Spent.", "Everyone who chooses tonight (Demon, Poisoner, Monk, Devil's Advocate, Fortune Teller…) gets the choice on their phone — buttons, players or characters — all at once. When all have chosen, each player's info is written by the rules and sent automatically. A used once-per-game ability is marked Spent.")}</small></div>`;
+    const waiting = bcastWaiting(), rows = Object.entries(b.ids).map(([seat, id]) => { const p = players().find(x => x.seat === +seat); if (!p) return "";
+      const a = ST.players[seat] && ST.players[seat].act, ok = a && a.wake === id, r = p.role;
+      const what = ok ? ((a.targets || []).map(nameOfSeat).concat((a.roles || []).map(rid => { const x = B().getRole(rid); return x ? (he() ? x.name_he : x.name_en) : rid; })).join(", ") || tr("דילג", "skipped")) : tr("ממתין…", "waiting…");
+      return `<li class="${ok ? "ok" : "now"}"><b>${esc(String(p.name).split(" / ")[0])}</b> <small>${r.icon || ""} ${esc(he() ? r.name_he : r.name_en)}</small> → ${esc(what)}</li>${ok ? decisionsHTML(p, a) : ""}`; }).join("");
+    return `<section class="bk-lp-sec bk-bcast"><h4>🌙 ${tr("הלילה נשלח לכולם", "The night was sent to everyone")}</h4>
+      <ol class="bk-run-steps">${rows || `<li class="ok">${tr("אף אחד לא בוחר הלילה.", "Nobody chooses tonight.")}</li>`}</ol>
+      ${b.done ? `<p class="bk-hint">✓ ${tr("המידע נשלח לכולם.", "Info sent to everyone.")}</p>` : `<button type="button" class="bk-btn bk-wide" onclick="window.BKLive.checkBcast(true)">${waiting.length ? tr(`שלח מידע עכשיו (בלי לחכות ל־${waiting.length})`, `Send info now (without waiting for ${waiting.length})`) : tr("שלח מידע", "Send info")}</button>`}
+      <button type="button" class="bk-btn bk-wide" onclick="window.BKLive.broadcastNight()">↺ ${tr("שלח שוב את הבחירות", "Send the choices again")}</button></section>`;
+  }
+
+  // ---- what the players do from their phones by day: accuse someone, use a day ability; and the automatic results ----
+  const DAY = {
+    slayer: { once: true, n: 1, he: "פעם במשחק: בחר שחקן בפומבי — אם הוא השד, הוא מת.", en: "Once per game: publicly choose a player — if they are the Demon, they die." },
+    psychopath: { n: 1, he: "כל יום, לפני ההאשמות: בחר שחקן בפומבי — הוא מת.", en: "Each day, before nominations: publicly choose a player — they die." },
+    klutz: { once: true, n: 1, deadOnly: true, he: "מתת: בחר שחקן חי בפומבי — אם הוא רע, הצוות שלך מפסיד.", en: "You died: publicly choose a living player — if they are evil, your team loses." },
+    gossip: { n: 0, he: "כל יום אתה יכול להצהיר הצהרה פומבית — אם היא נכונה, מישהו ימות הלילה. (אמור אותה בקול)", en: "Each day you may make a public statement — if true, someone dies tonight. (Say it out loud)" },
+  };
+  const doneKey = () => "bk_acts_" + ST.gid;
+  function doneActs() { try { return JSON.parse(localStorage.getItem(doneKey()) || "{}"); } catch (e) { return {}; } }
+  function processActs() {
+    const st = ST.game; if (!st || !ST.gid) return;
+    const done = doneActs(); let changed = false;
+    for (const [seat, doc] of Object.entries(ST.players)) {
+      const a = doc && doc.act; if (!a) continue;
+      // night: a once-per-game ability that was used (not skipped) is now spent
+      const wa = ST.run && ST.run.wakeA && ST.run.wakeA[seat];
+      if (a.wake && wa && wa.once && ST.run.woke[seat] === a.wake && ((a.targets || []).length || (a.roles || []).length)) markSpent(+seat);
+      if (!a.kind || a.wake) continue;
+      if ((done[seat] || 0) >= a.at) continue;
+      done[seat] = a.at; changed = true;
+      handleDayAct(+seat, a).catch(e => console.warn(e));
+    }
+    if (changed) try { localStorage.setItem(doneKey(), JSON.stringify(done)); } catch (e) {}
+    checkBcast();
+  }
+  const tell = (seat, text) => { const k = key(seat); return k ? C().pushInfos(ST.gid, [{ key: k, text, label: phaseName(ST.game || {}, he()) }]) : Promise.resolve(); };
+  async function killSeat(seat, text) {
+    const st = ST.game || {}, seats = (st.seats || []).map(x => Object.assign({}, x)), s = seats.find(x => x.seat === seat);
+    if (s) s.alive = false; mirrorLocal(seats);
+    await C().setState(ST.gid, { seats, notice: notice(text) }); checkWin(seats);
+  }
+  async function handleDayAct(seat, a) {
+    const st = ST.game || {}, p = players().find(x => x.seat === seat); if (!p) return;
+    const seats = st.seats || [], me = seats.find(x => x.seat === seat), t = (a.targets || [])[0], tp = players().find(x => x.seat === t), ts = seats.find(x => x.seat === t);
+    const N = q => String(q && q.name || "?").split(" / ")[0];
+    if (a.kind === "nom") {
+      const today = st.today || { by: {}, on: {} };
+      const why = !["day", "nominate"].includes(st.phase) ? tr("אפשר להאשים רק ביום.", "You can only nominate during the day.")
+        : st.nom && st.nom.open ? tr("יש כבר האשמה פתוחה — חכה שתיסגר.", "An accusation is already open — wait for it to close.")
+        : !(me && me.alive) ? tr("רק שחקנים חיים מאשימים.", "Only living players nominate.")
+        : today.by[seat] ? tr("כבר האשמת היום.", "You already nominated today.")
+        : !ts ? "?" : today.on[t] ? tr(`${N(ts)} כבר הואשם היום.`, `${N(ts)} was already nominated today.`) : "";
+      if (why) { await tell(seat, "⚖️ " + why); return; }
+      await openNomFor(seat, t);
+      return;
+    }
+    if (a.kind !== "day") return;
+    const id = shownId(p), cfg = DAY[id]; if (!cfg) return;
+    const bad = p.isDrunk || (ST.dayPoison || []).includes(seat) || p.thinks;   // drunk / poisoned (or only thinks they are it): no effect
+    if (cfg.once) { if (isSpent(seat)) { await tell(seat, tr("כבר השתמשת ביכולת הזו (Spent).", "You already used this ability (Spent).")); return; } await markSpent(seat); }
+    if (id === "slayer" && tp) {
+      if (!bad && tp.role.type === "demon" && ts && ts.alive) await killSeat(t, tr(`🏹 ${N(p)} (קוטל השדים) ירה ב־${N(tp)} — ${N(tp)} מת!`, `🏹 ${N(p)} (Slayer) shot ${N(tp)} — ${N(tp)} dies!`));
+      else await C().setState(ST.gid, { notice: notice(tr(`🏹 ${N(p)} טוען שהוא קוטל השדים וירה ב־${N(tp)}… כלום לא קרה.`, `🏹 ${N(p)} claims Slayer and shoots ${N(tp)}… nothing happens.`)) });
+    }
+    if (id === "psychopath" && tp) {
+      if (!bad && ts && ts.alive) await killSeat(t, tr(`🪓 הפסיכופת בחר ב־${N(tp)} — ${N(tp)} מת.`, `🪓 The Psychopath chose ${N(tp)} — ${N(tp)} dies.`));
+      else await tell(seat, tr("היכולת לא עבדה הפעם.", "Your ability didn't work this time."));
+    }
+    if (id === "klutz" && tp) {
+      if (!bad && tp.alignment === "evil") { ST.win = { team: "evil", why: tr(`${N(p)} (המגושם) בחר ב־${N(tp)}, שהוא רע.`, `${N(p)} (Klutz) chose ${N(tp)}, who is evil.`) }; render(); await declareWin("evil"); }
+      else await C().setState(ST.gid, { notice: notice(tr(`${N(p)} (המגושם) בחר ב־${N(tp)} — הוא טוב. המשחק ממשיך.`, `${N(p)} (Klutz) chose ${N(tp)} — they are good. The game goes on.`)) });
+    }
+  }
+
   async function sendNight(toWhatsapp) {
     const st = ST.game || {}, label = phaseName(st, he());
     const items = [];
     for (const p of players()) {
-      const ta = document.getElementById("bkAll-" + p.seat); const text = ta ? ta.value.trim() : "";
+      const ta = document.getElementById("bkAll-" + p.seat); const text = (ta ? ta.value : (ST.draft[p.seat] || "")).trim();
       if (!text) continue;
       const k = key(p.seat); if (!k) continue;
       items.push({ key: k, text, label }); p.firstNightInfo = text;
@@ -627,9 +778,10 @@
         <button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.setPhase('night')">${all ? tr("התחל — לילה 1", "Start — Night 1") : tr("התחל בכל זאת (בדיקה) — לילה 1", "Start anyway (test) — Night 1")}</button>
       </section>`;
 
-    if (st.phase === "night") body = `<section class="bk-lp-sec"><h4>${tr("הלילה, שחקן אחרי שחקן", "The night, player by player")} — ${esc(phaseName(st, he()))}</h4>
+    if (st.phase === "night") body = `${bcastHTML(st)}<section class="bk-lp-sec"><h4>${tr("או: הלילה, שחקן אחרי שחקן", "Or: the night, player by player")} — ${esc(phaseName(st, he()))}</h4>
         ${runnerHTML(st)}
-        <button type="button" class="bk-btn ${ST.run && ST.run.i >= Object.keys(ST.wakeNo || {}).length ? "pri" : ""} bk-wide bk-big" onclick="window.BKLive.setPhase('dawn')">${tr("סיום הלילה — עלות השחר ›", "End the night — dawn ›")}</button>
+        <button type="button" class="bk-btn ${(ST.run && ST.run.i >= Object.keys(ST.wakeNo || {}).length) || (ST.bcast && ST.bcast.done) ? "pri" : ""} bk-wide bk-big" onclick="window.BKLive.endNightAuto()">${tr("סיום הלילה — הכרז מי מת ›", "End the night — announce who died ›")}</button>
+        <button type="button" class="bk-btn bk-wide" onclick="window.BKLive.setPhase('dawn')">${tr("סיום הלילה — לבדוק קודם מי מת", "End the night — check who died first")}</button>
       </section>
       <div class="bk-lp-sec bk-auto"><button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.autoNight(false)">✨ ${tr("חולל מידע לכל השחקנים", "Write everyone's info for me")}</button>
         <button type="button" class="bk-btn bk-wide" onclick="window.BKLive.autoNight(true)">✨ ${tr("חולל ושלח ישר לכולם", "Write it and send to everyone")}</button>
@@ -702,6 +854,7 @@
         <button type="button" class="bk-btn pri" onclick="window.BKLive.sendCustom('any', 'bkCustomAny')">${tr("שלח לנבחרים", "Send to the chosen")}</button>
       </details>
       <section class="bk-lp-sec"><h4>${tr("הודעה לכולם", "Announcement")}</h4>
+        <div class="bk-chips bk-presets">${presets(st).map((x, i) => `<button type="button" onclick="window.BKLive.announcePreset(${i})">${esc(x)}</button>`).join("")}</div>
         <div class="bk-row"><input id="bkLiveNotice" type="text" maxlength="300" placeholder="${tr("למשל: עוד 2 דקות להצבעה", "e.g. 2 minutes to the vote")}">
           <button type="button" class="bk-btn" onclick="window.BKLive.announce()">${tr("שלח", "Send")}</button></div>
         ${st.notice ? `<p class="bk-hint">${tr("אחרונה:", "Last:")} ${esc(st.notice.text)}</p>` : ""}
@@ -859,8 +1012,65 @@
   }
   function toggleReveal() { PL.reveal = !PL.reveal; renderPlayer(); }
 
+  // ---- by day, from the phone: accuse a player, or use a day ability ----
+  function pickDay(mode, seat) { PL.day = PL.day && PL.day.mode === mode && seat == null ? null : { mode, sel: seat != null ? seat : (PL.day && PL.day.mode === mode ? PL.day.sel : null) }; renderPlayer(); }
+  async function playerNom() {
+    const t = PL.day && PL.day.sel; if (!t) return;
+    try { await C().dayAct(PL.gid, PL.key, "nom", [t]); PL.day = null; if (navigator.vibrate) navigator.vibrate(30); alertPlayer(isHeG() ? "ההאשמה נשלחה" : "Nomination sent", ""); renderPlayer(); } catch (e) { alert(e.message || e); }
+  }
+  async function playerDay() {
+    const t = PL.day && PL.day.sel; if (!t) return;
+    try { await C().dayAct(PL.gid, PL.key, "day", [t]); PL.day = null; PL.usedAt = Date.now(); if (navigator.vibrate) navigator.vibrate(30); renderPlayer(); } catch (e) { alert(e.message || e); }
+  }
+  // private notes next to each player (only on this phone)
+  const noteKey = () => "bk_notes_" + PL.gid + "_" + PL.key;
+  function notes() { try { return JSON.parse(localStorage.getItem(noteKey()) || "{}"); } catch (e) { return {}; } }
+  function setNote(seat, v) { const n = notes(); if (v && v.trim()) n[seat] = v.slice(0, 300); else delete n[seat]; try { localStorage.setItem(noteKey(), JSON.stringify(n)); } catch (e) {} }
+  function dayHTML(d, s, T) {
+    if (!s || !["day", "nominate"].includes(s.phase) && !(s.phase === "dawn")) return "";
+    const seats = s.seats || [], me = seats.find(x => x.seat === d.seat), alive = me && me.alive, today = s.today || { by: {}, on: {} };
+    const pickGrid = (mode, list) => `<div class="bkp-pickgrid">${list.map(x => `<button type="button" class="${PL.day && PL.day.mode === mode && PL.day.sel === x.seat ? "on" : ""}" onclick="window.BKLive.pickDay('${mode}', ${x.seat})"><i>${x.seat}</i>${av(x, "sm")}${esc(String(x.name).split(" / ")[0])}</button>`).join("")}</div>`;
+    let html = "";
+    // accuse
+    if (alive && ["day", "nominate"].includes(s.phase) && !(s.nom && s.nom.open)) {
+      if (today.by[d.seat]) html += `<p class="bkp-hint">⚖️ ${T("כבר האשמת היום.", "You already nominated today.")}</p>`;
+      else { const can = seats.filter(x => x.seat !== d.seat && !today.on[x.seat]), open = PL.day && PL.day.mode === "nom";
+        html += `<section class="bkp-card bkp-daycard"><button type="button" class="bkp-reveal" onclick="window.BKLive.pickDay('nom')">⚖️ ${open ? T("ביטול", "Cancel") : T("האשם שחקן", "Nominate a player")}</button>
+          ${open ? `<small class="bkp-lbl">${T("את מי אתה מאשים? (כולם יקבלו התראה)", "Whom do you nominate? (everyone is alerted)")}</small>${pickGrid("nom", can)}
+            <button type="button" class="bkp-reveal" ${PL.day.sel ? "" : "disabled"} onclick="window.BKLive.playerNom()">${PL.day.sel ? T(`האשם את ${esc(String((seats.find(x => x.seat === PL.day.sel) || {}).name || "").split(" / ")[0])}`, `Nominate ${esc(String((seats.find(x => x.seat === PL.day.sel) || {}).name || "").split(" / ")[0])}`) : T("בחר שחקן", "Choose a player")}</button>` : ""}</section>`; }
+    }
+    // a day ability
+    const cfg = DAY[d.roleId];
+    if (cfg && s.phase !== "dawn") {
+      const usable = cfg.deadOnly ? !alive : alive, spent = cfg.once && d.spent;
+      if (spent) html += `<section class="bkp-card bkp-daycard spent"><div><b>${d.icon || ""} ${esc(isHeG() ? d.name_he : d.name_en)}</b> <span class="bkp-spent">Spent</span></div><p class="bkp-hint">${T("השתמשת ביכולת שלך.", "You used your ability.")}</p></section>`;
+      else if (usable && cfg.n) { const open = PL.day && PL.day.mode === "day", list = seats.filter(x => x.alive && (x.seat !== d.seat));
+        html += `<section class="bkp-card bkp-daycard"><button type="button" class="bkp-reveal" onclick="window.BKLive.pickDay('day')">${d.icon || "✨"} ${open ? T("ביטול", "Cancel") : T("השתמש ביכולת", "Use your ability")}</button>
+          <p class="bkp-hint">${esc(isHeG() ? cfg.he : cfg.en)}${PL.usedAt && Date.now() - PL.usedAt < 60000 ? " · " + T("נשלח ✓", "sent ✓") : ""}</p>
+          ${open ? `${pickGrid("day", list)}<button type="button" class="bkp-reveal" ${PL.day.sel ? "" : "disabled"} onclick="window.BKLive.playerDay()">${T("אישור — בפומבי", "Confirm — in public")}</button>` : ""}</section>`; }
+      else if (usable && !cfg.n) html += `<p class="bkp-hint">${d.icon || ""} ${esc(isHeG() ? cfg.he : cfg.en)}</p>`;
+    }
+    return html;
+  }
+  function townHTML(d, s, T) {
+    if (!s || !s.seats) return "";
+    const n = notes(), row = x => `<div class="bkp-trow${x.alive ? "" : " dead"}${x.seat === d.seat ? " me" : ""}"><i>${x.seat}</i>${av(x, "sm")}<b>${esc(String(x.name).split(" / ")[0])}</b>${x.alive ? "" : `<small>${x.ghost ? T("👻 יש הצבעה", "👻 has a vote") : "✝"}</small>`}
+      ${x.seat === d.seat ? `<small>${T("אתה", "you")}</small>` : `<input type="text" id="bkpNote-${x.seat}" maxlength="300" value="${esc(n[x.seat] || "")}" placeholder="${T("הערה (רק אצלך)…", "Note (only you)…")}" oninput="window.BKLive.setNote(${x.seat}, this.value)">`}</div>`;
+    const al = s.seats.filter(x => x.alive), dd = s.seats.filter(x => !x.alive);
+    return `<section class="bkp-card bkp-townlist"><h3>${T("השחקנים", "The players")}</h3>
+      <small class="bkp-lbl">${T(`חיים · ${al.length}`, `Alive · ${al.length}`)}</small>${al.map(row).join("")}
+      ${dd.length ? `<small class="bkp-lbl">${T(`מתים · ${dd.length}`, `Dead · ${dd.length}`)}</small>${dd.map(row).join("")}` : ""}
+      <p class="bkp-hint">📝 ${T("ההערות נשמרות רק בטלפון שלך — אף אחד אחר לא רואה אותן.", "Notes are kept only on your phone — nobody else sees them.")}</p></section>`;
+  }
+
   function renderPlayer() {
     const root = document.getElementById("bkPlayerApp"); if (!root) return;
+    // keep the cursor where it was (typing a note or a defence while the game updates)
+    const a = document.activeElement, keep = a && root.contains(a) && a.id ? { id: a.id, s: a.selectionStart, e: a.selectionEnd, v: a.value } : null;
+    drawPlayer(root);
+    if (keep) { const el = document.getElementById(keep.id); if (el) { if (el.value !== keep.v) el.value = keep.v; el.focus({ preventScroll: true }); try { el.setSelectionRange(keep.s, keep.e); } catch (e) {} } }
+  }
+  function drawPlayer(root) {
     const d = PL.me, s = PL.game, isHe = d ? d.lang !== "en" : true, T = (h, e) => isHe ? h : e;
     document.documentElement.setAttribute("dir", isHe ? "rtl" : "ltr");
     if (!d) {
@@ -904,12 +1114,13 @@
       </section>` : ""}
 
       ${nightCardsHTML(d, s, T)}
+      ${dayHTML(d, s, T)}
       <section class="bkp-card bkp-role${PL.reveal ? " open" : ""}">
         <button type="button" class="bkp-reveal" onclick="window.BKLive.toggleReveal()">${PL.reveal ? T("הסתר את התפקיד שלי", "Hide my role") : T("הצג את התפקיד שלי", "Show my role")}</button>
         ${PL.reveal ? `<div class="bkp-role-body">
           <div class="bkp-seat">${av(((s && s.seats) || []).find(x => x.seat === d.seat) || d, "sm")} ${T("מושב", "Seat")} ${d.seat} · ${esc(d.name)}${alive ? "" : " · " + T("מת", "dead")}</div>
           <div class="bkp-icon">${d.icon || "🎭"}</div>
-          <h2>${esc(name)}</h2>
+          <h2>${esc(name)}${d.spent ? ` <span class="bkp-spent">Spent</span>` : ""}</h2>
           <div class="bkp-pills"><span class="${esc(d.type)}">${esc(String(d.type || "").toUpperCase())}</span><span class="${esc(d.alignment)}">${d.alignment === "evil" ? T("רעים", "Evil") : T("טובים", "Good")}</span></div>
           <p class="bkp-ability">${esc(ability)}</p>
           ${d.info ? `<div class="bkp-info"><small>${T("המידע האחרון שלך", "Your latest info")}</small><p>${esc(d.info)}</p></div>` : ""}
@@ -917,8 +1128,7 @@
         </div>` : `<p class="bkp-hint">${T("מוסתר — כדי ששכנים לא יראו.", "Hidden — so your neighbours can't see.")}</p>`}
       </section>
 
-      ${s && s.seats ? `<section class="bkp-card"><h3>${T("העיירה", "The town")}</h3>
-        <div class="bkp-town">${s.seats.map(x => `<span class="${x.alive ? "" : "dead"}${x.seat === d.seat ? " me" : ""}"><i>${x.seat}</i>${av(x, "sm")}${esc(x.name)}${x.alive ? "" : (x.ghost ? " 👻" : " ✝")}</span>`).join("")}</div></section>` : ""}
+      ${townHTML(d, s, T)}
 
       <footer class="bkp-foot">⌛ ${T("הדף נמחק ב־", "This page is deleted at ")}${exp}</footer>`;
   }
@@ -1057,5 +1267,5 @@
 
   window.BKLive = { devMode, decide: decideOpt, toggleRcpt, sendCustom, pickRole, endDay, declareWin, dismissWin: () => { ST.win = null; render(); }, runWake, runSend, runGo, pickSeat, sendPick, gotIt, useChip, sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
     groupSend, openLobby, startFlow, toggleDeath, announceDawn, openRoles, closeRoles, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
-    autoNight, autoText, autoToggle: o => { ST.autoOpen = o; }, openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
+    autoNight, autoText, broadcastNight, checkBcast, endNightAuto, announcePreset, playerNom, playerDay, pickDay, setNote, autoToggle: o => { ST.autoOpen = o; }, openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
 })();

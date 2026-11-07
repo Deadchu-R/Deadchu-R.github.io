@@ -581,3 +581,20 @@ html.bk-tv-mode body > *:not(#bkTV) { display: none !important; }
   html:not(.bk-phone) .bk-sp-row .bk-avatar.lg { width: 38px; height: 38px; font-size: 15px; }
 }
 .bootkeh-modal { max-height: calc(var(--bk-vh, 100vh) - 24px); }
+
+/* ---------- players' phones: day actions, Spent, the players list with private notes ---------- */
+.bkp-spent { display: inline-block; vertical-align: middle; margin-inline-start: 6px; padding: 2px 9px; border-radius: 999px; font: 800 11px/1.5 var(--bk-font-sans); letter-spacing: .08em; text-transform: uppercase;
+  color: #fecaca; background: rgba(127, 29, 29, .55); border: 1px solid rgba(248, 113, 113, .6); }
+.bkp-daycard { display: grid; gap: 8px; }
+.bkp-daycard.spent { opacity: .8; }
+.bkp-townlist { display: grid; gap: 6px; }
+.bkp-trow { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; background: rgba(255, 255, 255, .04); }
+.bkp-trow i { font-style: normal; opacity: .6; min-width: 1.4em; text-align: center; }
+.bkp-trow b { white-space: nowrap; }
+.bkp-trow.dead { opacity: .62; } .bkp-trow.dead b { text-decoration: line-through; text-decoration-color: rgba(248, 113, 113, .7); }
+.bkp-trow.me { box-shadow: 0 0 0 1px rgba(212, 175, 55, .55) inset; }
+.bkp-trow small { font-size: 12px; color: var(--bk-text-muted, #b8a98a); }
+.bkp-trow input { flex: 1; min-width: 0; width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(0, 0, 0, .3); color: #f3e7cb; font: 500 14px/1.3 var(--bk-font-sans); }
+.bkp-trow.dead input, .bkp-trow.dead small { grid-column: auto; }
+.bk-presets { margin-bottom: 8px; }
+.bk-bcast .bk-run-steps li.ok { opacity: .95; }
