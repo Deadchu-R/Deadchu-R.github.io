@@ -8,6 +8,11 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **Day → evening, on timers:** the day is talk on a timer (shown on every phone); when it ends the evening starts by itself — nominations and votes. Nominations are only possible in the evening.
+  - **Speeches before the vote:** a nomination opens with the accuser's reason and the accused's defence (written on the phone and shown to everyone, or out loud) on a timer; only then does the vote open (or when the storyteller taps).
+  - **Time to nominate:** after every vote a countdown restarts for the next nomination; when it runs out no more nominations are accepted today. All three lengths are set in "⏱ Timers" (+time buttons on the way).
+  - **Abilities only when the rules allow:** the Psychopath only by day before nominations, the Slayer by day but not during a vote, nobody's day ability at night — on the phone and checked again by the storyteller's page.
+  - **🧪 All players tab shows the storyteller too** (the storyteller's page next to the players).
   - **🧪 All players in one tab (developer mode):** browsers let one click open only one new tab, so "open all players" now opens a single tab with every player's page side by side (3/4/5 columns or auto), and takes every seat so they all count as joined.
   - **🌙 The night for everyone at once:** one button sends every player whose character chooses tonight (Demon, Poisoner, Monk, Devil's Advocate, Fortune Teller…) their choice on the phone — players, characters or skip — all at the same time; when all have chosen, each player's info is written by the rules from those choices and sent automatically. "End the night" now announces the deaths from the choices in one tap (or check first).
   - **Abilities follow the game:** a once-per-game ability is marked **Spent** on the player's page and not offered again; the Devil's Advocate's pick survives execution; day abilities from the phone — Slayer (the Demon dies), Psychopath (the target dies), Klutz (picks evil → evil wins) — update everyone at once.

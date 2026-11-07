@@ -138,7 +138,7 @@
     if (st.phase === "end") return H ? "סוף המשחק" : "Game over";
     if (st.phase === "night") return (H ? "לילה " : "Night ") + st.day;
     if (st.phase === "dawn") return (H ? "בוקר יום " : "Dawn, day ") + st.day;
-    if (st.phase === "nominate") return (H ? "יום " : "Day ") + st.day + (H ? " · האשמות" : " · Accusations");
+    if (st.phase === "nominate") return (H ? "ערב " : "Evening ") + st.day + (H ? " · האשמות והצבעות" : " · Nominations & votes");
     return (H ? "יום " : "Day ") + st.day + (H ? " · דיון" : " · Discussion");
   };
   const needed = st => Math.ceil(((st && st.seats) || []).filter(s => s.alive).length / 2);
@@ -208,18 +208,50 @@
     if (phase === "night" && ["day", "nominate", "dawn"].includes(from)) day += 1;
     const isHe = he(), patch = Object.assign({ phase, day }, extra || {});
     if (phase === "night") { patch.nom = null; ST.draft = {}; ST.poisonExtra = []; }
+    // the day is talk on a timer; then the evening: nominations, each one opens a new window to nominate
+    if (phase === "day") { patch.dayUntil = Date.now() + times().day * 60e3; patch.nomUntil = null; }
+    if (phase === "nominate") { patch.dayUntil = null; patch.nomUntil = Date.now() + times().win * 1e3; }
+    if (phase === "night" || phase === "dawn") { patch.dayUntil = null; patch.nomUntil = null; }
     // a new day: nobody has accused or been accused yet, nobody is on the block (official rules)
     if ((phase === "day" || phase === "dawn") && !["day", "nominate"].includes(from)) patch.today = { by: {}, on: {}, block: null };
     if (!patch.notice) {
       const say = { night: tr(`לילה ${day} — כולם עוצמים עיניים. מי שמתעורר יקבל הודעה.`, `Night ${day} — everyone close your eyes. Whoever wakes gets a message.`),
         day: tr(`יום ${day} — דיון חופשי. אפשר לדבר עם כולם.`, `Day ${day} — talk freely with everyone.`),
-        nominate: tr("ההאשמות פתוחות — מי רוצה להאשים, מצביע עכשיו.", "Accusations are open."),
+        nominate: tr("ערב — ההאשמות פתוחות. מי שרוצה להאשים, מאשים עכשיו (בטלפון או ליד השולחן).", "Evening — nominations are open. Nominate now (on your phone or at the table)."),
         lobby: "" }[phase];
       if (say) patch.notice = notice(say);
     }
     void isHe;
     await C().setState(ST.gid, patch);
   }
+
+  // ---- timers (the storyteller sets the lengths; every phone shows the countdown) ----
+  //  day = minutes of talk, def = seconds for the accusation & defence speeches before the vote, win = seconds to make
+  //  the next nomination (restarts after every vote; when it runs out, no more nominations today)
+  function times() { let t = {}; try { t = JSON.parse(localStorage.getItem("bk_times") || "{}"); } catch (e) {} return { day: +t.day || 5, def: +t.def || 60, win: +t.win || 60 }; }
+  function setTime(k, v) { const t = times(); t[k] = Math.max(k === "day" ? 1 : 10, +v || 0); try { localStorage.setItem("bk_times", JSON.stringify(t)); } catch (e) {} }
+  const mmss = ms => { const x = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(x / 60) + ":" + String(x % 60).padStart(2, "0"); };
+  const timerTag = (until, label) => until ? `<span class="bk-timer${until < Date.now() ? " over" : ""}" data-until="${until}">⏱ ${label ? esc(label) + " " : ""}<b>${mmss(until - Date.now())}</b></span>` : "";
+  // one clock for every countdown on the page
+  setInterval(() => { document.querySelectorAll(".bk-timer[data-until]").forEach(el => { const u = +el.dataset.until, b = el.querySelector("b"); if (b) b.textContent = mmss(u - Date.now()); el.classList.toggle("over", u < Date.now()); }); stTick(); }, 1000);
+  // the storyteller's page moves the game on when a timer ends
+  const fired = {};
+  function stTick() {
+    const st = ST.game; if (!st || !ST.gid || !B() || !B().liveGame || !B().liveGame()) return;
+    const now = Date.now();
+    if (st.phase === "day" && st.dayUntil && now > st.dayUntil && !fired["d" + st.dayUntil]) { fired["d" + st.dayUntil] = 1; setPhase("nominate").catch(() => {}); }
+    if (st.phase === "nominate" && st.nom && st.nom.open && st.nom.stage === "defense" && st.nom.defUntil && now > st.nom.defUntil && !fired["v" + st.nom.id]) { fired["v" + st.nom.id] = 1; startVote().catch(() => {}); }
+  }
+  async function startVote() { const n = ST.game && ST.game.nom; if (!n || !n.open || n.stage === "vote") return; await C().setState(ST.gid, { "nom.stage": "vote", notice: notice(tr(`ההצבעה על ${n.onName} נפתחה — הצביעו עכשיו.`, `The vote on ${n.onName} is open — vote now.`)) }); }
+  async function addTime(k, sec) { const st = ST.game || {}; if (k === "day") await C().setState(ST.gid, { dayUntil: Math.max(Date.now(), st.dayUntil || 0) + sec * 1e3 });
+    if (k === "win") await C().setState(ST.gid, { nomUntil: Math.max(Date.now(), st.nomUntil || 0) + sec * 1e3 });
+    if (k === "def" && st.nom) await C().setState(ST.gid, { "nom.defUntil": Math.max(Date.now(), st.nom.defUntil || 0) + sec * 1e3 }); }
+  const nomWindowOpen = st => st && st.phase === "nominate" && !(st.nom && st.nom.open) && (!st.nomUntil || Date.now() <= st.nomUntil + 3000);
+  function timesHTML() { const t = times();
+    return `<details class="bk-lp-sec bk-ie bk-times"><summary><h4>⏱ ${tr("זמנים", "Timers")}</h4><small>${tr(`דיון ${t.day} דק׳ · הגנה ${t.def} שנ׳ · הצעה ${t.win} שנ׳`, `talk ${t.day} min · defence ${t.def}s · nominate ${t.win}s`)}</small></summary>
+      <div class="bk-row"><label>${tr("דיון ביום (דקות)", "Day talk (minutes)")}<input type="number" min="1" max="60" value="${t.day}" onchange="window.BKLive.setTime('day', this.value)"></label>
+      <label>${tr("נאום האשמה והגנה (שניות)", "Accusation & defence (seconds)")}<input type="number" min="10" max="600" value="${t.def}" onchange="window.BKLive.setTime('def', this.value)"></label>
+      <label>${tr("זמן להצעה הבאה (שניות)", "Time for the next nomination (seconds)")}<input type="number" min="10" max="600" value="${t.win}" onchange="window.BKLive.setTime('win', this.value)"></label></div></details>`; }
 
   // Dawn: the storyteller marks who died in the night, then everyone hears it.
   function toggleDeath(seat) { ST.deaths[seat] = !ST.deaths[seat]; render(); }
@@ -269,7 +301,9 @@
     const byP = { ...today.by, [by]: true }, onP = { ...today.on, [on]: true };
     const virgin = players().find(p => p.seat === on && p.role.id === "virgin");
     if (virgin) ST.msg = tr("👁 הבתולה הואשמה — אם זו הפעם הראשונה והמאשים הוא תושב (לא שיכור/מורעל), המאשים מוצא להורג מיד.", "👁 The Virgin was nominated — if this is the first time and the nominator is a Townsfolk, the nominator is executed immediately.");
-    await C().setState(ST.gid, { phase: "nominate", today: { ...today, by: byP, on: onP }, nom: { id: "m" + Date.now(), by, on, byName: b ? b.name : "", onName: s ? s.name : "", open: true, manual: {}, result: null } });
+    await C().setState(ST.gid, { phase: "nominate", today: { ...today, by: byP, on: onP }, nomUntil: null, nom: { id: "m" + Date.now(), by, on, byName: b ? b.name : "", onName: s ? s.name : "", open: true, manual: {}, result: null,
+      stage: "defense", defUntil: Date.now() + times().def * 1e3, accText: "", defText: "" },
+      notice: notice(tr(`${b ? b.name : ""} מאשים את ${s ? s.name : ""}. קודם נאום ההאשמה וההגנה — ההצבעה תיפתח אחריהם.`, `${b ? b.name : ""} nominates ${s ? s.name : ""}. First the accusation and the defence — then the vote opens.`)) });
   }
 
   // Count of "yes" votes: from players' own pages (only for this accusation) plus hands the storyteller ticked.
@@ -308,7 +342,8 @@
       text = tr(`תיקו (${v} קולות) — אף אחד לא על הגרדום כרגע.`, `A tie (${v} votes) — nobody is on the block now.`); }
     else { result = "short"; text = tr(`${nom.onName}: ${v} קולות — ${v < need ? `צריך לפחות ${need}` : `צריך יותר מ־${top}`}. לא עולה לגרדום.`, `${nom.onName}: ${v} votes — ${v < need ? `needs at least ${need}` : `needs more than ${top}`}. Not on the block.`); }
     mirrorLocal(seats);
-    await C().setState(ST.gid, { seats, today: { ...today, block }, nom: Object.assign({}, nom, { open: false, yes: v, result }), notice: notice(text) });
+    await C().setState(ST.gid, { seats, today: { ...today, block }, nom: Object.assign({}, nom, { open: false, yes: v, result }), nomUntil: Date.now() + times().win * 1e3,
+      notice: notice(text + " " + tr(`יש ${times().win} שניות להאשמה הבאה.`, `${times().win} seconds for the next nomination.`)) });
   }
 
   // End of the day: execute whoever is on the block (at most one execution a day; the storyteller may also skip it),
@@ -614,15 +649,23 @@
 
   // ---- what the players do from their phones by day: accuse someone, use a day ability; and the automatic results ----
   const DAY = {
-    slayer: { once: true, n: 1, he: "פעם במשחק: בחר שחקן בפומבי — אם הוא השד, הוא מת.", en: "Once per game: publicly choose a player — if they are the Demon, they die." },
-    psychopath: { n: 1, he: "כל יום, לפני ההאשמות: בחר שחקן בפומבי — הוא מת.", en: "Each day, before nominations: publicly choose a player — they die." },
-    klutz: { once: true, n: 1, deadOnly: true, he: "מתת: בחר שחקן חי בפומבי — אם הוא רע, הצוות שלך מפסיד.", en: "You died: publicly choose a living player — if they are evil, your team loses." },
-    gossip: { n: 0, he: "כל יום אתה יכול להצהיר הצהרה פומבית — אם היא נכונה, מישהו ימות הלילה. (אמור אותה בקול)", en: "Each day you may make a public statement — if true, someone dies tonight. (Say it out loud)" },
+    slayer: { once: true, n: 1, when: ["day", "nominate"], notDuringVote: true, he: "פעם במשחק: בחר שחקן בפומבי — אם הוא השד, הוא מת.", en: "Once per game: publicly choose a player — if they are the Demon, they die." },
+    psychopath: { n: 1, when: ["day"], daily: true, he: "כל יום, לפני ההאשמות: בחר שחקן בפומבי — הוא מת.", en: "Each day, before nominations: publicly choose a player — they die." },
+    klutz: { once: true, n: 1, deadOnly: true, when: ["dawn", "day", "nominate"], he: "מתת: בחר שחקן חי בפומבי — אם הוא רע, הצוות שלך מפסיד.", en: "You died: publicly choose a living player — if they are evil, your team loses." },
+    gossip: { n: 0, when: ["day"], he: "כל יום אתה יכול להצהיר הצהרה פומבית — אם היא נכונה, מישהו ימות הלילה. (אמור אותה בקול)", en: "Each day you may make a public statement — if true, someone dies tonight. (Say it out loud)" },
   };
+  const dayAbilityOk = (cfg, st) => !!st && (cfg.when || ["day"]).includes(st.phase) && !(cfg.notDuringVote && st.nom && st.nom.open);
   const doneKey = () => "bk_acts_" + ST.gid;
   function doneActs() { try { return JSON.parse(localStorage.getItem(doneKey()) || "{}"); } catch (e) { return {}; } }
   function processActs() {
     const st = ST.game; if (!st || !ST.gid) return;
+    const n = st.nom;
+    if (n && n.open) {
+      const da = ST.players[n.by] && ST.players[n.by].defense, dd = ST.players[n.on] && ST.players[n.on].defense, patch = {};
+      if (da && da.nom === n.id && da.text !== n.accText) patch["nom.accText"] = da.text;
+      if (dd && dd.nom === n.id && dd.text !== n.defText) patch["nom.defText"] = dd.text;
+      if (Object.keys(patch).length) C().setState(ST.gid, patch).catch(() => {});
+    }
     const done = doneActs(); let changed = false;
     for (const [seat, doc] of Object.entries(ST.players)) {
       const a = doc && doc.act; if (!a) continue;
@@ -649,8 +692,9 @@
     const N = q => String(q && q.name || "?").split(" / ")[0];
     if (a.kind === "nom") {
       const today = st.today || { by: {}, on: {} };
-      const why = !["day", "nominate"].includes(st.phase) ? tr("אפשר להאשים רק ביום.", "You can only nominate during the day.")
+      const why = st.phase !== "nominate" ? tr("אפשר להאשים רק בערב, אחרי הדיון.", "You can only nominate in the evening, after the talk.")
         : st.nom && st.nom.open ? tr("יש כבר האשמה פתוחה — חכה שתיסגר.", "An accusation is already open — wait for it to close.")
+        : !nomWindowOpen(st) ? tr("הזמן להאשמות נגמר להיום.", "Time for nominations is over today.")
         : !(me && me.alive) ? tr("רק שחקנים חיים מאשימים.", "Only living players nominate.")
         : today.by[seat] ? tr("כבר האשמת היום.", "You already nominated today.")
         : !ts ? "?" : today.on[t] ? tr(`${N(ts)} כבר הואשם היום.`, `${N(ts)} was already nominated today.`) : "";
@@ -660,6 +704,9 @@
     }
     if (a.kind !== "day") return;
     const id = shownId(p), cfg = DAY[id]; if (!cfg) return;
+    // only when the rules allow it (e.g. the Psychopath: by day, before nominations; nobody during a vote or at night)
+    if (!dayAbilityOk(cfg, st)) { await tell(seat, tr("אי אפשר להשתמש ביכולת עכשיו — רק בזמן שהחוקים מאפשרים.", "You can't use your ability now — only when the rules allow it.")); return; }
+    if (cfg.daily) { const k = "used_" + seat + "_" + (st.day || 1); if (ST[k]) { await tell(seat, tr("כבר השתמשת ביכולת היום.", "You already used your ability today.")); return; } ST[k] = 1; }
     const bad = p.isDrunk || (ST.dayPoison || []).includes(seat) || p.thinks;   // drunk / poisoned (or only thinks they are it): no effect
     if (cfg.once) { if (isSpent(seat)) { await tell(seat, tr("כבר השתמשת ביכולת הזו (Spent).", "You already used this ability (Spent).")); return; } await markSpent(seat); }
     if (id === "slayer" && tp) {
@@ -745,7 +792,7 @@
 
   // The steps bar at the top of the panel.
   function stepsHTML(st) {
-    const steps = [["lobby", tr("הצטרפות", "Join")], ["night", tr("לילה", "Night")], ["dawn", tr("בוקר", "Dawn")], ["day", tr("יום", "Day")], ["nominate", tr("האשמות", "Accuse")]];
+    const steps = [["lobby", tr("הצטרפות", "Join")], ["night", tr("לילה", "Night")], ["dawn", tr("בוקר", "Dawn")], ["day", tr("יום · דיון", "Day · talk")], ["nominate", tr("ערב · הצבעות", "Evening · votes")]];
     const at = steps.findIndex(x => x[0] === st.phase);
     return `<ol class="bk-steps">${steps.map(([k, n], i) => `<li class="${i < at ? "done" : i === at ? "on" : ""}"><button type="button" onclick="window.BKLive.setPhase('${k}')" title="${tr("קפוץ לשלב הזה", "Jump to this step")}">${n}</button></li>`).join("")}</ol>`;
   }
@@ -817,23 +864,30 @@
       </section>`;
 
     if (st.phase === "day") body = `<section class="bk-lp-sec"><h4>${esc(phaseName(st, he()))}</h4>
-        <p class="bk-hint">${tr("הדיון פתוח. כשמוכנים — פותחים האשמות. אפשר גם לדלג ישר ללילה.", "Discussion is open. When ready, open accusations — or skip to the night.")}</p>
-        <button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.setPhase('nominate')">${tr("פתח האשמות", "Open accusations")}</button>
+        <p class="bk-hint">${tr("יום = דיבורים. כשהטיימר נגמר עוברים אוטומטית לערב (האשמות והצבעות).", "Day = talking. When the timer ends the evening starts by itself (nominations & votes).")}</p>
+        <div class="bk-row">${timerTag(st.dayUntil, tr("לסוף הדיון", "talk left"))}<button type="button" class="bk-btn sm" onclick="window.BKLive.addTime('day', 60)">+1 ${tr("דק׳", "min")}</button></div>
+        <button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.setPhase('nominate')">${tr("עבור לערב עכשיו — האשמות", "Go to the evening now — nominations")}</button>
         ${endDayHTML(st)}
       </section>`;
 
     if (st.phase === "nominate") body = `<section class="bk-lp-sec"><h4>${tr("האשמה", "Accusation")}</h4>
         ${nom && nom.open ? `
           <div class="bk-nom"><span>${esc(nom.byName)}</span><i>${tr("מאשים את", "accuses")}</i><b>${esc(nom.onName)}</b></div>
-          ${ST.players[nom.on] && ST.players[nom.on].defense && ST.players[nom.on].defense.nom === nom.id ? `<blockquote>“${esc(ST.players[nom.on].defense.text)}”</blockquote>` : ""}
+          ${nom.accText ? `<blockquote>⚔️ ${esc(nom.byName)}: “${esc(nom.accText)}”</blockquote>` : ""}
+          ${nom.defText ? `<blockquote>🛡️ ${esc(nom.onName)}: “${esc(nom.defText)}”</blockquote>` : ""}
+          ${nom.stage === "defense" ? `<p class="bk-hint">${tr("שלב הנאומים: המאשים מסביר והמואשם מתגונן (בקול או בטלפון). ההצבעה נפתחת בסוף הזמן או כשתלחץ.", "Speeches: the accuser explains, the accused defends (out loud or on the phone). The vote opens when time is up or when you tap.")}</p>
+            <div class="bk-row">${timerTag(nom.defUntil, tr("לנאומים", "speeches"))}<button type="button" class="bk-btn sm" onclick="window.BKLive.addTime('def', 30)">+30 ${tr("שנ׳", "s")}</button></div>
+            <button type="button" class="bk-btn pri bk-big bk-wide" onclick="window.BKLive.startVote()">${tr("פתח את ההצבעה עכשיו", "Open the vote now")}</button>` : `
           <div class="bk-tally"><b>${t.yes.length}</b> ${tr("בעד", "for")} · ${t.no.length} ${tr("נגד", "against")} · ${tr("צריך", "need")} ${needed(st)}</div>
           <p class="bk-hint">${tr("שחקנים מצביעים בדף שלהם. מי שהרים יד ליד השולחן — לחץ עליו (לחיצה: בעד → נגד → כלום).", "Players vote on their page. For hands raised at the table, tap a seat (tap: for → against → clear).")}</p>
           <p class="bk-hint">${tr("סדר ההצבעה: עם כיוון השעון, מתחיל אחרי המואשם — המואשם מצביע אחרון.", "Voting order: clockwise, starting after the accused — the accused votes last.")}</p>
           <div class="bk-votes">${clockwise(seats, nom.on).filter(s => s.alive || s.ghost).map(s => { const y = t.yes.includes(s.seat), n = t.no.includes(s.seat);
             return `<button type="button" class="${y ? "yes" : n ? "no" : ""}${s.alive ? "" : " ghost"}" onclick="window.BKLive.toggleHand(${s.seat})">${s.seat} ${esc(s.name)}${s.alive ? "" : " 👻"}</button>`; }).join("")}</div>
-          <button type="button" class="bk-btn pri bk-big bk-wide" onclick="window.BKLive.closeNom()">${tr("סגור הצבעה וספור", "Close the vote and count")}</button>
+          <button type="button" class="bk-btn pri bk-big bk-wide" onclick="window.BKLive.closeNom()">${tr("סגור הצבעה וספור", "Close the vote and count")}</button>`}
           ${ST.msg ? `<p class="bk-st-note">${esc(ST.msg)}</p>` : ""}`
         : `${blockHTML(st)}
+          <div class="bk-row">${timerTag(st.nomUntil, tr("להאשמה הבאה", "to nominate"))}${st.nomUntil ? `<button type="button" class="bk-btn sm" onclick="window.BKLive.addTime('win', 30)">+30 ${tr("שנ׳", "s")}</button>` : ""}</div>
+          ${st.nomUntil && Date.now() > st.nomUntil ? `<p class="bk-st-note">${tr("הזמן להאשמות נגמר — אפשר לסיים את היום.", "Nomination time is over — you can end the day.")}</p>` : ""}
           ${(() => { const today = st.today || { by: {}, on: {} }, canBy = alive.filter(s => !today.by[s.seat]), canOn = seats.filter(s => !today.on[s.seat]);
             return canBy.length && canOn.length ? `<div class="bk-row"><label>${tr("מאשים (חיים שעוד לא האשימו)", "Accuser (alive, not yet today)")}<select id="bkNomBy">${opt(canBy)}</select></label>
             <label>${tr("מואשם (מי שעוד לא הואשם)", "Accused (not yet today)")}<select id="bkNomOn">${opt(canOn, (canOn.find(x => x.seat !== (canBy[0] || {}).seat) || {}).seat)}</select></label></div>
@@ -848,6 +902,7 @@
       ${winHTML()}
       ${st.phase === "end" ? `<div class="bk-win ${st.winner}"><b>${st.winner === "good" ? tr("🏆 הטובים ניצחו", "🏆 Good won") : tr("😈 הרעים ניצחו", "😈 Evil won")}</b><span>${tr("כל התפקידים נחשפו בטלפונים של השחקנים.", "All roles are now revealed on the players' phones.")}</span></div>` : stepsHTML(st)}
       ${st.phase === "end" ? "" : body}
+      ${timesHTML()}
       ${st.phase !== "night" ? infoEditorHTML(st) : ""}
       <details class="bk-lp-sec bk-ie"><summary><h4>${tr("הודעה לשחקנים נבחרים", "Message chosen players")}</h4><small>${tr("פרטי — רק להם", "private — only them")}</small></summary>
         ${recipientsHTML("any", [])}
@@ -1007,8 +1062,8 @@
     const n = PL.game && PL.game.nom; if (!n || !n.open) return;
     try { await C().vote(PL.gid, PL.key, n.id, v); } catch (e) { alert(e.message || e); }
   }
-  async function playerDefend() {
-    const n = PL.game && PL.game.nom, ta = document.getElementById("bkpDefense"); if (!n || !ta || !ta.value.trim()) return;
+  async function playerDefend(id) {
+    const n = PL.game && PL.game.nom, ta = document.getElementById(id || "bkpDefense"); if (!n || !ta || !ta.value.trim()) return;
     try { await C().defend(PL.gid, PL.key, n.id, ta.value.trim()); ta.value = ""; } catch (e) { alert(e.message || e); }
   }
   function toggleReveal() { PL.reveal = !PL.reveal; renderPlayer(); }
@@ -1033,17 +1088,19 @@
     const pickGrid = (mode, list) => `<div class="bkp-pickgrid">${list.map(x => `<button type="button" class="${PL.day && PL.day.mode === mode && PL.day.sel === x.seat ? "on" : ""}" onclick="window.BKLive.pickDay('${mode}', ${x.seat})"><i>${x.seat}</i>${av(x, "sm")}${esc(String(x.name).split(" / ")[0])}</button>`).join("")}</div>`;
     let html = "";
     // accuse
-    if (alive && ["day", "nominate"].includes(s.phase) && !(s.nom && s.nom.open)) {
+    if (s.phase === "day" && s.dayUntil) html += `<div class="bkp-notice">🗣️ ${T("יום — דיון חופשי. האשמות בערב.", "Day — free talk. Nominations in the evening.")} ${timerTag(s.dayUntil, "")}</div>`;
+    if (alive && s.phase === "nominate" && !(s.nom && s.nom.open) && !nomWindowOpen(s)) html += `<p class="bkp-hint">⚖️ ${T("הזמן להאשמות נגמר להיום.", "Nomination time is over today.")}</p>`;
+    if (alive && nomWindowOpen(s)) {
       if (today.by[d.seat]) html += `<p class="bkp-hint">⚖️ ${T("כבר האשמת היום.", "You already nominated today.")}</p>`;
       else { const can = seats.filter(x => x.seat !== d.seat && !today.on[x.seat]), open = PL.day && PL.day.mode === "nom";
-        html += `<section class="bkp-card bkp-daycard"><button type="button" class="bkp-reveal" onclick="window.BKLive.pickDay('nom')">⚖️ ${open ? T("ביטול", "Cancel") : T("האשם שחקן", "Nominate a player")}</button>
+        html += `<section class="bkp-card bkp-daycard">${timerTag(s.nomUntil, T("להאשמה", "to nominate"))}<button type="button" class="bkp-reveal" onclick="window.BKLive.pickDay('nom')">⚖️ ${open ? T("ביטול", "Cancel") : T("האשם שחקן", "Nominate a player")}</button>
           ${open ? `<small class="bkp-lbl">${T("את מי אתה מאשים? (כולם יקבלו התראה)", "Whom do you nominate? (everyone is alerted)")}</small>${pickGrid("nom", can)}
             <button type="button" class="bkp-reveal" ${PL.day.sel ? "" : "disabled"} onclick="window.BKLive.playerNom()">${PL.day.sel ? T(`האשם את ${esc(String((seats.find(x => x.seat === PL.day.sel) || {}).name || "").split(" / ")[0])}`, `Nominate ${esc(String((seats.find(x => x.seat === PL.day.sel) || {}).name || "").split(" / ")[0])}`) : T("בחר שחקן", "Choose a player")}</button>` : ""}</section>`; }
     }
     // a day ability
     const cfg = DAY[d.roleId];
     if (cfg && s.phase !== "dawn") {
-      const usable = cfg.deadOnly ? !alive : alive, spent = cfg.once && d.spent;
+      const usable = (cfg.deadOnly ? !alive : alive) && dayAbilityOk(cfg, s), spent = cfg.once && d.spent;
       if (spent) html += `<section class="bkp-card bkp-daycard spent"><div><b>${d.icon || ""} ${esc(isHeG() ? d.name_he : d.name_en)}</b> <span class="bkp-spent">Spent</span></div><p class="bkp-hint">${T("השתמשת ביכולת שלך.", "You used your ability.")}</p></section>`;
       else if (usable && cfg.n) { const open = PL.day && PL.day.mode === "day", list = seats.filter(x => x.alive && (x.seat !== d.seat));
         html += `<section class="bkp-card bkp-daycard"><button type="button" class="bkp-reveal" onclick="window.BKLive.pickDay('day')">${d.icon || "✨"} ${open ? T("ביטול", "Cancel") : T("השתמש ביכולת", "Use your ability")}</button>
@@ -1103,9 +1160,14 @@
       ${nom && (nom.open || nom.result) ? `<section class="bkp-card bkp-nom${nom.open ? " open" : ""}">
         <div class="bkp-nom-who"><span>${esc(nom.byName)}</span><i>${T("מאשים את", "accuses")}</i><b>${esc(nom.onName)}</b></div>
         ${nom.open ? `
+          ${nom.accText ? `<blockquote class="bkp-speech">⚔️ ${esc(nom.byName)}: “${esc(nom.accText)}”</blockquote>` : ""}
+          ${nom.defText ? `<blockquote class="bkp-speech">🛡️ ${esc(nom.onName)}: “${esc(nom.defText)}”</blockquote>` : ""}
+          ${nom.stage === "defense" && nom.by === d.seat ? `<label class="bkp-lbl">${T("למה אתה מאשים? — כולם יראו", "Why do you nominate? — everyone sees it")}</label>
+            <div class="bkp-row"><input id="bkpAccuse" type="text" maxlength="600" placeholder="${T("כי…", "Because…")}"><button type="button" class="bkp-btn" onclick="window.BKLive.playerDefend('bkpAccuse')">${T("שלח", "Send")}</button></div>` : ""}
+          ${nom.stage === "defense" ? `<div class="bkp-notice">🗣️ ${T("נאום ההאשמה וההגנה — ההצבעה תיפתח אחריהם.", "The accusation and the defence — the vote opens after them.")} ${timerTag(nom.defUntil, "")}</div>` : ""}
           ${amAccused ? `<label class="bkp-lbl">${T("ההגנה שלך — כולם יראו אותה", "Your defence — everyone sees it")}</label>
             <div class="bkp-row"><input id="bkpDefense" type="text" maxlength="600" placeholder="${T("למה זה לא אני…", "Why it isn't me…")}"><button type="button" class="bkp-btn" onclick="window.BKLive.playerDefend()">${T("שלח", "Send")}</button></div>` : ""}
-          ${canVote ? `<div class="bkp-vote">
+          ${nom.stage === "defense" ? "" : canVote ? `<div class="bkp-vote">
               <button type="button" class="yes${myVote === "yes" ? " on" : ""}" onclick="window.BKLive.playerVote('yes')">✋ ${T("בעד הוצאה להורג", "Execute")}</button>
               <button type="button" class="no${myVote === "no" ? " on" : ""}" onclick="window.BKLive.playerVote('no')">${T("נגד", "Against")}</button></div>
             ${!alive ? `<p class="bkp-hint">${T("אתה מת — נשארה לך הצבעה אחת. הצבעה \"בעד\" משתמשת בה.", "You are dead — you have one vote left. Voting \"for\" uses it.")}</p>` : ""}`
@@ -1223,8 +1285,10 @@
     const draw = () => {
       root.innerHTML = `<div class="bk-devall-top"><b>🧪 ${T("כל השחקנים", "All players")} · ${esc(g.title || "")}</b><span id="bkDevAllMsg">${T("מחבר את כולם…", "Connecting everyone…")}</span>
         <span class="bk-seg">${[0, 3, 4, 5].map(c => `<button type="button" data-cols="${c}" class="${cols === c ? "on" : ""}">${c || T("אוטו", "auto")}</button>`).join("")}</span></div>
-        <div class="bk-devall-grid" style="${cols ? `grid-template-columns:repeat(${cols},minmax(0,1fr))` : ""}">${ps.map(p => `<figure><figcaption>${p.seat} · ${esc(String(p.name).split(" / ")[0])}${p.role ? ` <small>${p.role.icon || ""} ${esc(isHe ? p.role.name_he : p.role.name_en)}</small>` : ""}</figcaption>
+        <div class="bk-devall-grid" style="${cols ? `grid-template-columns:repeat(${cols},minmax(0,1fr))` : ""}"><figure class="bk-devall-st"><figcaption>👑 ${T("מספר הסיפורים", "Storyteller")}${g.st && g.st.name ? " · " + esc(g.st.name) : ""}</figcaption>
+          <iframe id="bkDevAllSt" src="${esc(devAllUrl().replace(/\?devall=1$/, ""))}" title="Storyteller" loading="eager"></iframe></figure>${ps.map(p => `<figure><figcaption>${p.seat} · ${esc(String(p.name).split(" / ")[0])}${p.role ? ` <small>${p.role.icon || ""} ${esc(isHe ? p.role.name_he : p.role.name_en)}</small>` : ""}</figcaption>
           <iframe src="${esc(g.links[p.seat])}" title="${esc(p.name)}" loading="eager"></iframe></figure>`).join("")}</div>`;
+      const stf = root.querySelector("#bkDevAllSt"); if (stf) stf.onload = () => { try { const w = stf.contentWindow; w.Bootkeh.setTab("board"); w.BKLive.attach(); } catch (e) {} };
       root.querySelectorAll("[data-cols]").forEach(b => b.onclick = () => { cols = +b.dataset.cols; try { localStorage.setItem("bk_devall_cols", cols); } catch (e) {} draw(); claimAll(); });
     };
     const claimAll = async () => {
@@ -1294,5 +1358,5 @@
 
   window.BKLive = { devMode, decide: decideOpt, toggleRcpt, sendCustom, pickRole, endDay, declareWin, dismissWin: () => { ST.win = null; render(); }, runWake, runSend, runGo, pickSeat, sendPick, gotIt, useChip, sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
     groupSend, openLobby, startFlow, toggleDeath, announceDawn, openRoles, closeRoles, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
-    openDevAll, devAllUrl, autoNight, autoText, broadcastNight, checkBcast, endNightAuto, announcePreset, playerNom, playerDay, pickDay, setNote, autoToggle: o => { ST.autoOpen = o; }, openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
+    openDevAll, devAllUrl, startVote, addTime, setTime, autoNight, autoText, broadcastNight, checkBcast, endNightAuto, announcePreset, playerNom, playerDay, pickDay, setNote, autoToggle: o => { ST.autoOpen = o; }, openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
 })();
