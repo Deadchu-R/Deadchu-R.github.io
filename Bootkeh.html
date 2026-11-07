@@ -30,7 +30,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="assets/bootkeh.css?v=9c3fa812">
   <link rel="stylesheet" href="assets/bootkeh-medieval.css?v=23c27a0d">
-  <link rel="stylesheet" href="assets/bootkeh-live.css?v=2a73823a">
+  <link rel="stylesheet" href="assets/bootkeh-live.css?v=5a84cd8b">
 </head>
 <body class="bootkeh-body">
 
@@ -44,13 +44,16 @@
       <div class="bootkeh-logo-wrap">
         <span class="bootkeh-logo-icon">🕰️</span>
         <span class="bootkeh-title">Bootkeh</span>
-        <span class="bk-ver" id="bkVersion" data-v="3c0e5a"></span>
+        <span class="bk-ver" id="bkVersion" data-v="aab369"></span>
       </div>
     </div>
 
     <div class="bootkeh-topbar-actions">
       <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSavedPlayersModal()">
         <span>שחקנים שמורים</span>
+      </button>
+      <button type="button" class="bk-btn sm" onclick="window.Bootkeh.openSettings()" aria-label="הגדרות" title="הגדרות">
+        <span>⚙ הגדרות</span>
       </button>
       <button type="button" class="bk-btn sm" onclick="window.Bootkeh.toggleLanguage()" id="langToggleBtn">
         <span>English</span>
@@ -88,6 +91,8 @@
             <span>חלק תפקידים</span>
           </button>
         </div>
+        <!-- quick setup: a picture of the roles sheet + the players' names (quickSetup in bootkeh.js) -->
+        <div id="bkQuick" class="bk-quick"></div>
 
         <div class="bk-grid-2">
           <div>
@@ -103,7 +108,8 @@
           <div>
             <div class="bk-form-group">
               <label class="bk-label">מספר הסיפורים</label>
-              <input type="text" id="storytellerInput" class="bk-input" value="רועי / Sit" placeholder="שם מספר הסיפורים">
+              <div id="bkStoryteller"></div>
+              <input type="text" id="storytellerInput" class="bk-input" value="רועי / Sit" placeholder="שם מספר הסיפורים" oninput="window.Bootkeh.typeStoryteller(this.value)">
             </div>
             <!-- saved custom games (renderPresets in bootkeh.js) -->
             <div id="bkPresets" class="bk-form-group"></div>
@@ -262,7 +268,9 @@
       <div class="bk-seg bk-sheet-mode bootkeh-print-hide" role="group" aria-label="תצוגה">
         <button type="button" data-mode="list" onclick="window.BKSheet.setMode('list')">רשימה נגללת</button>
         <button type="button" data-mode="page" onclick="window.BKSheet.setMode('page')">דף מלא</button>
+        <button type="button" data-mode="tv" onclick="window.BKSheet.setMode('tv')">16:9</button>
       </div>
+      <div class="bk-row bk-tv-row bootkeh-print-hide"><button type="button" class="bk-btn" onclick="window.BKSheet.tvDialog()">📺 קישור לטלוויזיה</button></div>
       <div id="characterSheetWrap"></div>
     </section>
 
@@ -369,12 +377,12 @@
   <!-- Scripts -->
   <script src="assets/bootkeh-data.js?v=3f4114aa"></script>
   <script src="assets/bootkeh-roles-extra.js?v=471f8fef"></script>
-  <script src="assets/bootkeh-themes.js?v=8c51438b"></script>
-  <script src="assets/bootkeh-cloud.js?v=9fe320bd"></script>
-  <script src="assets/bootkeh-i18n.js?v=a458e157"></script>
+  <script src="assets/bootkeh-themes.js?v=5f42b766"></script>
+  <script src="assets/bootkeh-cloud.js?v=1176f3cf"></script>
+  <script src="assets/bootkeh-i18n.js?v=cb3e046f"></script>
   <script src="assets/bootkeh-sets.js?v=e3da8048"></script>
   <script src="assets/bootkeh-rules.js?v=a69fba06"></script>
-  <script src="assets/bootkeh-live.js?v=33c00a74"></script>
-  <script src="assets/bootkeh.js?v=544b6596"></script>
+  <script src="assets/bootkeh-live.js?v=45bc2810"></script>
+  <script src="assets/bootkeh.js?v=ac5309d4"></script>
 </body>
 </html>

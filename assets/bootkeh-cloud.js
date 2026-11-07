@@ -45,7 +45,7 @@
   }
 
   // Publish a game: one private page per player. players: [{seat,name,phone?,role:{…},alignment,info}]. Returns {gameId, links:{seat: url}, expiresAt}.
-  C.createGame = async (title, players, hours, lang, script) => {
+  C.createGame = async (title, players, hours, lang, script, st) => {
     const uid = await storyteller();
     hours = Math.min(12, Math.max(1, +hours || 6));
     const exp = FV.Timestamp.fromMillis(Date.now() + hours * 3600e3);
@@ -55,9 +55,12 @@
     // links always point at the Bootkeh page (…/Bootkeh/), whether it was opened as /Bootkeh, /Bootkeh/ or /Bootkeh.html
     const base = location.origin + location.pathname.replace(/\/Bootkeh(\.html|\/index\.html|\/)?$/i, "/").replace(/[^/]*$/, "") + "Bootkeh/";
     // the shared, public part of the game (phase, who is alive, the current accusation, announcements)
-    const seats = players.map(p => ({ seat: p.seat, name: String(p.name || "").slice(0, 60), alive: p.alive !== false, ghost: true }));
+    // a small photo (≤ ~12KB data URL from the saved players) so everyone sees who is who
+    const pic = u => (typeof u === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(u) && u.length < 16000) ? u : "";
+    const seats = players.map(p => ({ seat: p.seat, name: String(p.name || "").slice(0, 60), alive: p.alive !== false, ghost: true, photo: pic(p.photo) }));
     b.set(db.collection("bk_games").doc(gameId), { owner: uid, title: String(title || "").slice(0, 120), createdAt: FV.FieldValue.serverTimestamp(), expiresAt: exp,
       lang: lang || "he", state: { phase: "lobby", day: 1, seats, nom: null, notice: null, rev: 1 },
+      st: { name: String((st && st.name) || "").slice(0, 60), photo: pic(st && st.photo) },
       // the roles that can be in this game (public in Blood on the Clocktower) — shown to players in a pull-out list
       scriptName: String(sc.name || "").slice(0, 80), scriptAuthor: String(sc.author || "").slice(0, 60),
       script: (sc.roles || []).slice(0, 40).map(r => ({ id: r.id, icon: r.icon || "", type: r.type || "", name_he: r.name_he || "", name_en: r.name_en || "",
@@ -121,7 +124,7 @@
   // Anyone with the link (storyteller or player): watch the shared game state. cb(state|null)
   C.watchGame = async (gameId, cb) => {
     await C.ready; if (!C.ok) { cb(null); return () => {}; }
-    return db.collection("bk_games").doc(gameId).onSnapshot(d => cb(d.exists ? Object.assign({ title: d.data().title, lang: d.data().lang, script: d.data().script || [], scriptName: d.data().scriptName || "", scriptAuthor: d.data().scriptAuthor || "" }, d.data().state || {}) : null), () => cb(null));
+    return db.collection("bk_games").doc(gameId).onSnapshot(d => cb(d.exists ? Object.assign({ title: d.data().title, lang: d.data().lang, script: d.data().script || [], scriptName: d.data().scriptName || "", scriptAuthor: d.data().scriptAuthor || "", st: d.data().st || null }, d.data().state || {}) : null), () => cb(null));
   };
 
   // Player: vote on the open accusation ("yes" / "no"), from their own private page.

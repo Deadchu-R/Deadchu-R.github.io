@@ -293,6 +293,54 @@
 
 
   // --- Initialization ---
+  // Settings (⚙ in the top bar). Developer mode: run a game without everyone and open several players in separate
+  // tabs on one computer (the seat isn't remembered per device, each tab can be a different player) — for testing.
+  const devOn = () => { try { return localStorage.getItem("bk_dev") === "1"; } catch (e) { return false; } };
+  function openSettings() {
+    const he = state.lang === "he";
+    let ov = document.getElementById("bkSettings");
+    if (!ov) { ov = document.createElement("div"); ov.id = "bkSettings"; ov.className = "bk-sendall"; document.body.appendChild(ov); }
+    const draw = () => {
+      ov.innerHTML = `<div class="bk-sendall-card bk-group" role="dialog" aria-label="${he ? "הגדרות" : "Settings"}">
+        <div class="bk-sendall-top"><b>⚙ ${he ? "הגדרות" : "Settings"}</b><button type="button" class="bk-sendall-x" aria-label="${he ? "סגור" : "Close"}">×</button></div>
+        <label class="bk-switch"><input type="checkbox" id="bkDevToggle" ${devOn() ? "checked" : ""}><span class="bk-switch-ui" aria-hidden="true"></span>
+          <span><b>${he ? "מצב מפתח" : "Developer mode"}</b><small>${he ? "להפעיל משחק בלי שכל השחקנים הצטרפו, ולהתחבר מאותו מחשב כמה שחקנים בטאבים נפרדים (🧪 בחלון השליחה) — לבדיקת הפלואו." : "Run a game without everyone joining, and connect as several players in separate tabs on this computer (🧪 in the send panel) — to test the flow."}</small></span></label>
+        <p class="bk-hint">${he ? "התראות לשחקנים הן רטט בלבד (בלי צליל), כדי שליד השולחן אף אחד לא ידע למי נשלח." : "Player alerts vibrate only (no sound), so nobody at the table knows whose phone it was."}</p>
+      </div>`;
+      ov.querySelector(".bk-sendall-x").onclick = () => ov.remove();
+      ov.querySelector("#bkDevToggle").onchange = e => { try { localStorage.setItem("bk_dev", e.target.checked ? "1" : "0"); } catch (er) {} document.documentElement.classList.toggle("bk-dev", e.target.checked); if (window.BKLive) window.BKLive.render(); };
+    };
+    draw();
+  }
+
+  // Desktop: ‹ › arrows on the sides (and the keyboard arrows) move between the main screens.
+  function attachArrows() {
+    const order = ["setup", "board", "sheet", "cards"];
+    const go = dir => { const i = order.indexOf(state.activeTab || "setup"), n = order[i + dir]; if (n) { setTab(n); window.scrollTo({ top: 0, behavior: "smooth" }); } };
+    // in Hebrew the screens run right → left, so the right arrow goes back and the left arrow goes forward
+    const rtl = () => state.lang === "he";
+    for (const side of ["left", "right"]) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "bk-side-arrow " + side; b.setAttribute("aria-label", side);
+      b.innerHTML = `<span aria-hidden="true">${side === "left" ? "‹" : "›"}</span><small></small>`;
+      b.onclick = () => go((side === "left") === rtl() ? 1 : -1);
+      document.body.appendChild(b);
+    }
+    window.__bkArrows = () => {
+      const i = order.indexOf(state.activeTab || "setup"), he = state.lang === "he";
+      document.querySelectorAll(".bk-side-arrow").forEach(b => {
+        const dir = b.classList.contains("left") === rtl() ? 1 : -1, n = order[i + dir];
+        b.hidden = !n || document.body.classList.contains("bkp-mode");
+        if (n) { b.querySelector("small").textContent = TAB_NAMES[n][he ? 0 : 1]; b.setAttribute("aria-label", TAB_NAMES[n][he ? 0 : 1]); }
+      });
+    };
+    document.addEventListener("keydown", e => {
+      if (e.altKey || e.ctrlKey || e.metaKey || /input|textarea|select/i.test((e.target || {}).tagName || "") || e.target.isContentEditable) return;
+      if (document.querySelector(".bk-sendall, .bootkeh-modal-backdrop.open")) return;
+      if (e.key === "ArrowLeft") go(rtl() ? 1 : -1); else if (e.key === "ArrowRight") go(rtl() ? -1 : 1);
+    });
+    window.__bkArrows();
+  }
+
   // Bottom bar like Apple's: a floating glass bar with a bubble behind the current tab. Press and hold (or just slide)
   // on the bar: the bubble follows the finger and grows like a lens, the tab under it lights up with a tiny tap of
   // vibration, and letting go selects that tab. A plain tap still selects as before. Same idea as the main site's
@@ -445,6 +493,8 @@
 
   function init() {
     loadSavedPlayers();
+    try { const id = localStorage.getItem("bk_storyteller") || ""; const sp = state.savedPlayers.find(x => x.id === id); if (sp) { state.storytellerId = id; state.storytellerName = sp.name; } else { const n = localStorage.getItem("bk_storyteller_name"); if (n) state.storytellerName = n; } } catch (e) {}
+    setTimeout(() => { const i = document.getElementById("storytellerInput"); if (i) i.value = state.storytellerName || ""; renderStoryteller(); renderQuick(); }, 0);
     const slider = $("#playerCountSlider");
     if (slider) state.playerCount = parseInt(slider.value, 10) || state.playerCount;
     initThemeSelection();
@@ -457,6 +507,8 @@
     attachEventListeners();
     attachSwipe();
     attachTabBar();
+    attachArrows();
+    document.documentElement.classList.toggle("bk-dev", devOn());
     if (window.BKSets) window.BKSets.renderSelect();
     initPanels();
     generateGame(false); // prepare initial game data silently
@@ -472,7 +524,9 @@
     const urlParams = new URLSearchParams(window.location.search);
     const playerParam = urlParams.get("player") || urlParams.get("p");
     showVersion();
-    if (urlParams.get("g") && urlParams.get("join") && window.BKLive) {
+    if (urlParams.has("tv") && window.BKSheet) {
+      window.BKSheet.openTV();   // the roles sheet on a TV (a link that stops working after a few hours)
+    } else if (urlParams.get("g") && urlParams.get("join") && window.BKLive) {
       window.BKLive.openLobby(urlParams.get("g"));   // the one link for the whole group
     } else if (urlParams.get("g") && urlParams.get("k")) {
       openLivePortal(urlParams.get("g"), urlParams.get("k"));
@@ -530,7 +584,7 @@
     renderCardsView();
     renderThemeGen();
     // everything else follows too: roster, presets, picked roles, role sets, shutters, back bar, the live game panel
-    try { renderRosterInputs(); renderPresets(); initCustomRolesMatrix(); updatePanels(); renderBackBar(state.activeTab || "setup"); showVersion(); } catch (e) { console.warn(e); }
+    try { renderRosterInputs(); renderPresets(); initCustomRolesMatrix(); updatePanels(); renderBackBar(state.activeTab || "setup"); showVersion(); renderQuick(); renderStoryteller(); renderSavedPlayersList(); } catch (e) { console.warn(e); }
     if (window.BKSets) window.BKSets.renderSelect();
     if (window.BKLive && document.getElementById("bkLivePanel")) window.BKLive.render();
     if (window.BKI18n) window.BKI18n.apply(state.lang);   // the fixed texts of the page
@@ -550,7 +604,7 @@
     }
     state.activeTab = tab;
     renderBackBar(tab);
-    requestAnimationFrame(() => window.__bkPlacePill && window.__bkPlacePill());
+    requestAnimationFrame(() => { window.__bkPlacePill && window.__bkPlacePill(); window.__bkArrows && window.__bkArrows(); });
     $$(".bootkeh-tab-btn").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
     });
@@ -625,7 +679,7 @@
       const item = state.roster[i] || { name: "", phone: "" };
       const placeholderName = state.lang === "he" ? `שחקן ${i + 1}` : `Player ${i + 1}`;
 
-      const savedOptions = state.savedPlayers.map(sp => 
+      const savedOptions = state.savedPlayers.filter(sp => sp.id !== state.storytellerId).map(sp => 
         `<option value="${sp.id}">${esc(sp.name)}</option>`
       ).join("");
 
@@ -664,13 +718,9 @@
 
   function autoFillRosterFromSaved() {
     const count = parseInt(state.playerCount, 10) || 8;
+    const people = state.savedPlayers.filter(sp => sp.id !== state.storytellerId);   // the storyteller doesn't get a seat
     for (let i = 0; i < count; i++) {
-      if (state.savedPlayers[i]) {
-        state.roster[i] = {
-          name: state.savedPlayers[i].name,
-          phone: state.savedPlayers[i].phone || ""
-        };
-      }
+      if (people[i]) state.roster[i] = { name: people[i].name, phone: "" };
     }
     renderRosterInputs();
   }
@@ -956,7 +1006,7 @@
           <button type="button" class="bk-btn sm pri" onclick="window.Bootkeh.useGenTheme()">${he ? "השתמש בעולם הזה" : "Use this world"}</button>
           <button type="button" class="bk-btn sm" onclick="window.Bootkeh.genTheme()">${he ? "אחר" : "Another"}</button>
           ${"speechSynthesis" in window ? `<button type="button" class="bk-btn sm" onclick="window.Bootkeh.readOpening()">${he ? "הקרא פתיחה" : "Read aloud"}</button>` : ""}
-        </div></div>` : `<div style="font-size:12.5px;color:var(--bk-text-muted);">${he ? `${window.BKThemes.count} עולמות: אירועים היסטוריים, ז'אנרים של סרטים ומשחקי תפקידים — עם פתיחה להקראה.` : `${window.BKThemes.count} worlds from history, film genres and RPGs — with an opening to read aloud.`}</div>`}`;
+        </div></div>` : `<div style="font-size:12.5px;color:var(--bk-text-muted);">${he ? `${window.BKThemes.count} עולמות ויותר מ־${Math.floor((window.BKThemes.combos || 0) / 1000)} אלף צירופים של שד, משרתים, פתיחה ותפנית: אירועים היסטוריים, ז'אנרים של סרטים ומשחקי תפקידים — בלי לחזור על מה שכבר ראית.` : `${window.BKThemes.count} worlds and over ${Math.floor((window.BKThemes.combos || 0) / 1000)}k combinations of Demon, Minions, opening and twist — from history, film genres and RPGs — with an opening to read aloud.`}</div>`}`;
   }
   function setThemeFam(f) { state.themeFam = f; renderThemeGen(); }
   function genTheme() { state.genTheme = window.BKThemes.generate(state.themeFam || "any", state.genTheme && state.genTheme.en.title); renderThemeGen(); }
@@ -1053,6 +1103,7 @@
         seat: i + 1,
         name,
         phone,
+        photo: photoFor(name),
         roleId: role.id,
         role,
         alignment,
@@ -1236,7 +1287,7 @@
              title="${esc(p.name)} (${esc(roleName)})">
           ${THRONE_SVG}
           <span class="bootkeh-seat-num">#${p.seat}</span>
-          <span class="bootkeh-seat-icon">${icon}</span>
+          <span class="bootkeh-seat-icon">${!isRevealed && (p.photo || photoFor(p.name)) ? `<img class="bk-seat-photo" src="${p.photo || photoFor(p.name)}" alt="">` : icon}</span>
           <span class="bootkeh-seat-name">${esc(String(p.name).split(" / ")[0])}</span>
           <span class="bootkeh-seat-role-title">${esc(roleName)}</span>
         </div>
@@ -1251,7 +1302,7 @@
     if (!list) { list = document.createElement("div"); list.id = "bkSeatList"; list.className = "bk-seat-list"; container.insertAdjacentElement("afterend", list); }
     list.innerHTML = state.players.map(p => { const r = p.role || {}, show = state.isStorytellerView;
       return `<button type="button" class="${show ? p.alignment : ""}${p.isAlive ? "" : " dead"}" onclick="window.Bootkeh.openPlayerDetailsModal('${p.id}')">
-        <i>${p.seat}</i><span class="ic">${show ? r.icon : "👤"}</span><b>${esc(p.name)}</b><small>${show ? esc(state.lang === "he" ? r.name_he : r.name_en) + (p.thinks && getRole(p.thinks) ? " → " + esc(state.lang === "he" ? getRole(p.thinks).name_he : getRole(p.thinks).name_en) : "") + (state.rules && state.rules.redHerring === p.seat ? (state.lang === "he" ? " · פתיון" : " · red herring") : "") : ""}${p.isAlive ? "" : (state.lang === "he" ? " · מת" : " · dead")}</small></button>`; }).join("");
+        <i>${p.seat}</i>${(p.photo || photoFor(p.name)) ? `<span class="bk-avatar sm"><img src="${p.photo || photoFor(p.name)}" alt=""></span>` : ""}<span class="ic">${show ? r.icon : "👤"}</span><b>${esc(p.name)}</b><small>${show ? esc(state.lang === "he" ? r.name_he : r.name_en) + (p.thinks && getRole(p.thinks) ? " → " + esc(state.lang === "he" ? getRole(p.thinks).name_he : getRole(p.thinks).name_en) : "") + (state.rules && state.rules.redHerring === p.seat ? (state.lang === "he" ? " · פתיון" : " · red herring") : "") : ""}${p.isAlive ? "" : (state.lang === "he" ? " · מת" : " · dead")}</small></button>`; }).join("");
 
     // Update Storyteller Toggle Button label
     const toggleBtn = $("#toggleViewBtn");
@@ -1318,6 +1369,7 @@
       `;
     }
 
+    state.sheetData = { title: sheetTitle, author: author || "", ids: [...townsfolk, ...outsiders, ...minions, ...demons].map(r => r.id) };   // for the TV link
     if (window.BKSheet) {   // same layout as the official script sheet (and as the players' 📜 list)
       wrap.innerHTML = window.BKSheet.html({ title: sheetTitle, author, roles: [...townsfolk, ...outsiders, ...minions, ...demons], lang: state.lang });
       window.BKSheet.fit();
@@ -1681,8 +1733,8 @@
     const st = document.getElementById("bkLiveStatus"); if (st) st.textContent = he ? "יוצר דפים פרטיים…" : "Creating private pages…";
     try {
       const old = liveGame(); if (old) await window.BKCloud.endGame(old.gameId).catch(() => {});
-      const g = await window.BKCloud.createGame(getThemeTitle(), state.players.map(p => ({ seat: p.seat, name: p.name, role: shownRole(p), alignment: shownAlign(p), info: p.firstNightInfo })), hours, state.lang,
-        { name: getScriptTitle(), author: (getScript(state.scriptId) || {}).author || "", roles: (state.poolIds || []).map(getRole).filter(Boolean) });
+      const g = await window.BKCloud.createGame(getThemeTitle(), state.players.map(p => ({ seat: p.seat, name: p.name, photo: p.photo || photoFor(p.name), role: shownRole(p), alignment: shownAlign(p), info: p.firstNightInfo })), hours, state.lang,
+        { name: getScriptTitle(), author: (getScript(state.scriptId) || {}).author || "", roles: (state.poolIds || []).map(getRole).filter(Boolean) }, storyteller());
       saveLive(g);
       renderCardsView();
     } catch (e) { if (st) st.textContent = (he ? "לא הצלחתי ליצור דפים: " : "Couldn't create pages: ") + (e.message || e); }
@@ -1925,18 +1977,199 @@
     const list = $("#savedPlayersList");
     if (!list) return;
 
-    list.innerHTML = state.savedPlayers.map(p => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bk-surface-card);border:1px solid var(--bk-border);border-radius:8px;margin-bottom:8px;">
-        <div>
-          <div style="font-weight:700;font-size:13.5px;color:#fff;">${esc(p.name)}</div>
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button type="button" class="bk-btn sm" onclick="window.Bootkeh.quickSeatSavedPlayer('${p.id}')">🪑 ${state.lang === "he" ? "הושב" : "Seat"}</button>
-          <button type="button" class="bk-btn sm" style="color:#ef4444;" onclick="window.Bootkeh.deleteSavedPlayer('${p.id}')">✕</button>
+    const he = state.lang === "he";
+    list.innerHTML = `<p class="bk-hint">${he ? `${state.savedPlayers.length} / 16 · עד 16 אנשים, כולל מספר הסיפורים (👑). לחץ על העיגול כדי להוסיף תמונה.` : `${state.savedPlayers.length} / 16 · up to 16 people including the storyteller (👑). Tap the circle to add a photo.`}</p>`
+      + state.savedPlayers.map(p => { const st = p.id === state.storytellerId;
+      return `<div class="bk-sp-row${st ? " st" : ""}">
+        <button type="button" class="bk-avatar lg" onclick="window.Bootkeh.pickPhoto('${p.id}')" title="${he ? "הוסף / החלף תמונה" : "Add / change photo"}">${avatarInner(p)}</button>
+        <div class="bk-sp-name"><b>${esc(p.name)}</b>${st ? `<small>👑 ${he ? "מספר הסיפורים" : "Storyteller"}</small>` : ""}</div>
+        <div class="bk-sp-btns">
+          <button type="button" class="bk-btn sm${st ? " pri" : ""}" onclick="window.Bootkeh.setStoryteller('${p.id}')" title="${he ? "הוא מריץ את המשחק" : "They run the game"}">👑</button>
+          ${st ? "" : `<button type="button" class="bk-btn sm" onclick="window.Bootkeh.quickSeatSavedPlayer('${p.id}')">🪑 ${he ? "הושב" : "Seat"}</button>`}
+          <button type="button" class="bk-btn sm" style="color:#ef4444;" onclick="window.Bootkeh.deleteSavedPlayer('${p.id}')" aria-label="${he ? "מחק" : "Delete"}">✕</button>
+        </div></div>`; }).join("");
+  }
+
+  // ---- people: photos, the storyteller, matching typed names to saved people ----
+  const nn = s => String(s || "").toLowerCase().replace(/[^a-z0-9\u0590-\u05ff]/g, "");
+  // the saved person a typed name belongs to ("Blam", "בלאם / Blam", "blam ")
+  function savedFor(name) {
+    const parts = String(name || "").split("/").map(nn).filter(Boolean); if (!parts.length) return null;
+    return state.savedPlayers.find(sp => { const sps = String(sp.name).split("/").map(nn); return sps.some(x => parts.includes(x)); }) || null;
+  }
+  function photoFor(name) { const sp = savedFor(name); return sp && sp.photo || ""; }
+  function avatarInner(p) {
+    return p && p.photo ? `<img src="${p.photo}" alt="">` : `<span>${esc((String(p && p.name || "?").trim()[0] || "?").toUpperCase())}</span>`;
+  }
+  // choose a photo → square, 112px, JPEG (small enough to keep on the phone and in the game)
+  function pickPhoto(id) {
+    let inp = document.getElementById("bkPhotoInput");
+    if (!inp) { inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.id = "bkPhotoInput"; inp.hidden = true; document.body.appendChild(inp); }
+    inp.value = "";
+    inp.onchange = () => {
+      const f = inp.files && inp.files[0]; if (!f) return;
+      const img = new Image(), url = URL.createObjectURL(f);
+      img.onload = () => {
+        const S = 112, c = document.createElement("canvas"); c.width = c.height = S;
+        const k = Math.min(img.width, img.height), sx = (img.width - k) / 2, sy = (img.height - k) / 2;
+        c.getContext("2d").drawImage(img, sx, sy, k, k, 0, 0, S, S);
+        const sp = state.savedPlayers.find(x => x.id === id); if (sp) { sp.photo = c.toDataURL("image/jpeg", 0.78); saveSavedPlayers(); }
+        URL.revokeObjectURL(url); renderSavedPlayersList(); renderRosterInputs(); renderStoryteller(); renderBoardView();
+      };
+      img.src = url;
+    };
+    inp.click();
+  }
+  function setStoryteller(id) {
+    const sp = state.savedPlayers.find(x => x.id === id);
+    state.storytellerId = sp && state.storytellerId !== id ? id : null;
+    state.storytellerName = state.storytellerId ? sp.name : (state.storytellerName || "");
+    try { localStorage.setItem("bk_storyteller", state.storytellerId || ""); } catch (e) {}
+    // the storyteller is not one of the players
+    if (state.storytellerId) state.roster.forEach(r => { if (r && savedFor(r.name) === sp) r.name = ""; });
+    const inp = document.getElementById("storytellerInput"); if (inp && state.storytellerId) inp.value = sp.name;
+    renderSavedPlayersList(); renderRosterInputs(); renderStoryteller();
+  }
+  // typing a name: a saved person with that name becomes the storyteller (with their photo), otherwise it's just a name
+  function typeStoryteller(v) {
+    state.storytellerName = v; const sp = savedFor(v);
+    state.storytellerId = sp ? sp.id : null;
+    try { localStorage.setItem("bk_storyteller", state.storytellerId || ""); localStorage.setItem("bk_storyteller_name", v); } catch (e) {}
+    renderStoryteller();
+  }
+  function storyteller() { const sp = state.savedPlayers.find(x => x.id === state.storytellerId); return { name: (sp ? sp.name : state.storytellerName || "").slice(0, 60), photo: sp && sp.photo || "" }; }
+  // the "Storyteller" field in setup: pick from the saved people (with photo) or type a name
+  function renderStoryteller() {
+    const box = document.getElementById("bkStoryteller"); if (!box) return;
+    const he = state.lang === "he", sp = state.savedPlayers.find(x => x.id === state.storytellerId);
+    box.innerHTML = `<div class="bk-st-pick"><span class="bk-avatar">${sp ? avatarInner(sp) : "👑"}</span>
+      <select id="bkStSelect" aria-label="${he ? "מספר הסיפורים" : "Storyteller"}">
+        <option value="">${he ? "— בחר מהשחקנים השמורים —" : "— pick from saved people —"}</option>
+        ${state.savedPlayers.map(p => `<option value="${p.id}"${p.id === state.storytellerId ? " selected" : ""}>${esc(p.name)}</option>`).join("")}
+      </select></div>`;
+    box.querySelector("#bkStSelect").onchange = e => setStoryteller(e.target.value || state.storytellerId);
+  }
+
+  // ---- matching names across languages: "בלאם" ↔ "Blam", "שי" ↔ "Shai" ----
+  const HE2L = { "א": "", "ב": "b", "ג": "g", "ד": "d", "ה": "", "ו": "v", "ז": "z", "ח": "h", "ט": "t", "י": "", "כ": "k", "ך": "k", "ל": "l", "מ": "m", "ם": "m", "נ": "n", "ן": "n",
+    "ס": "s", "ע": "", "פ": "p", "ף": "p", "צ": "c", "ץ": "c", "ק": "k", "ר": "r", "ש": "s", "ת": "t", "'": "" };
+  // the consonants of a name, the same way for Hebrew and English
+  function skel(name) {
+    let s = String(name || "").toLowerCase().trim();
+    s = s.replace(/[׳’`´]/g, "'");
+    if (/[\u0590-\u05ff]/.test(s)) s = s.replace(/ג'/g, "j").replace(/[צץ]'/g, "c").replace(/ז'/g, "j").split("").map(c => c in HE2L ? HE2L[c] : (/[a-z]/.test(c) ? c : "")).join("").replace(/v(?=[^aeiou]|$)/g, "");
+    else s = s.replace(/[^a-z]/g, "").replace(/(.)\1+/g, "$1").replace(/sh|sch/g, "s").replace(/tch|ch/g, "c").replace(/kh/g, "h").replace(/ph|f/g, "p").replace(/tz|ts/g, "c").replace(/[cq](?!h)/g, m => m === "q" ? "k" : "k").replace(/w/g, "v").replace(/[aeiouyh]/g, "").replace(/v(?=[^aeiou]|$)/g, "");
+    s = s.replace(/h/g, "");
+    return s;
+  }
+  function levd(a, b) { const d = Array.from({ length: a.length + 1 }, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[a.length][b.length]; }
+  // the saved person a name from a pasted list most likely is (exact, then same sound in the other language)
+  function matchSaved(name, used) {
+    const exact = savedFor(name); if (exact && !(used && used.has(exact.id))) return exact;
+    const k = skel(name); if (!k) return null;
+    let best = null, bd = 9, tie = false;
+    for (const sp of state.savedPlayers) {
+      if (used && used.has(sp.id)) continue;
+      for (const part of String(sp.name).split("/")) { const d = levd(k, skel(part)), lim = k.length >= 3 ? 1 : 0;
+        if (d <= lim) { if (d < bd) { bd = d; best = sp; tie = false; } else if (d === bd && best !== sp) tie = true; } }
+    }
+    return tie ? null : best;
+  }
+  // a list of names from pasted text / a .txt file: one per line, or separated by commas; numbers, bullets and "(GM)" marks are removed
+  function parseNames(text) {
+    let lines = String(text || "").replace(/\r/g, "").split("\n").map(x => x.trim()).filter(Boolean);
+    if (lines.length <= 2) lines = lines.join(",").split(/[,،;|]+/).map(x => x.trim()).filter(Boolean);
+    let st = "";
+    const names = [];
+    for (let ln of lines) {
+      ln = ln.replace(/^\[[^\]]*\]\s*/, "").replace(/^[\s\d.)\-–•*#·:]+/, "").replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu, "").trim();
+      const isSt = /\b(st|gm|storyteller)\b|מספר(\s|-)?(ה)?סיפורים|מנחה|גיאם|ג'יאם|דיאמ|👑/i.test(ln);
+      ln = ln.replace(/[(\[].*?[)\]]/g, "").replace(/[-–:]\s*(st|gm|storyteller|מספר(\s|-)?(ה)?סיפורים|מנחה|גיאם|דיאמ)\s*$/i, "").replace(/\b(st|gm)\b/ig, "").trim();
+      if (!ln || ln.length > 40 || /^(שחקנים|players?|רשימה|list)[:\s]*$/i.test(ln)) continue;
+      if (isSt && !st) { st = ln; continue; }
+      if (!names.some(n => n.toLowerCase() === ln.toLowerCase())) names.push(ln);
+    }
+    return { names, st };
+  }
+  // put a list of names into the seats: matched to saved people (their name + photo), the storyteller left out
+  function applyNames(text) {
+    const { names, st } = parseNames(text), used = new Set();
+    if (st) { const sp = matchSaved(st); if (sp) { state.storytellerId = null; setStoryteller(sp.id); used.add(sp.id); } else { const i = document.getElementById("storytellerInput"); if (i) i.value = st; typeStoryteller(st); } }
+    if (state.storytellerId) used.add(state.storytellerId);
+    const out = [], fresh = [];
+    for (const n of names) { const sp = matchSaved(n, used); if (sp) { used.add(sp.id); out.push(sp.name); } else { out.push(n); fresh.push(n); } }
+    const list = out.slice(0, 15);
+    if (!list.length) return { n: 0, matched: 0, fresh: [] };
+    state.playerCount = Math.max(5, list.length);
+    state.roster = list.map(n => ({ name: n, phone: "" }));
+    const sl = $("#playerCountSlider"); if (sl) sl.value = state.playerCount;
+    renderSetupView(); renderRosterInputs(); updatePanels && updatePanels();
+    return { n: list.length, matched: list.length - fresh.filter(f => list.includes(f)).length, fresh: fresh.filter(f => list.includes(f)), cut: out.length - list.length };
+  }
+  function addFreshToSaved(names) {
+    for (const n of names) { if (state.savedPlayers.length >= 16) break; if (!savedFor(n)) state.savedPlayers.push({ id: "sp_" + Math.random().toString(36).slice(2, 9), name: n, phone: "", notes: "" }); }
+    saveSavedPlayers(); renderSavedPlayersList(); renderStoryteller(); renderRosterInputs();
+  }
+  // the box at the top of "New game": drop / pick a picture of the roles and a players list, or paste the names
+  const QS = { msg: "", busy: false, fresh: [] };
+  function renderQuick() {
+    const box = document.getElementById("bkQuick"); if (!box) return;
+    const he = state.lang === "he", T = (h, e) => he ? h : e;
+    box.innerHTML = `<div class="bk-quick-head"><b>⚡ ${T("הכנה מהירה", "Quick setup")}</b><span>${T("תמונה של דף התפקידים + רשימת השחקנים → מספר שחקנים, שמות ותמונות, ותפקידים — בלחיצה אחת", "A picture of the roles sheet + the players list → player count, names and photos, and roles — in one go")}</span></div>
+      <div class="bk-quick-row">
+        <label class="bk-quick-drop" id="bkQuickDrop" tabindex="0">
+          <input type="file" id="bkQuickFile" accept="image/*,.txt,.csv,text/plain" multiple hidden>
+          <span class="ic">🖼️ 📄</span><b>${T("גרור לכאן תמונה / קובץ טקסט", "Drop a picture / text file here")}</b><small>${T("או לחץ לבחירה · אפשר גם להדביק תמונה (Ctrl+V)", "or click to choose · you can also paste a picture (Ctrl+V)")}</small>
+        </label>
+        <div class="bk-quick-text">
+          <textarea id="bkQuickNames" class="bk-input" rows="4" placeholder="${T("הדבק את שמות השחקנים — שורה לכל שחקן או מופרדים בפסיקים.&#10;למספר הסיפורים הוסף (מספר סיפורים) או 👑", "Paste the players' names — one per line or comma separated.&#10;Mark the storyteller with (ST) or 👑")}"></textarea>
+          <button type="button" class="bk-btn pri" id="bkQuickApply">${T("הכנס שחקנים", "Fill in players")}</button>
         </div>
       </div>
-    `).join("");
+      <div class="bk-quick-msg" id="bkQuickMsg">${QS.msg}${QS.fresh.length ? ` <button type="button" class="bk-btn sm" id="bkQuickAdd">＋ ${T(`הוסף ${QS.fresh.length} חדשים לשחקנים השמורים`, `Add ${QS.fresh.length} new to saved players`)}</button>` : ""}</div>`;
+    const f = box.querySelector("#bkQuickFile"), drop = box.querySelector("#bkQuickDrop");
+    f.onchange = () => quickFiles([...f.files]);
+    drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); f.click(); } };
+    ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", e => quickFiles([...(e.dataTransfer && e.dataTransfer.files || [])]));
+    box.querySelector("#bkQuickApply").onclick = () => quickNames(box.querySelector("#bkQuickNames").value);
+    const add = box.querySelector("#bkQuickAdd"); if (add) add.onclick = () => { addFreshToSaved(QS.fresh); QS.fresh = []; QS.msg += he ? " · נוספו לשמורים ✓" : " · added to saved ✓"; renderQuick(); };
   }
+  function quickMsg(m) { QS.msg = m; const el = document.getElementById("bkQuickMsg"); if (el) renderQuick(); }
+  function quickNames(text) {
+    const he = state.lang === "he", r = applyNames(text);
+    if (!r.n) { QS.fresh = []; quickMsg(he ? "לא מצאתי שמות בטקסט." : "No names found in the text."); return; }
+    QS.fresh = r.fresh;
+    quickMsg(he ? `✓ ${r.n} שחקנים הושבו · ${r.matched} זוהו מהשמורים (עם תמונה)${r.cut ? ` · ${r.cut} מעבר ל־15 לא נכנסו` : ""}${r.n < 5 ? " · המשחק צריך לפחות 5" : ""}`
+      : `✓ ${r.n} players seated · ${r.matched} matched to saved people (with photo)${r.cut ? ` · ${r.cut} beyond 15 left out` : ""}${r.n < 5 ? " · the game needs at least 5" : ""}`);
+  }
+  async function quickFiles(files) {
+    const he = state.lang === "he";
+    for (const file of files) {
+      if (/^image\//.test(file.type)) {
+        if (!window.BKSets) continue;
+        quickMsg(he ? "קורא את התמונה…" : "Reading the picture…");
+        try {
+          const d = await window.BKSets.fromImage(file, p => { const el = document.getElementById("bkQuickMsg"); if (el) el.textContent = (he ? "קורא את התמונה… " : "Reading the picture… ") + Math.round(p * 100) + "%"; });
+          if (!d.ids.length) { quickMsg(he ? "לא זיהיתי תפקידים בתמונה — נסה תמונה חדה וישרה יותר." : "No roles found in the picture — try a sharper, straighter one."); continue; }
+          const id = window.BKSets.save(d.name || (he ? "סט מתמונה" : "Set from picture"), d.author || "", d.ids);
+          window.BKSets.use(id);
+          quickMsg((he ? `✓ ${d.ids.length} תפקידים זוהו ונשמרו כסט` : `✓ ${d.ids.length} roles found and saved as a set`) + (d.name ? ` · ${esc(d.name)}` : ""));
+        } catch (e) { quickMsg(he ? "לא הצלחתי לקרוא את התמונה." : "Couldn't read the picture."); }
+      } else {
+        const text = await file.text(); const ta = document.getElementById("bkQuickNames"); quickNames(text); if (ta) ta.value = text;
+      }
+    }
+  }
+  // paste a picture anywhere on the setup screen
+  document.addEventListener("paste", e => {
+    const v = document.getElementById("view-setup"); if (!v || !v.classList.contains("active")) return;
+    if (e.target && /textarea|input/i.test(e.target.tagName) && !(e.clipboardData && [...e.clipboardData.files].length)) return;
+    const fs = e.clipboardData ? [...e.clipboardData.files].filter(f => /^image\//.test(f.type)) : [];
+    if (fs.length) { e.preventDefault(); quickFiles(fs); }
+  });
 
   function addSavedPlayer() {
     const nameInput = $("#newPlayerName");
@@ -1945,6 +2178,7 @@
     const phone = phoneInput ? phoneInput.value.trim() : "";
 
     if (!name) return;
+    if (state.savedPlayers.length >= 16) { alert(state.lang === "he" ? "אפשר עד 16 אנשים ברשימה (כולל מספר הסיפורים)." : "Up to 16 people (including the storyteller)."); return; }
     state.savedPlayers.push({
       id: "sp_" + Math.random().toString(36).substring(2, 7),
       name,
@@ -2024,6 +2258,16 @@
     getThemeTitle,
     getRole,
     openRolePicker,
+    pickPhoto,
+    typeStoryteller,
+    parseNames,
+    matchSaved,
+    applyNames,
+    renderQuick,
+    photoFor,
+    setStoryteller,
+    savedFor,
+    openSettings,
     renderSetupView,
     getScriptRoles: () => { const sc = getScript(state.scriptId); return sc ? sc.roles.slice() : state.customRoles.slice(); },
     useAlt,

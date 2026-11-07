@@ -34,21 +34,76 @@
   }
   // Two ways to show the sheet: "list" (one column that scrolls, easy to read on a phone) or "page" (the whole sheet in
   // two columns like the printed one, shrunk to fit the screen; pinch to zoom in). The choice is kept on this device.
+  // "tv" = a 16:9 sheet (four columns, big type) to show on a screen or a TV.
   function sheetMode() { try { return localStorage.getItem("bk_sheet_mode") || "list"; } catch (e) { return "list"; } }
   function fitSheets() {
     document.querySelectorAll(".bk-script-page").forEach(el => {
       const box = el.parentElement, w = box ? box.clientWidth : 0;
       el.style.zoom = w ? Math.min(1, w / 1000).toFixed(3) : "";
     });
+    document.querySelectorAll(".bk-script-tv").forEach(el => {
+      el.style.zoom = ""; el.style.setProperty("--tvk", "1");
+      const box = el.parentElement, onTV = !!el.closest("#bkTV"), w = onTV ? innerWidth : (box ? box.clientWidth : 0), h = onTV ? innerHeight : w * 9 / 16;
+      // shrink the type when there are many roles, so it all fits in 16:9
+      let k = 1; while (el.scrollHeight > 900 && k > 0.6) { k -= 0.05; el.style.setProperty("--tvk", k.toFixed(2)); }
+      if (w) el.style.zoom = Math.min(w / 1600, h / 900).toFixed(4);
+    });
     document.querySelectorAll(".bk-sheet-mode button").forEach(b => b.classList.toggle("on", b.dataset.mode === sheetMode()));
   }
   function setMode(m) {
     try { localStorage.setItem("bk_sheet_mode", m); } catch (e) {}
-    document.querySelectorAll(".bk-script").forEach(el => { el.classList.toggle("bk-script-page", m === "page"); el.classList.toggle("bk-script-list", m !== "page"); });
+    document.querySelectorAll(".bk-script").forEach(el => { if (el.closest("#bkTV")) return; el.classList.toggle("bk-script-page", m === "page"); el.classList.toggle("bk-script-tv", m === "tv"); el.classList.toggle("bk-script-list", m !== "page" && m !== "tv"); });
     fitSheets();
   }
+
+  // ---- 📺 the roles sheet on a TV: a link that holds the list of roles (public in this game) and the time it stops working ----
+  const b64e = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const b64d = s => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/")))));
+  function tvLink(hours) {
+    const st = window.Bootkeh && window.Bootkeh._state, d = (st && st.sheetData) || { title: "", author: "", ids: [] };
+    const base = location.origin + location.pathname.replace(/\/Bootkeh(\.html|\/index\.html|\/)?$/i, "/").replace(/[^/]*$/, "") + "Bootkeh/";
+    return base + "?tv#" + b64e({ t: d.title, a: d.author, l: (st && st.lang) || "he", r: d.ids, x: Date.now() + hours * 3600e3 });
+  }
+  function tvDialog() {
+    const he = !window.Bootkeh || window.Bootkeh._state.lang !== "en", T = (h, e) => he ? h : e;
+    let ov = document.getElementById("bkTvDlg");
+    if (!ov) { ov = document.createElement("div"); ov.id = "bkTvDlg"; ov.className = "bk-sendall"; document.body.appendChild(ov); }
+    let hours = 4;
+    const draw = () => { const url = tvLink(hours);
+      ov.innerHTML = `<div class="bk-sendall-card bk-group" role="dialog" aria-label="${T("קישור לטלוויזיה", "Link for a TV")}">
+        <div class="bk-sendall-top"><b>📺 ${T("דף התפקידים בטלוויזיה", "The roles sheet on a TV")}</b><button type="button" class="bk-sendall-x" aria-label="${T("סגור", "Close")}">×</button></div>
+        <p class="bk-hint">${T("פתח את הקישור בדפדפן של הטלוויזיה (או סרוק את הקוד בטלפון ושדר למסך). הדף מוצג ב־16:9 על כל המסך, ומפסיק לעבוד אחרי הזמן שבחרת.", "Open the link in the TV's browser (or scan the code with a phone and cast it). The sheet fills the screen in 16:9 and stops working after the time you choose.")}</p>
+        <div class="bk-seg bk-tv-hours">${[2, 4, 8, 12].map(h => `<button type="button" data-h="${h}" class="${h === hours ? "on" : ""}">${h} ${T("שעות", "hours")}</button>`).join("")}</div>
+        <div class="bk-qr" id="bkTvQr" aria-label="QR"></div>
+        <div class="bk-row"><button type="button" class="bk-btn pri" data-act="copy">${T("העתק קישור", "Copy link")}</button><a class="bk-btn" href="${url}" target="_blank" rel="noopener">${T("פתח בטאב חדש", "Open in a new tab")}</a></div>
+      </div>`;
+      ov.querySelector(".bk-sendall-x").onclick = () => ov.remove();
+      ov.querySelectorAll("[data-h]").forEach(b => b.onclick = () => { hours = +b.dataset.h; draw(); });
+      ov.querySelector('[data-act="copy"]').onclick = e => { navigator.clipboard && navigator.clipboard.writeText(url); e.target.textContent = "✓"; };
+      drawQr(url, "bkTvQr");
+    };
+    draw();
+  }
+  function openTV() {
+    let d = null; try { d = b64d(location.hash.slice(1)); } catch (e) {}
+    const he = !d || d.l !== "en";
+    document.documentElement.classList.add("bk-tv-mode");
+    const root = document.createElement("div"); root.id = "bkTV"; document.body.appendChild(root);
+    if (!d || !Array.isArray(d.r) || !(d.x > Date.now())) {
+      document.title = "Bootkeh";
+      root.innerHTML = `<div class="bk-tv-msg"><b>⌛</b><p>${he ? "הקישור הזה כבר לא פעיל. בקש ממספר הסיפורים קישור חדש." : "This link has expired. Ask the storyteller for a new one."}</p></div>`; return;
+    }
+    const roles = d.r.map(id => window.Bootkeh && window.Bootkeh.getRole(id)).filter(Boolean);
+    document.title = `📺 ${d.t || "Bootkeh"}`;
+    root.innerHTML = sheetHTML({ title: d.t, author: d.a, roles, lang: d.l }).replace(/bk-script bk-script-\w+/, "bk-script bk-script-tv")
+      + `<button type="button" class="bk-tv-full" aria-label="${he ? "מסך מלא" : "Full screen"}">⛶</button>`;
+    root.querySelector(".bk-tv-full").onclick = () => { const f = document.documentElement; (f.requestFullscreen || f.webkitRequestFullscreen || (() => {})).call(f); };
+    fitSheets();
+    setTimeout(() => { root.innerHTML = `<div class="bk-tv-msg"><b>⌛</b><p>${he ? "הקישור הזה כבר לא פעיל." : "This link has expired."}</p></div>`; }, Math.min(d.x - Date.now(), 2147483000));
+    let idle; addEventListener("mousemove", () => { root.classList.remove("idle"); clearTimeout(idle); idle = setTimeout(() => root.classList.add("idle"), 2500); });
+  }
   addEventListener("resize", () => fitSheets());
-  window.BKSheet = { html: sheetHTML, setMode, fit: fitSheets, mode: sheetMode };
+  window.BKSheet = { html: sheetHTML, setMode, fit: fitSheets, mode: sheetMode, tvLink, tvDialog, openTV };
 
   // Copy every "small screen" rule (@media max-width ≤ 900px) of the Bootkeh styles to html.bk-phone, so a phone gets
   // the phone layout even when the browser lays the page out wider than the screen (see the script in Bootkeh.html).
@@ -68,6 +123,11 @@
   }
   if (document.readyState === "complete") phoneStyles(); else addEventListener("load", phoneStyles);
   const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  // a seat's face: its photo (from the saved players) or its first letter
+  const okPic = u => typeof u === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u);
+  const av = (x, cls) => `<span class="bk-avatar${cls ? " " + cls : ""}">${x && okPic(x.photo) ? `<img src="${x.photo}" alt="">` : `<span>${esc((String(x && x.name || "?").trim()[0] || "?").toUpperCase())}</span>`}</span>`;
+  // who runs the game, shown to the players so they know who is who
+  const stLine = (s, T) => s && s.st && s.st.name ? `<div class="bkp-st">${av(s.st, "sm")}<span>👑 ${T("מספר הסיפורים", "Storyteller")}: <b>${esc(s.st.name)}</b></span></div>` : "";
   const B = () => window.Bootkeh, C = () => window.BKCloud;
   const he = () => (B() && B()._state ? B()._state.lang : "he") !== "en";
   const tr = (h, e) => he() ? h : e;
@@ -432,6 +492,39 @@
     if ((st.day || 1) === 1) return p.firstNightInfo || "";
     return "";
   }
+  // ✨ Write tonight's info for everyone by the rules, so the storyteller only checks and sends (and one day: no storyteller).
+  //  night 1 = the dealt info (already false for the Drunk); later nights = the true answer from BKRules.laterNight, or a
+  //  false one for a drunk / poisoned player; choices made on the phones tonight (Fortune Teller, Seamstress, Ravenkeeper…)
+  //  are answered from what they picked.
+  function autoText(p) {
+    const st = ST.game || {}, R = window.BKRules, first = (st.day || 1) === 1;
+    if (p.isAlive === false && !(ST.deaths && ST.deaths[p.seat] && p.role.id === "ravenkeeper")) return nightDefault(p);
+    if (first) return p.firstNightInfo || "";
+    if (!R) return "";
+    const bad = p.isDrunk || poisonedTonight().includes(p.seat), t = actsTonight()[p.seat] || [], tg = t.map(x => players().find(q => q.seat === x)).filter(Boolean);
+    const evil = q => q.alignment === "evil", demon = q => q.role && q.role.type === "demon", rh = (B()._state.rules || {}).redHerring;
+    const id = (p.thinks && B().getRole(p.thinks) ? p.thinks : p.role.id);
+    let truth = null;
+    if (id === "fortune_teller" && tg.length) truth = tg.some(q => demon(q) || q.seat === rh) ? 0 : 1;   // index of yes / no
+    if (id === "seamstress" && tg.length === 2) truth = evil(tg[0]) === evil(tg[1]) ? 0 : 1;
+    if (id === "ravenkeeper" && tg.length) { const q = tg[0], r = bad ? ((rulesCtx().pool || []).filter(x => x.id !== q.role.id)[0] || q.role) : q.role;
+      return tr(`${String(q.name).split(" / ")[0]} הוא ${r.name_he}.`, `${String(q.name).split(" / ")[0]} is the ${r.name_en}.`); }
+    const list = R.laterNight(p, rulesCtx());
+    if (id === "undertaker" && !rulesCtx().executedToday) return tr("היום אף אחד לא הוצא להורג.", "Nobody was executed today.");
+    if (!list.length) return "";
+    if (truth != null) { const i = bad ? 1 - truth : truth; return (list[i] || list[0]).text; }
+    const want = p.isDrunk ? true : !bad;   // laterNight already flipped "truth" for the Drunk
+    const pick = list.filter(x => x.truth === want);
+    return (pick[Math.floor(Math.random() * pick.length)] || list.find(x => x.truth == null) || list[0]).text;
+  }
+  function autoNight(send) {
+    let n = 0;
+    for (const p of players()) { const t = autoText(p); if (t) { ST.draft[p.seat] = t; n++; } }
+    ST.autoOpen = true;
+    ST.msg = tr(`✨ נכתב מידע ל־${n} שחקנים לפי החוקים — בדוק ושלח.`, `✨ Wrote info for ${n} players by the rules — check and send.`);
+    render();
+    if (send) setTimeout(() => sendNight(false), 0);
+  }
   async function sendNight(toWhatsapp) {
     const st = ST.game || {}, label = phaseName(st, he());
     const items = [];
@@ -538,7 +631,10 @@
         ${runnerHTML(st)}
         <button type="button" class="bk-btn ${ST.run && ST.run.i >= Object.keys(ST.wakeNo || {}).length ? "pri" : ""} bk-wide bk-big" onclick="window.BKLive.setPhase('dawn')">${tr("סיום הלילה — עלות השחר ›", "End the night — dawn ›")}</button>
       </section>
-      <details class="bk-lp-sec bk-ie"><summary><h4>${tr("או: מידע לכולם בבת אחת", "Or: info for everyone at once")}</h4></summary>
+      <div class="bk-lp-sec bk-auto"><button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.autoNight(false)">✨ ${tr("חולל מידע לכל השחקנים", "Write everyone's info for me")}</button>
+        <button type="button" class="bk-btn bk-wide" onclick="window.BKLive.autoNight(true)">✨ ${tr("חולל ושלח ישר לכולם", "Write it and send to everyone")}</button>
+        <small class="bk-hint">${tr("לפי החוקים: מידע אמיתי, ושקרי לשיכור / מורעל. בחירות מהטלפונים הלילה (מגדת עתידות, תופרת, שומר העורבים…) נענות לפי מה שבחרו.", "By the rules: true info, false for a drunk / poisoned player. Tonight's choices on the phones (Fortune Teller, Seamstress, Ravenkeeper…) are answered from what they picked.")}</small></div>
+      <details class="bk-lp-sec bk-ie"${ST.autoOpen ? " open" : ""} ontoggle="window.BKLive.autoToggle && window.BKLive.autoToggle(this.open)"><summary><h4>${tr("או: מידע לכולם בבת אחת", "Or: info for everyone at once")}</h4></summary>
         <p class="bk-hint">${tr("כתוב לכל שחקן מה הוא לומד הלילה (ריק = לא נשלח). \"שלח לכולם\" שולח לכל הטלפונים בבת אחת, והמידע הקודם נשמר אצלם בהיסטוריה.", "Write what each player learns tonight (empty = not sent). \"Send to all\" sends to every phone at once; older info stays in their history.")}</p>
         <p class="bk-hint">${tr("הסדר הוא סדר ההתעוררות הרשמי (מספר ליד מי שמתעורר). ✓ = מידע אמיתי, ✗ = שקרי (לשיכור או מורעל).", "Rows follow the official wake order (number = wakes). ✓ = true info, ✗ = false (for a drunk or poisoned player).")}</p>
         <div class="bk-night">${orderedForNight(st).map(p => {
@@ -649,15 +745,15 @@
     const bar = document.getElementById("bkpToast");
     if (bar) { bar.innerHTML = `<b>${esc(title)}</b>${body ? `<span>${esc(body)}</span>` : ""}`; bar.classList.add("on"); clearTimeout(bar._t); bar._t = setTimeout(() => bar.classList.remove("on"), 7000); }
     if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
-    if (PL.alerts) chime();
+    // no sound on purpose: at the table only the player feels their phone buzz
     if (PL.alerts && document.hidden && "Notification" in window && Notification.permission === "granted") {
-      try { new Notification(title, { body, tag: "bootkeh", renotify: true }); } catch (e) {}
+      try { new Notification(title, { body, tag: "bootkeh", renotify: true, silent: true }); } catch (e) {}
     }
     void isHe;
   }
 
   async function enableAlerts() {
-    PL.alerts = true; chime();
+    PL.alerts = true; if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
     if ("Notification" in window && Notification.permission === "default") { try { await Notification.requestPermission(); } catch (e) {} }
     try { localStorage.setItem("bk_alerts", "1"); } catch (e) {}
     renderPlayer();
@@ -665,7 +761,7 @@
 
   // Open the player app for ?g=…&k=…
   async function openPlayer(gid, k) {
-    PL.gid = gid; PL.key = k; seatMem.set(gid, k);
+    PL.gid = gid; PL.key = k; if (!devMode()) seatMem.set(gid, k);
     try { PL.alerts = localStorage.getItem("bk_alerts") === "1"; } catch (e) {}
     document.body.classList.add("bkp-mode");   // hides the storyteller screens (see bootkeh-live.css)
     if (!document.getElementById("bkpToast")) { const t = document.createElement("div"); t.id = "bkpToast"; t.className = "bkp-toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
@@ -722,7 +818,7 @@
       const done = pick.length === (w.n || 0) && rpick.length === nr, skip = w.once && !pick.length && !rpick.length, any = w.n || nr;
       html += `<section class="bkp-card bkp-wake"><div class="bkp-wake-top">🌙 <b>${T("התעוררת!", "You are awake!")}</b></div>
         <p class="bkp-wake-text">${esc(w.text || "")}</p>
-        ${w.n ? `<small class="bkp-lbl">${T(`בחר ${w.n} ${w.n > 1 ? "שחקנים" : "שחקן"}`, `Choose ${w.n} player${w.n > 1 ? "s" : ""}`)}</small><div class="bkp-pickgrid">${seats.map(x => `<button type="button" class="${pick.includes(x.seat) ? "on" : ""}" onclick="window.BKLive.pickSeat(${x.seat})"><i>${x.seat}</i>${esc(String(x.name).split(" / ")[0])}</button>`).join("")}</div>` : ""}
+        ${w.n ? `<small class="bkp-lbl">${T(`בחר ${w.n} ${w.n > 1 ? "שחקנים" : "שחקן"}`, `Choose ${w.n} player${w.n > 1 ? "s" : ""}`)}</small><div class="bkp-pickgrid">${seats.map(x => `<button type="button" class="${pick.includes(x.seat) ? "on" : ""}" onclick="window.BKLive.pickSeat(${x.seat})"><i>${x.seat}</i>${av(x, "sm")}${esc(String(x.name).split(" / ")[0])}</button>`).join("")}</div>` : ""}
         ${nr ? `<small class="bkp-lbl">${T("בחר תפקיד", "Choose a character")}</small><div class="bkp-pickgrid bkp-rolegrid">${roleList.map(r => `<button type="button" class="${rpick.includes(r.id) ? "on" : ""} ${esc(r.type)}" onclick="window.BKLive.pickRole('${esc(r.id)}')"><span>${r.icon || ""}</span>${esc(isHeG() ? r.name_he || r.name_en : r.name_en || r.name_he)}</button>`).join("")}</div>` : ""}
         ${any ? `<button type="button" class="bkp-reveal" ${done || skip ? "" : "disabled"} onclick="window.BKLive.sendPick()">${skip ? T("דלג הפעם", "Skip this time") : done ? T("אישור", "Confirm") : T("בחר כדי להמשיך", "Choose to continue")}</button>`
           : `<button type="button" class="bkp-reveal" onclick="window.BKLive.sendPick()">${T("אני ער — מוכן למידע", "I'm awake — ready")}</button>`}
@@ -772,6 +868,7 @@
         <p>${T("הדף הזה היה זמני ונמחק. תודה ששיחקת!", "This page was temporary and has been removed. Thanks for playing!")}</p></div>`;
       return;
     }
+    document.title = `${String(d.name || "").split(" / ")[0]} · ${s && s.title ? s.title : "Bootkeh"}`;   // the player's name in the tab
     const mine = s && (s.seats || []).find(x => x.seat === d.seat), alive = !mine || mine.alive, canVote = alive || (mine && mine.ghost);
     const nom = s && s.nom, myVote = d.vote && nom && d.vote.nom === nom.id ? d.vote.v : null, amAccused = nom && nom.open && nom.on === d.seat;
     const name = isHe ? (d.name_he || d.name_en) : (d.name_en || d.name_he), ability = isHe ? (d.ability_he || d.ability_en) : (d.ability_en || d.ability_he);
@@ -783,6 +880,7 @@
         <span class="bkp-top-btns"><button type="button" class="bkp-bell" onclick="window.BKLive.openRoles()" aria-label="${T("התפקידים במשחק", "Roles in this game")}" title="${T("התפקידים במשחק", "Roles in this game")}">📜</button>
         <button type="button" class="bkp-bell${PL.alerts ? " on" : ""}" onclick="window.BKLive.enableAlerts()" aria-label="${T("התראות", "Alerts")}">${PL.alerts ? "🔔" : "🔕"}</button></span>
       </header>
+      ${stLine(s, T)}
       ${!PL.alerts ? `<button type="button" class="bkp-enable" onclick="window.BKLive.enableAlerts()">${T("הפעל התראות — תדע מיד כשמישהו מואשם", "Turn on alerts — know at once when someone is accused")}</button>` : ""}
       ${s && s.phase === "lobby" ? `<div class="bkp-notice">⏳ ${T("ממתינים שכולם יצטרפו. בינתיים אפשר להציץ בתפקיד שלך ובתפקידים שבמשחק (📜).", "Waiting for everyone to join. Meanwhile, peek at your role and the roles in this game (📜).")}</div>` : ""}
       ${s && s.phase === "night" ? `<div class="bkp-night">🌙 ${T("לילה — עצמו עיניים. המידע שלך יופיע כאן.", "Night — eyes closed. Your info will appear here.")}</div>` : ""}
@@ -809,7 +907,7 @@
       <section class="bkp-card bkp-role${PL.reveal ? " open" : ""}">
         <button type="button" class="bkp-reveal" onclick="window.BKLive.toggleReveal()">${PL.reveal ? T("הסתר את התפקיד שלי", "Hide my role") : T("הצג את התפקיד שלי", "Show my role")}</button>
         ${PL.reveal ? `<div class="bkp-role-body">
-          <div class="bkp-seat">${T("מושב", "Seat")} ${d.seat} · ${esc(d.name)}${alive ? "" : " · " + T("מת", "dead")}</div>
+          <div class="bkp-seat">${av(((s && s.seats) || []).find(x => x.seat === d.seat) || d, "sm")} ${T("מושב", "Seat")} ${d.seat} · ${esc(d.name)}${alive ? "" : " · " + T("מת", "dead")}</div>
           <div class="bkp-icon">${d.icon || "🎭"}</div>
           <h2>${esc(name)}</h2>
           <div class="bkp-pills"><span class="${esc(d.type)}">${esc(String(d.type || "").toUpperCase())}</span><span class="${esc(d.alignment)}">${d.alignment === "evil" ? T("רעים", "Evil") : T("טובים", "Good")}</span></div>
@@ -820,7 +918,7 @@
       </section>
 
       ${s && s.seats ? `<section class="bkp-card"><h3>${T("העיירה", "The town")}</h3>
-        <div class="bkp-town">${s.seats.map(x => `<span class="${x.alive ? "" : "dead"}${x.seat === d.seat ? " me" : ""}"><i>${x.seat}</i>${esc(x.name)}${x.alive ? "" : (x.ghost ? " 👻" : " ✝")}</span>`).join("")}</div></section>` : ""}
+        <div class="bkp-town">${s.seats.map(x => `<span class="${x.alive ? "" : "dead"}${x.seat === d.seat ? " me" : ""}"><i>${x.seat}</i>${av(x, "sm")}${esc(x.name)}${x.alive ? "" : (x.ghost ? " 👻" : " ✝")}</span>`).join("")}</div></section>` : ""}
 
       <footer class="bkp-foot">⌛ ${T("הדף נמחק ב־", "This page is deleted at ")}${exp}</footer>`;
   }
@@ -856,8 +954,9 @@
         <div class="bk-qr" id="bkQr" aria-label="QR"></div>
         <div class="bk-sendall-bar"><i style="width:${Math.round(taken / Math.max(1, ps.length) * 100)}%"></i></div>
         <div class="bk-sendall-count">${taken} / ${ps.length} ${tr("הצטרפו", "joined")}</div>
-        <div class="bk-group-list">${ps.map(p => `<span class="${ST.taken[p.seat] ? "on" : ""}">${p.seat}. ${esc(p.name)}${ST.taken[p.seat] ? " ✓" : ""}
-          <button type="button" data-link="${p.seat}" title="${tr("הקישור האישי שלו — להעתקה / שליחה מחדש", "Their personal link — copy / resend")}">🔗</button>${ST.taken[p.seat] ? `<button type="button" data-free="${p.seat}" title="${tr("שחרר מושב", "Free seat")}">↺</button>` : ""}</span>`).join("")}</div>
+        <div class="bk-group-list">${ps.map(p => `<span class="${ST.taken[p.seat] ? "on" : ""}">${p.seat}. ${av((ST.game && (ST.game.seats || []).find(x => x.seat === p.seat)) || { name: p.name, photo: B().photoFor ? B().photoFor(p.name) : "" }, "sm")}${esc(p.name)}${ST.taken[p.seat] ? " ✓" : ""}
+          <button type="button" data-link="${p.seat}" title="${tr("הקישור האישי שלו — להעתקה / שליחה מחדש", "Their personal link — copy / resend")}">🔗</button>${devMode() ? `<button type="button" data-tab="${p.seat}" title="${tr("פתח כשחקן בטאב חדש (מצב מפתח)", "Open as this player in a new tab (developer mode)")}">🧪</button>` : ""}${ST.taken[p.seat] ? `<button type="button" data-free="${p.seat}" title="${tr("שחרר מושב", "Free seat")}">↺</button>` : ""}</span>`).join("")}</div>
+        ${devMode() ? `<button type="button" class="bk-btn bk-wide" data-act="alltabs">🧪 ${tr("מצב מפתח: פתח את כל השחקנים בטאבים", "Developer mode: open every player in tabs")}</button>` : ""}
         <p class="bk-hint">${tr("🔗 = הקישור האישי של השחקן (אם החליף טלפון או לא מצליח להיכנס). ↺ = שחרור מושב שנלקח בטעות.", "🔗 = the player's personal link (if they changed phone or can't get in). ↺ = free a seat taken by mistake.")}</p>
         <div class="bk-join ${all ? "all" : ""}">${all ? tr("כולם הצטרפו — אפשר להתחיל!", "Everyone joined — you can start!") : tr(`ממתינים ל־${ps.length - taken} שחקנים…`, `Waiting for ${ps.length - taken} players…`)}</div>
         <button type="button" class="bk-btn pri bk-wide bk-big" data-act="start">${all ? tr("התחל — לילה 1", "Start — Night 1") : tr("התחל בכל זאת (בדיקה)", "Start anyway (test)")}</button>
@@ -871,6 +970,8 @@
       ov.querySelector('[data-act="start"]').onclick = async () => { ov.remove(); B().setTab("board"); await attach(); if (!ST.game || ST.game.phase === "lobby") await setPhase("night"); };
       ov.querySelector('[data-act="each"]').onclick = () => { ov.remove(); B().sendEachWhatsapp(); };
       ov.querySelectorAll("[data-free]").forEach(b => b.onclick = () => C().releaseSeat(g.gameId, +b.dataset.free).catch(e => alert(e.message || e)));
+      ov.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => window.open(g.links[+b.dataset.tab], "_blank"));
+      const allTabs = ov.querySelector('[data-act="alltabs"]'); if (allTabs) allTabs.onclick = () => ps.forEach(p => window.open(g.links[p.seat], "_blank"));
       ov.querySelectorAll("[data-link]").forEach(b => b.onclick = () => {
         const seat = +b.dataset.link, url = g.links[seat], who = (ps.find(p => p.seat === seat) || {}).name || "";
         if (navigator.share) navigator.share({ title: who, text: tr(`${who} — הדף האישי שלך במשחק:`, `${who} — your personal page:`), url }).catch(() => {});
@@ -885,8 +986,8 @@
 
   // QR code (qrcodejs from cdnjs, loaded the first time it's needed)
   let qrLib = null;
-  function drawQr(text) {
-    const box = document.getElementById("bkQr"); if (!box) return;
+  function drawQr(text, id) {
+    const box = document.getElementById(id || "bkQr"); if (!box) return;
     qrLib = qrLib || new Promise((ok, bad) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"; s.onload = ok; s.onerror = bad; document.head.appendChild(s); });
     if (box.dataset.for === text && box.firstChild) return;
     box.dataset.for = text;
@@ -895,6 +996,8 @@
 
   // A player's personal key for a game, kept on this phone in two places (some in-app browsers clear one of them).
   // Not by IP: everyone at the table shares the same Wi-Fi IP, and on mobile data it keeps changing.
+  // developer mode (Settings ⚙): several players in separate tabs of one computer, start without everyone
+  function devMode() { try { return localStorage.getItem("bk_dev") === "1"; } catch (e) { return false; } }
   const seatMem = {
     get(gid) {
       try { const k = localStorage.getItem("bk_seat_" + gid); if (k) return k; } catch (e) {}
@@ -910,7 +1013,7 @@
   const LB = { gid: null, sel: null, taken: {}, busy: false, game: null };
   async function openLobby(gid) {
     LB.gid = gid;
-    { const k = seatMem.get(gid); if (k) { location.replace(location.pathname + `?g=${gid}&k=${k}`); return; } }
+    if (!devMode()) { const k = seatMem.get(gid); if (k) { location.replace(location.pathname + `?g=${gid}&k=${k}`); return; } }
     document.body.classList.add("bkp-mode");
     let root = document.getElementById("bkPlayerApp");
     if (!root) { root = document.createElement("div"); root.id = "bkPlayerApp"; root.className = "bkp"; document.body.appendChild(root); }
@@ -925,12 +1028,14 @@
     document.documentElement.setAttribute("dir", isHe ? "rtl" : "ltr");
     if (!s) { root.innerHTML = `<div class="bkp-end"><div class="bkp-candle">🕯️</div><h2>${T("המשחק הסתיים", "This game has ended")}</h2><p>${T("הקישור כבר לא פעיל.", "This link is no longer active.")}</p></div>`; return; }
     const free = (s.seats || []).filter(x => !LB.taken[x.seat]).length;
+    document.title = `${T("מי אתה?", "Who are you?")} · ${s.title || "Bootkeh"}`;
     root.innerHTML = `<header class="bkp-top"><div><small>${esc(s.title || "")}</small><b>${T("מי אתה?", "Who are you?")}</b></div>
         <button type="button" class="bkp-bell" onclick="window.BKLive.openRoles()" aria-label="${T("התפקידים במשחק", "Roles in this game")}" title="${T("התפקידים במשחק", "Roles in this game")}">📜</button></header>
+      ${stLine(s, T)}
       <div class="bkp-notice">${T(`${free} מקומות פנויים · השמות שנלקחו מתעדכנים בזמן אמת`, `${free} seats free · taken names update live`)}</div>
       <p class="bkp-hint">${T("לחץ על השם שלך. אחרי זה המושב ננעל לטלפון הזה ותקבל רק את התפקיד שלך.", "Tap your name. The seat then locks to this phone and you'll see only your own role.")}</p>
       <div class="bkp-pick">${(s.seats || []).map(x => `<button type="button" class="${LB.sel === x.seat ? "sel" : ""}${LB.taken[x.seat] ? " taken" : ""}" data-seat="${x.seat}">
-        <i>${x.seat}</i><span>${esc(x.name)}</span>${LB.taken[x.seat] ? `<small>${T("תפוס", "taken")}</small>` : ""}</button>`).join("")}</div>
+        <i>${x.seat}</i>${av(x)}<span>${esc(x.name)}</span>${LB.taken[x.seat] ? `<small>${T("תפוס", "taken")}</small>` : ""}</button>`).join("")}</div>
       <p class="bkp-hint">${T("יצאת או רעננת? לחץ שוב על השם שלך — מאותו טלפון תחזור ישר לדף שלך.", "Left or refreshed? Tap your name again — from the same phone you go straight back to your page.")}</p>
       ${LB.sel ? `<button type="button" class="bkp-reveal" id="bkpClaim"${LB.busy ? " disabled" : ""}>${LB.busy ? "…" : (LB.taken[LB.sel] ? T("זה אני — חזור לדף שלי · ", "That's me — back to my page · ") : T("כן, זה אני — ", "Yes, that's me — ")) + esc(((s.seats || []).find(x => x.seat === LB.sel) || {}).name || "")}</button>` : ""}
       <p class="bkp-hint" id="bkpLobbyMsg">${esc(LB.msg || "")}</p>`;
@@ -940,7 +1045,7 @@
       LB.busy = true; drawLobby();
       try {
         const k = await C().claimSeat(LB.gid, LB.sel);
-        seatMem.set(LB.gid, k);
+        if (!devMode()) seatMem.set(LB.gid, k);
         location.replace(location.pathname + `?g=${LB.gid}&k=${k}`);
       } catch (e) {
         LB.taken[LB.sel] = true; LB.sel = null; LB.busy = false;
@@ -950,7 +1055,7 @@
     };
   }
 
-  window.BKLive = { decide: decideOpt, toggleRcpt, sendCustom, pickRole, endDay, declareWin, dismissWin: () => { ST.win = null; render(); }, runWake, runSend, runGo, pickSeat, sendPick, gotIt, useChip, sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
+  window.BKLive = { devMode, decide: decideOpt, toggleRcpt, sendCustom, pickRole, endDay, declareWin, dismissWin: () => { ST.win = null; render(); }, runWake, runSend, runGo, pickSeat, sendPick, gotIt, useChip, sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
     groupSend, openLobby, startFlow, toggleDeath, announceDawn, openRoles, closeRoles, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
-    openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
+    autoNight, autoText, autoToggle: o => { ST.autoOpen = o; }, openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
 })();

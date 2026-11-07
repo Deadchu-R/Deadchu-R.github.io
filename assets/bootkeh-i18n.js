@@ -24,7 +24,7 @@
     "תפקידים אקראיים": "Random roles", "תצוגה": "View", "＋ הוסף": "＋ Add", "🌙 מידע התחלתי ללילה הראשון:": "🌙 First-night info:", "🏰 כניסת מספר סיפורים": "🏰 Storyteller entrance",
     "👁️ הצג את הכרטיס שלי": "👁️ Show my card", "📜 יכולת הדמות שלך:": "📜 Your ability:", "🙈 הסתר מסך": "🙈 Hide screen",
     "משחקים שמורים": "Saved games", "שמור את ההגדרה הנוכחית": "Save the current setup", "הסתר תפקידים": "Hide roles", "הצג תפקידים": "Show roles",
-    "שחקנים שמורים ": "Saved players", "חזרה": "Back",
+    "שחקנים שמורים ": "Saved players", "חזרה": "Back", "📺 קישור לטלוויזיה": "📺 Link for a TV", "הגדרות": "Settings",
   };
   const orig = new WeakMap(), ATTRS = ["placeholder", "title", "aria-label"];
   const he = /[֐-׿]/;
