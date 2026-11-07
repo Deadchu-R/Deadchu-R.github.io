@@ -8,6 +8,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **The storyteller never sits:** while there is a storyteller they can't be in the seats — choosing them as storyteller gives their seat to the next saved person, the seat picker refuses them, and a pasted list skips them. "No storyteller" option added. Picking a saved player who already sits elsewhere swaps the two seats instead of seating them twice.
   - **Reading a roles sheet from a picture:** the two columns are now read separately (sparse-text OCR + a second pass, merged) and a line that holds two names is split — the Crimson Guard sheet that gave 4 roles now gives all 20. A set read from a picture is used for this game only (gone on refresh) unless you press "Save as a set".
   - **Windows on a computer:** the saved-players window (and the other windows) fit the screen and scroll inside, so Back is always reachable; slightly smaller on desktop.
   - **Desktop & settings:** bigger, more readable text on computers; ‹ › arrows (and keyboard ←/→) between the main screens; dark styled dropdowns (no more white on white); a ⚙ Settings window with a developer mode (start without everyone, open every player in its own tab to test); each player's tab is titled with their name; alerts vibrate only, no sound.

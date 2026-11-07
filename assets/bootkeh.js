@@ -659,6 +659,7 @@
   function renderRosterInputs() {
     const container = $("#playerRosterInputs");
     if (!container) return;
+    clearStorytellerSeat();
 
     const count = parseInt(state.playerCount, 10) || 8;
 
@@ -711,9 +712,31 @@
     if (!state.roster[index]) {
       state.roster[index] = { name: "", phone: "" };
     }
+    if (sp.id === state.storytellerId) { alert(state.lang === "he" ? "זה מספר הסיפורים — הוא לא יכול לשבת כשחקן. בחר מספר סיפורים אחר (או \"ללא\") קודם." : "That's the storyteller — they can't take a seat. Pick another storyteller (or \"None\") first."); renderRosterInputs(); return; }
+    // already sitting elsewhere → the two seats swap (no duplicates)
+    const count = parseInt(state.playerCount, 10) || 8;
+    const old = state.roster[index].name;
+    for (let j = 0; j < count; j++) {
+      if (j !== index && state.roster[j] && savedFor(state.roster[j].name) === sp) state.roster[j] = { name: old || "", phone: "" };
+    }
     state.roster[index].name = sp.name;
-    state.roster[index].phone = sp.phone || "";
+    state.roster[index].phone = "";
     renderRosterInputs();
+  }
+  // the storyteller never has a seat: their seat goes to the next saved person who isn't seated yet (or stays empty)
+  function clearStorytellerSeat() {
+    const st = state.savedPlayers.find(x => x.id === state.storytellerId), stName = nn(state.storytellerName);
+    const isSt = n => n && ((st && savedFor(n) === st) || (!st && stName && String(n).split("/").map(nn).includes(stName)));
+    const count = parseInt(state.playerCount, 10) || 8, seated = new Set();
+    for (let i = 0; i < count; i++) { const r = state.roster[i]; const sp = r && savedFor(r.name); if (sp) seated.add(sp.id); }
+    let changed = false;
+    for (let i = 0; i < state.roster.length; i++) {
+      const r = state.roster[i]; if (!r || !isSt(r.name)) continue;
+      const next = i < count ? state.savedPlayers.find(x => x.id !== state.storytellerId && !seated.has(x.id)) : null;
+      if (next) seated.add(next.id);
+      state.roster[i] = { name: next ? next.name : "", phone: "" }; changed = true;
+    }
+    return changed;
   }
 
   function autoFillRosterFromSaved() {
@@ -1087,7 +1110,8 @@
     // Combine game roles in play
     const rolesInPlay = shuffle([...pickedTownsfolk, ...pickedOutsiders, ...pickedMinions, ...pickedDemons]);
 
-    // Prepare player names from state.roster for all `count` seats (up to 15)
+    // Prepare player names from state.roster for all `count` seats (up to 15) — never the storyteller
+    clearStorytellerSeat();
     const players = [];
     for (let i = 0; i < count; i++) {
       const item = state.roster[i] || {};
@@ -2023,10 +2047,11 @@
   function setStoryteller(id) {
     const sp = state.savedPlayers.find(x => x.id === id);
     state.storytellerId = sp && state.storytellerId !== id ? id : null;
-    state.storytellerName = state.storytellerId ? sp.name : (state.storytellerName || "");
+    state.storytellerName = state.storytellerId ? sp.name : "";
+    if (!state.storytellerId) { const i = document.getElementById("storytellerInput"); if (i) i.value = ""; try { localStorage.setItem("bk_storyteller_name", ""); } catch (e) {} }
     try { localStorage.setItem("bk_storyteller", state.storytellerId || ""); } catch (e) {}
     // the storyteller is not one of the players
-    if (state.storytellerId) state.roster.forEach(r => { if (r && savedFor(r.name) === sp) r.name = ""; });
+    clearStorytellerSeat();
     const inp = document.getElementById("storytellerInput"); if (inp && state.storytellerId) inp.value = sp.name;
     renderSavedPlayersList(); renderRosterInputs(); renderStoryteller();
   }
@@ -2044,10 +2069,17 @@
     const he = state.lang === "he", sp = state.savedPlayers.find(x => x.id === state.storytellerId);
     box.innerHTML = `<div class="bk-st-pick"><span class="bk-avatar">${sp ? avatarInner(sp) : "👑"}</span>
       <select id="bkStSelect" aria-label="${he ? "מספר הסיפורים" : "Storyteller"}">
-        <option value="">${he ? "— בחר מהשחקנים השמורים —" : "— pick from saved people —"}</option>
+        <option value="none"${!state.storytellerId && !state.storytellerName ? " selected" : ""}>${he ? "ללא מספר סיפורים" : "No storyteller"}</option>
+        ${!state.storytellerId && state.storytellerName ? `<option value="" selected>${esc(state.storytellerName)}</option>` : ""}
         ${state.savedPlayers.map(p => `<option value="${p.id}"${p.id === state.storytellerId ? " selected" : ""}>${esc(p.name)}</option>`).join("")}
       </select></div>`;
-    box.querySelector("#bkStSelect").onchange = e => setStoryteller(e.target.value || state.storytellerId);
+    box.querySelector("#bkStSelect").onchange = e => {
+      const v = e.target.value;
+      if (v === "none") { state.storytellerId = null; state.storytellerName = ""; const i = document.getElementById("storytellerInput"); if (i) i.value = "";
+        try { localStorage.setItem("bk_storyteller", ""); localStorage.setItem("bk_storyteller_name", ""); } catch (er) {}
+        renderSavedPlayersList(); renderRosterInputs(); renderStoryteller(); return; }
+      if (v && v !== state.storytellerId) setStoryteller(v);
+    };
   }
 
   // ---- matching names across languages: "בלאם" ↔ "Blam", "שי" ↔ "Shai" ----
@@ -2098,7 +2130,11 @@
     if (st) { const sp = matchSaved(st); if (sp) { state.storytellerId = null; setStoryteller(sp.id); used.add(sp.id); } else { const i = document.getElementById("storytellerInput"); if (i) i.value = st; typeStoryteller(st); } }
     if (state.storytellerId) used.add(state.storytellerId);
     const out = [], fresh = [];
-    for (const n of names) { const sp = matchSaved(n, used); if (sp) { used.add(sp.id); out.push(sp.name); } else { out.push(n); fresh.push(n); } }
+    const stSp = state.savedPlayers.find(x => x.id === state.storytellerId);
+    for (const n of names) {
+      if (stSp && matchSaved(n) === stSp) continue;   // the storyteller is in the list — not a player
+      if (!stSp && state.storytellerName && skel(n) && skel(n) === skel(state.storytellerName)) continue;
+      const sp = matchSaved(n, used); if (sp) { used.add(sp.id); out.push(sp.name); } else { out.push(n); fresh.push(n); } }
     const list = out.slice(0, 15);
     if (!list.length) return { n: 0, matched: 0, fresh: [] };
     state.playerCount = Math.max(5, list.length);
