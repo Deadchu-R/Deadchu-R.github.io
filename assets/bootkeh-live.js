@@ -393,6 +393,7 @@
   }
   function chipsFor(p, target) {
     const R = window.BKRules; if (!R) return "";
+    if (!ST.manual && target !== "ie") return "";   // the answer is written by the rules; ✋ shows the true / false options
     const st = ST.game || {}, first = (st.day || 1) === 1 && st.phase === "night", out = [];
     if ((target === "night" || target === "all") && first) {
       if (p.firstNightInfo) out.push({ label: tr("המידע שחושב", "Dealt info") + (p.isDrunk ? " (" + tr("שקרי", "false") + ")" : ""), text: p.firstNightInfo, truth: !p.isDrunk });
@@ -442,19 +443,22 @@
     if (!woke.length) return `<p class="bk-hint">${tr("אף אחד לא מתעורר הלילה.", "Nobody wakes tonight.")}</p>`;
     if (run.i >= woke.length) return `<section class="bk-run done"><b>${tr("כל מי שמתעורר סיים ✓", "Everyone who wakes is done ✓")}</b>
       <button type="button" class="bk-btn bk-wide" onclick="window.BKLive.runGo(-1)">${tr("‹ חזרה לשחקן האחרון", "‹ Back to the last player")}</button></section>`;
-    const p = woke[run.i], r = p.role, th = p.thinks && B().getRole(p.thinks), id = run.woke[p.seat];
-    const a = (id && run.wakeA && run.wakeA[p.seat]) || R.action(p, first, he() ? "he" : "en");   // as it was when they were woken
+    const p = woke[run.i], r = p.role, th = p.thinks && B().getRole(p.thinks);
+    let a = (run.wakeA && run.wakeA[p.seat]) || R.action(p, first, he() ? "he" : "en");   // as it was when they were woken
+    const infoOnly = run.woke[p.seat] ? run.woke[p.seat] === "info" : (!(a.n || a.r) || (a.once && isSpent(p.seat)));
+    if (infoOnly && !run.woke[p.seat]) { run.woke[p.seat] = "info"; (run.wakeA = run.wakeA || {})[p.seat] = a; }   // no "you are awake" message — just their info
+    const id = run.woke[p.seat];
     const doc = ST.players[p.seat] || {}, act = doc.act && doc.act.wake === id ? doc.act : null, sentAt = run.sent[p.seat];
     const seen = sentAt && doc.seen && doc.seen.at >= sentAt;
-    const v = ST.draft[p.seat] != null ? ST.draft[p.seat] : (first ? (p.firstNightInfo || "") : "");
+    const v = ST.draft[p.seat] != null ? ST.draft[p.seat] : autoText(p);   // the answer by the rules (✋ to choose by hand)
     return `<section class="bk-run">
       <div class="bk-run-top"><em class="bk-wake">${run.i + 1}</em><div><b>${esc(p.name)}</b><small>${r.icon || ""} ${esc(he() ? r.name_he : r.name_en)}${th ? " → " + esc(he() ? th.name_he : th.name_en) : ""}${p.isAlive === false ? " · " + tr("מת", "dead") : ""}</small></div>
         <span class="bk-run-n">${run.i + 1}/${woke.length}</span></div>
       ${p.fnNote && first ? `<i class="bk-st-note">👁 ${esc(p.fnNote)}</i>` : ""}
       <p class="bk-hint">${esc(a.text)}</p>
       <ol class="bk-run-steps">
-        <li class="${id ? "ok" : "now"}">${id ? tr("הוער ✓", "Woken ✓") : `<button type="button" class="bk-btn pri bk-big bk-wide" onclick="window.BKLive.runWake()">${tr(`העיר את ${esc(String(p.name).split(" / ")[0])}`, `Wake ${esc(p.name)}`)}</button>`}</li>
-        ${id ? `<li class="${act ? "ok" : "now"}">${act ? (a.n || a.r ? tr("בחר: ", "Chose: ") + ((act.targets || []).map(nameOfSeat).concat((act.roles || []).map(rid => { const x = B().getRole(rid); return x ? (x.icon || "") + " " + (he() ? x.name_he : x.name_en) : rid; })).join(", ") || tr("דילג", "skipped")) : tr("ער ✓", "Awake ✓")) : tr("ממתין שיבחר בטלפון…", "Waiting for their choice…")}</li>
+        ${infoOnly ? "" : `<li class="${id ? "ok" : "now"}">${id ? tr("הוער ✓", "Woken ✓") : `<button type="button" class="bk-btn pri bk-big bk-wide" onclick="window.BKLive.runWake()">${tr(`העיר את ${esc(String(p.name).split(" / ")[0])}`, `Wake ${esc(p.name)}`)}</button>`}</li>`}
+        ${id && !infoOnly ? `<li class="${act ? "ok" : "now"}">${act ? (a.n || a.r ? tr("בחר: ", "Chose: ") + ((act.targets || []).map(nameOfSeat).concat((act.roles || []).map(rid => { const x = B().getRole(rid); return x ? (x.icon || "") + " " + (he() ? x.name_he : x.name_en) : rid; })).join(", ") || tr("דילג", "skipped")) : tr("ער ✓", "Awake ✓")) : tr("ממתין שיבחר בטלפון…", "Waiting for their choice…")}</li>
           ${act ? decisionsHTML(p, act) : ""}` : ""}
         ${id ? `<li class="${sentAt ? (seen ? "ok" : "now") : "now"}">
           <textarea id="bkNight-${p.seat}" rows="2" oninput="window.BKLive.draft(${p.seat}, this.value)" placeholder="${tr("התשובה שלו…", "Their answer…")}">${esc(v)}</textarea>
@@ -470,7 +474,9 @@
   function decisionsHTML(p, act) {
     const R = window.BKRules; if (!R) return "";
     const ctx = Object.assign(rulesCtx(), { poisoned: poisonedTonight() });
-    const list = R.decide(p, act, ctx); ST.dec[p.seat] = list;
+    const all = R.decide(p, act, ctx), list = ST.manual ? all : all.filter(d => d.options.some(o => (o.effects || []).length) || !d.options.length && false);
+    ST.dec[p.seat] = list;
+    if (!list.length && !ST.manual) return "";
     const rel = [p.seat].concat(act.targets || []).filter((x, i, a) => a.indexOf(x) === i);
     const done = ST.decDone[p.seat + ":" + act.at] || {};
     return `<li class="bk-dec-wrap">${list.map((d, i) => `<div class="bk-dec${done[i] != null ? " done" : ""}"><b>⚖️ ${esc(d.title)}</b><p>${esc(d.text)}</p>
@@ -559,6 +565,8 @@
     if (!R) return first ? p.firstNightInfo || "" : "";
     const bad = p.isDrunk || poisonedTonight().includes(p.seat), t = actsTonight()[p.seat] || [], tg = t.map(x => players().find(q => q.seat === x)).filter(Boolean);
     const id0 = (p.thinks && B().getRole(p.thinks) ? p.thinks : p.role.id);
+    const A0 = R.action(p, first, he() ? "he" : "en");
+    if (!first && (A0.n || A0.r) && !tg.length && ["fortune_teller", "seamstress", "ravenkeeper", "dreamer", "chambermaid"].includes(id0)) return "";   // waits for their choice
     // night 1: the dealt info, except for those who chose tonight (Fortune Teller, Seamstress…) — answered from their picks
     if (first && !(tg.length && ["fortune_teller", "seamstress"].includes(id0))) return p.firstNightInfo || "";
     const evil = q => q.alignment === "evil", demon = q => q.role && q.role.type === "demon", rh = (B()._state.rules || {}).redHerring;
@@ -749,6 +757,7 @@
         <span><b>${p.seat} · ${esc(p.name)}</b> <small>${r.icon || ""} ${esc(he() ? r.name_he : r.name_en)}${p.isAlive === false ? " · " + tr("מת", "dead") : ""}</small></span>
         <textarea id="bkIe-${p.seat}" rows="2" oninput="window.BKLive.editInfo(${p.seat}, this.value)" placeholder="${tr("מה כתוב בכרטיס שלו…", "What their card says…")}">${esc(v)}</textarea>
         ${chipsFor(p, "ie")}
+        ${(ST.players[p.seat] && (ST.players[p.seat].log || []).length) ? `<details class="bk-ie-log"><summary>📜 ${tr("כל מה שקיבל", "Everything they were told")} (${ST.players[p.seat].log.length})</summary>${ST.players[p.seat].log.slice().reverse().map(x => `<div><small>${esc(x.label || "")}</small> ${esc(x.text)}</div>`).join("")}</details>` : ""}
         <button type="button" class="bk-btn sm${changed ? " pri" : ""}" onclick="window.BKLive.sendInfo([${p.seat}])">${tr("שלח לכרטיס שלו", "Send to their card")}</button></div>`;
     }).join("");
     const n = Object.keys(ST.edit).filter(k => ST.edit[k] !== ((ST.players[k] && ST.players[k].info) || "")).length;
@@ -826,7 +835,9 @@
         <button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.setPhase('night')">${all ? tr("התחל — לילה 1", "Start — Night 1") : tr("התחל בכל זאת (בדיקה) — לילה 1", "Start anyway (test) — Night 1")}</button>
       </section>`;
 
-    if (st.phase === "night") body = `${bcastHTML(st)}<section class="bk-lp-sec"><h4>${tr("או: הלילה, שחקן אחרי שחקן", "Or: the night, player by player")} — ${esc(phaseName(st, he()))}</h4>
+    if (st.phase === "night") body = `<div class="bk-row bk-manual"><button type="button" class="bk-btn sm${ST.manual ? " pri" : ""}" onclick="window.BKLive.toggleManual()">✋ ${ST.manual ? tr("בחירה ידנית פעילה — לחץ לחזור לאוטומטי", "Choosing by hand — tap for automatic") : tr("בחירה ידנית של אמת / שקר", "Choose true / false by hand")}</button>
+        <small class="bk-hint">${ST.manual ? tr("✓ = אמת, ✗ = שקר. אתה מחליט מה כל שחקן מקבל.", "✓ = true, ✗ = false. You decide what each player gets.") : tr("המידע נכתב לפי החוקים (אמת, ושקר לשיכור / מורעל) — לא צריך לבחור.", "Info is written by the rules (true; false for drunk / poisoned) — no need to choose.")}</small></div>
+      ${bcastHTML(st)}<section class="bk-lp-sec"><h4>${tr("או: הלילה, שחקן אחרי שחקן", "Or: the night, player by player")} — ${esc(phaseName(st, he()))}</h4>
         ${runnerHTML(st)}
         <button type="button" class="bk-btn ${(ST.run && ST.run.i >= Object.keys(ST.wakeNo || {}).length) || (ST.bcast && ST.bcast.done) ? "pri" : ""} bk-wide bk-big" onclick="window.BKLive.endNightAuto()">${tr("סיום הלילה — הכרז מי מת ›", "End the night — announce who died ›")}</button>
         <button type="button" class="bk-btn bk-wide" onclick="window.BKLive.setPhase('dawn')">${tr("סיום הלילה — לבדוק קודם מי מת", "End the night — check who died first")}</button>
@@ -1110,6 +1121,22 @@
     }
     return html;
   }
+  // the table as everyone sits — names and faces only, no roles; you in gold, your neighbours marked
+  function circleHTML(d, s, T) {
+    const seats = (s && s.seats) || [], N = seats.length; if (N < 2) return "";
+    const i = seats.findIndex(x => x.seat === d.seat), nb = i < 0 ? [] : [seats[(i - 1 + N) % N].seat, seats[(i + 1) % N].seat];
+    const R = 40, start = i < 0 ? 0 : i;   // you at the bottom
+    return `<section class="bkp-card bkp-circle-card"><h3>${T("מעגל הישיבה", "The table")}</h3>
+      <div class="bkp-circle">${seats.map((x, k) => { const a = ((k - start) / N) * 2 * Math.PI + Math.PI / 2, cx = 50 + R * Math.cos(a), cy = 50 + R * Math.sin(a);
+        return `<div class="bkp-cseat${x.alive ? "" : " dead"}${x.seat === d.seat ? " me" : ""}${nb.includes(x.seat) ? " nb" : ""}" style="left:${cx.toFixed(2)}%;top:${cy.toFixed(2)}%">${av(x)}<b>${esc(String(x.name).split(" / ")[0])}</b><i>${x.seat}</i></div>`; }).join("")}
+        <div class="bkp-circle-mid">${T("עם כיוון השעון ←", "clockwise →")}<br><small>${T(`${seats.filter(x => x.alive).length} חיים`, `${seats.filter(x => x.alive).length} alive`)}</small></div></div>
+      ${nb.length ? `<p class="bkp-hint">${T("השכנים שלך", "Your neighbours")}: <b>${nb.map(n => esc(String((seats.find(x => x.seat === n) || {}).name || "").split(" / ")[0])).join(T(" ו־", " and "))}</b></p>` : ""}</section>`;
+  }
+  // everything this player was told, newest first (kept for the whole game)
+  function historyHTML(d, T) {
+    const log = (d.log || []).slice().reverse(); if (!log.length) return "";
+    return `<details class="bkp-card bkp-log"><summary>📜 ${T("כל המידע שקיבלת", "Everything you were told")} (${log.length})</summary>${log.map(x => `<div><small>${esc(x.label)}${x.at ? " · " + new Date(x.at).toLocaleTimeString(isHeG() ? "he-IL" : "en-GB", { hour: "2-digit", minute: "2-digit" }) : ""}</small><p>${esc(x.text)}</p></div>`).join("")}</details>`;
+  }
   function townHTML(d, s, T) {
     if (!s || !s.seats) return "";
     const n = notes(), row = x => `<div class="bkp-trow${x.alive ? "" : " dead"}${x.seat === d.seat ? " me" : ""}"><i>${x.seat}</i>${av(x, "sm")}<b>${esc(String(x.name).split(" / ")[0])}</b>${x.alive ? "" : `<small>${x.ghost ? T("👻 יש הצבעה", "👻 has a vote") : "✝"}</small>`}
@@ -1187,10 +1214,12 @@
           <div class="bkp-pills"><span class="${esc(d.type)}">${esc(String(d.type || "").toUpperCase())}</span><span class="${esc(d.alignment)}">${d.alignment === "evil" ? T("רעים", "Evil") : T("טובים", "Good")}</span></div>
           <p class="bkp-ability">${esc(ability)}</p>
           ${d.info ? `<div class="bkp-info"><small>${T("המידע האחרון שלך", "Your latest info")}</small><p>${esc(d.info)}</p></div>` : ""}
-          ${log.length > 1 ? `<details class="bkp-log"><summary>${T("כל המידע שקיבלת", "Everything you were told")} (${log.length})</summary>${log.map(x => `<div><small>${esc(x.label)}</small><p>${esc(x.text)}</p></div>`).join("")}</details>` : ""}
+
         </div>` : `<p class="bkp-hint">${T("מוסתר — כדי ששכנים לא יראו.", "Hidden — so your neighbours can't see.")}</p>`}
       </section>
 
+      ${historyHTML(d, T)}
+      ${circleHTML(d, s, T)}
       ${townHTML(d, s, T)}
 
       <footer class="bkp-foot">⌛ ${T("הדף נמחק ב־", "This page is deleted at ")}${exp}</footer>`;
@@ -1358,5 +1387,5 @@
 
   window.BKLive = { devMode, decide: decideOpt, toggleRcpt, sendCustom, pickRole, endDay, declareWin, dismissWin: () => { ST.win = null; render(); }, runWake, runSend, runGo, pickSeat, sendPick, gotIt, useChip, sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
     groupSend, openLobby, startFlow, toggleDeath, announceDawn, openRoles, closeRoles, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
-    openDevAll, devAllUrl, startVote, addTime, setTime, autoNight, autoText, broadcastNight, checkBcast, endNightAuto, announcePreset, playerNom, playerDay, pickDay, setNote, autoToggle: o => { ST.autoOpen = o; }, openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
+    toggleManual: () => { ST.manual = !ST.manual; render(); }, openDevAll, devAllUrl, startVote, addTime, setTime, autoNight, autoText, broadcastNight, checkBcast, endNightAuto, announcePreset, playerNom, playerDay, pickDay, setNote, autoToggle: o => { ST.autoOpen = o; }, openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
 })();

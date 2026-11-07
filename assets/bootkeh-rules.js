@@ -74,6 +74,12 @@
     return shuffle(players.filter(x => x !== asker && x.role.id !== notHolderOf)).slice(0, 2).map(x => x.name);
   }
 
+  // the Grimoire (Spy, Widow): every seat with its real character
+  const typeName = (t, lang) => ({ townsfolk: say(lang, "תושב", "Townsfolk"), outsider: say(lang, "אאוטסיידר", "Outsider"), minion: say(lang, "משרת", "Minion"), demon: say(lang, "שד", "Demon") }[t] || t);
+  function grimoire(players, lang) {
+    return say(lang, "📖 הגרימואר: ", "📖 The Grimoire: ") + players.map(x => `${x.seat}. ${x.name} — ${nm(x.role, lang)}${x.isDrunk ? say(lang, " (שיכור)", " (drunk)") : ""}${x.isAlive === false ? " ✝" : ""}`).join(" · ");
+  }
+
   // --- first night: {truth, lies:[...], note} for one player. ctx = {players, pool, rules:{redHerring,bluffs}, lang} ---
   function firstNight(p, ctx) {
     const { players, lang } = ctx, pool = ctx.pool || [], rules = ctx.rules || {};
@@ -137,6 +143,10 @@
         out.truth = m ? say(lang, `יש לך את היכולת של ${nm(m, lang)}: ${m.ability_he}`, `You have the ${nm(m, lang)} ability: ${m.ability_en}`) : ""; break; }
       case "fortune_teller": out.truth = say(lang, "בכל לילה תבחר שני שחקנים ותגלה אם אחד מהם שד.", "Each night you choose two players and learn if either is a Demon."); break;
       case "seamstress": out.truth = say(lang, "פעם אחת במשחק, בלילה, תבחר שני שחקנים ותגלה אם הם באותו צד.", "Once per game, at night, choose two players: learn if they are the same alignment."); break;
+      case "knight": { const t = shuffle(players.filter(x => x !== p && x.role.type !== "demon")).slice(0, 2); out.truth = say(lang, `שני השחקנים האלה אינם השד: ${t.map(x => x.name).join(" ו־")}.`, `These two players are not the Demon: ${t.map(x => x.name).join(" and ")}.`);
+        const d = demons[0], o = players.find(x => x !== p && x !== d); if (d && o) out.lies = [say(lang, `שני השחקנים האלה אינם השד: ${shuffle([d, o]).map(x => x.name).join(" ו־")}.`, `These two players are not the Demon: ${shuffle([d, o]).map(x => x.name).join(" and ")}.`)]; break; }
+      case "spy": case "widow": out.truth = grimoire(players, lang); break;
+      case "balloonist": { const t = pick(players.filter(x => x !== p)); out.truth = t ? say(lang, `${t.name} הוא ${typeName(t.role.type, lang)}.`, `${t.name} is a ${typeName(t.role.type, lang)}.`) : ""; break; }
       case "damsel": case "recluse": case "heretic": case "klutz": out.truth = ""; break;
       default: out.truth = "";
     }
@@ -161,6 +171,8 @@
     if (r.id === "undertaker" && ctx.executedToday) { const ex = ctx.executedToday; add(nm(shown(ex), lang), say(lang, `היום הוצא להורג: ${nm(ex.role, lang)}.`, `Executed today: the ${nm(ex.role, lang)}.`), true);
       const f = pick((ctx.pool || []).filter(x => x.id !== ex.role.id)); if (f) add(nm(f, lang), say(lang, `היום הוצא להורג: ${nm(f, lang)}.`, `Executed today: the ${nm(f, lang)}.`), false); }
     if (r.id === "oracle") { const n = players.filter(x => x.isAlive === false && evil(x)).length; [n, n + 1].concat(n ? [n - 1] : []).forEach(x => add(String(x), say(lang, `מספר השחקנים המתים שהם רעים: ${x}.`, `Dead players who are evil: ${x}.`), x === n)); }
+    if (r.id === "spy") add(say(lang, "הגרימואר", "Grimoire"), grimoire(players, lang), true);
+    if (r.id === "balloonist") { const t = pick(players.filter(x => x !== p)); if (t) add(typeName(t.role.type, lang), say(lang, `${t.name} הוא ${typeName(t.role.type, lang)}.`, `${t.name} is a ${typeName(t.role.type, lang)}.`), true); }
     if (r.id === "ravenkeeper") add(say(lang, "בחר שחקן", "Choose"), say(lang, "מתת הלילה. בחר שחקן ותגלה את התפקיד שלו.", "You died tonight. Choose a player: you learn their character."), null);
     if (p.isDrunk) list.forEach(x => { if (x.truth != null) x.truth = !x.truth; });   // for the Drunk the "right" answer is a false one
     return list;
@@ -224,8 +236,22 @@
     philosopher: { n: 0, first: true, r: 1, kinds: ["townsfolk", "outsider"], once: true, he: "פעם במשחק: בחר תפקיד טוב — תקבל את היכולת שלו. (אפשר לדלג)", en: "Once per game: choose a good character — gain its ability. (You may skip)" },
   };
   const DEMON_KILL = new Set(["imp", "vortox", "vigormortis", "no_dashii", "fang_gu", "zombuul", "shabaloth", "po", "lleech", "al_hadikhia"]);
+  // A role without a hand-written prompt: read the choice from its ability text ("Each night, choose 2 players…",
+  // "choose a character…", "Once per game…", "(not yourself)"), so every character that chooses at night gets buttons.
+  const NUM = { a: 1, an: 1, one: 1, "1": 1, two: 2, "2": 2, three: 3, "3": 3 };
+  function inferAct(r) {
+    const t = String(r.ability_en || ""); if (!(r.firstNight || r.otherNight)) return null;
+    if (!/(each|at) night|on night 1|once per game, at night/i.test(t)) return null;
+    const mp = /choose (a|an|one|two|three|\d) (?:alive |living |dead |good |evil |other )?players?/i.exec(t), mc = /choose (a|an|one|two|\d) (?:good |evil |)?characters?/i.exec(t);
+    if (!mp && !mc) return null;
+    const a = { n: mp ? NUM[mp[1].toLowerCase()] || 1 : 0, r: mc ? NUM[mc[1].toLowerCase()] || 1 : 0, self: !/not yourself|other than you/i.test(t), first: !!r.firstNight && !/night\*/i.test(t),
+      once: /once per game/i.test(t), dead: /choose (a|an) dead player/i.test(t), kinds: /good character/i.test(t) ? ["townsfolk", "outsider"] : /evil character/i.test(t) ? ["minion", "demon"] : null };
+    a.he = `לפי היכולת שלך: ${r.ability_he || ""}`; a.en = `Your ability: ${r.ability_en}`;
+    if (a.once) { a.he += " (אפשר לדלג)"; a.en += " (You may skip)"; }
+    return a;
+  }
   function action(p, first, lang) {
-    const r = shown(p), a = ACT[r.id];
+    const r = shown(p), a = ACT[r.id] || inferAct(r);
     if (!a || (first && !a.first)) return { n: 0, text: say(lang, "התעוררת. תסתכל במידע שלך.", "You are awake. Look at your info."), info: true };
     return { n: a.n, r: a.r || 0, kinds: a.kinds || null, self: !!a.self, dead: !!a.dead, once: !!a.once, text: L(lang) === "he" ? a.he : a.en };
   }
@@ -304,5 +330,5 @@
     return out;
   }
 
-  window.BKRules = { decide, action, resolveNight, setup, shown, shownAlignment, firstNight, laterNight, quick, nightOrder, outsiderChange };
+  window.BKRules = { inferAct, grimoire, decide, action, resolveNight, setup, shown, shownAlignment, firstNight, laterNight, quick, nightOrder, outsiderChange };
 })();

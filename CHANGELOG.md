@@ -8,6 +8,10 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **The table on every phone:** each player sees the whole seating circle (names and photos, no roles) with their neighbours marked, plus everything they were told this game (📜, newest first); the storyteller sees each player's full history in the info editor.
+  - **No "you are awake" for info-only players:** players who only learn something get their info directly (no wake-up message and then the info).
+  - **True / false is decided by the rules:** answers are pre-written by the rules (false for drunk / poisoned); the ✓/✗ options appear only after "✋ Choose true / false by hand".
+  - **More characters handled:** a character without a hand-written prompt gets its night choice read from its ability text (e.g. Widow, Harpy, Ojo, Kazali); Knight, Spy / Widow (the Grimoire) and Balloonist get their info by the rules.
   - **Day → evening, on timers:** the day is talk on a timer (shown on every phone); when it ends the evening starts by itself — nominations and votes. Nominations are only possible in the evening.
   - **Speeches before the vote:** a nomination opens with the accuser's reason and the accused's defence (written on the phone and shown to everyone, or out loud) on a timer; only then does the vote open (or when the storyteller taps).
   - **Time to nominate:** after every vote a countdown restarts for the next nomination; when it runs out no more nominations are accepted today. All three lengths are set in "⏱ Timers" (+time buttons on the way).
