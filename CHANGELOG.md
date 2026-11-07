@@ -8,6 +8,7 @@ Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`
 
 ## 2026-11-06
 - **Bootkeh:**
+  - **🧪 All players in one tab (developer mode):** browsers let one click open only one new tab, so "open all players" now opens a single tab with every player's page side by side (3/4/5 columns or auto), and takes every seat so they all count as joined.
   - **🌙 The night for everyone at once:** one button sends every player whose character chooses tonight (Demon, Poisoner, Monk, Devil's Advocate, Fortune Teller…) their choice on the phone — players, characters or skip — all at the same time; when all have chosen, each player's info is written by the rules from those choices and sent automatically. "End the night" now announces the deaths from the choices in one tap (or check first).
   - **Abilities follow the game:** a once-per-game ability is marked **Spent** on the player's page and not offered again; the Devil's Advocate's pick survives execution; day abilities from the phone — Slayer (the Demon dies), Psychopath (the target dies), Klutz (picks evil → evil wins) — update everyone at once.
   - **Players nominate from their phone:** "⚖️ Nominate a player" opens the accusation for everyone (with the usual rules: alive, once a day, one at a time).

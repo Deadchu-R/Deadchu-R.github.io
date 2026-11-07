@@ -524,7 +524,9 @@
     const urlParams = new URLSearchParams(window.location.search);
     const playerParam = urlParams.get("player") || urlParams.get("p");
     showVersion();
-    if (urlParams.has("tv") && window.BKSheet) {
+    if (urlParams.has("devall") && window.BKLive) {
+      window.BKLive.openDevAll();   // developer mode: all players of the live game in one tab
+    } else if (urlParams.has("tv") && window.BKSheet) {
       window.BKSheet.openTV();   // the roles sheet on a TV (a link that stops working after a few hours)
     } else if (urlParams.get("g") && urlParams.get("join") && window.BKLive) {
       window.BKLive.openLobby(urlParams.get("g"));   // the one link for the whole group

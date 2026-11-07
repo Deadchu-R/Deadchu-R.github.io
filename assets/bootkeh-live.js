@@ -775,6 +775,7 @@
         <div class="bk-join ${all ? "all" : ""}"><b>${joined} / ${total}</b> ${tr("הצטרפו", "joined")}${all ? ` · ${tr("כולם בפנים!", "everyone is in!")}` : ""}</div>
         <div class="bk-group-list">${players().map(p => `<span class="${ST.taken[p.seat] ? "on" : ""}">${p.seat}. ${esc(p.name)}${ST.taken[p.seat] ? " ✓" : ""}</span>`).join("")}</div>
         <button type="button" class="bk-btn bk-wide" onclick="window.BKLive.groupSend()">${tr("קישור לקבוצה / ברקוד", "Group link / QR code")}</button>
+        ${devMode() ? `<button type="button" class="bk-btn bk-wide" onclick="window.open(window.BKLive.devAllUrl(), '_blank')">🧪 ${tr("פתח את כל השחקנים בטאב אחד ומחובר", "Open all players in one tab, connected")}</button>` : ""}
         <button type="button" class="bk-btn pri bk-wide bk-big" onclick="window.BKLive.setPhase('night')">${all ? tr("התחל — לילה 1", "Start — Night 1") : tr("התחל בכל זאת (בדיקה) — לילה 1", "Start anyway (test) — Night 1")}</button>
       </section>`;
 
@@ -1166,7 +1167,7 @@
         <div class="bk-sendall-count">${taken} / ${ps.length} ${tr("הצטרפו", "joined")}</div>
         <div class="bk-group-list">${ps.map(p => `<span class="${ST.taken[p.seat] ? "on" : ""}">${p.seat}. ${av((ST.game && (ST.game.seats || []).find(x => x.seat === p.seat)) || { name: p.name, photo: B().photoFor ? B().photoFor(p.name) : "" }, "sm")}${esc(p.name)}${ST.taken[p.seat] ? " ✓" : ""}
           <button type="button" data-link="${p.seat}" title="${tr("הקישור האישי שלו — להעתקה / שליחה מחדש", "Their personal link — copy / resend")}">🔗</button>${devMode() ? `<button type="button" data-tab="${p.seat}" title="${tr("פתח כשחקן בטאב חדש (מצב מפתח)", "Open as this player in a new tab (developer mode)")}">🧪</button>` : ""}${ST.taken[p.seat] ? `<button type="button" data-free="${p.seat}" title="${tr("שחרר מושב", "Free seat")}">↺</button>` : ""}</span>`).join("")}</div>
-        ${devMode() ? `<button type="button" class="bk-btn bk-wide" data-act="alltabs">🧪 ${tr("מצב מפתח: פתח את כל השחקנים בטאבים", "Developer mode: open every player in tabs")}</button>` : ""}
+        ${devMode() ? `<button type="button" class="bk-btn bk-wide" data-act="alltabs">🧪 ${tr("מצב מפתח: פתח את כל השחקנים בטאב אחד ומחובר", "Developer mode: open all players in one tab, connected")}</button>` : ""}
         <p class="bk-hint">${tr("🔗 = הקישור האישי של השחקן (אם החליף טלפון או לא מצליח להיכנס). ↺ = שחרור מושב שנלקח בטעות.", "🔗 = the player's personal link (if they changed phone or can't get in). ↺ = free a seat taken by mistake.")}</p>
         <div class="bk-join ${all ? "all" : ""}">${all ? tr("כולם הצטרפו — אפשר להתחיל!", "Everyone joined — you can start!") : tr(`ממתינים ל־${ps.length - taken} שחקנים…`, `Waiting for ${ps.length - taken} players…`)}</div>
         <button type="button" class="bk-btn pri bk-wide bk-big" data-act="start">${all ? tr("התחל — לילה 1", "Start — Night 1") : tr("התחל בכל זאת (בדיקה)", "Start anyway (test)")}</button>
@@ -1180,8 +1181,9 @@
       ov.querySelector('[data-act="start"]').onclick = async () => { ov.remove(); B().setTab("board"); await attach(); if (!ST.game || ST.game.phase === "lobby") await setPhase("night"); };
       ov.querySelector('[data-act="each"]').onclick = () => { ov.remove(); B().sendEachWhatsapp(); };
       ov.querySelectorAll("[data-free]").forEach(b => b.onclick = () => C().releaseSeat(g.gameId, +b.dataset.free).catch(e => alert(e.message || e)));
-      ov.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => window.open(g.links[+b.dataset.tab], "_blank"));
-      const allTabs = ov.querySelector('[data-act="alltabs"]'); if (allTabs) allTabs.onclick = () => ps.forEach(p => window.open(g.links[p.seat], "_blank"));
+      ov.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { const seat = +b.dataset.tab; window.open(g.links[seat], "_blank"); C().claimSeat(g.gameId, seat).catch(() => {}); });
+      // browsers let a click open only one new tab, so all the players open together in ONE tab (a grid of phones)
+      const allTabs = ov.querySelector('[data-act="alltabs"]'); if (allTabs) allTabs.onclick = () => window.open(devAllUrl(), "_blank");
       ov.querySelectorAll("[data-link]").forEach(b => b.onclick = () => {
         const seat = +b.dataset.link, url = g.links[seat], who = (ps.find(p => p.seat === seat) || {}).name || "";
         if (navigator.share) navigator.share({ title: who, text: tr(`${who} — הדף האישי שלך במשחק:`, `${who} — your personal page:`), url }).catch(() => {});
@@ -1207,6 +1209,31 @@
   // A player's personal key for a game, kept on this phone in two places (some in-app browsers clear one of them).
   // Not by IP: everyone at the table shares the same Wi-Fi IP, and on mobile data it keeps changing.
   // developer mode (Settings ⚙): several players in separate tabs of one computer, start without everyone
+  // 🧪 developer mode: every player of this game, side by side in one tab, each seat taken ("joined") and live
+  function devAllUrl() { return location.origin + location.pathname.replace(/\/Bootkeh(\.html|\/index\.html|\/)?$/i, "/").replace(/[^/]*$/, "") + "Bootkeh/?devall=1"; }
+  async function openDevAll() {
+    const isHe = he(), T = tr;
+    document.documentElement.classList.add("bk-tv-mode", "bk-devall");
+    const root = document.createElement("div"); root.id = "bkTV"; root.className = "bk-devall-root"; document.body.appendChild(root);
+    const g = C() && C().saved();
+    if (!g) { root.innerHTML = `<div class="bk-tv-msg"><b>🧪</b><p>${T("אין משחק חי במכשיר הזה. צור משחק בטאב של מספר הסיפורים ואז פתח שוב.", "No live game on this device. Create one in the storyteller tab, then open this again.")}</p></div>`; return; }
+    document.title = "🧪 " + T("כל השחקנים", "All players") + " · " + (g.title || "Bootkeh");
+    const ps = (B()._state.players && B()._state.players.length ? B()._state.players : Object.keys(g.links).map(seat => ({ seat: +seat, name: T("שחקן ", "Player ") + seat })));
+    let cols = +(localStorage.getItem("bk_devall_cols") || 0) || 0;
+    const draw = () => {
+      root.innerHTML = `<div class="bk-devall-top"><b>🧪 ${T("כל השחקנים", "All players")} · ${esc(g.title || "")}</b><span id="bkDevAllMsg">${T("מחבר את כולם…", "Connecting everyone…")}</span>
+        <span class="bk-seg">${[0, 3, 4, 5].map(c => `<button type="button" data-cols="${c}" class="${cols === c ? "on" : ""}">${c || T("אוטו", "auto")}</button>`).join("")}</span></div>
+        <div class="bk-devall-grid" style="${cols ? `grid-template-columns:repeat(${cols},minmax(0,1fr))` : ""}">${ps.map(p => `<figure><figcaption>${p.seat} · ${esc(String(p.name).split(" / ")[0])}${p.role ? ` <small>${p.role.icon || ""} ${esc(isHe ? p.role.name_he : p.role.name_en)}</small>` : ""}</figcaption>
+          <iframe src="${esc(g.links[p.seat])}" title="${esc(p.name)}" loading="eager"></iframe></figure>`).join("")}</div>`;
+      root.querySelectorAll("[data-cols]").forEach(b => b.onclick = () => { cols = +b.dataset.cols; try { localStorage.setItem("bk_devall_cols", cols); } catch (e) {} draw(); claimAll(); });
+    };
+    const claimAll = async () => {
+      let ok = 0;
+      for (const p of ps) { try { await C().claimSeat(g.gameId, p.seat); ok++; } catch (e) {} }
+      const m = document.getElementById("bkDevAllMsg"); if (m) m.textContent = T(`✓ ${ok}/${ps.length} מחוברים`, `✓ ${ok}/${ps.length} connected`);
+    };
+    draw(); claimAll();
+  }
   function devMode() { try { return localStorage.getItem("bk_dev") === "1"; } catch (e) { return false; } }
   const seatMem = {
     get(gid) {
@@ -1267,5 +1294,5 @@
 
   window.BKLive = { devMode, decide: decideOpt, toggleRcpt, sendCustom, pickRole, endDay, declareWin, dismissWin: () => { ST.win = null; render(); }, runWake, runSend, runGo, pickSeat, sendPick, gotIt, useChip, sendInfo, editInfo: (seat, v) => { ST.edit[seat] = v; }, ieToggle: o => { ST.ieOpen = o; },
     groupSend, openLobby, startFlow, toggleDeath, announceDawn, openRoles, closeRoles, attach, render, syncSeats, setPhase, announce, openNom, toggleHand, closeNom, sendNight, draft: (seat, v) => { ST.draft[seat] = v; },
-    autoNight, autoText, broadcastNight, checkBcast, endNightAuto, announcePreset, playerNom, playerDay, pickDay, setNote, autoToggle: o => { ST.autoOpen = o; }, openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
+    openDevAll, devAllUrl, autoNight, autoText, broadcastNight, checkBcast, endNightAuto, announcePreset, playerNom, playerDay, pickDay, setNote, autoToggle: o => { ST.autoOpen = o; }, openPlayer, enableAlerts, playerVote, playerDefend, toggleReveal };
 })();
