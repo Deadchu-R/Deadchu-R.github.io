@@ -6,6 +6,9 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
+## 2026-11-08
+- **KesherAI page (roeetal.com/KesherAI):** a project page for KesherAI — what it is, features, screenshots and tour videos of the real app (English and Hebrew UI, recorded by the KesherAI repo's `site-media` workflow), downloads for Windows / macOS / Linux / Android picked from the newest GitHub release, run-from-source, open source and roadmap; EN / עברית switch. Hand-written in `KesherAI/` (not generated); not linked from the main site yet.
+
 ## 2026-11-06
 - **Bootkeh:**
   - **The table on every phone:** each player sees the whole seating circle (names and photos, no roles) with their neighbours marked, plus everything they were told this game (📜, newest first); the storyteller sees each player's full history in the info editor.
