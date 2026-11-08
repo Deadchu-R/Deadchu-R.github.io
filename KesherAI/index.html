@@ -86,6 +86,7 @@ html[lang=he] .sec-h small{letter-spacing:0}
 .dl a:hover{border-color:rgba(152,163,255,.5);transform:translateY(-2px)}
 .dl a.mine{border-color:var(--a);box-shadow:var(--glow)}
 .dl b{font:600 18px var(--font)}.dl span{color:var(--mut);font-size:14px}
+.dl small.v{color:var(--a);font:500 12.5px var(--mono)}
 .dl i{font-style:normal;font-size:26px}
 .note{margin-top:16px;color:var(--mut);font-size:14px}
 pre{background:#0d0d0e;border:1px solid var(--line);border-radius:var(--rs);padding:16px 18px;overflow:auto;font:13.5px/1.6 var(--mono);color:#dcdcf5;direction:ltr;text-align:left}
@@ -124,7 +125,7 @@ a:focus-visible,button:focus-visible,video:focus-visible,figure:focus-visible{ou
 
 <main>
 <div class="hero"><canvas id="net" aria-hidden="true"></canvas><div class="wrap">
-  <span class="pill"><b id="ver">v0.4.97</b> <span data-t="pill">· free & open source · Apache-2.0</span></span>
+  <span class="pill"><b id="ver">v0.5</b> <span data-t="pill">· free & open source · Apache-2.0</span></span>
   <h1><span data-t="h1a">Your AI studio,</span><br><span class="grad" data-t="h1b">on your own computer.</span></h1>
   <p class="lead" data-t="lead">Create pictures, music, video and 3D, write code, and build games in Unreal and Unity — in words, with models that run on your machine. Free and open source.</p>
   <div class="cta">
@@ -279,17 +280,41 @@ function drawVideos() {
 function hero() { const h = document.getElementById("heroMedia");
   if ((MEDIA.videos || []).includes("desktop-tour")) h.innerHTML = `<video src="media/${lang}/video/desktop-tour.mp4" poster="media/${lang}/shots/home-s.webp" autoplay muted loop playsinline></video>`;
   else if ((MEDIA.desk || []).includes("home")) h.innerHTML = `<img src="media/${lang}/shots/home.webp" alt="KesherAI">`; else h.style.display = "none"; }
-/* downloads: the newest release's files, and the visitor's own system highlighted */
+/* downloads: always the newest version. Reads the newest published releases from GitHub (skipping drafts and
+   pre-releases) and, for each system, takes the newest one that already has that file — so a release that is still
+   uploading never leaves a button empty. The answer is kept for 10 minutes (GitHub allows 60 requests an hour per
+   visitor); if GitHub can't be reached, the buttons open the releases page, which also shows the newest version. */
 (function downloads() {
   const ua = navigator.userAgent, os = /Android/i.test(ua) ? "android" : /Win/i.test(ua) ? "win" : /Mac/i.test(ua) ? "mac" : /Linux/i.test(ua) ? "linux" : "";
   const mine = document.querySelector(`#dl a[data-os="${os}"]`); if (mine) mine.classList.add("mine");
-  fetch("https://api.github.com/repos/Deadchu-R/KesherAI/releases/latest").then(r => r.ok ? r.json() : null).then(rel => {
-    if (!rel) return; document.getElementById("ver").textContent = rel.tag_name;
-    const f = re => (rel.assets || []).find(a => re.test(a.name));
-    const set = (o, a) => { const el = document.querySelector(`#dl a[data-os="${o}"]`); if (el && a) el.href = a.browser_download_url; };
-    set("win", f(/Setup.*\.exe$/i)); set("mac", f(/\.dmg$/i)); set("linux", f(/\.AppImage$/i));
+  const WANT = { win: /^KesherAI-Setup-.*\.exe$/i, mac: /\.dmg$/i, linux: /\.AppImage$/i, deb: /\.deb$/i };
+  const MB = n => (n / 1048576).toFixed(n > 1048576 * 100 ? 0 : 1) + " MB";
+  const apply = d => {
+    if (!d) return;
+    if (d.ver) document.getElementById("ver").textContent = d.ver;
+    for (const [o, a] of Object.entries(d.files || {})) {
+      const el = document.querySelector(`#dl a[data-os="${o}"]`); if (!el || !a) continue;
+      el.href = a.url; el.setAttribute("download", "");
+      let v = el.querySelector(".v"); if (!v) { v = document.createElement("small"); v.className = "v"; el.appendChild(v); }
+      v.textContent = `${a.tag} · ${MB(a.size)}${o === "linux" && d.files.deb ? " · .deb ↓" : ""}`;
+      if (o === "linux" && d.files.deb) { v.style.cursor = "pointer"; v.onclick = e => { e.preventDefault(); location.href = d.files.deb.url; }; }
+    }
     if (mine && os !== "android") document.getElementById("ctaDl").href = mine.href;
-  }).catch(() => {});
+  };
+  let cached = null; try { cached = JSON.parse(localStorage.getItem("kesher-rel") || "null"); } catch (e) {}
+  if (cached) apply(cached);
+  if (cached && Date.now() - cached.at < 10 * 60e3) return;
+  fetch("https://api.github.com/repos/Deadchu-R/KesherAI/releases?per_page=15", { headers: { Accept: "application/vnd.github+json" } })
+    .then(r => r.ok ? r.json() : null).then(list => {
+      if (!Array.isArray(list)) return;
+      const rels = list.filter(r => !r.draft && !r.prerelease && /^v\d/.test(r.tag_name)).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+      if (!rels.length) return;
+      const files = {};
+      for (const [o, re] of Object.entries(WANT)) for (const r of rels) { const a = (r.assets || []).find(x => re.test(x.name) && x.state !== "starter"); if (a) { files[o] = { url: a.browser_download_url, size: a.size, tag: r.tag_name }; break; } }
+      const d = { at: Date.now(), ver: rels[0].tag_name, files };
+      try { localStorage.setItem("kesher-rel", JSON.stringify(d)); } catch (e) {}
+      apply(d);
+    }).catch(() => {});
 })();
 /* scroll reveal */
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .12 });
