@@ -6,6 +6,9 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
+## 2026-11-09
+- **KesherAI updates page (roeetal.com/KesherAI/updates):** every KesherAI release, newest first, grouped by day, in Hebrew or English (from each release's notes); search, "show small fix releases", the newest marked. Updates itself: reads GitHub on every visit (cached 10 min, re-checks every 10 min while open); `updates/snapshot.json` only if GitHub can't be reached. Linked from the KesherAI page's menu and footer.
+
 ## 2026-11-08
 - **KesherAI page — downloads always the newest version:** each button takes the newest published release that already has its file (so a release still uploading never breaks a button), shows the version and size, highlights your system, keeps the answer 10 minutes, and falls back to the releases page if GitHub can't be reached.
 - **KesherAI page — new design and positioning:** the app's colours (#121213 / #98a3ff, no gradients), Rubik + IBM Plex Mono, 16/10px corners; new hero ("Your AI studio, on your own computer"), Create / Games / Safe and simple first, Telegram and "Make it yours" cards, a "How it is different" table (KesherAI · OpenClaw · LM Studio · ComfyUI), focus outlines, a note that the screenshots predate the new design.

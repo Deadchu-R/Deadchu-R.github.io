@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KesherAI — Updates</title>
+<meta name="description" content="What's new in KesherAI: every release, newest first.">
+<meta property="og:title" content="KesherAI — Updates">
+<meta property="og:image" content="https://roeetal.com/KesherAI/media/og.jpg">
+<meta name="theme-color" content="#121213">
+<link rel="icon" href="../media/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- KesherAI updates page (roeetal.com/KesherAI/updates). Always current: on every visit it reads the releases from
+     GitHub (cached 10 minutes); snapshot.json is only a fallback for when GitHub can't be reached. -->
+<style>
+:root{--bg:#121213;--bg2:#18181a;--card:#1f1f22;--line:rgba(255,255,255,.08);--txt:#ededee;--mut:#94949c;--a:#98a3ff;--on-a:#121213;--r:16px;--rs:10px;--font:Rubik,system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.6 var(--font);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+h1,h2,h3{font-family:var(--font);font-weight:700;margin:0;letter-spacing:-.015em}
+html[lang=he] h1,html[lang=he] h2,html[lang=he] h3{letter-spacing:0}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px}
+.top{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);background:rgba(18,18,19,.8);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:16px;height:62px;max-width:1180px}
+.logo{display:flex;align-items:center;gap:10px;font:700 19px var(--font);text-decoration:none}
+.logo img{width:30px;height:30px;border-radius:8px}
+.top nav{display:flex;gap:16px;margin-inline-start:auto;font-size:14.5px;color:var(--mut)}
+.top nav a{text-decoration:none}.top nav a:hover,.top nav a[aria-current]{color:var(--txt)}
+.lang{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:999px;padding:5px 12px;font:600 13px var(--font);cursor:pointer}
+@media(max-width:640px){.top nav a.hide-s{display:none}}
+header.h{padding:56px 0 24px}
+header.h small{display:block;color:var(--a);font:600 13px var(--font);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px}
+html[lang=he] header.h small{letter-spacing:0}
+header.h h1{font-size:clamp(32px,5vw,48px);line-height:1.1;margin-bottom:10px}
+header.h p{color:var(--mut);margin:0}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:22px 0 8px}
+.bar input[type=search]{flex:1;min-width:200px;padding:11px 14px;border-radius:var(--rs);border:1px solid var(--line);background:var(--card);color:var(--txt);font:15px var(--font)}
+.chk{display:inline-flex;gap:8px;align-items:center;color:var(--mut);font-size:14.5px;cursor:pointer}
+.chk input{accent-color:var(--a);width:16px;height:16px}
+.status{color:var(--mut);font-size:13.5px;margin:6px 0 18px;min-height:1.4em}
+.day{margin:28px 0 10px;color:var(--mut);font:600 14px var(--font);display:flex;align-items:center;gap:12px}
+.day::after{content:"";flex:1;height:1px;background:var(--line)}
+.rel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}
+.rel.latest{border-color:rgba(152,163,255,.55);box-shadow:0 0 0 1px rgba(152,163,255,.2)}
+.rel-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.rel-h b{font:600 17px var(--font)}
+.rel-h time{color:var(--mut);font-size:13.5px}
+.rel-h a{margin-inline-start:auto;font-size:13.5px;color:var(--mut);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.rel-h a:hover{color:var(--txt)}
+.badge{background:var(--a);color:var(--on-a);font:600 12px var(--font);padding:2px 9px;border-radius:999px}
+.rel ul{margin:4px 0 0;padding-inline-start:20px}
+.rel li{margin:4px 0}
+.rel li::marker{color:var(--a)}
+.rel.minor{padding:10px 18px;opacity:.75}.rel.minor ul{display:none}
+.rel code{font:13.5px var(--mono);background:rgba(255,255,255,.06);padding:1px 5px;border-radius:6px}
+mark{background:rgba(152,163,255,.3);color:inherit;border-radius:3px}
+.more{display:block;margin:18px auto 50px;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:var(--rs);padding:11px 22px;font:600 15px var(--font);cursor:pointer}
+footer{border-top:1px solid var(--line);padding:26px 0 44px;color:var(--mut);font-size:14px}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--a);outline-offset:3px;border-radius:var(--rs)}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="../"><img src="../media/icon.svg" alt="">KesherAI</a>
+  <nav><a href="../" class="hide-s" data-t="nHome">Home</a><a href="./" aria-current="page" data-t="nUpd">Updates</a><a href="../#download" data-t="nDl">Download</a><a href="https://github.com/Deadchu-R/KesherAI/releases" target="_blank" rel="noopener" class="hide-s">GitHub</a></nav>
+  <button class="lang" id="lang" type="button">עברית</button>
+</div></header>
+<main class="wrap">
+  <header class="h"><small data-t="k">Updates</small><h1 data-t="h">What's new in KesherAI</h1>
+    <p data-t="p">Every release, newest first — updated automatically from GitHub.</p></header>
+  <div class="bar">
+    <input type="search" id="q" data-tp="qp" placeholder="Search updates (e.g. Unreal, phone, images)" aria-label="Search updates">
+    <label class="chk"><input type="checkbox" id="minor"> <span data-t="minor">Show small fix releases</span></label>
+  </div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+  <div id="list"></div>
+  <button class="more" id="more" type="button" hidden data-t="more">Show older updates</button>
+</main>
+<footer><div class="wrap"><a href="../">KesherAI</a> · <span data-t="by">an open-source project by</span> <a href="https://roeetal.com">Roee Tal</a></div></footer>
+<script>
+const T = {
+  en: { nHome:"Home", nUpd:"Updates", nDl:"Download", k:"Updates", h:"What's new in KesherAI", p:"Every release, newest first — updated automatically from GitHub.", qp:"Search updates (e.g. Unreal, phone, images)",
+    minor:"Show small fix releases", more:"Show older updates", by:"an open-source project by", latest:"Latest", notes:"Release", small:"Fixes and improvements",
+    live:n => `${n} releases · updated from GitHub just now`, cache:(n, m) => `${n} releases · from GitHub ${m} min ago`, snap:"Couldn't reach GitHub — showing a saved copy; newer releases are on GitHub.", none:"Nothing found." },
+  he: { nHome:"ראשי", nUpd:"עדכונים", nDl:"הורדה", k:"עדכונים", h:"מה חדש ב-KesherAI", p:"כל הגרסאות, מהחדשה לישנה — מתעדכן אוטומטית מ-GitHub.", qp:"חיפוש בעדכונים (למשל Unreal, טלפון, תמונות)",
+    minor:"להציג גם גרסאות תיקונים קטנות", more:"להציג עדכונים ישנים יותר", by:"פרויקט קוד פתוח של", latest:"האחרונה", notes:"לגרסה", small:"תיקונים ושיפורים",
+    live:n => `${n} גרסאות · עודכן מ-GitHub עכשיו`, cache:(n, m) => `${n} גרסאות · מ-GitHub לפני ${m} דק׳`, snap:"לא הצלחתי להגיע ל-GitHub — מוצג עותק שמור; גרסאות חדשות יותר נמצאות ב-GitHub.", none:"לא נמצא כלום." }
+};
+let lang = "en"; try { lang = localStorage.getItem("kesher-lang") || (/^he/.test(navigator.language) ? "he" : "en"); } catch (e) {}
+const t = k => T[lang][k];
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const HEB = /[֐-׿]/;
+let REL = [], SRC = { kind: "", at: 0 }, shown = 25;
+
+/* releases → [{t: tag, d: date, b: [bullets]}]; the bullets under "What's new" in each release's notes */
+const parse = list => list.filter(r => !r.draft && !r.prerelease && /^v\d/.test(r.tag_name)).map(r => ({ t: r.tag_name, d: r.published_at,
+  b: String(r.body || "").split(/\r?\n/).filter(l => /^\s*[-*] /.test(l)).map(l => l.replace(/^\s*[-*] /, "").trim()) }));
+async function load() {
+  let c = null; try { c = JSON.parse(localStorage.getItem("kesher-upd") || "null"); } catch (e) {}
+  if (c && c.rel && c.rel.length) { REL = c.rel; SRC = { kind: "cache", at: c.at }; draw(); if (Date.now() - c.at < 10 * 60e3) return; }
+  try {
+    const pages = await Promise.all([1, 2].map(p => fetch(`https://api.github.com/repos/Deadchu-R/KesherAI/releases?per_page=100&page=${p}`, { headers: { Accept: "application/vnd.github+json" } }).then(r => r.ok ? r.json() : Promise.reject(r.status))));
+    REL = parse(pages.flat()).sort((a, b) => new Date(b.d) - new Date(a.d)); SRC = { kind: "live", at: Date.now() };
+    try { localStorage.setItem("kesher-upd", JSON.stringify({ at: SRC.at, rel: REL })); } catch (e) {}
+  } catch (e) {
+    if (!REL.length) { try { REL = await fetch("snapshot.json").then(r => r.json()); SRC = { kind: "snap", at: 0 }; } catch (e2) {} }
+  }
+  draw();
+}
+const isMinor = r => !r.b.length || r.b.every(x => /^fixes and improvements\.?$/i.test(x));
+/* one release in the reader's language: Hebrew lines for Hebrew, English lines for English (both if only one kind exists) */
+function bullets(r) {
+  const he = r.b.filter(x => HEB.test(x)), en = r.b.filter(x => !HEB.test(x));
+  const list = lang === "he" ? (he.length ? he : en) : (en.length ? en : he);
+  return list.map(x => /^fixes and improvements\.?$/i.test(x) ? t("small") : x);
+}
+const md = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+function hl(html, q) { if (!q) return html; const re = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi"); return html.replace(/(<[^>]+>)|([^<]+)/g, (m, tag, txt) => tag || txt.replace(re, "<mark>$1</mark>")); }
+function draw() {
+  const q = document.getElementById("q").value.trim().toLowerCase(), showMinor = document.getElementById("minor").checked;
+  const fmtDay = d => new Date(d).toLocaleDateString(lang === "he" ? "he-IL" : "en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const fmtTime = d => new Date(d).toLocaleTimeString(lang === "he" ? "he-IL" : "en-GB", { hour: "2-digit", minute: "2-digit" });
+  let list = REL.filter(r => (showMinor || !isMinor(r) || r === REL[0]) && (!q || (r.t + " " + r.b.join(" ")).toLowerCase().includes(q)));
+  const total = list.length; list = list.slice(0, shown);
+  let html = "", day = "";
+  for (const r of list) {
+    const dd = fmtDay(r.d); if (dd !== day) { day = dd; html += `<h2 class="day">${esc(dd)}</h2>`; }
+    const b = bullets(r), minor = isMinor(r);
+    html += `<article class="rel${r === REL[0] ? " latest" : ""}${minor && r !== REL[0] ? " minor" : ""}"><div class="rel-h"><b>${esc(r.t)}</b>${r === REL[0] ? `<span class="badge">${t("latest")}</span>` : ""}<time datetime="${esc(r.d)}">${fmtTime(r.d)}</time>
+      <a href="https://github.com/Deadchu-R/KesherAI/releases/tag/${encodeURIComponent(r.t)}" target="_blank" rel="noopener">${t("notes")} ↗</a></div>
+      ${minor && r !== REL[0] ? "" : `<ul>${b.map(x => `<li>${hl(md(x), q)}</li>`).join("")}</ul>`}</article>`;
+  }
+  document.getElementById("list").innerHTML = html || `<p class="status">${t("none")}</p>`;
+  document.getElementById("more").hidden = total <= shown;
+  const st = document.getElementById("status");
+  st.textContent = !REL.length ? "" : SRC.kind === "snap" ? t("snap") : SRC.kind === "live" ? t("live")(REL.length) : t("cache")(REL.length, Math.max(1, Math.round((Date.now() - SRC.at) / 60e3)));
+}
+function applyLang() {
+  document.documentElement.lang = lang; document.documentElement.dir = lang === "he" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
+  document.querySelectorAll("[data-tp]").forEach(el => { el.placeholder = t(el.dataset.tp); el.setAttribute("aria-label", t(el.dataset.tp)); });
+  document.getElementById("lang").textContent = lang === "he" ? "English" : "עברית";
+  document.title = "KesherAI — " + t("nUpd"); draw();
+}
+document.getElementById("lang").onclick = () => { lang = lang === "he" ? "en" : "he"; try { localStorage.setItem("kesher-lang", lang); } catch (e) {} applyLang(); };
+document.getElementById("q").oninput = () => { shown = 25; draw(); };
+document.getElementById("minor").onchange = () => { shown = 25; draw(); };
+document.getElementById("more").onclick = () => { shown += 25; draw(); };
+// while the page stays open, check GitHub again every 10 minutes
+setInterval(() => { try { localStorage.removeItem("kesher-upd"); } catch (e) {} load(); }, 10 * 60e3);
+applyLang(); load();
+</script>
+</body>
+</html>
