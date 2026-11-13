@@ -505,3 +505,20 @@ if(/[?&]g=[^&]+/.test(location.search)&&/[?&](k|join)=/.test(location.search)&&!
   };
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ready);else ready();
 })();
+
+/* Hero clip: the project name follows the clip being played. Times match hero.mp4 (18 s). */
+(()=>{
+  const SEG=[[0,3.4,"Infiltration"],[3.4,6.6,"A Musical Level"],[6.6,10.6,"Boss Rush"],[10.6,13.6,"Almond Bar"],[13.6,99,"Shards"]];
+  const ready=()=>{
+    const v=document.querySelector(".hero-video"), tag=document.querySelector(".hero-tag");
+    if(!v||!tag)return;
+    let cur="";
+    const update=()=>{
+      const t=v.currentTime%18;
+      const seg=SEG.find(([a,b])=>t>=a&&t<b);
+      if(seg&&seg[2]!==cur){cur=seg[2];tag.textContent=cur;}
+    };
+    v.addEventListener("timeupdate",update);
+  };
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ready);else ready();
+})();
