@@ -914,7 +914,7 @@ html.tv :focus{box-shadow:0 0 0 10px rgba(255,210,63,.35)!important}
 .flow.set li::after{content:none!important}
 .diagram{padding-inline:16px}
 @media(max-width:640px){.flow{flex-direction:column;gap:14px}.flow li{flex:0 0 auto}.flow li:not(:last-child)::after{content:"↓";inset-inline-end:auto;left:50%;top:auto;bottom:-15px;transform:translateX(-50%)}}
-.hero-tag{position:absolute;z-index:3;left:clamp(16px,2.2vw,28px);bottom:clamp(14px,2.4vw,26px);display:inline-flex;align-items:center;gap:6px;font:700 14px/1 "Urbanist",system-ui,sans-serif;letter-spacing:.02em;color:#fff;background:var(--tag,#2f5a45);padding:12px 18px;border-radius:999px;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:background .5s ease,transform .2s ease,box-shadow .2s ease}
+.hero-tag{position:absolute;z-index:5;left:clamp(16px,2.2vw,28px);bottom:clamp(14px,2.4vw,26px);display:inline-flex;align-items:center;gap:6px;font:700 14px/1 "Urbanist",system-ui,sans-serif;letter-spacing:.02em;color:#fff;background:var(--tag,#2f5a45);padding:12px 18px;border-radius:999px;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:background .5s ease,transform .2s ease,box-shadow .2s ease}
 .hero-tag:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.45)}
 .hero-tag:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media (max-width:600px){.hero-tag{left:16px;bottom:14px;font-size:13px;padding:10px 15px}}
