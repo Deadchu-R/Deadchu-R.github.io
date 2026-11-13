@@ -723,7 +723,7 @@ def build_index():
     PROJ_GRAD = "conic-gradient(" + ",".join(pj['theme'][1] for pj in PROJECTS) + "," + PROJECTS[0]['theme'][1] + ")"
     html += jump_menu(INDEX_JUMP(), 0)
     html += f"""<section class="hero" id="top"{ADD("site:hero_buttons", "hero")}{X(("Background video · plays behind your name", "site:hero_video", "video"), ("Phone-only background (optional)", "site:hero_video_mobile", "video"), ("Text panel darkness (0 = no panel)", "site:hero_panel", "range", [0, 90, 5, "%", "--hp", ""]))}{f' style="--hp:{SITE_TEXT.get("hero_panel")}%"' if SITE_TEXT.get("hero_panel") not in (None, "") else ""}>
-  <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}{'<span class="hero-tag" aria-hidden="true">Infiltration</span>' if hero_video else ''}</div>
+  <div class="hero-media">{hero_video or f'<div class="slides" aria-hidden="true">{slides}</div>'}{'<a class="hero-tag" href="projects/infiltration.html" style="--tag:#2f5a45">Infiltration →</a>' if hero_video else ''}</div>
   <div class="wrap hero-copy"><div class="hero-panel">
     <p class="kicker"{E("site:hero_kicker")}>{e(SITE_TEXT["hero_kicker"])}</p>
     <h1{E("site:hero_title")}>{e(SITE_TEXT["hero_title"])}</h1>

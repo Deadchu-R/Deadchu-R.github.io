@@ -506,9 +506,9 @@ if(/[?&]g=[^&]+/.test(location.search)&&/[?&](k|join)=/.test(location.search)&&!
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ready);else ready();
 })();
 
-/* Hero clip: the project name follows the clip being played. Times match hero.mp4 (18 s). */
+/* Hero clip: the label names the project of the clip playing and links to its page. Times match hero.mp4 (18 s). */
 (()=>{
-  const SEG=[[0,3.4,"Infiltration"],[3.4,6.6,"A Musical Level"],[6.6,10.6,"Boss Rush"],[10.6,13.6,"Almond Bar"],[13.6,99,"Shards"]];
+  const SEG=[[0,3.4,"Infiltration","infiltration","#2f5a45"],[3.4,6.6,"A Musical Level","musical-level","#4a2398"],[6.6,10.6,"Boss Rush","boss-rush","#8c1d55"],[10.6,13.6,"Almond Bar","almond-bar","#7a1a73"],[13.6,99,"Shards","shards","#17736b"]];
   const ready=()=>{
     const v=document.querySelector(".hero-video"), tag=document.querySelector(".hero-tag");
     if(!v||!tag)return;
@@ -516,7 +516,7 @@ if(/[?&]g=[^&]+/.test(location.search)&&/[?&](k|join)=/.test(location.search)&&!
     const update=()=>{
       const t=v.currentTime%18;
       const seg=SEG.find(([a,b])=>t>=a&&t<b);
-      if(seg&&seg[2]!==cur){cur=seg[2];tag.textContent=cur;}
+      if(seg&&seg[1]!==undefined&&seg[2]!==cur){cur=seg[2];tag.textContent=seg[2]+" →";tag.href="projects/"+seg[3]+".html";tag.style.setProperty("--tag",seg[4]);}
     };
     v.addEventListener("timeupdate",update);
   };

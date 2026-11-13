@@ -7,7 +7,7 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
 ## 2026-11-13
-- **Home hero:** a small label on the background video behind the name shows the project of the clip playing (Infiltration, A Musical Level, Boss Rush, Almond Bar, Shards).
+- **Home hero:** a button on the background video shows the project of the clip playing, in that project's colour, and opens its page when clicked.
 
 - **Showreel captions animated:** each on-screen label slides in from the left and fades out as its segment ends, instead of appearing all at once (f393cc4).
 - **Portfolio research follow-up:** social preview tags (og:title/description/image, canonical) on every page; skill tags on the project cards with a filter; a "Team" fact where it's known; "How it fits together" diagrams on Shards, Infiltration, Almond Bar and Tile-Map Engine; 3DVision bullets rewritten (client UI systems, adapting projects, improving systems incl. the unified UI system); on-screen labels in the showreel (project + system per segment).
