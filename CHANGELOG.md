@@ -6,6 +6,9 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
+## 2026-11-13
+- **Squarespace check before cancelling:** compared every Squarespace page with the new site and added the few details that were only there — Glide! indicator (A Musical Level), the exact Boss Rush mechanic descriptions (attack order, path arrow, resource bar, attack/defense zones on hover), and Almond Bar's acceptance window, Missions panel and aquarium. Old Squarespace addresses (/bossrush, /unrealenginefps, /contact…) now redirect to the matching pages (404.html).
+
 ## 2026-11-09
 - **KesherAI updates page (roeetal.com/KesherAI/updates):** every KesherAI release, newest first, grouped by day, in Hebrew or English (from each release's notes); search, "show small fix releases", the newest marked. Updates itself: reads GitHub on every visit (cached 10 min, re-checks every 10 min while open); `updates/snapshot.json` only if GitHub can't be reached. Linked from the KesherAI page's menu and footer.
 

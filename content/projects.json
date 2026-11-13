@@ -398,19 +398,19 @@
         "clips": [
           {
             "label": "Tactical view",
-            "caption": "A top-down read of the whole battlefield.",
+            "caption": "Hover a character to highlight its attack and defense zones, so you can plan ahead.",
             "video": "/assets/clips/bossrush-tactical.mp4",
             "drive_id": "1aDkpRLZy3QNMPEeAIcHc3f8_Cf9acxPM"
           },
           {
             "label": "Movement arrow",
-            "caption": "Shows where a unit will move on the grid.",
+            "caption": "Draw the path with an arrow instead of clicking one destination, for more control over movement.",
             "video": "/assets/clips/bossrush-arrow.mp4",
             "drive_id": "1vcp3IeeehFJ_Ppq5JHC6mzsaFMiTb7Pc"
           },
           {
             "label": "Attack sequence",
-            "caption": "How a party member's attack plays out.",
+            "caption": "Party members attack one after another in a set order, not all at once, for a smoother, more strategic flow.",
             "video": "/assets/clips/bossrush-attack.mp4",
             "drive_id": "12FAXoXFoiz_-gTPMpAHg0HDlMtjLlzJO"
           }
@@ -429,7 +429,7 @@
           },
           {
             "label": "Resource gather",
-            "caption": "The effect that plays when resources are gathered.",
+            "caption": "Gathered resources fly into the resource bar, so the player sees how to collect and use them.",
             "video": "/assets/clips/bossrush-gather.mp4",
             "drive_id": "1OZmcyiAOi2JdeSAK5nQF3ZrqDwe8VoyK"
           }
@@ -497,8 +497,8 @@
     "hook": "My hometown bar, rebuilt brighter. Find the key, talk to the regulars, finish the quest.",
     "what_i_built": [
       "A Blueprint dialogue system where the player's answers decide which quest they get",
-      "A quest system that tracks the active mission and completes it",
-      "Built and dressed the bar environment"
+      "A quest system: NPCs hand out missions through an acceptance window, and a Missions panel tracks what's done and shows the next step",
+      "Built the level from a real bar in my hometown, with modern lighting, a premium look and an aquarium"
     ],
     "teammates_built": [],
     "tech": [
@@ -605,7 +605,7 @@
     "sections": [
       {
         "title": "Action indicators",
-        "intro": "Icons that tell the player what the beat wants next.",
+        "intro": "Icons that tell the player what the beat wants next: Jump! (a bold arrow), Glide! (a jetpack icon you hold to charge, with a progress bar) and Attack! (a fist).",
         "clips": [
           {
             "label": "Jump!",

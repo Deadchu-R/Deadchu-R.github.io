@@ -34,6 +34,12 @@
       var s = window.location.search || '';
       var h = window.location.hash || '';
 
+      // old Squarespace addresses (roeetal-portfolio.squarespace.com) → the same pages here
+      var OLD = { '/home': '/', '/projects': '/#projects', '/contact': '/#contact',
+        '/a-musical-level-1': '/projects/musical-level.html', '/isometric-story-driven-game': '/projects/shards.html',
+        '/bossrush': '/projects/boss-rush.html', '/unrealenginefps': '/projects/infiltration.html', '/almondbarunrealengine': '/projects/almond-bar.html' };
+      var q = p.replace(/\/+$/, '');
+      if (OLD[q]) { window.location.replace(OLD[q]); return; }
       if (p.indexOf('bootkeh') !== -1) {
         window.location.replace('/Bootkeh/' + s + h);
         return;
