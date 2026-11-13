@@ -343,6 +343,7 @@ for p in _load("projects.json"):
         layouts=[sec.get("layout", "auto") for sec in p.get("sections", [])], page_order=p.get("page_order", []),
         sec_icons=[sec.get("icon", "") for sec in p.get("sections", [])],
         buttons=p.get("buttons") or {},
+        team=p.get("team", ""), tags=p.get("tags", []), diagram=p.get("diagram") or None,
     ))
     TECH[s] = p.get("tech", [])
     CARD_TECH[s] = p.get("card_tech", "")

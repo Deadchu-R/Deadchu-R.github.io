@@ -28,11 +28,32 @@ if(/[?&]g=[^&]+/.test(location.search)&&/[?&](k|join)=/.test(location.search)&&!
       if(en.isIntersecting){if(!v.src)v.src=btn.dataset.src;v.play().catch(()=>{})}else v.pause();
     });
   },{threshold:.4}) : null;
+  /* skill filter above the project cards */
+  const tf=document.querySelector(".tagfilter");
+  if(tf)tf.addEventListener("click",e=>{const b=e.target.closest("button[data-tag]");if(!b)return;const t=b.dataset.tag;
+    tf.querySelectorAll("button").forEach(x=>{const on=x===b;x.classList.toggle("on",on);x.setAttribute("aria-pressed",on)});
+    document.querySelectorAll(".ptile[data-tags]").forEach(c=>{c.hidden=!!t&&!c.dataset.tags.split("|").includes(t)});});
+
+  /* posters load when a clip comes near the screen, and the clip itself starts buffering a little before it is
+     visible, so it is already playing when you reach it (instead of loading every poster up front) */
+  const near="IntersectionObserver" in window ? new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(!en.isIntersecting)return;
+      const btn=en.target,v=btn.querySelector("video");near.unobserve(btn);
+      if(!v)return;
+      if(v.dataset.poster&&!v.poster)v.poster=v.dataset.poster;
+      if(btn.classList.contains("clip")&&btn.dataset.src&&!("still" in btn.dataset)&&!v.src){v.preload="auto";v.src=btn.dataset.src}
+    });
+  },{rootMargin:"900px 0px"}) : null;
   clips.forEach(c=>{
     const v=c.querySelector("video");
     if(v)v.addEventListener("error",()=>{c.dataset.src=""},{once:true});
     io&&io.observe(c);
+    if(near)near.observe(c);else if(v&&v.dataset.poster)v.poster=v.dataset.poster;
   });
+  // any other video with a waiting poster (e.g. gallery "full video" tiles)
+  document.querySelectorAll("video[data-poster]").forEach(v=>{if(v.closest(".clip"))return;
+    if(near){const box=v.parentElement;near.observe(box)}else v.poster=v.dataset.poster;});
 
   /* ---------- hero reel ---------- */
   const heroVideo=$(".hero-video");

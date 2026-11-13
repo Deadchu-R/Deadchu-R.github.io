@@ -7,6 +7,9 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
 ## 2026-11-13
+- **Portfolio research follow-up:** social preview tags (og:title/description/image, canonical) on every page; skill tags on the project cards with a filter; a "Team" fact where it's known; "How it fits together" diagrams on Shards, Infiltration, Almond Bar and Tile-Map Engine; 3DVision bullets rewritten (client UI systems, adapting projects, improving systems incl. the unified UI system); on-screen labels in the showreel (project + system per segment).
+- **Speed:** the top-bar photo is now a 96px WebP (was a 290KB photo on every page); clip posters load when near the screen; clips start buffering a little before they're visible so they're already playing; full videos still load only on Play.
+- **Fixed:** every project card said "Write something here." instead of "View project →".
 - **Squarespace check before cancelling:** compared every Squarespace page with the new site and added the few details that were only there — Glide! indicator (A Musical Level), the exact Boss Rush mechanic descriptions (attack order, path arrow, resource bar, attack/defense zones on hover), and Almond Bar's acceptance window, Missions panel and aquarium. Old Squarespace addresses (/bossrush, /unrealenginefps, /contact…) now redirect to the matching pages (404.html).
 
 ## 2026-11-09

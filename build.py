@@ -117,7 +117,9 @@ def skin_js(p):
     g = f'<script src="{p}assets/skins/guard.js?v={ver("assets/skins/guard.js")}" defer></script>\n'
     return g + (f'<script src="{p}assets/skins/{SKIN}.js?v={ver("assets/skins/" + SKIN + ".js")}" defer></script>\n' if f.exists() else "")
 
-def head(title, desc, depth, theme=None):
+SITE_URL = "https://roeetal.com/"
+OG_DEFAULT = "assets/hero.jpg"
+def head(title, desc, depth, theme=None, path="", image=""):
     """Start of every page: <head> with title, description, fonts, site.css (+ style css, + owner's custom CSS) and optional theme colors."""
     p = "../" * depth
     style = ""
@@ -130,6 +132,14 @@ def head(title, desc, depth, theme=None):
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{e(title)}</title>
 <meta name="description" content="{e(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Roee Tal">
+<meta property="og:title" content="{e(title)}">
+<meta property="og:description" content="{e(desc)}">
+<meta property="og:url" content="{SITE_URL}{e(path)}">
+<meta property="og:image" content="{SITE_URL}{e((image or OG_DEFAULT).replace('../', '').lstrip('/'))}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="{SITE_URL}{e(path)}">
 <meta name="theme-color" content="{theme[0] if theme else '#0c2f6e'}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -141,11 +151,28 @@ def head(title, desc, depth, theme=None):
 """
 
 
+def small_avatar(ph):
+    """The top-bar photo is shown at 30px: make (once) a 96px WebP next to the upload, so every page doesn't load the full photo."""
+    src = ROOT / ph.lstrip("/")
+    small = src.with_name(src.stem + "-ava.webp")
+    try:
+        if src.exists() and (not small.exists() or small.stat().st_mtime < src.stat().st_mtime):
+            from PIL import Image, ImageOps
+            im = ImageOps.exif_transpose(Image.open(src)).convert("RGB")
+            k = min(im.size); im = im.crop(((im.width - k) // 2, (im.height - k) // 2, (im.width + k) // 2, (im.height + k) // 2)).resize((96, 96), Image.LANCZOS)
+            im.save(small, "WEBP", quality=82)
+        if small.exists():
+            return str(small.relative_to(ROOT)).replace("\\", "/")
+    except Exception as ex:
+        print("avatar:", ex)
+    return ph.lstrip("/")
+
+
 def brand_photo(p):
     """Optional small round photo before the name in the top bar (chosen in the editor)."""
     ph = SITE_TEXT.get("brand_photo") or ""
     if ph:
-        return f'<img class="mark-ava" src="{p}{e(ph.lstrip("/"))}" alt="" width="30" height="30" data-m="site:brand_photo" data-mk="image">'
+        return f'<img class="mark-ava" src="{p}{e(small_avatar(ph))}" alt="" width="30" height="30" data-m="site:brand_photo" data-mk="image">'
     return '<span role="button" class="mark-ava rt-pick add" data-m="site:brand_photo" data-mk="image" data-cls="mark-ava" hidden data-edit-show title="Add your photo">＋</span>'
 
 def topbar(depth, current=""):
@@ -224,7 +251,7 @@ def clip_tile(label, file, did, depth, big=False, cap="", group="", still=False,
         poster = thumb(POSTERS[file], 960)
     src = f"{p}assets/clips/{file}" if has_clip(file) else ""
     return (f'<button class="clip{" big" if big else ""}" type="button"{f' data-group="{group}"' if group else ""}{" data-still" if still else ""}{M(mpath, "video") if mpath else ""} data-src="{src}" data-drive="{did}" data-title="{e(label)}" data-cap="{e(cap)}"{more}{credit} aria-label="Play video: {e(label)}">'
-            f'<video muted loop playsinline preload="none" poster="{poster}"></video>'
+            f'<video muted loop playsinline preload="none" data-poster="{poster}"></video>'
             f'{FS_ICON}</button>')
 
 
@@ -308,7 +335,7 @@ def mosaic_pool(g=None):
     import re, hashlib
     from PIL import Image
     g = g if g is not None else (ROOT / "gallery.html").read_text()
-    srcs = re.findall(r'<img loading="lazy" src="(assets/(?:img|posters)/[^"]+)"', g) + re.findall(r'poster="(assets/(?:img|posters)/[^"]+)"', g)
+    srcs = re.findall(r'<img loading="lazy" src="(assets/(?:img|posters)/[^"]+)"', g) + re.findall(r'data-poster="(assets/(?:img|posters)/[^"]+)"', g)
     out, seen = [], set()
     tdir = ROOT / "assets/thumbs"; tdir.mkdir(exist_ok=True)
     for src in srcs:
@@ -657,19 +684,30 @@ def custom_sections_html():
     r = subprocess.run(["node", "-e", js, str(ROOT / "assets/sections.js")], input=_json.dumps(data), capture_output=True, text=True, check=True)
     return _json.loads(r.stdout)
 
+def tag_filter():
+    """Skill chips above the project cards: tap one to show only the projects with that skill (site.js)."""
+    from collections import Counter
+    cnt = Counter(t for pj in PROJECTS for t in (pj.get("tags") or []))
+    if not cnt: return ""
+    tags = [t for t, _ in sorted(cnt.items(), key=lambda x: (-x[1], x[0]))][:9]
+    return ('<div class="tagfilter" role="group" aria-label="Filter projects by skill"><button type="button" class="on" data-tag="" aria-pressed="true">All</button>'
+            + "".join(f'<button type="button" data-tag="{e(t)}" aria-pressed="false">{e(t)}</button>' for t in tags) + "</div>")
+
+
 def build_index():
     """Write index.html: hero, then the main-page sections in site:section_order (experience, projects, more code, about, gallery & lab, custom sections), then the footer."""
     global DEPTH
     DEPTH = 0
     tiles = []
     for i, pj in enumerate(PROJECTS):
-        tiles.append(f"""<a class="ptile"{I(i)}{X(("Page address (lowercase-with-dashes)", f"projects:{i}.slug", "text"), *colors(f"projects:{i}"))} id="p-{pj['slug']}" href="projects/{pj['slug']}.html" data-mid="{pj['theme'][1]}" data-deep="{pj['theme'][0]}" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
+        tiles.append(f"""<a class="ptile"{I(i)}{X(("Page address (lowercase-with-dashes)", f"projects:{i}.slug", "text"), *colors(f"projects:{i}"))} id="p-{pj['slug']}" data-tags="{e('|'.join(pj.get('tags') or []))}" href="projects/{pj['slug']}.html" data-mid="{pj['theme'][1]}" data-deep="{pj['theme'][0]}" style="--deep:{pj['theme'][0]};--mid:{pj['theme'][1]};--accent:{pj['theme'][2]}">
   <span class="ptile-img"><img loading="lazy"{M(f"projects:{i}.cover")} onerror="this.style.visibility='hidden'" src="{thumb(pj['cover'], 900)}" alt="{e(pj['title'])} screenshot">{f'<img class="peek"{M(f"projects:{i}.mascot", "art")} loading="lazy" src="assets/art/{pj["mascot"]}.webp" alt="">' if pj.get("mascot") else ""}</span>
   <span class="ptile-body">
     <span class="kicker"{E(f"projects:{i}.engine")}>{e(pj['engine'])}</span>
     <span class="role-tag"{E(f"projects:{i}.card_role")}>{e(CARD_ROLE[pj['slug']])}</span>
     <span class="ptile-title"{E(f"projects:{i}.title")}>{e(pj['title'])}</span>
     <span class="ptile-hook tech"{E(f"projects:{i}.card_tech")}>{e(CARD_TECH[pj['slug']])}</span>
+    {('<span class="ptags">' + "".join(f"<i>{e(t)}</i>" for t in pj["tags"]) + "</span>") if pj.get("tags") else ""}
     {ui("view_project", "View project →", cls="more")}
   </span>
 </a>""")
@@ -727,6 +765,7 @@ def build_index():
     blocks["projects"] = f"""<section class="band blue palette-band" id="projects"{K("projects", "site:section_order")}>
   <div class="wrap">
     <div class="sec-head">{heading("projects")}<p class="muted"{E("site:projects_intro")}>{e(SITE_TEXT["projects_intro"])}</p></div>
+    {tag_filter()}
     <div class="ptiles"{L("projects")}>{''.join(tiles)}</div>
   </div>
 </section>
@@ -937,7 +976,7 @@ def build_code_page(i, cp):
     corder = [k for k in cp.get("page_order", []) if k in cb]
     corder += [k for k in cb if k not in corder]
     code_blocks = "\n".join(cb[k] for k in corder)
-    html = head(f"{cp['title']} — Roee Tal", cp["hook"], depth, cp["theme"])
+    html = head(f"{cp['title']} — Roee Tal", cp["hook"], depth, cp["theme"], f"code/{cp['slug']}.html" if cp.get("slug") else "")
     html += topbar(depth, "projects")
     acc = cp["theme"][2]
     html += jump_menu([("#top", e(cp["title"]), acc, "", ICON_CODE), ("#built", "What I built", acc, "sub", ""),
@@ -1010,10 +1049,19 @@ def build_project(i, pj):
     if pj.get("cast"):
         cast = f'<section class="mech-sec" id="characters">{ui("h_chars", "Characters", tag="h2", big=True)}<div class="cast"{L(B + ".characters")}>' + "".join(
             f'<figure{I(ci)}{X(("Caption", f"{B}.characters.{ci}.caption", "text"))}><button class="zoom bare" type="button" data-full="../assets/art/{f}.webp" data-group="cast" data-title="{e(c)}" data-cap="{e(CAST_CAPS.get(f, ""))}"{more_attrs(more_text(pj))} aria-label="Enlarge: {e(c)}"><img loading="lazy"{M(f"{B}.characters.{ci}.image", "art")} src="../assets/art/{f}.webp" alt="{e(c)}">{FS_ICON}</button><figcaption{E(f"{B}.characters.{ci}.name")}>{e(c)}</figcaption></figure>' for (f, c), ci in zip(pj["cast"], pj["cast_idx"])) + "</div></section>"
+    diagram = ""
+    if pj.get("diagram"):
+        dg = pj["diagram"]
+        rows = "".join(
+            f'<div class="flow-row">{f"<span class=flow-label>{e(r.get("label",""))}</span>" if r.get("label") else ""}<ol class="flow{" set" if r.get("kind") == "set" else ""}">'
+            + "".join(f'<li>{e(st)}</li>' for st in r.get("steps", [])) + "</ol></div>"
+            for r in dg.get("rows", []))
+        diagram = f'<section class="mech-sec diagram" id="diagram"><h2>{e(dg.get("title") or "How it fits together")}</h2><div class="flows">{rows}</div>{('<p class="muted">' + e(dg.get("note", "")) + '</p>') if dg.get("note") else ""}</section>'
     PO = B + ".page_order"
     def blk(key, inner, cls="wrap"):
         return f'<div class="{cls}"{K(key, PO)}>{inner}</div>' if inner else ""
     pb = {
+        "diagram": blk("diagram", diagram),
         "code_sample": blk("code_sample", code_section(pj, B)),
         "clips": f'<div class="wrap"{K("clips", PO)}{L(B + ".sections")}>{"".join(sections)}</div>' if sections else "",
         "screenshots": blk("screenshots", shots),
@@ -1024,12 +1072,15 @@ def build_project(i, pj):
         "credits": (f'<div class="wrap credits"{K("credits", PO)}><p class="art-note"><span aria-hidden="true">{"🎨" if pj["slug"] in ART_CREDIT_SLUGS else "🛠️"}</span><span>{ui("credits_label", "Credits.", tag="b")} <span{E(B + ".credits")}>{e(ART_NOTES[pj["slug"]])}</span></span></p></div>' if pj["slug"] in ART_NOTES else ""),
     }
     order = [k for k in pj.get("page_order", []) if k in pb]
+    if "diagram" not in order: order.insert(0, "diagram")   # right after "What I built"
     order += [k for k in pb if k not in order]
     page_blocks = "\n".join(pb[k] for k in order)
-    html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"])
+    _img = thumb(pj['cover'], 1280)
+    html = head(f"{pj['title']} — Roee Tal", pj["hook"], depth, pj["theme"], f"projects/{pj['slug']}.html", _img if not _img.startswith("http") else "")
     html += topbar(depth, "projects")
     acc = pj["theme"][2]
     items = [("#top", e(pj["title"]), acc, "", ICON_PAD), ("#built", "What I built", acc, "sub", "")]
+    if pj.get("diagram"): items.append(("#diagram", "How it fits together", acc, "sub", ""))
     if pj["slug"] in SNIPPETS: items.append(("#code", "Code sample", acc, "sub", ""))
     items += [(f"#s{k+1}", e(t), acc, "sub", "") for k, (t, _i, _c) in enumerate(pj["sections"])]
     if pj["shots"]: items.append(("#shots", "Screenshots", acc, "sub", ""))
@@ -1062,6 +1113,7 @@ def build_project(i, pj):
     <dl class="facts">
       <div>{ui("f_role", "Role", tag="dt")}<dd{E(B + ".role")}>{e(pj['role'])}</dd></div>
       <div>{ui("f_engine", "Engine", tag="dt")}<dd{E(B + ".engine")}>{e(pj['engine'])}</dd></div>
+      {f'<div>{ui("f_team", "Team", tag="dt")}<dd{E(B + ".team")}>{e(pj["team"])}</dd></div>' if pj.get("team") else ""}
       <div>{ui("f_when", "When", tag="dt")}<dd{E(B + ".when")}>{e(pj['when'])}</dd></div>
       <div>{ui("f_context", "Context", tag="dt")}<dd{E(B + ".context")}>{e(pj['context'])}</dd></div>
     </dl>
@@ -1084,7 +1136,7 @@ def build_lab():
                 f'<figcaption><b{E(f"{fn}:{j}.label")}>{e(lbl)}</b> <span{E(f"{fn}:{j}.caption")}>{e(cap)}</span></figcaption></figure>')
     tiles = "".join(labfig("lab", j, *t) for j, t in enumerate(LAB))
     early = "".join(labfig("early-work", j, *t) for j, t in enumerate(EARLY))
-    html = head("The Lab — Roee Tal", "Shaders, systems and course experiments by Roee Tal.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
+    html = head("The Lab — Roee Tal", "Shaders, systems and course experiments by Roee Tal.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"), "lab.html")
     html += topbar(0, "lab")
     html += jump_menu([("#top", "The lab", "#ffd23f", "", J_FLASK), ("#experiments", "Experiments", "#ffd23f", "sub", ""),
                        ("#early", "Early work", "#ffd23f", "sub", "")], 0, site_jump(0))
@@ -1127,7 +1179,7 @@ def build_gallery():
             src = f"assets/full/{name}.mp4" if name and (ROOT / f"assets/full/{name}.mp4").exists() else ""
             cap = "The full gameplay video."
             inner = (f'<button class="clip" type="button" data-group="all" data-still data-src="{src}" data-drive="{pj["full"]}" data-title="{e(pj["title"])} · full video" data-cap="{cap}"{more_attrs(more_text(pj), href)}{credit_attr(pj["slug"])} aria-label="Play the full {e(pj["title"])} video">'
-                     f'<video muted playsinline preload="none" poster="{poster}"></video><span class="tag">Full video</span>{FS_ICON}</button>')
+                     f'<video muted playsinline preload="none" data-poster="{poster}"></video><span class="tag">Full video</span>{FS_ICON}</button>')
             items.append(card(inner, pj["title"], "Full video", cap, pj["slug"], "video", more_attrs(more_text(pj), href)))
         for sid in pj["shots"]:
             cap = SHOT_CAPS.get(sid, "")
@@ -1148,7 +1200,7 @@ def build_gallery():
         th = THEMES.get(k)
         return f' style="--deep:{th[0]};--mid:{th[1]};--accent:{th[2]}"' if th else ""
     chip_html = "".join(f'<button type="button" class="chip{" themed" if k in THEMES else ""}" data-filter="{k}"{chip_style(k)} aria-pressed="{str(k == "all").lower()}">{v}</button>' for k, v in chips)
-    html = head("Gallery — Roee Tal", "Every clip, screenshot and character from Roee Tal's projects in one place.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"))
+    html = head("Gallery — Roee Tal", "Every clip, screenshot and character from Roee Tal's projects in one place.", 0, ("#0c2f6e", "#1758b0", "#ffd23f"), "gallery.html")
     html += topbar(0, "gallery")
     gal_mosaic = mosaic_html(mosaic_pool("".join(items)))
     html += jump_menu([("#top", "Gallery", "#ff8fc0", "", J_IMG), ("#ggrid", "Browse everything", "#ff8fc0", "sub", "")], 0, site_jump(0))
@@ -1215,7 +1267,7 @@ def build_cv():
     data = {"default": default, "files": files, "names": {k: _cv_file(v) for k, v in pub.items()},
             "variants": pub, "icons": {**ICONS_22, **ICON_RAW} if any(v.get("show_icons") for v in pub.values()) else {}}
     dv = pub[default]
-    html = head(f"Résumé — {(dv.get('person') or {}).get('name', 'Roee Tal')}", "Résumé of Roee Tal, game developer (Unity / Unreal). Download as PDF.", 0)
+    html = head(f"Résumé — {(dv.get('person') or {}).get('name', 'Roee Tal')}", "Résumé of Roee Tal, game developer (Unity / Unreal). Download as PDF.", 0, None, "cv.html")
     html = html.replace("</head>", f'<link rel="stylesheet" href="{_cv_font(dv)}" id="cv-font">\n<link rel="stylesheet" href="assets/cv.css?v={ver("assets/cv.css")}">\n</head>', 1)
     html += topbar(0, "cv")
     nm = data["names"][default]

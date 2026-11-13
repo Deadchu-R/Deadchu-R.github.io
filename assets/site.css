@@ -895,3 +895,22 @@ html.tv :focus{box-shadow:0 0 0 10px rgba(255,210,63,.35)!important}
 .tv-chip{position:fixed;z-index:2147480001;left:50%;bottom:28px;transform:translateX(-50%);background:rgba(10,12,30,.92);color:#fff;border:2px solid #ffd23f;border-radius:14px;padding:12px 20px;
   font:700 18px/1.2 system-ui,sans-serif;opacity:0;pointer-events:none;white-space:nowrap}
 .tv-chip.on{opacity:1}
+
+/* ---------- skill tags on project cards + filter ---------- */
+.ptags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.ptags i{font-style:normal;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.12);color:inherit;line-height:1.6}
+.tagfilter{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 auto 18px;max-width:900px}
+.tagfilter button{font:600 14px/1 inherit;font-family:inherit;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:transparent;color:inherit;cursor:pointer}
+.tagfilter button.on{background:var(--accent,#ffd23f);color:#0c1a33;border-color:transparent}
+.tagfilter button:focus-visible{outline:2px solid var(--accent,#ffd23f);outline-offset:2px}
+.ptile[hidden]{display:none!important}
+/* ---------- "how it fits together" diagrams on project pages ---------- */
+.diagram .flows{display:grid;gap:14px;max-width:1000px;margin:0 auto}
+.flow-row{display:grid;gap:6px}
+.flow-label{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent,#ffd23f)}
+.flow{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:stretch;gap:8px}
+.flow li{position:relative;flex:1 1 150px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);font-size:15px;line-height:1.35;display:flex;align-items:center}
+.flow li:not(:last-child)::after{content:"→";position:absolute;inset-inline-end:-15px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--accent,#ffd23f);z-index:1}
+.flow.set li::after{content:none!important}
+.diagram{padding-inline:16px}
+@media(max-width:640px){.flow{flex-direction:column;gap:14px}.flow li{flex:0 0 auto}.flow li:not(:last-child)::after{content:"↓";inset-inline-end:auto;left:50%;top:auto;bottom:-15px;transform:translateX(-50%)}}

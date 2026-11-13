@@ -12,9 +12,10 @@
   "job_start": "2025-02",
   "job_end": "",
   "job_bullets": [
-    "Develop and integrate interactive features based on client requests",
-    "Debug and optimize complex logic and Blueprints across multiple projects",
-    "Build custom UI elements and functionality for each client"
+    "Build UI systems tailored to each client",
+    "Adapt each project to the client's requests",
+    "Work on and improve existing systems, including the move to a unified UI system",
+    "Debug and optimize complex logic and Blueprints across multiple projects"
   ],
   "timeline": [
     {
@@ -193,7 +194,7 @@
       "icon": "play-solid"
     },
     "view_project": {
-      "text": "Write something here."
+      "text": "View project →"
     }
   },
   "sound": {

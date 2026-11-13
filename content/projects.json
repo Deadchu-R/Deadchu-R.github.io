@@ -134,7 +134,47 @@
       "about",
       "characters",
       "credits"
-    ]
+    ],
+    "team": "Solo",
+    "tags": [
+      "Gameplay",
+      "Combat",
+      "AI",
+      "C++",
+      "Unreal"
+    ],
+    "diagram": {
+      "title": "How it fits together",
+      "rows": [
+        {
+          "label": "Shooting",
+          "steps": [
+            "Fire input",
+            "Raycast from the weapon",
+            "Hit → damage & recoil",
+            "OnShot event"
+          ]
+        },
+        {
+          "label": "Feedback",
+          "steps": [
+            "OnShot event",
+            "Sound plays",
+            "Muzzle VFX plays",
+            "(the weapon knows neither)"
+          ]
+        },
+        {
+          "label": "Detection",
+          "steps": [
+            "Enemy patrols",
+            "Sees the player",
+            "Meter fills",
+            "Full → you lose · escape or shoot to stop it"
+          ]
+        }
+      ]
+    }
   },
   {
     "slug": "tile-map-engine",
@@ -227,7 +267,36 @@
       "about",
       "characters",
       "credits"
-    ]
+    ],
+    "team": "3 programmers",
+    "tags": [
+      "Engine",
+      "Architecture",
+      "C#"
+    ],
+    "diagram": {
+      "title": "Engine and game",
+      "rows": [
+        {
+          "label": "Engine",
+          "steps": [
+            "TileMap & grid",
+            "GameObjects + Components",
+            "Transform on every object",
+            "RenderingManager draws to the console"
+          ]
+        },
+        {
+          "label": "Chess",
+          "steps": [
+            "Player command",
+            "Piece asks IMovementRule for legal moves",
+            "Move on the grid",
+            "Turn passes · OnWin when it ends"
+          ]
+        }
+      ]
+    }
   },
   {
     "slug": "shards",
@@ -354,7 +423,42 @@
       "about",
       "characters",
       "credits"
-    ]
+    ],
+    "tags": [
+      "Dialogue",
+      "Tools",
+      "Data-driven",
+      "Unity"
+    ],
+    "diagram": {
+      "title": "The dialogue system",
+      "rows": [
+        {
+          "label": "Data",
+          "steps": [
+            "Sheet (ScriptableObject)",
+            "Pages",
+            "Each page → an NPC_ID (name, icon, talking sprite)"
+          ]
+        },
+        {
+          "label": "Two kinds of page (both override PageAction)",
+          "kind": "set",
+          "steps": [
+            "Dialogue page: answers branch to other pages",
+            "Level page: moves the player on"
+          ]
+        },
+        {
+          "label": "Typing",
+          "steps": [
+            "Typewriter",
+            "onLetterTyped · onWordTyped · onTypeFinished",
+            "Talking sounds + mouth animation"
+          ]
+        }
+      ]
+    }
   },
   {
     "slug": "boss-rush",
@@ -476,6 +580,12 @@
       "about",
       "characters",
       "credits"
+    ],
+    "tags": [
+      "Leadership",
+      "Combat",
+      "Tactics",
+      "Unity"
     ]
   },
   {
@@ -568,7 +678,30 @@
       "about",
       "characters",
       "credits"
-    ]
+    ],
+    "team": "Solo",
+    "tags": [
+      "Gameplay",
+      "Dialogue",
+      "Quests",
+      "Blueprints",
+      "Unreal"
+    ],
+    "diagram": {
+      "title": "Quest flow",
+      "rows": [
+        {
+          "label": "",
+          "steps": [
+            "Talk to an NPC",
+            "Your answers pick the quest",
+            "Accept in the quest window",
+            "Missions panel tracks it",
+            "Quest complete"
+          ]
+        }
+      ]
+    }
   },
   {
     "slug": "musical-level",
@@ -686,6 +819,11 @@
       "about",
       "characters",
       "credits"
+    ],
+    "tags": [
+      "Production",
+      "Platforming",
+      "Unity"
     ]
   }
 ]
