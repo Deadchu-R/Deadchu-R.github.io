@@ -914,3 +914,5 @@ html.tv :focus{box-shadow:0 0 0 10px rgba(255,210,63,.35)!important}
 .flow.set li::after{content:none!important}
 .diagram{padding-inline:16px}
 @media(max-width:640px){.flow{flex-direction:column;gap:14px}.flow li{flex:0 0 auto}.flow li:not(:last-child)::after{content:"↓";inset-inline-end:auto;left:50%;top:auto;bottom:-15px;transform:translateX(-50%)}}
+.hero-tag{position:absolute;z-index:3;left:clamp(16px,2.2vw,28px);bottom:clamp(14px,2.4vw,26px);font:600 11px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.72);background:rgba(0,0,0,.28);padding:6px 10px;border-radius:999px;pointer-events:none}
+@media (max-width:600px){.hero-tag{left:16px;bottom:12px;font-size:10px}}
