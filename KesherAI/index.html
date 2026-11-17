@@ -287,7 +287,11 @@ function hero() { document.getElementById("heroMedia").innerHTML = `<img src="me
    Android is its own prerelease ("android-latest"), so it is read separately. Answers are kept 10 minutes; if GitHub
    can't be reached, the buttons open the releases page. */
 (function downloads() {
-  const ua = navigator.userAgent, os = /Android/i.test(ua) ? "android" : /Win/i.test(ua) ? "win" : /Mac/i.test(ua) ? "mac" : /Linux/i.test(ua) ? "linux" : "";
+  const ua = navigator.userAgent, touch = (navigator.maxTouchPoints || 0) > 0;
+  /* Android in "desktop site" mode reports a Linux UA, so a touch screen that isn't Windows/Mac counts as Android too.
+     iPhone/iPad (which report Mac or iPhone UAs) have no build here, so they get no desktop installer. */
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && touch);
+  const os = /Android/i.test(ua) || (/Linux|X11/i.test(ua) && touch && !/Windows/i.test(ua)) ? "android" : isIOS ? "" : /Win/i.test(ua) ? "win" : /Mac/i.test(ua) ? "mac" : /Linux/i.test(ua) ? "linux" : "";
   const mine = document.querySelector(`#dl a[data-os="${os}"]`); if (mine) mine.classList.add("mine");
   if (os === "android") document.getElementById("ctaDl").href = "https://github.com/Deadchu-R/KesherAI/releases/download/android-latest/KesherAI-android.apk";
   const WANT = { win: /^KesherAI-Setup-.*\.exe$/i, mac: /\.dmg$/i, linux: /\.AppImage$/i, deb: /\.deb$/i };
