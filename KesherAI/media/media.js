@@ -2,6 +2,6 @@
    -s.webp = half size for the grid, .webp = full size for the viewer. */
 window.KESHER_MEDIA = {
   "desk": ["home", "study", "models", "images", "canvas", "nodes", "code", "connections", "personas", "plugins", "knowledge", "unreal", "godot", "unity", "usage", "updates", "settings", "phone", "tasks", "compare"],
-  "phone": ["home", "study", "images", "models", "settings"],
+  "phone": ["study", "tools", "images", "models", "settings"],
   "videos": []
 };

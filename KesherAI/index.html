@@ -258,7 +258,7 @@ const EN = {}; document.querySelectorAll("[data-t]").forEach(el => EN[el.dataset
 let lang = "en"; try { lang = localStorage.getItem("kesher-lang") || (/^he/.test(navigator.language) ? "he" : "en"); } catch (e) {}
 const NAMES = { home:["Chat","צ'אט"], study:["Study","לימודים"], models:["Models & downloads","מודלים והורדות"], images:["Images","תמונות"], canvas:["Canvas","Canvas"], nodes:["Nodes (ComfyUI)","Nodes (ComfyUI)"],
   code:["Coding agent","סוכן קוד"], connections:["Connections","חיבורים"], personas:["Personas","פרסונות"], plugins:["Plugins","תוספים"], knowledge:["Knowledge","ידע"], unreal:["Unreal Blueprints","Unreal Blueprints"],
-  godot:["Godot","Godot"], unity:["Unity","Unity"], usage:["Usage","שימוש"], updates:["Updates","עדכונים"], settings:["Settings","הגדרות"], phone:["Phone pairing","חיבור טלפון"], tasks:["Tasks","משימות"], compare:["Compare models","השוואת מודלים"] };
+  godot:["Godot","Godot"], unity:["Unity","Unity"], usage:["Usage","שימוש"], updates:["Updates","עדכונים"], settings:["Settings","הגדרות"], phone:["Phone pairing","חיבור טלפון"], tasks:["Tasks","משימות"], tools:["Tools","כלים"], compare:["Compare models","השוואת מודלים"] };
 const nm = k => (NAMES[k] || [k, k])[lang === "he" ? 1 : 0];
 function applyLang() {
   document.documentElement.lang = lang; document.documentElement.dir = lang === "he" ? "rtl" : "ltr";
