@@ -287,6 +287,7 @@ function hero() { document.getElementById("heroMedia").innerHTML = `<img src="me
 (function downloads() {
   const ua = navigator.userAgent, os = /Android/i.test(ua) ? "android" : /Win/i.test(ua) ? "win" : /Mac/i.test(ua) ? "mac" : /Linux/i.test(ua) ? "linux" : "";
   const mine = document.querySelector(`#dl a[data-os="${os}"]`); if (mine) mine.classList.add("mine");
+  if (os === "android") document.getElementById("ctaDl").href = "https://github.com/Deadchu-R/KesherAI/releases/download/android-latest/KesherAI-android.apk";
   const WANT = { win: /^KesherAI-Setup-.*\.exe$/i, mac: /\.dmg$/i, linux: /\.AppImage$/i, deb: /\.deb$/i };
   const MB = n => (n / 1048576).toFixed(n > 1048576 * 100 ? 0 : 1) + " MB";
   const setSmall = (el, text) => { let v = el.querySelector(".v"); if (!v) { v = document.createElement("small"); v.className = "v"; el.appendChild(v); } v.textContent = text; };
@@ -300,7 +301,9 @@ function hero() { document.getElementById("heroMedia").innerHTML = `<img src="me
       if (o === "linux" && d.files.deb) { el.querySelector(".v").style.cursor = "pointer"; el.querySelector(".v").onclick = e => { e.preventDefault(); location.href = d.files.deb.url; }; }
     }
     if (d.android) { const el = document.querySelector('#dl a[data-os="android"]'); el.href = d.android.url; el.setAttribute("download", ""); setSmall(el, `${d.android.date} · ${MB(d.android.size)}`); }
-    if (mine && os !== "android") document.getElementById("ctaDl").href = mine.href;
+    const cta = document.getElementById("ctaDl");
+    if (os === "android") { if (d.android) cta.href = d.android.url; }
+    else if (mine) cta.href = mine.href;
   };
   let cached = null; try { cached = JSON.parse(localStorage.getItem("kesher-rel-2") || "null"); } catch (e) {}
   if (cached) apply(cached);

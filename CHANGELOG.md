@@ -7,7 +7,7 @@ The Action's `Rebuild site [skip ci]` commits are left out.
 Format for new entries: `- **Area:** what changed, for the visitor/owner (hash)`. Areas: Site, Editor, AI, Résumé, Styles, TV, Build, Docs.
 
 ## 2026-11-17
-- **KesherAI page:** Study moved up under the hero with its own screenshot, and the share image is rebuilt from the new home screen.
+- **KesherAI page:** on Android the top Download button goes straight to the APK. Study moved up under the hero with its own screenshot, and the share image is rebuilt from the new home screen.
 - **KesherAI page rewritten for the current app:** new screenshots in both languages (from the app as it is now, not the 8 November build), a list of what changed since 9 November, and the features described as they are today (Study, Create, game engines, coding agent, phone, controller). The Android download now reads the current `android-latest` APK, and the old videos are removed until new ones are recorded.
 
 ## 2026-11-13
